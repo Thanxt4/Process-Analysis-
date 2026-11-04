@@ -287,8 +287,12 @@ textarea{min-height:96px;resize:vertical}
 .zbtn.grp.sub{border-color:#94a3b8;background:linear-gradient(180deg,#fff,#f8fafc)}
 .ez-h input{font-weight:700}
 .ez input[type=text]{padding:8px 10px;border-radius:9px}
-.er{display:grid;grid-template-columns:62px 1fr 140px auto;gap:6px;align-items:center;margin-bottom:6px}
-.er select.e-proc{border:1px solid var(--line);border-radius:10px;padding:8px 6px;font:inherit;font-size:13px;background:#fff;min-width:0}
+.er{display:grid;grid-template-columns:62px 1fr 140px 128px auto;gap:6px;align-items:center;margin-bottom:6px}
+.er select.e-proc,.er select.e-cust{border:1px solid var(--line);border-radius:10px;padding:8px 6px;font:inherit;font-size:13px;background:#fff;min-width:0}
+.er select.e-cust.c-weruva{background:#ecfdf5;border-color:#6ee7b7;color:#065f46;font-weight:700}
+.er select.e-cust.c-smucker{background:#fff1f2;border-color:#fda4af;color:#9f1239;font-weight:700}
+.ctag{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;font-size:11px;font-weight:700;line-height:18px;vertical-align:1px;white-space:nowrap;border:1px solid}
+.ctag.c-weruva{background:#ecfdf5;color:#065f46;border-color:#6ee7b7}.ctag.c-smucker{background:#fff1f2;color:#9f1239;border-color:#fda4af}
 .ptag{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;font-size:11px;font-weight:700;line-height:18px;vertical-align:1px;white-space:nowrap}
 .ptag.pt0{background:#ede9fe;color:#5b21b6}
 .ptag.pt1{background:#dbeafe;color:#1e40af}
@@ -307,8 +311,8 @@ textarea{min-height:96px;resize:vertical}
 .editbar{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom));background:#fff;display:flex;gap:10px;padding:12px 0 4px;margin-top:10px;border-top:1px solid var(--line)}
 .editbar .btn{flex:1}
 @media(max-width:699px){.hm .rh{min-width:96px;max-width:118px;font-size:12px;padding:3px 4px}.hm thead th{min-width:28px;font-size:10.5px}.hm td.cell{width:24px;height:24px}.hm td.z{font-size:11px}}
-@media(max-width:560px){.er .e-qty{grid-column:1/3;grid-row:3;flex-wrap:wrap}}
-@media(max-width:560px){.ez-h{grid-template-columns:1fr auto auto}.ez-h input:nth-child(2){grid-column:1/2;grid-row:2}.ez-h input.e-sub{grid-column:1/2;grid-row:3}.er{grid-template-columns:48px 1fr}.er select.e-proc,.er>span:empty{grid-column:1/3;grid-row:2;justify-self:start;max-width:58%}.er .acts{grid-column:1/3;grid-row:2;justify-self:end}}
+@media(max-width:560px){.er .e-qty{grid-column:1/3;grid-row:4;flex-wrap:wrap}}
+@media(max-width:560px){.ez-h{grid-template-columns:1fr auto auto}.ez-h input:nth-child(2){grid-column:1/2;grid-row:2}.ez-h input.e-sub{grid-column:1/2;grid-row:3}.er{grid-template-columns:48px 1fr}.er select.e-proc,.er>span:empty{grid-column:1/3;grid-row:2;justify-self:start;max-width:46%}.er select.e-cust{grid-column:1/3;grid-row:3;justify-self:start;max-width:46%}.er>span:empty+span:empty{display:none}.er .acts{grid-column:1/3;grid-row:2;justify-self:end}}
 .me{margin-top:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;padding:3px 12px;font-size:13px;font-weight:600;display:inline-flex;gap:4px;align-items:center;max-width:100%}
 .me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
 .me em{font-style:normal;color:var(--amber);font-size:12px;margin-left:4px}
@@ -981,10 +985,13 @@ const canEdit = r => { const d = daysBetween(r, CFG.current_round); return d >= 
 const FS = () => (formRound && formRound !== CFG.current_round && FSTATUS) ? FSTATUS : STATUS;
 const isG = z => z && z.deck === "gmp";
 /* ป้ายกระบวนการของรายการ (Rawmat / จุดเตรียม / บรรจุ / Retort&Store) */
+const CUSTS = ["Weruva", "Smucker"];
+const custTag = it => it && CUSTS.includes(it.cust) ? `<span class="ctag c-${it.cust.toLowerCase()}" title="Checklist ของลูกค้า ${esc(it.cust)}">${esc(it.cust)}</span>` : "";
 function procTag(it){
-  if(!it || !it.proc) return "";
+  if(!it) return "";
+  if(!it.proc) return custTag(it);
   const i = ((CFG && CFG.process_tags) || []).indexOf(it.proc);
-  return `<span class="ptag pt${i < 0 ? 9 : i}">${esc(it.proc)}</span>`;
+  return `<span class="ptag pt${i < 0 ? 9 : i}">${esc(it.proc)}</span>` + custTag(it);
 }
 /* หัวข้อใหญ่ (ชุดสไลด์): Process Control / GMP / Retort Analysis */
 const DECK_LIST = [{key: "pc", name: "Process Control"}, {key: "gmp", name: "GMP"}, {key: "retort", name: "Retort Analysis"}];
@@ -1072,7 +1079,7 @@ function renderSearch(){
   if(!on) return;
   const rows = [];
   FS().zones.forEach(z => z.items.forEach(it => {
-    const hay = norm(`${it.extra?"":it.no} ${it.name} ${zLabel(z)} ${it.proc||""}`);
+    const hay = norm(`${it.extra?"":it.no} ${it.name} ${zLabel(z)} ${it.proc||""} ${it.cust||""}`);
     if(hay.includes(fQuery)) rows.push({z, it});
   }));
   $("#searchResults").innerHTML = rows.length ? rows.slice(0, 60).map(({z, it}) => {
@@ -1252,7 +1259,7 @@ async function renderChecklist(){
   syncDatePick();
   const data = viewRound===CFG.current_round ? STATUS : await api("/api/status?round="+viewRound);
   const keep = (it, z) => {
-    if(ckQuery && !norm(`${it.no} ${it.name} ${it.last_inspector||""} ${zLabel(z)} ${z.owner} ${it.proc||""}`).includes(ckQuery)) return false;
+    if(ckQuery && !norm(`${it.no} ${it.name} ${it.last_inspector||""} ${zLabel(z)} ${z.owner} ${it.proc||""} ${it.cust||""}`).includes(ckQuery)) return false;
     if(filter === "issue") return it.issue;
     if(it.extra) return it.count > 0 && filter !== "pending";
     return filter==="all" || (filter==="done") === it.checked;
@@ -2357,6 +2364,7 @@ function renderEditor(){
         <input type="text" class="e-no" value="${esc(it.no)}" ${it.extra?"disabled":""} placeholder="ลำดับ">
         <input type="text" class="e-name" value="${esc(it.name)}" placeholder="ชื่อรายการตรวจ">
         ${it.extra ? `<span></span>` : `<select class="e-proc" title="อยู่ในกระบวนการไหน"><option value="">— กระบวนการ —</option>${(CFG.process_tags||[]).map(t=>`<option ${t===it.proc?"selected":""}>${esc(t)}</option>`).join("")}</select>`}
+        ${it.extra ? `<span></span>` : `<select class="e-cust ${it.cust ? "c-" + it.cust.toLowerCase() : ""}" title="Checklist นี้ใช้กับลูกค้าไหน"><option value="">ทั้งสองลูกค้า</option>${CUSTS.map(c => `<option value="${c}" ${c===it.cust?"selected":""}>${c}</option>`).join("")}</select>`}
         <div class="acts">${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
         <button type="button" class="down" ${ii>=z.items.filter(x=>!x.extra).length-1?"disabled":""} title="เลื่อนลง">▼</button>
         <button type="button" class="del" title="ลบรายการ"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:`<span class="note">หัวข้อเพิ่มเติม</span>`}</div>
@@ -2383,6 +2391,7 @@ $("#editZones").addEventListener("input", e => {
   else { const er = e.target.closest(".er"); const it = z.items[+er.dataset.i];
     if(e.target.classList.contains("e-no")) it.no = e.target.value;
     else if(e.target.classList.contains("e-proc")) it.proc = e.target.value;
+    else if(e.target.classList.contains("e-cust")){ it.cust = e.target.value; e.target.className = "e-cust" + (it.cust ? " c-" + it.cust.toLowerCase() : ""); }
     else if(e.target.classList.contains("e-rooms")) it.qty = {...it.qty, rooms: e.target.value.split(/[,，]/).map(x => x.trim()).filter(Boolean)};
     else if(e.target.classList.contains("e-unit")) it.qty = {...it.qty, unit: e.target.value.trim() || "คัน"};
     else it.name = e.target.value; }
@@ -2396,7 +2405,7 @@ $("#editZones").addEventListener("click", e => {
   const ez = b.closest(".ez"); const zi = +ez.dataset.z; const z = editZones[zi];
   if(b.classList.contains("zcopy")){
     const c = {name: z.name + " (สำเนา)", owner: z.owner, deck: z.deck, sub: z.sub || "",
-      items: z.items.filter(it => !it.extra).map(it => ({no: it.no, name: it.name, proc: it.proc || ""}))};
+      items: z.items.filter(it => !it.extra).map(it => ({no: it.no, name: it.name, proc: it.proc || "", cust: it.cust || ""}))};
     editZones.splice(zi + 1, 0, c); renderEditor();
     const inp = $("#editZones").querySelector(`.ez[data-z="${zi + 1}"] .e-zname`); inp.focus(); inp.select(); return;
   }
