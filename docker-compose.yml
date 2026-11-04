@@ -1,0 +1,15 @@
+services:
+  process-control-form:
+    build: .
+    container_name: process-control-form
+    restart: always          # เปิดเองอัตโนมัติเมื่อเครื่องรีสตาร์ท → ทำงาน 24 ชม.
+    ports:
+      - "8000:8000"
+    environment:
+      - CUTOFF=07:15         # เวลาตัดรอบสไลด์
+      - TZ_NAME=Asia/Bangkok
+      - ADMIN_PIN=           # ใส่ตัวเลข ถ้าต้องการให้ต้องกรอก PIN ก่อนลบรายการ
+      - ACCESS_CODE=         # รหัสเข้าเว็บ (ควรตั้งเมื่อเปิดเป็นสาธารณะ)
+      - SLIDE_FONT=Leelawadee UI
+    volumes:
+      - ./data:/data         # ฐานข้อมูล รูป และไฟล์สไลด์ทั้งหมดเก็บที่โฟลเดอร์นี้

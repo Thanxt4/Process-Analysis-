@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Retort Analysis · ฟอร์มตรวจพื้นที่</title>
+<meta name="theme-color" content="#0f2a47">
+<link rel="icon" href="/icon-192.png">
+<style>
+@font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:400;src:url(/fonts/sarabun-thai-400-normal.woff2) format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:500;src:url(/fonts/sarabun-thai-500-normal.woff2) format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:600;src:url(/fonts/sarabun-thai-600-normal.woff2) format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:700;src:url(/fonts/sarabun-thai-700-normal.woff2) format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:400;src:url(/fonts/sarabun-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:500;src:url(/fonts/sarabun-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:600;src:url(/fonts/sarabun-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:700;src:url(/fonts/sarabun-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{
+  --bg:#f1f5f9;--card:#fff;--ink:#1e293b;--ink2:#334155;--mute:#64748b;--line:#e2e8f0;--field:#f8fafc;
+  --navy:#1b2a41;--navy2:#24364f;--acc:#1b2a41;--acc2:#1b2a41;--accbg:#fef3c7;--amber:#f59e0b;
+  --ok:#047857;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#c81e1e;--badbg:#fee2e2;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#6250d6;--sOther:#94a3b8;
+  --r:16px;--sh:0 1px 2px rgba(15,23,42,.06),0 2px 8px rgba(15,23,42,.04)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Sarabun,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.45}
+body{padding:0 env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 78px) env(safe-area-inset-left)}
+svg.i{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+.wrap{max-width:640px;margin:0 auto;padding:14px}
+.wrap.wide{max-width:1040px}
+header.top{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;padding-top:env(safe-area-inset-top)}
+header.top .wrap{padding:10px 14px;display:flex;align-items:center;gap:10px;min-height:60px;max-width:1040px}
+.ttl{flex:1;min-width:0}
+h1{font-size:18px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl .s{font-size:12.5px;color:#b8c7da}
+.sync{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#b8c7da;white-space:nowrap}
+.sync .d{width:8px;height:8px;border-radius:50%;background:#94a3b8}
+.sync.on .d{background:#34d399}
+.back{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.back svg.i{width:22px;height:22px;stroke-width:2.4}
+.svgc{position:relative;height:100%}
+.svgc svg{display:block;width:100%;height:100%;overflow:visible}
+.svgc .ax{font-size:11px;fill:#64748b}
+.svgc .gl{stroke:#eef2f6}
+.svgc .tip{position:absolute;pointer-events:none;background:#0f2a47;color:#fff;font-size:13px;border-radius:10px;padding:8px 10px;white-space:nowrap;z-index:5;display:none;box-shadow:0 6px 18px rgba(15,23,42,.25);line-height:1.5}
+.svgc .tip i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.lock{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+#lockPin::placeholder{letter-spacing:normal;font-size:16px}
+.lockbox{background:#fff;border-radius:22px;padding:26px 22px;width:100%;max-width:360px;text-align:center;box-shadow:var(--sh);border:1px solid var(--line)}
+.av{width:36px;height:36px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:0 0 auto;border:0;box-shadow:0 0 0 2px rgba(255,255,255,.25);padding:0;min-height:0}
+h2{font-size:16.5px;font-weight:600;margin:0}
+h3{font-size:15px;font-weight:600;margin:0}
+.sub{color:var(--mute);font-size:13.5px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--sh);border:1px solid rgba(226,232,240,.7)}
+.sec{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sec .ic{width:34px;height:34px;border-radius:10px;background:var(--accbg);color:var(--acc);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.sec .t{flex:1;min-width:0}
+.sec .sub{font-size:12.5px;margin-top:1px}
+.row{display:flex;gap:10px;align-items:center}
+.sp{justify-content:space-between}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+label.f{display:block}
+.lab{display:block;font-size:13px;font-weight:500;color:var(--ink2);margin:0 0 6px 2px}
+.lab .req{color:var(--bad)}
+input,select,textarea{width:100%;font:inherit;font-size:17px;padding:11px 13px;border:1.5px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);min-height:50px;-webkit-appearance:none;appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:18px;padding-right:38px}
+input::placeholder,textarea::placeholder{color:#a3b0c2}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc);background:#fff;box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+input.err,.chips.err{border-color:var(--bad)!important}
+textarea{min-height:80px;resize:vertical}
+button{font:inherit;font-size:15px;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;min-height:48px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+button:active{transform:scale(.97)}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+button.ghost{border-color:transparent;background:transparent;color:var(--acc)}
+button.soft{background:var(--accbg);border-color:var(--accbg);color:var(--acc2);font-weight:500}
+button.sm{min-height:36px;padding:5px 11px;font-size:14px;border-radius:10px}
+button.blk{width:100%}
+button.dash{border-style:dashed;border-color:#b6c3d6;color:var(--acc2);background:transparent;font-weight:500}
+.danger{color:var(--bad)!important}
+.chips{display:flex;flex-wrap:wrap;gap:8px;border:1.5px solid transparent;border-radius:14px}
+.chip{min-height:44px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--field);color:var(--ink2);font-size:15px;font-weight:500}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip.big{flex:1 1 140px;min-height:58px;justify-content:flex-start;text-align:left;gap:10px}
+.catgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.catgrid .chip{justify-content:flex-start;text-align:left;min-height:56px;padding:8px 10px;gap:8px;font-size:14.5px;line-height:1.3}
+.catgrid .chip .no{flex:0 0 auto;width:24px;height:24px;border-radius:7px;background:#e2e8f0;color:var(--ink2);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.catgrid .chip.on .no{background:rgba(255,255,255,.2);color:#fff}
+.catgrid .chip.on{background:var(--acc);border-color:var(--acc)}
+.chip.big.on{background:var(--acc);border-color:var(--acc)}
+.seg{display:flex;background:#eef2f7;border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;border-radius:9px;min-height:42px;background:transparent;color:var(--ink2);font-weight:500}
+.seg button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.seg button.on.warnc{background:var(--warn);color:#fff}
+.alert{display:flex;gap:10px;align-items:flex-start;border-radius:14px;padding:11px 13px;font-size:14.5px;margin-bottom:10px}
+.a-info{background:var(--accbg);color:#1e40af}.a-warn{background:var(--warnbg);color:#92400e}.a-bad{background:var(--badbg);color:#991b1b}
+.nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 10px calc(6px + env(safe-area-inset-bottom));z-index:6}
+.nav .in{max-width:520px;margin:0 auto;display:flex;gap:6px}
+.nav button{flex:1;flex-direction:column;gap:2px;border:0;background:transparent;color:var(--mute);font-size:12.5px;min-height:56px;border-radius:12px}
+.nav button svg.i{width:22px;height:22px}
+.nav button.on{color:var(--acc2);background:var(--accbg);font-weight:600}
+.item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;width:100%;text-align:left;background:transparent;border-radius:0;border-left:0;border-right:0;border-top:0;min-height:0;align-items:flex-start;justify-content:flex-start;font-weight:400}
+.item:last-child{border-bottom:0}
+.item .bar{width:4px;align-self:stretch;border-radius:2px;flex:0 0 auto}
+.item .b{flex:1;min-width:0}
+.item .b b{font-weight:600;display:block}
+.item .meta{font-size:13px;color:var(--mute)}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;background:#f1f5f9;color:var(--ink2)}
+.tag.hold{background:var(--warnbg);color:var(--warn)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.filters select{width:auto;min-height:42px;font-size:15px;padding:8px 36px 8px 12px;background-color:#fff}
+.filters .seg{flex:0 0 auto}
+.filters .seg button{min-height:34px;padding:4px 12px;font-size:14px;flex:0 0 auto}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:var(--card);border-radius:14px;padding:12px 14px;box-shadow:var(--sh);border:1px solid rgba(226,232,240,.7);min-width:0}
+.kpi span{font-size:12.5px;color:var(--mute);display:block}
+.kpi b{display:block;font-size:24px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi b.txt{font-size:16px;line-height:1.5;padding-top:4px}
+.kpi small{font-size:12.5px;color:var(--mute)}
+.kpi small.up{color:var(--bad)}.kpi small.down{color:var(--ok)}
+.dgrid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:860px){.dgrid{grid-template-columns:1.5fr 1fr}.dgrid .span2{grid-column:1/-1}}
+@media(max-width:560px){.kpis{grid-template-columns:1fr 1fr}}
+.dgrid .card{margin-bottom:0}
+.chart{position:relative;height:260px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink2);margin:10px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.hb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:14px}
+.hb:last-child{border-bottom:0}
+.hb .n{color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb .v{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.hb .v small{color:var(--mute);font-weight:400;margin-left:6px}
+.hb .track{grid-column:1/-1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden}
+.hb .fill{height:100%;border-radius:0 4px 4px 0;background:var(--s1)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;color:var(--mute);font-size:12.5px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:8px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tscroll{overflow-x:auto}
+.empty{text-align:center;padding:36px 16px}
+.empty .ic{width:64px;height:64px;border-radius:20px;background:var(--accbg);color:var(--acc);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.empty .ic svg.i{width:30px;height:30px}
+.set-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.set-row:last-child{border-bottom:0}
+.set-row input{min-height:42px;font-size:15px;padding:8px 10px}
+.set-row .grow{flex:1;min-width:0}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.modal .box{background:#fff;width:100%;max-width:640px;border-radius:22px 22px 0 0;padding:10px 18px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+.modal .box::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:#cbd5e1;margin:0 auto 14px}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:14px;font-size:14px;z-index:30;max-width:90%}
+small.hint{display:block;color:var(--mute);font-size:12.5px;margin:5px 0 0 2px}
+.hide{display:none!important}
+.retbar{margin-bottom:14px}
+.seg.gran{max-width:340px;margin:-4px 0 10px}
+.seg.gran button{min-height:34px;font-size:13.5px}
+.retscroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.retscroll .chip{flex:0 0 auto;min-height:42px;background:#fff}
+.retscroll .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.cmpbox{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.cmpbox div{background:var(--field);border-radius:12px;padding:12px}
+.cmpbox b{display:block;font-size:24px;font-weight:600}
+.cmpbox span{font-size:13px;color:var(--mute)}
+.hero{padding:20px}
+.hero .big{font-size:48px;font-weight:600;line-height:1.1;margin:4px 0 8px}
+.hero .big span{font-size:20px;font-weight:500;color:var(--mute)}
+.hero .cmp{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:15.5px;font-weight:500;color:var(--ink2)}
+.hero .cmp.up{color:var(--bad)}.hero .cmp.down{color:var(--ok)}
+.rank{display:flex;align-items:center;gap:12px;width:100%;padding:10px 0;border:0;border-bottom:1px solid #f1f5f9;border-radius:0;background:transparent;text-align:left;min-height:0;font-weight:400}
+.rank:last-child{border-bottom:0}
+.rank .rk{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:#f1f5f9;color:var(--ink2);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.rank .rk.r0{background:var(--bad);color:#fff}.rank .rk.r1{background:#f97316;color:#fff}.rank .rk.r2{background:#f59e0b;color:#fff}
+.rank .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.rank .nm b{font-weight:600;font-size:15.5px;line-height:1.3}
+.rank .track{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;display:block}
+.rank .fill{display:block;height:100%;background:var(--s1);border-radius:0 4px 4px 0}
+.rank .ct{flex:0 0 auto;text-align:right;font-size:13px;color:var(--mute);display:flex;flex-direction:column;align-items:flex-end}
+.rank .ct b{font-size:20px;color:var(--ink);font-weight:600;line-height:1.1}
+.chg{display:inline-flex;align-items:center;gap:2px;font-size:12.5px;font-weight:600;color:var(--mute)}
+.chg svg.i{width:14px;height:14px;stroke-width:2.6}
+.chg.up{color:var(--bad)}.chg.down{color:var(--ok)}
+.steps{display:flex;gap:6px;margin-bottom:16px}
+.steps .st{flex:1;min-width:0;justify-content:flex-start;gap:8px;padding:6px 8px;min-height:52px;border-radius:14px;background:#fff;border:1.5px solid var(--line);color:var(--mute);text-align:left}
+.steps .st:disabled{opacity:1;cursor:default}
+.steps .st .no{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#e2e8f0;color:var(--ink2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.steps .st .no svg.i{width:15px;height:15px;stroke-width:2.6}
+.steps .st .tx{min-width:0;display:flex;flex-direction:column;line-height:1.2}
+.steps .st small{font-size:12px}
+.steps .st b{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.steps .st.on{border-color:var(--acc);color:var(--acc2);font-weight:600}
+.steps .st.on .no{background:var(--acc);color:#fff}
+.steps .st.done .no{background:var(--ok);color:#fff}
+h2.q{font-size:22px;font-weight:600;margin:4px 2px 12px}
+.biglist{display:grid;gap:8px}
+button.big{justify-content:flex-start;text-align:left;gap:12px;min-height:62px;padding:10px 14px;border-radius:16px;background:#fff;border:1.5px solid var(--line);font-size:17px;font-weight:500;box-shadow:var(--sh)}
+button.big .no{flex:0 0 auto;width:32px;height:32px;border-radius:10px;background:var(--accbg);color:var(--acc2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600}
+button.big .nm{flex:1;min-width:0;line-height:1.3}
+button.big > svg.i{color:#94a3b8}
+button.big.on{border-color:var(--acc);background:var(--accbg)}
+button.big.sm2{min-height:56px}
+button.big .radio{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:2px solid #cbd5e1}
+button.big.on .radio{border:7px solid var(--acc)}
+.retgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.retgrid button.big{justify-content:center;font-size:19px;font-weight:600;min-height:68px}
+.more{width:100%;margin-top:14px;justify-content:flex-start;background:transparent;border:1.5px dashed #b6c3d6;color:var(--acc2);font-weight:500;flex-wrap:wrap}
+.more .sub{margin-left:auto;font-weight:400}
+.savebig{min-height:60px!important;font-size:18px!important;margin-top:14px;border-radius:16px}
+.done-card{text-align:center;padding:30px 16px}
+.okic{width:72px;height:72px;border-radius:50%;background:var(--okbg);color:var(--ok);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.okic svg.i{width:36px;height:36px;stroke-width:2.6}
+.mb{margin-bottom:14px}
+/* ===== ธีมเดียวกับฟอร์มตรวจพื้นที่ (กรมท่า + เส้นส้ม) ===== */
+header.top{box-shadow:0 2px 10px rgba(0,0,0,.15)}
+header.top::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:var(--amber)}
+header.top .wrap,.nav .in{max-width:1240px}
+.wrap,.wrap.wide{max-width:1240px}
+.ttl .brand{display:block;color:var(--amber);font-weight:600;font-size:12px;letter-spacing:.06em}
+h1{font-size:19px;font-weight:700}
+.ttl .s{color:#cbd5e1}
+.av{background:var(--amber);color:var(--navy);font-weight:700}
+.card,.kpi,button.big{box-shadow:none;border:1px solid var(--line);border-radius:14px}
+.sec .ic{background:var(--accbg);color:#92400e}
+button.pri{background:var(--navy);border-color:var(--navy)}
+button.soft{background:#e2e8f0;border-color:#e2e8f0;color:var(--navy)}
+button.ghost{color:var(--navy)}
+button.big .no{background:#e2e8f0;color:var(--navy)}
+button.big.on{border-color:var(--navy);background:#f8fafc;box-shadow:inset 0 0 0 1px var(--navy)}
+button.big.on .radio{border-color:var(--navy)}
+.steps .st.on{border-color:var(--amber);color:var(--navy)}
+.steps .st.on .no{background:var(--amber);color:var(--navy)}
+.catgrid .chip.on,.chip.big.on{background:var(--navy);border-color:var(--navy)}
+.alert.a-info{background:#f1f5f9;color:var(--navy)}
+.hb .fill,.rank .fill{background:var(--navy)}
+input:focus,select:focus,textarea:focus{border-color:var(--navy);box-shadow:0 0 0 4px rgba(27,42,65,.12)}
+.more{border-color:#cbd5e1;color:var(--navy)}
+button.dash{color:var(--navy)}
+.okic{background:var(--accbg)!important;color:#92400e!important}
+.done-card .okic{background:var(--okbg)!important;color:var(--ok)!important}
+/* จอคอม: หน้าบันทึกแบ่ง 2 ฝั่ง + รายการตัวเลือกเรียง 2 คอลัมน์ */
+@media(min-width:700px){.biglist{grid-template-columns:1fr 1fr}.retgrid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1000px){
+  #main.split{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:22px;align-items:start}
+  #main.split .logR{position:sticky;top:100px}
+  #main.split .logR .card{margin-bottom:12px}
+  #main.split h2.q{margin-top:0}
+}
+.plantseg{max-width:320px}.plantseg button{font-size:17px;font-weight:700;min-height:48px}
+.plantseg button.on{background:var(--navy);color:#fff}
+.proggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.proggrid button.big.pg{flex-direction:column;justify-content:center;align-items:center;min-height:58px;padding:6px;gap:0;text-align:center}
+.proggrid button.big.pg b{font-size:19px}.proggrid button.big.pg small{font-size:10.5px;color:var(--mute);font-weight:500;line-height:1.2}
+.proggrid button.big.pg.on{background:var(--navy);color:#fff}.proggrid button.big.pg.on small{color:#cbd5e1}
+.spec-h b{font-size:17px}.spec-h .sub{margin-top:3px}
+.spec-k{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 8px;font-size:13.5px;color:var(--ink2)}
+.spec-k span{background:#f1f5f9;border-radius:8px;padding:4px 10px}.spec-k b{color:var(--navy)}
+.spec-t td,.spec-t th{padding:6px 8px}.spec-t th.num{text-align:right}
+.spec-t td.n{color:var(--mute);width:28px}.spec-t td.ph{font-weight:700;font-size:13px;white-space:nowrap}
+.spec-t tr.first td{border-top:2px solid var(--line)}
+.spec-t tr.ph-come td.ph{color:#b45309}.spec-t tr.ph-cook{background:#fff7ed}.spec-t tr.ph-cook td.ph{color:#c2410c}.spec-t tr.ph-cool td.ph{color:#0e7490}
+.spec-t tr.ph-cook td.num{font-weight:700}
+.spec-t .xx{font-size:12px;font-weight:700;background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 7px}
+.pgrow{border-bottom:1px solid #f1f5f9}.pgrow:last-child{border-bottom:0}.pgrow.open{padding-bottom:12px}
+.pgh{width:100%;justify-content:flex-start;gap:12px;border:0;background:transparent;padding:10px 0;min-height:0;text-align:left;font-weight:400}
+.pgh .pno{flex:0 0 auto;width:44px;height:40px;border-radius:10px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px}
+.pgh .b{flex:1;min-width:0}.pgh .b b{display:block}.pgh .meta{font-size:13px;color:var(--mute)}
+.ai-opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ai-opts .seg button{min-height:36px;padding:4px 12px;font-size:14px;flex:0 0 auto}
+.ai-quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ai-quick .chip{min-height:40px;font-size:14px;background:#fff;text-align:left}
+.ai-quick .chip:hover{border-color:var(--navy)}
+.ai-chat{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.ai-msg{display:flex;gap:10px;align-items:flex-start}
+.ai-msg.user{justify-content:flex-end}
+.ai-msg.user .ai-b{background:var(--navy);color:#fff;border-radius:16px 16px 4px 16px;max-width:80%;white-space:pre-wrap}
+.ai-msg.ai .ai-b{background:#fff;border:1px solid var(--line);border-radius:4px 16px 16px 16px;flex:1;min-width:0}
+.ai-b{padding:12px 15px;font-size:15px;line-height:1.6}
+.ai-b h4{margin:10px 0 4px;font-size:15.5px;color:var(--navy)}.ai-b h4:first-child{margin-top:0}
+.ai-b p{margin:4px 0}.ai-b ul,.ai-b ol{margin:4px 0;padding-left:22px}.ai-b li{margin:2px 0}
+.ai-b code{background:#f1f5f9;border-radius:4px;padding:0 4px}
+.ai-av{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--accbg);color:#92400e;display:flex;align-items:center;justify-content:center}
+.ai-meta{margin-top:8px;font-size:12px;color:var(--mute);border-top:1px dashed var(--line);padding-top:6px}
+.ai-dots{display:inline-flex;gap:3px;margin-right:6px;vertical-align:middle}
+.ai-dots i{width:7px;height:7px;border-radius:50%;background:var(--amber);animation:aid 1s infinite}
+.ai-dots i:nth-child(2){animation-delay:.15s}.ai-dots i:nth-child(3){animation-delay:.3s}
+@keyframes aid{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.ai-input{position:sticky;bottom:calc(84px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:flex-end;background:var(--bg);padding:8px 0}
+.ai-input textarea{min-height:52px;font-size:16px;resize:none}
+.ai-input button{flex:0 0 auto;min-height:52px}
+@media(min-width:700px){.ai-input{bottom:0}}
+@media(max-width:699px){.nav .in{gap:2px}.nav button{min-width:0;padding:6px 2px;font-size:11.5px}.nav button svg.i{width:20px;height:20px}}
+.zcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.zcards.two{grid-template-columns:1fr 1fr}
+.zc{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:14px 38px 14px 16px;min-height:96px;font-weight:400}
+.zc:hover{border-color:var(--navy)}
+.zc.on{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+.zc>svg.i{position:absolute;right:12px;top:16px;color:#94a3b8}
+.zc b{font-size:19px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:8px}
+.zc.big2{min-height:150px;border-color:var(--navy);background:linear-gradient(180deg,#fff,#f1f5ff)}
+.zc.big2 b{font-size:24px}
+.zc .gtag{font-size:11px;font-weight:700;color:#fff;background:var(--navy);border-radius:99px;padding:1px 8px}
+.zc .zs{font-size:13px;color:var(--mute);line-height:1.4}
+.zc .zrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.zbadge{font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px}
+.zbadge.ok{background:var(--okbg);color:var(--ok)}.zbadge.ng{background:var(--badbg);color:var(--bad)}
+.zsub2{font-size:12px;color:var(--mute)}
+.proggrid button.big.pg{min-height:74px}
+@media(max-width:560px){.zcards{grid-template-columns:1fr 1fr}.zc{padding:12px 30px 12px 12px}.zc b{font-size:17px}.zc.big2 b{font-size:21px}}
+/* แท็บเมนู: จอคอม = แถบด้านบนแบบหน้าหลัก / มือถือ = แถบล่าง */
+.nav button.on{color:var(--navy);background:var(--accbg)}
+@media(min-width:700px){
+  body{padding-bottom:30px}
+  .nav{position:static;background:transparent;border:0;padding:16px 16px 0;backdrop-filter:none;-webkit-backdrop-filter:none}
+  .nav .in{margin:0 auto;background:#e2e8f0;padding:4px;border-radius:12px;gap:6px}
+  .nav button{flex-direction:row;gap:6px;min-height:42px;font-size:15px;font-weight:600;color:var(--mute);border-radius:9px}
+  .nav button svg.i{width:18px;height:18px}
+  .nav button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .toast{bottom:28px}
+}
+/* ===== Visual refresh (v77) ===== */
+:root{--bg:#eef2f7;--sh2:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.18)}
+body{background:radial-gradient(1200px 400px at 50% -120px,#dfe7f2 0%,rgba(223,231,242,0) 70%),var(--bg);background-attachment:fixed}
+header.top{background:linear-gradient(135deg,#14213a 0%,#1b2a41 55%,#26405f 100%)}
+h1{letter-spacing:.01em}
+.card{border-radius:18px;box-shadow:var(--sh2);border:1px solid #e3e9f1}
+.kpi{border-radius:16px;box-shadow:var(--sh2)}
+.sec .ic{border-radius:11px}
+h2.q{font-size:23px;font-weight:700;color:var(--navy);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;letter-spacing:-.005em}
+/* แถบขั้นตอน: เส้นความคืบหน้า */
+.steps{position:relative;gap:8px}
+.steps .st{border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04);transition:border-color .15s,background .15s}
+.steps .st.done{border-color:#cfe9dc;background:#f5fbf8;cursor:pointer}
+.steps .st.done:hover{border-color:var(--ok)}
+.steps .st.on{background:#fffbeb;box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+@media(max-width:620px){
+  .steps{gap:4px}
+  .steps .st{flex-direction:column;justify-content:center;align-items:center;gap:3px;padding:6px 2px;min-height:58px;text-align:center}
+  .steps .st .tx{align-items:center;max-width:100%}
+  .steps .st small{font-size:11px;white-space:nowrap}
+  .steps .st b{font-size:11.5px;max-width:100%}
+  .steps .st .no{width:24px;height:24px;font-size:12px}
+}
+/* การ์ดพื้นที่ / หม้อ */
+.zc{border-radius:18px;box-shadow:0 1px 2px rgba(15,23,42,.05);transition:transform .12s,box-shadow .15s,border-color .15s}
+.zc:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
+.zc.big2{border:1.5px solid #c9d4e3;background:linear-gradient(160deg,#fff 0%,#f4f7fc 100%);padding:18px 40px 18px 18px;overflow:hidden}
+.zc.big2::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--navy)}
+.zc.big2[data-plant="PF2"]::before{background:var(--amber)}
+.zc.big2 b{font-size:28px;letter-spacing:.01em}
+.zc .gtag{font-size:11.5px;padding:2px 9px}
+.zc.on{background:#fffbeb;border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.18)}
+/* โปรแกรม */
+.proggrid button.big.pg{border-radius:14px;transition:transform .12s,border-color .15s}
+.proggrid button.big.pg:hover{transform:translateY(-1px);border-color:var(--navy)}
+.proggrid button.big.pg b{font-size:21px;color:var(--navy)}
+.proggrid button.big.pg.on b{color:#fff}
+.proggrid button.big.pg.on{box-shadow:0 6px 16px -6px rgba(27,42,65,.55)}
+/* หัวข้อปัญหา */
+.glegend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:-4px 2px 12px;font-size:12.5px;color:var(--mute)}
+.glegend span{display:inline-flex;align-items:center;gap:6px}.glegend i{width:10px;height:10px;border-radius:3px}
+.catlist{gap:10px}
+button.big.cat{position:relative;min-height:70px;padding:10px 12px 10px 10px;gap:12px;border-radius:16px;background:#fff;overflow:hidden;transition:transform .12s,box-shadow .15s,border-color .15s}
+button.big.cat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gc)}
+button.big.cat:hover{transform:translateY(-1px);box-shadow:var(--sh2);border-color:color-mix(in srgb,var(--gc) 45%,#e2e8f0)}
+.gic{flex:0 0 auto;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--gc);background:color-mix(in srgb,var(--gc) 13%,#fff)}
+.gic svg.i{width:21px;height:21px}
+button.big.cat .nm{display:flex;flex-direction:column;gap:2px}
+button.big.cat .cn{font-size:16.5px;font-weight:600;color:var(--ink);line-height:1.3}
+button.big.cat .cn em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--mute);margin-right:7px}
+button.big.cat small{font-size:12.5px;color:var(--mute);font-weight:400;line-height:1.35}
+button.big.cat .wk{flex:0 0 auto;min-width:24px;height:24px;padding:0 7px;border-radius:99px;background:var(--badbg);color:var(--bad);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+button.big.cat.on{background:color-mix(in srgb,var(--gc) 7%,#fff);border-color:var(--gc);box-shadow:inset 0 0 0 1px var(--gc)}
+.catsel{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e3e9f1;border-left:5px solid var(--gc);border-radius:16px;padding:10px 12px;margin-bottom:14px;box-shadow:var(--sh2)}
+.catsel>div{flex:1;min-width:0}.catsel small{display:block;font-size:12.5px;color:var(--mute)}.catsel b{display:block;font-size:17px;color:var(--ink);line-height:1.3}
+/* สาเหตุ */
+button.big.sm2{border-radius:14px;transition:border-color .15s,background .15s}
+button.big.sm2:hover{border-color:#94a3b8}
+button.big.sm2.on{background:#fffbeb;border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+button.big.on .radio{border-color:var(--amber)!important}
+.savebig{background:linear-gradient(135deg,#1b2a41,#2a4466)!important;box-shadow:0 10px 22px -10px rgba(27,42,65,.7)}
+/* หน้าบันทึกเสร็จ */
+.done-card{padding:38px 18px;background:linear-gradient(180deg,#f0fdf4 0%,#fff 60%)}
+.done-card .okic{width:84px;height:84px;box-shadow:0 0 0 10px rgba(4,120,87,.08)}
+.done-card h2{font-size:22px}
+/* รายการ */
+.item{border-radius:12px;padding:12px 8px;transition:background .12s}
+.item:hover{background:#f8fafc}
+.item .bar{width:5px;border-radius:3px}
+.cmpbox div{border-radius:14px;background:linear-gradient(160deg,#f8fafc,#eef2f7)}
+.cmpbox b{font-size:28px;color:var(--navy)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ===== Flow ใหม่: เวลา → พื้นที่ → หม้อ → ปัญหา+รูป → สาเหตุ/แก้ไข/ลงนาม ===== */
+.timecard{padding:18px}
+.tc-top{display:flex;align-items:center;gap:14px}.tc-top>div:first-child{flex:1;min-width:0}
+.tc-date{font-size:15px;color:var(--mute);font-weight:500}
+.tc-time{font-size:44px;font-weight:700;color:var(--navy);line-height:1.1;font-variant-numeric:tabular-nums}
+.shiftbig{flex:0 0 auto;width:96px;height:96px;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.shiftbig small{font-size:13px;font-weight:600;opacity:.8}.shiftbig b{font-size:34px;font-weight:800;margin-top:4px}
+.shiftbig.DS{background:#fef3c7;color:#92400e;box-shadow:inset 0 0 0 2px #fcd34d}
+.shiftbig.NS{background:#1b2a41;color:#fff;box-shadow:inset 0 0 0 2px #3b5577}
+.addbar{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px dashed #b6c3d6;border-radius:16px;padding:8px;margin-bottom:12px;position:sticky;top:76px;z-index:3;box-shadow:var(--sh2)}
+.addbar .pickAdd:disabled{opacity:.35;cursor:default}
+.pickHint{font-size:13px;color:var(--mute);margin:-6px 4px 10px;min-height:0}.pickHint:empty{display:none}
+.listsearch{position:static;border-style:solid;border-color:var(--line)}
+.formcard .addbar{position:static;box-shadow:none;margin-bottom:8px;padding:6px}
+.formcard .addbar .gic{width:32px;height:32px}.formcard .addbar input,.formcard .addbar button{min-height:40px;font-size:15px}
+.addbar .gic{width:38px;height:38px;color:#fff;background:var(--navy)}
+.addbar input{min-height:44px;font-size:16px;background:var(--field)}
+.addbar button{min-height:44px}
+.camBtn{display:flex;align-items:center;gap:14px;padding:18px;border-radius:16px;background:linear-gradient(135deg,#1b2a41,#2a4466);color:#fff;cursor:pointer;box-shadow:0 10px 22px -10px rgba(27,42,65,.7)}
+.camBtn svg.i{width:34px;height:34px;color:var(--amber)}
+.camBtn span{display:flex;flex-direction:column}.camBtn b{font-size:19px}.camBtn small{font-size:12.5px;color:#cbd5e1}
+.camBtn:active{transform:scale(.98)}
+.galBtn{display:inline-flex;align-items:center;gap:6px;margin-top:10px;color:var(--navy);font-weight:500;cursor:pointer;font-size:14px;padding:6px 4px}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:12px}
+.photos:empty{display:none}
+.photos .ph{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#e2e8f0}
+.photos .ph img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.photos .phx{position:absolute;top:6px;right:6px;width:30px;height:30px;min-height:0;padding:0;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff}
+.photos.mini{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));margin:0 0 12px}
+.formcard textarea{font-size:16px}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sugg .chip{min-height:36px;padding:5px 12px;font-size:14px;background:#fff}
+.sugg .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.signcard{background:linear-gradient(180deg,#fff,#fbfcfe)}
+.signcard input{font-size:18px;font-weight:600}
+.signline{margin-top:14px;text-align:center;border-top:1.5px dotted #94a3b8;padding-top:8px}
+.signline span{display:block;font-weight:600;color:var(--navy)}.signline small{color:var(--mute);font-size:12.5px}
+.tag svg.i{width:13px;height:13px;vertical-align:-2px}
+.tag.ok{background:var(--okbg);color:var(--ok)}
+.tag.wait{background:#f1f5f9;color:var(--mute)}
+.item .tags{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto}
+.apprbox{margin-top:12px;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.apprbox.ok{background:var(--okbg);color:var(--ok)}
+.apprbox.wait{background:#f1f5f9;color:var(--ink2)}
+.apprbox b{display:block;font-size:16px}.apprbox small{font-size:12.5px;opacity:.85}
+@media(max-width:560px){.tc-time{font-size:36px}.shiftbig{width:80px;height:80px}.shiftbig b{font-size:28px}.addbar{top:70px}}
+/* ===== Dashboard วิเคราะห์ (แบบหน้า Process Control / GMP) ===== */
+.wrap.xwide{max-width:1240px}
+.dash .dhead{background:linear-gradient(135deg,#14213a,#1b2a41 55%,#2a4a72);color:#fff;border-radius:18px 18px 0 0;padding:16px 20px;border-left:5px solid var(--amber)}
+.dhead b{display:block;font-size:20px}.dhead span{font-size:13px;color:#cbd5e1}
+.drange{background:#fff;border:1px solid #e3e9f1;border-top:0;border-radius:0 0 18px 18px;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:18px;box-shadow:var(--sh2)}
+.drange .rg{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.rlab{font-weight:700;font-size:16px;padding:6px 12px;border-radius:10px;white-space:nowrap}
+.rlab.r1{background:#dbeafe;color:#1d4ed8}.rlab.r2{background:#e2e8f0;color:#334155}
+.drange .or{font-size:13px;color:var(--mute)}
+.drange input[type=date]{width:auto;min-height:40px;font-size:14.5px;padding:6px 10px;background:#fff}
+.drange button.sm{min-height:40px;font-weight:600}
+.rsep{width:1px;align-self:stretch;background:var(--line)}
+.dseg{flex:0 0 auto}.dseg button{min-height:36px;padding:4px 12px;font-size:14.5px;flex:0 0 auto}
+.dtitle{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 2px 12px}
+.dtitle h2{font-size:28px;font-weight:800;color:var(--navy);letter-spacing:-.01em}.dtitle h2 em{font-style:normal;color:var(--bad)}
+.dtitle .sub{font-weight:500;margin-top:2px}
+.dseg2 button{min-height:38px;padding:4px 16px;font-weight:600;flex:0 0 auto}
+.dpanel{background:#fff;border:1px solid #e3e9f1;border-radius:18px;overflow:hidden;box-shadow:var(--sh2);margin-bottom:18px}
+.dp-h{background:linear-gradient(135deg,#1b2a41,#24406a);padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dp-ic{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center}
+.pchip{min-height:40px;border-radius:12px;background:transparent;border:1.5px solid rgba(255,255,255,.3);color:#fff;font-weight:700;font-size:16px;padding:4px 12px;gap:8px}
+.pchip span{font-size:12.5px;font-weight:700;background:#fef3c7;color:#92400e;border-radius:99px;padding:1px 8px}
+.pchip.on{background:#fff;color:var(--navy);border-color:#fff}
+.dseg3{margin-left:auto;background:rgba(255,255,255,.12)}.dseg3 button{color:#cbd5e1;min-height:36px;padding:4px 12px;flex:0 0 auto}.dseg3 button.on{background:#fff;color:var(--navy)}
+.dp-b{padding:16px}
+.dkpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.dk{border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.dk small{display:block;font-size:12.5px;color:var(--mute);font-weight:600}
+.dk b{display:block;font-size:34px;font-weight:800;line-height:1.15;color:var(--ink)}.dk b i{font-style:normal;font-size:15px;font-weight:600;color:var(--mute)}
+.dk b.c1{color:#2563eb}.dk b.c2{color:#64748b}.dk span{font-size:13px;color:var(--mute)}
+.dk.bad{background:#fff5f5;border-color:#fecaca}.dk.bad b{color:var(--bad)}.dk.good{background:#f0fdf4;border-color:#bbf7d0}.dk.good b{color:var(--ok)}
+.dwb{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0 16px}
+.dwb-c{border-radius:16px;padding:12px 16px;border:1px solid}.dwb-c small{font-weight:700;font-size:12.5px}.dwb-c>b{display:block;font-size:16.5px;margin:2px 0}.dwb-c b.muted{color:var(--mute);font-weight:500}
+.dwb-c>div{margin-top:4px;font-size:14px;color:var(--ink2)}
+.dwb-c.bad{background:#fff5f5;border-color:#fecaca}.dwb-c.bad small{color:var(--bad)}.dwb-c.good{background:#f0fdf4;border-color:#bbf7d0}.dwb-c.good small{color:var(--ok)}
+.cpill{display:inline-block;font-size:12.5px;font-weight:700;border-radius:99px;padding:2px 9px;white-space:nowrap}
+.cpill.up{background:#fee2e2;color:var(--bad)}.cpill.dn{background:#dcfce7;color:var(--ok)}.cpill.z{background:#f1f5f9;color:var(--mute)}
+.cb-leg{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13px;color:var(--mute);margin:6px 0 10px}
+.cb-leg span{display:inline-flex;align-items:center;gap:6px}.cb-leg b{color:var(--ink)}.cb-leg i{width:22px;height:10px;border-radius:4px;display:inline-block}
+.cb-leg i.c1{background:#2563eb}.cb-leg i.c2{background:#cbd5e1}.cb-leg em{font-style:normal;margin-left:auto;font-size:12.5px}
+.cb{display:flex;flex-direction:column}
+.cb-row{display:grid;grid-template-columns:minmax(180px,34%) 1fr 110px;gap:14px;align-items:center;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid #f1f5f9;border-radius:0;padding:10px 4px;min-height:0;font-weight:400}
+button.cb-row:hover{background:#f8fafc}
+.cb-ax{border:0;padding-bottom:0}.cb-ax .cb-track{height:18px}.cb-ax i{position:absolute;transform:translateX(-50%);font-style:normal;font-size:12px;color:var(--mute);font-weight:600}
+.cb-ch{text-align:center;font-size:12px;color:var(--mute)}
+.cb-n{display:flex;gap:10px;align-items:center;min-width:0}.cb-n em{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--navy);color:#fff;font-style:normal;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.cb-n span{min-width:0}.cb-n b{display:block;font-size:15px;line-height:1.3}.cb-n small{font-size:12px;color:var(--mute)}
+.cb-track{position:relative;height:40px;margin-right:38px}
+.cb-track s{position:absolute;top:0;bottom:0;border-left:1px solid #eef2f6}
+.bar1,.bar2{position:absolute;left:0;border-radius:0 6px 6px 0;min-width:2px}
+.bar1{top:4px;height:18px;background:linear-gradient(90deg,#1d4ed8,#3b82f6)}.bar2{top:26px;height:10px;background:#cbd5e1}
+.cb-track label{position:absolute;margin-left:6px;font-size:13px;font-weight:700;white-space:nowrap}
+.cb-track .v1{top:3px;color:var(--ink)}.cb-track .v2{top:22px;font-size:11.5px;color:var(--mute);font-weight:600}
+.hgrp{background:#fff;border:1px solid #e3e9f1;border-left:5px solid var(--gc);border-radius:18px;margin-bottom:16px;overflow:hidden;box-shadow:var(--sh2)}
+.hg-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 9%,#fff),#fff)}
+.hg-h .gic{width:34px;height:34px;color:#fff;background:var(--gc);border-radius:10px}.hg-h .gic svg.i{width:18px;height:18px}
+.hg-h>b{font-size:18px;color:var(--gc);flex:1;min-width:120px}
+.hchip{font-size:13px;font-weight:600;border-radius:99px;padding:3px 12px;background:#f1f5f9;color:var(--ink2)}.hchip.bad{background:#fee2e2;color:var(--bad)}
+table.heat{border-collapse:separate;border-spacing:3px;width:100%;font-size:13px;padding:6px}
+.heat th{font-weight:600;color:var(--mute);font-size:11.5px;line-height:1.15;white-space:nowrap}
+.heat th.hd{min-width:30px;font-size:10.5px}.heat th.hd small{display:block;font-weight:500}.heat th.sun{color:#cbd5e1}
+.heat th.hx{min-width:62px}
+.heat td.hn{min-width:210px;max-width:340px;padding:4px 8px;position:sticky;left:0;background:#fff;z-index:1}.heat th.hn{position:sticky;left:0;background:#fff;z-index:1}.heat td.hn small{display:block;font-size:11px;color:var(--mute);font-weight:600}
+.heat td.hn span{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14.5px}.heat td.hn em{font-style:normal;flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#f1f5f9;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--ink2)}
+.heat td.hc{height:38px;min-width:28px;border-radius:8px;background:#f1f5f9;text-align:center;font-weight:700}
+.heat td.hc.on{background:rgba(239,68,68,var(--a));color:#7f1d1d}
+.heat td.hx{text-align:center;font-variant-numeric:tabular-nums}.heat td.hx b{font-size:16px}.heat td.hx.small{font-size:12.5px;color:var(--ink2);white-space:nowrap}
+.heat tr[data-trend]{cursor:pointer}.heat tr[data-trend]:hover td.hn{background:#f8fafc;border-radius:8px}
+.modal.center{align-items:center}
+.modal .box.wide{max-width:1100px}
+@media(min-width:700px){.modal.center .box{border-radius:22px;max-height:94vh}.modal.center .box::before{display:none}}
+.tm-h{display:flex;align-items:flex-start;gap:12px;margin:6px 0 12px}.tm-h>div{flex:1}.tm-h small{color:#d97706;font-weight:700;font-size:13px}.tm-h h2{font-size:22px}
+.tm-x{width:42px;height:42px;min-height:0;padding:0;border-radius:50%;border:0;background:#f1f5f9}
+.tm-seg{display:inline-flex;margin-bottom:12px}.tm-seg button{flex:0 0 auto;padding:4px 14px;min-height:36px}
+.tm-k{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.tm-k>div{border:1px solid var(--line);border-radius:14px;padding:10px 14px}.tm-k small{display:block;font-size:12.5px;color:var(--mute)}
+.tm-k b{display:block;font-size:24px;font-weight:800;line-height:1.25}.tm-k b.bad,.tm-k b.up{color:var(--bad)}.tm-k b.dn{color:var(--ok)}.tm-k span{font-size:12px;color:var(--mute)}
+.tm-c{border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:#fcfdff}
+.tm-c .ax{font-size:11px;fill:#64748b}.tm-c .bv{font-size:12px;font-weight:700;fill:#dc2626}
+.tm-days{display:flex;flex-wrap:wrap;gap:8px}.tm-days .chip{min-height:38px;background:#fff5f5;border-color:#fecaca;color:#b91c1c;font-weight:600}.tm-days .chip.on{background:var(--bad);color:#fff;border-color:var(--bad)}
+@media(max-width:860px){.dkpis{grid-template-columns:1fr}.dwb{grid-template-columns:1fr}.tm-k{grid-template-columns:1fr 1fr}.rsep{display:none}
+  .cb-row{grid-template-columns:1fr 70px;gap:4px 10px}.cb-row .cb-track{grid-column:1/2;grid-row:2}.cb-row .cb-ch{grid-row:1/3;grid-column:2}.cb-ax{display:none}
+  .dtitle h2{font-size:23px}.dseg3{margin-left:0}}
+/* ===== Desktop balance (v82) ===== */
+.drange{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.rcard{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fbfcfe}
+.rc-h{display:flex;align-items:center;gap:10px;margin-bottom:8px}.rc-d{font-size:13px;color:var(--mute);font-weight:500}
+.rlab{font-size:15px;padding:4px 10px}
+.rc-b{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rc-dates{display:flex;align-items:center;gap:6px;margin-left:auto}.rc-dates span{color:var(--mute)}
+.rc-dates input[type=date]{width:auto;min-height:38px;font-size:14px;padding:5px 8px;background:#fff}
+.rc-dates button{min-height:38px}
+.dseg button{min-height:34px}
+.dash .dhead{border-radius:18px 18px 0 0}
+.dtitle{margin:22px 2px 14px}
+.dpanel,.hgrp,.dash .card{border-radius:18px}
+.dash .dgrid{grid-template-columns:1fr 1fr}
+.dp-b{padding:18px 20px}
+.cb-row{grid-template-columns:minmax(220px,30%) 1fr 104px}
+.heat td.hn{min-width:230px}
+@media(min-width:700px){.nav{padding-top:18px}.nav .in{box-shadow:inset 0 1px 2px rgba(15,23,42,.06)}}
+@media(min-width:1000px){#main{padding:18px 20px 28px}header.top .wrap{padding:10px 20px}}
+@media(max-width:1100px){.drange{grid-template-columns:1fr}}
+@media(max-width:860px){.dash .dgrid{grid-template-columns:1fr}.rc-dates{margin-left:0}}
+.drange{align-items:stretch}
+.rc-h{flex-wrap:wrap}.rc-h .dseg{margin-left:auto}
+.rc-b{justify-content:space-between}.rc-or{font-size:13px;color:var(--mute)}
+@media(min-width:700px){.nav .in{max-width:1200px}}
+@media(min-width:1000px){#main.vset{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;align-items:start}#main.vset>*{grid-column:auto}#main.vset>.alert,#main.vset>:not(.card){grid-column:1/-1}}
+table.heat{table-layout:fixed}.heat th.hn{width:250px}.heat th.hx{width:64px}.heat th.hx:nth-last-child(2){width:120px}.heat th.hx:last-child{width:96px}
+.heat td.hn{min-width:0;max-width:none}.heat td.hn span{overflow:hidden}.heat th.hd,.heat td.hc{min-width:0}
+.dash .dgrid{align-items:stretch}
+@media(max-width:860px){table.heat{table-layout:auto}.heat td.hc{min-width:28px}.heat td.hn{min-width:170px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="back" href="/" aria-label="กลับหน้าหลัก" title="กลับหน้าหลัก"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></a>
+  <div class="ttl"><small class="brand">LINE QC / RETORT ANALYSIS</small><h1 id="title">บันทึกปัญหา Retort</h1><div class="s" id="subtitle">หาสาเหตุ · วิเคราะห์แนวโน้ม</div></div>
+  <span class="sync" id="sync"><span class="d"></span><span id="syncTxt">ในเครื่อง</span></span>
+  <button class="av" id="userBtn" aria-label="ผู้ใช้"></button>
+</div></header>
+<nav class="nav"><div class="in" id="nav"></div></nav>
+<main class="wrap" id="main"></main>
+<div id="modalRoot"></div>
+<div class="lock hide" id="lock"><form class="lockbox" id="lockForm">
+  <div class="okic" style="background:var(--accbg);color:var(--acc)"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+  <h2>Retort Analysis</h2><p class="sub" style="margin:4px 0 14px">ใส่รหัสผ่านเพื่อเข้าใช้งาน</p>
+  <input type="password" id="lockPin" inputmode="numeric" autocomplete="current-password" placeholder="รหัสผ่าน" style="text-align:center;font-size:22px;letter-spacing:6px">
+  <p class="sub" id="lockErr" style="color:var(--bad);min-height:20px;margin:8px 0 0"></p>
+  <button class="pri blk savebig" type="submit" style="margin-top:6px">เข้าใช้งาน</button>
+  <a href="/" class="sub" style="display:block;margin-top:14px;color:var(--acc)">กลับหน้าหลัก</a>
+</form></div>
+
+<script>
+/* ---------- icons ---------- */
+const IP = {
+  plus:'<path d="M12 5v14M5 12h14"/>', chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+  pen:'<path d="M4 20h4L18.5 9.5a2.83 2.83 0 0 0-4-4L4 16v4"/><path d="m13.5 6.5 4 4"/>',
+  settings:'<path d="M10.3 4.3c.4-1.8 3-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.5 1.8 3.1 0 3.5a1.7 1.7 0 0 0-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.9-2.4-2.4a1.7 1.7 0 0 0-1-2.6c-1.8-.4-1.8-3 0-3.4a1.7 1.7 0 0 0 1-2.6c-.9-1.5.9-3.3 2.4-2.4a1.7 1.7 0 0 0 2.6-1.1z"/><circle cx="12" cy="12" r="3"/>',
+  alert:'<path d="M12 9v4M12 17h.01"/><path d="M10.24 3.96 2.4 17.5A2 2 0 0 0 4.14 20.5h15.72a2 2 0 0 0 1.74-3L13.76 3.96a2 2 0 0 0-3.52 0z"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>',
+  list:'<path d="M9 6h11M9 12h11M9 18h11M5 6v.01M5 12v.01M5 18v.01"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>',
+  download:'<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="m7 11 5 5 5-5"/><path d="M12 4v12"/>',
+  trend:'<path d="m3 17 6-6 4 4 8-8"/><path d="M14 7h7v7"/>', bars:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+  tool:'<path d="M7 10h3V7L6.5 3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1-3 3l-6-6a6 6 0 0 1-8-8L7 10"/>',
+  tag:'<path d="M7.5 7.5h.01"/><path d="M3 6v5.17a2 2 0 0 0 .59 1.42l7.71 7.71a2.41 2.41 0 0 0 3.4 0l5.6-5.6a2.41 2.41 0 0 0 0-3.4L12.59 3.59A2 2 0 0 0 11.17 3H6a3 3 0 0 0-3 3z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>', check:'<path d="m5 12 5 5L20 7"/>',
+  up:'<path d="m6 15 6-6 6 6"/>', right:'<path d="m9 6 6 6-6 6"/>', down:'<path d="m6 9 6 6 6-6"/>', x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  grid:'<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+  spark:'<path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  send:'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
+  thermo:'<path d="M10 13.5a4 4 0 1 0 4 0V5a2 2 0 0 0-4 0v8.5"/><path d="M10 9h4"/>',
+  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', drop:'<path d="M12 2.7S5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.7 12 2.7z"/>',
+  gauge:'<path d="M12 14l4-4"/><path d="M3.3 17a9 9 0 1 1 17.4 0"/><circle cx="12" cy="14" r="1.5"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', factory:'<path d="M3 21V10l6 4V10l6 4V4h6v17z"/><path d="M7 17h2M12 17h2M17 17h2"/>'
+};
+const I = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${IP[n] || ""}</svg>`;
+const sec = (icon, title, sub = "", right = "") => `<div class="sec"><span class="ic">${I(icon)}</span><div class="t"><h2>${title}</h2>${sub ? `<div class="sub">${sub}</div>` : ""}</div>${right}</div>`;
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayISO = () => iso(new Date());
+const nowHM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const dmy = s => { if (!s) return ""; const [y, m, d] = s.split("-"); return `${d}/${m}/${y.slice(2)}`; };
+const addDays = (s, n) => { const d = new Date(s + "T00:00:00"); d.setDate(d.getDate() + n); return iso(d); };
+const daysBetween = (a, b) => Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 864e5);
+const num = v => { if (v === "" || v == null) return null; const n = parseFloat(String(v).replace(",", ".")); return isNaN(n) ? null : n; };
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const initials = n => { n = String(n || "").trim(); if (!n) return "?"; const p = n.split(/\s+/); return (p.length > 1 ? p[0][0] + p[1][0] : n.slice(0, 2)).toUpperCase(); };
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+function toast(m) { const t = document.createElement("div"); t.className = "toast"; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
+// กะ: DS 07:00–17:30 · NS 17:31–06:59
+const shiftOf = hm => { const [h, mi] = String(hm || "12:00").split(":").map(n => parseInt(n, 10) || 0); const t = h * 60 + mi; return t >= 420 && t <= 1050 ? "DS" : "NS"; };
+const TH_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+const thDate = s => { const d = new Date(s + "T00:00:00"); return isNaN(d) ? "" : `วัน${TH_DAYS[d.getDay()]}ที่ ${dmy(s)}`; };
+const SERIES = ["--s1","--s2","--s3","--s4","--s5","--s6"].map(v => getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+const OTHER = "#94a3b8";
+
+/* ---------- default config (editable in settings) ---------- */
+const CFG_VERSION = 3;
+/* กลุ่มของปัญหา (ใช้ทำสี/ไอคอนในหน้าบันทึก) */
+const GROUPS = {
+  power: { name: "ไฟฟ้า / ระบบควบคุม", color: "#d97706", icon: "bolt" },
+  steam: { name: "สตีม / ลม / ความดัน", color: "#dc2626", icon: "gauge" },
+  water: { name: "น้ำ Cooling / สเปรย์", color: "#0891b2", icon: "drop" },
+  temp:  { name: "อุณหภูมิ / เวลา", color: "#ea580c", icon: "thermo" },
+  oper:  { name: "การปฏิบัติงาน", color: "#7c3aed", icon: "user" },
+  mech:  { name: "ตะกร้า / ตัวหม้อ", color: "#475569", icon: "tool" },
+  rec:   { name: "กราฟ / การบันทึก", color: "#2563eb", icon: "chart" },
+  other: { name: "อื่นๆ", color: "#64748b", icon: "tag" }
+};
+const grpOf = c => GROUPS[(c && c.grp) || "other"] || GROUPS.other;
+/* รายการปัญหา Retort ปัจจุบัน (อัปเดต 04/11/26) — เรียงตามลำดับที่ใช้หน้างาน */
+const DEFAULT_CONFIG = {
+  version: CFG_VERSION,
+  categories: [
+    { id: "c01", grp: "rec",   name: "DAS", active: true, causes: [], fields: [] },
+    { id: "c02", grp: "power", name: "ไฟฟ้าดับ / ไฟตก", active: true, causes: ["ไฟฟ้าดับ", "ไฟตก"], fields: [] },
+    { id: "c03", grp: "power", name: "ระบบ Retort หยุดทำงาน", active: true, causes: [], fields: [] },
+    { id: "c04", grp: "steam", name: "Main สตีมตก", active: true, causes: [], fields: [{ key: "minSteam", label: "Main steam ต่ำสุด", unit: "psi" }] },
+    { id: "c05", grp: "water", name: "น้ำ Cooling ไม่พอ", active: true, causes: [], fields: [] },
+    { id: "c06", grp: "mech",  name: "ตะกร้าล้ม ก่อนหรือหลังฆ่าเชื้อ", active: true, causes: ["ตะกร้าไม่ลงล็อค", "ไม่ล็อคราง"], fields: [] },
+    { id: "c07", grp: "steam", name: "ความดันแกว่ง", active: true, causes: ["Main ลมตก", "การควบคุมความดันภายในหม้อ"], fields: [{ key: "minAir", label: "ความดันลมต่ำสุด", unit: "bar" }] },
+    { id: "c08", grp: "oper",  name: "ใช้ Program หรือเวลาฆ่าเชื้อผิด", active: true, causes: ["ใช้ Program ผิด", "ตั้งเวลาฆ่าเชื้อผิด"], fields: [] },
+    { id: "c09", grp: "rec",   name: "กราฟขาดตอน", active: true, causes: [], fields: [] },
+    { id: "c14", grp: "rec",   name: "กราฟหยุดเดิน", active: true, causes: [], fields: [] },
+    { id: "c10", grp: "mech",  name: "ฝาหม้อรั่ว", active: true, causes: [], fields: [] },
+    { id: "c11", grp: "temp",  name: "ช่วงฆ่าเชื้ออุณหภูมิสูงกว่าที่กำหนด", active: true, causes: [], fields: [{ key: "maxTemp", label: "อุณหภูมิสูงสุด", unit: "°C" }] },
+    { id: "c12", grp: "temp",  name: "Come up เกิน", active: true, causes: [], fields: [] },
+    { id: "c15", grp: "water", name: "Cooling ยืด (อุณหภูมิ/ความดัน)", active: true, causes: ["อุณหภูมิยืด", "ความดันยืด"], fields: [] },
+    { id: "c13", grp: "oper",  name: "กดเลื่อนขั้นตอนผิด", active: true, causes: [], fields: [] },
+    { id: "c16", grp: "temp",  name: "ฆ่าเชื้อไม่ครบ", active: true, causes: [], fields: [] },
+    { id: "c17", grp: "power", name: "หน้าจอ PLC ดับ / error", active: true, causes: [], fields: [] },
+    { id: "c18", grp: "steam", name: "ท่อสตีมรั่ว", active: true, causes: [], fields: [] },
+    { id: "c19", grp: "water", name: "หัวสเปรย์เอียง / หัว Spray ตัน", active: true, causes: ["หัวสเปรย์เอียง", "หัว Spray ตัน"], fields: [] }
+  ],
+  retorts: [],
+  updatedAt: 0
+};
+const UNKNOWN = "ยังไม่ทราบสาเหตุ";
+/* หัวข้อเดิมที่ไม่อยู่ในรายการใหม่ — เก็บไว้ (ซ่อน) เพื่อให้ประวัติเก่ายังแสดงชื่อได้ */
+const RETIRED = [{ id: "c_temp_pressure", grp: "steam", name: "อุณหภูมิหรือความดันตก", active: false, causes: [], fields: [] }];
+/* สาเหตุตั้งต้นของรุ่นก่อน — ตัดออกเมื่ออัปเดตรายการ (สาเหตุที่ผู้ใช้เพิ่มเองยังอยู่) */
+const OLD_DEFAULT_CAUSES = new Set(["ความดันแกว่ง", "ใช้ PG ผิด", "ฆ่าเชื้อเกิน", "Come up เกินเวลา", "Cooling อุณหภูมิยืด", "Cooling ความดันยืด",
+  "แรงดัน steam จาก boiler ต่ำ", "เปิด steam หลายหม้อพร้อมกัน", "Valve ควบคุมผิดปกติ", "Sensor / เครื่องมือวัดผิดปกติ", "ปรับตั้งค่าผิด", UNKNOWN, "ไม่ทราบสาเหตุ"]);
+function migrate(cfg) {
+  cfg = cfg ? JSON.parse(JSON.stringify(cfg)) : JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  if ((cfg.version || 1) >= CFG_VERSION) return [cfg, false];
+  const old = cfg.categories || [];
+  const merged = DEFAULT_CONFIG.categories.map(d => {
+    const n = JSON.parse(JSON.stringify(d)); const o = old.find(c => c.id === d.id);
+    if (o) { n.causes = [...new Set([...d.causes, ...(o.causes || []).filter(c => !OLD_DEFAULT_CAUSES.has(c))])]; if (o.active === false) n.active = false; if ((o.fields || []).length && !d.fields.length) n.fields = o.fields; }
+    return n;
+  });
+  RETIRED.forEach(r => { const o = old.find(c => c.id === r.id); if (o) merged.push({ ...o, ...r, active: false }); });
+  old.forEach(o => { if (!merged.some(m => m.id === o.id)) merged.push({ grp: "other", ...o }); });
+  cfg.categories = merged; cfg.version = CFG_VERSION; cfg.retorts = cfg.retorts || [];
+  return [cfg, true];
+}
+/* ปรับบันทึกเก่าให้ตรงกับหัวข้อใหม่ (เฉพาะการแสดงผล ไม่แก้ข้อมูลบนเซิร์ฟเวอร์) */
+function normItem(x) {
+  if (x.category === "c12" && /cooling/i.test(x.cause || "")) { x.category = "c15"; x.cause = /ความดัน/.test(x.cause) ? "ความดันยืด" : "อุณหภูมิยืด"; }
+  else if (x.category === "c07" && x.cause === "ความดันแกว่ง") x.cause = "Main ลมตก";
+  else if (x.category === "c08" && x.cause === "ใช้ PG ผิด") x.cause = "ใช้ Program ผิด";
+  return x;
+}
+
+/* ---------- โปรแกรมฆ่าเชื้อ (จากเอกสาร Thermal Process Specification SQCTP001 / TP002-*) ---------- */
+const TP_DOCS = [{"doc": "TP002-F1", "rev": "3", "eff": "31/10/26", "title": "Petfood โรง PF1 สำหรับ RP09", "plant": "PF1", "retorts": ["RP09"]}, {"doc": "TP002-T", "rev": "3", "eff": "31/10/26", "title": "Petfood โรง PF1 สำหรับหม้อ KM-Retort RP19-RP21", "plant": "PF1", "retorts": ["RP19", "RP20", "RP21"]}, {"doc": "TP002-P", "rev": "4", "eff": "31/10/26", "title": "FM-Water Spray Retort RP16-18", "plant": "", "retorts": ["RP16", "RP17", "RP18"]}, {"doc": "TP002-N", "rev": "36", "eff": "18/06/26", "title": "FM-Water Spray Retort RP01-04 และ RP10-15", "plant": "", "retorts": ["RP01", "RP02", "RP03", "RP04", "RP10", "RP11", "RP12", "RP13", "RP14", "RP15"]}, {"doc": "TP002-N1", "rev": "0", "eff": "17/08/26", "title": "Spout pouch ลูกค้า Mars · Water spray retort RP11-15", "plant": "", "retorts": ["RP11", "RP12", "RP13", "RP14", "RP15"]}];
+const TP_PROGS = [{"doc":"TP002-F1","no":"7","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.65"],["come","123","3","1.80"],["come","122","2","2.00"],["cook","122","XX","2.30"],["cool","90","2","1.60"],["cool","60","2","1.10"],["cool","45","5","0.50"],["cool","38","6","0.20"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"8","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.70"],["come","123","3","1.85"],["come","122","2","2.15"],["cook","122","XX","2.43"],["cool","90","2","1.72"],["cool","60","2","1.22"],["cool","45","5","0.65"],["cool","38","6","0.35"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"15","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.65"],["come","123","3","1.80"],["come","122","2","2.00"],["cook","122","XX","2.30"],["cool","90","2","1.60"],["cool","60","2","1.10"],["cool","45","5","0.50"],["cool","38","6","0.30"],["cool","38","25","0.01"]]},{"doc":"TP002-F1","no":"25","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.70"],["come","123","3","1.85"],["come","122","2","2.05"],["cook","122","XX","2.35"],["cool","90","2","1.60"],["cool","60","2","1.10"],["cool","45","5","0.50"],["cool","38","6","0.25"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"26","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.62"],["come","123","3","1.77"],["come","122","2","1.87"],["cook","122","XX","2.25"],["cool","90","2","1.26"],["cool","60","2","0.77"],["cool","45","5","0.23"],["cool","38","6","0.05"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"27","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.65"],["come","123","3","1.80"],["come","122","2","2.00"],["cook","122","XX","2.43"],["cool","90","2","1.67"],["cool","60","2","1.06"],["cool","45","5","0.25"],["cool","38","6","0.10"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"28","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.60"],["come","123","3","1.70"],["come","122","2","1.85"],["cook","122","XX","2.20"],["cool","90","2","1.10"],["cool","60","2","0.55"],["cool","45","5","0.10"],["cool","38","6","0.01"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"32","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.68"],["come","123","3","1.83"],["come","122","2","2.13"],["cook","122","XX","2.42"],["cool","90","2","1.64"],["cool","60","2","0.99"],["cool","45","5","0.48"],["cool","38","6","0.22"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"33","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.65"],["come","123","3","1.70"],["come","122","2","1.80"],["cook","122","XX","2.25"],["cool","90","2","1.50"],["cool","60","2","0.70"],["cool","45","5","0.20"],["cool","38","6","0.05"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"34","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.60"],["come","123","3","1.65"],["come","122","2","1.88"],["cook","122","XX","2.25"],["cool","90","2","1.30"],["cool","60","2","0.65"],["cool","45","5","0.01"],["cool","38","6","0.01"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"35","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.55"],["come","123","3","1.60"],["come","122","2","1.65"],["cook","122","XX","2.45"],["cool","90","2","1.68"],["cool","60","2","1.21"],["cool","45","5","0.58"],["cool","38","6","0.10"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"37","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.65"],["come","123","3","1.80"],["come","122","2","2.00"],["cook","122","XX","2.30"],["cool","90","2","1.67"],["cool","60","2","1.08"],["cool","45","5","0.25"],["cool","38","6","0.05"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"38","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.60"],["come","123","3","1.65"],["come","122","2","1.88"],["cook","122","XX","2.25"],["cool","90","2","1.25"],["cool","60","2","0.60"],["cool","45","5","0.01"],["cool","38","6","0.01"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"39","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.60"],["come","123","3","1.65"],["come","122","2","1.88"],["cook","122","XX","2.25"],["cool","90","2","1.30"],["cool","60","2","0.65"],["cool","45","5","0.15"],["cool","38","6","0.10"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"40","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.60"],["come","123","3","1.65"],["come","122","2","1.88"],["cook","122","XX","2.25"],["cool","90","2","1.40"],["cool","60","2","0.85"],["cool","45","5","0.20"],["cool","38","6","0.15"],["cool","38","30","0.01"]]},{"doc":"TP002-F1","no":"3","note":"Pouch (Spout pouch)","retorts":["RP09"],"steps":[["come","90","10","1.00"],["come","122","7","2.00"],["come","122","3","2.00"],["cook","122","XX","2.00"],["cool","90","2","1.80"],["cool","60","2","1.30"],["cool","45","5","0.50"],["cool","40","4","0.20"],["cool","38","7","0.01"]]},{"doc":"TP002-F1","no":"10","note":"","retorts":["RP09"],"steps":[["come","90","7","0.25"],["come","122","18","1.65"],["come","122","2","1.80"],["come","122","2","2.00"],["cook","122","XX","2.42"],["cool","90","2","1.70"],["cool","60","2","1.22"],["cool","45","5","0.62"],["cool","38","6","0.30"],["cool","38","25","0.01"]]},{"doc":"TP002-F1","no":"9","note":"","retorts":["RP09"],"steps":[["come","90","12","0.25"],["come","123","18","1.65"],["come","123","3","1.80"],["come","122","2","2.00"],["cook","122","XX","2.30"],["cool","90","2","1.50"],["cool","60","2","0.80"],["cool","45","5","0.35"],["cool","38","6","0.20"],["cool","38","20","0.01"]]},{"doc":"TP002-T","no":"7","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.25"],["come","123","18","1.65"],["come","123","2","1.80"],["come","122","2","2.00"],["cook","122","XX","2.30"],["cool","90","2","1.60"],["cool","60","2","1.10"],["cool","45","5","0.50"],["cool","38","6","0.20"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"8","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.70"],["come","123","2","1.85"],["come","122","2","2.15"],["cook","122","XX","2.43"],["cool","90","2","1.72"],["cool","60","2","1.22"],["cool","45","5","0.65"],["cool","38","6","0.35"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"15","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.65"],["come","123","2","1.80"],["come","122","2","2.00"],["cook","122","XX","2.30"],["cool","90","2","1.60"],["cool","60","2","1.10"],["cool","45","5","0.50"],["cool","38","6","0.30"],["cool","38","25","0.01"]]},{"doc":"TP002-T","no":"25","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.70"],["come","123","2","1.85"],["come","122","2","2.05"],["cook","122","XX","2.35"],["cool","90","2","1.60"],["cool","60","2","1.10"],["cool","45","5","0.50"],["cool","38","6","0.25"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"26","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.62"],["come","123","2","1.77"],["come","122","2","1.87"],["cook","122","XX","2.25"],["cool","90","2","1.26"],["cool","60","2","0.77"],["cool","45","5","0.23"],["cool","38","6","0.05"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"27","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.65"],["come","123","2","1.80"],["come","122","2","2.00"],["cook","122","XX","2.43"],["cool","90","2","1.67"],["cool","60","2","1.06"],["cool","45","5","0.25"],["cool","38","6","0.10"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"28","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.60"],["come","123","2","1.70"],["come","122","2","1.85"],["cook","122","XX","2.20"],["cool","90","2","1.10"],["cool","60","2","0.55"],["cool","45","5","0.10"],["cool","38","6","0.01"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"32","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.25"],["come","123","18","1.68"],["come","123","2","1.83"],["come","122","2","2.13"],["cook","122","XX","2.42"],["cool","90","2","1.64"],["cool","60","2","0.99"],["cool","45","5","0.48"],["cool","38","6","0.22"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"33","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.65"],["come","123","2","1.70"],["come","122","2","1.80"],["cook","122","XX","2.25"],["cool","90","2","1.50"],["cool","60","2","0.70"],["cool","45","5","0.20"],["cool","38","6","0.05"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"34","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.60"],["come","123","2","1.65"],["come","122","2","1.88"],["cook","122","XX","2.25"],["cool","90","2","1.30"],["cool","60","2","0.65"],["cool","45","5","0.01"],["cool","38","6","0.01"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"35","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.55"],["come","123","2","1.60"],["come","122","2","1.65"],["cook","122","XX","2.45"],["cool","90","2","1.68"],["cool","60","2","1.21"],["cool","45","5","0.58"],["cool","38","6","0.10"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"37","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.35"],["come","123","18","1.65"],["come","123","2","1.80"],["come","122","2","2.00"],["cook","122","XX","2.30"],["cool","90","2","1.67"],["cool","60","2","1.08"],["cool","45","5","0.25"],["cool","38","6","0.05"],["cool","38","30","0.01"]]},{"doc":"TP002-T","no":"40","note":"","retorts":["RP19","RP20","RP21"],"steps":[["come","90","7","0.25"],["come","123","18","1.60"],["come","123","2","1.65"],["come","122","2","1.88"],["cook","122","XX","2.25"],["cool","90","2","1.40"],["cool","60","2","0.85"],["cool","45","5","0.20"],["cool","38","6","0.15"],["cool","38","30","0.01"]]},{"doc":"TP002-P","no":"7","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","8","0.35","0"],["come","123","18","1.65","0"],["come","123","1","1.80","0"],["come","122","2","2.10","0"],["cook","122","0","2.30","0"],["cool","90","2","1.60","0"],["cool","60","2","1.10","0"],["cool","45","5","0.50","0"],["cool","38","6","0.20","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-P","no":"8","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","8","0.35","0"],["come","123","18","1.70","0"],["come","123","1","1.85","0"],["come","122","2","2.25","0"],["cook","122","0","2.43","0"],["cool","90","2","1.72","0"],["cool","60","2","1.22","0"],["cool","45","5","0.65","0"],["cool","38","6","0.35","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-P","no":"25","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","8","0.35","0"],["come","123","18","1.70","0"],["come","123","1","1.85","0"],["come","122","2","2.05","0"],["cook","122","0","2.35","0"],["cool","90","2","1.60","0"],["cool","60","2","1.10","0"],["cool","45","5","0.50","0"],["cool","38","6","0.25","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-P","no":"27","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","8","0.35","0"],["come","123","18","1.65","0"],["come","123","1","1.80","0"],["come","122","2","2.10","0"],["cook","122","0","2.43","0"],["cool","90","2","1.67","0"],["cool","60","2","1.06","0"],["cool","45","5","0.25","0"],["cool","38","6","0.10","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-P","no":"28","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","8","0.35","0"],["come","123","18","1.60","0"],["come","123","1","1.70","0"],["come","122","2","1.95","0"],["cook","122","0","2.20","0"],["cool","90","2","1.10","0"],["cool","60","2","0.55","0"],["cool","45","5","0.10","0"],["cool","38","6","0.01","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-P","no":"32","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","8","0.35","0"],["come","123","18","1.68","0"],["come","123","1","1.83","0"],["come","122","2","2.20","0"],["cook","122","0","2.42","0"],["cool","90","2","1.64","0"],["cool","60","2","0.99","0"],["cool","45","5","0.48","0"],["cool","38","6","0.22","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-P","no":"33","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","8","0.35","0"],["come","123","18","1.65","0"],["come","123","1","1.70","0"],["come","122","2","1.90","0"],["cook","122","0","2.25","0"],["cool","90","2","1.50","0"],["cool","60","2","0.70","0"],["cool","45","5","0.20","0"],["cool","38","6","0.05","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-P","no":"34","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","8","0.35","0"],["come","123","18","1.60","0"],["come","123","1","1.65","0"],["come","122","2","1.98","0"],["cook","122","0","2.25","0"],["cool","90","2","1.30","0"],["cool","60","2","0.65","0"],["cool","45","5","0.01","0"],["cool","38","6","0.01","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-P","no":"15","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.65","0"],["come","123","2","1.80","0"],["come","122","2","2.00","0"],["cook","122","0","2.30","0"],["cool","90","2","1.60","0"],["cool","60","2","1.10","0"],["cool","45","5","0.50","0"],["cool","38","6","0.30","0"],["cool","38","25","0.01","0"]]},{"doc":"TP002-P","no":"40","note":"","retorts":["RP16","RP17","RP18"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.60","0"],["come","123","2","1.65","0"],["come","122","2","1.88","0"],["cook","122","0","2.25","0"],["cool","90","2","1.40","0"],["cool","60","2","0.85","0"],["cool","45","5","0.20","0"],["cool","38","6","0.15","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"6","note":"โปรแกรม 6 เฉพาะหม้อ RP01-RP04","retorts":["RP01","RP02","RP03","RP04"],"steps":[["come","90","8","0.25","0"],["come","123","18","1.60","0"],["come","123","2","1.65","0"],["come","122","2","1.68","0"],["cook","122","0","2.05","0"],["cook","122","0","2.30","0"],["cool","93","2","1.25","0"],["cool","65","2","0.80","0"],["cool","50","4","0.35","0"],["cool","38","9","0.25","0"],["cool","38","35","0.01","0"]]},{"doc":"TP002-N","no":"7","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.65","0"],["come","123","2","1.80","0"],["come","122","2","2.00","0"],["cook","122","0","2.30","0"],["cool","90","2","1.60","0"],["cool","60","2","1.10","0"],["cool","45","5","0.50","0"],["cool","38","6","0.20","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"8","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.70","0"],["come","123","2","1.85","0"],["come","122","2","2.15","0"],["cook","122","0","2.43","0"],["cool","90","2","1.72","0"],["cool","60","2","1.22","0"],["cool","45","5","0.65","0"],["cool","38","6","0.35","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"15","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.65","0"],["come","123","2","1.80","0"],["come","122","2","2.00","0"],["cook","122","0","2.30","0"],["cool","90","2","1.60","0"],["cool","60","2","1.10","0"],["cool","45","5","0.50","0"],["cool","38","6","0.30","0"],["cool","38","25","0.01","0"]]},{"doc":"TP002-N","no":"25","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.70","0"],["come","123","2","1.85","0"],["come","122","2","2.05","0"],["cook","122","0","2.35","0"],["cool","90","2","1.60","0"],["cool","60","2","1.10","0"],["cool","45","5","0.50","0"],["cool","38","6","0.25","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"26","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.62","0"],["come","123","2","1.77","0"],["come","122","2","1.87","0"],["cook","122","0","2.25","0"],["cool","90","2","1.26","0"],["cool","60","2","0.77","0"],["cool","45","5","0.23","0"],["cool","38","6","0.05","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"27","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.65","0"],["come","123","2","1.80","0"],["come","122","2","2.00","0"],["cook","122","0","2.43","0"],["cool","90","2","1.67","0"],["cool","60","2","1.06","0"],["cool","45","5","0.25","0"],["cool","38","6","0.10","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"28","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.60","0"],["come","123","2","1.70","0"],["come","122","2","1.85","0"],["cook","122","0","2.20","0"],["cool","90","2","1.10","0"],["cool","60","2","0.55","0"],["cool","45","5","0.10","0"],["cool","38","6","0.01","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"32","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.68","0"],["come","123","2","1.83","0"],["come","122","2","2.13","0"],["cook","122","0","2.42","0"],["cool","90","2","1.64","0"],["cool","60","2","0.99","0"],["cool","45","5","0.48","0"],["cool","38","6","0.22","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"33","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.65","0"],["come","123","2","1.70","0"],["come","122","2","1.80","0"],["cook","122","0","2.25","0"],["cool","90","2","1.50","0"],["cool","60","2","0.70","0"],["cool","45","5","0.20","0"],["cool","38","6","0.05","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"34","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.60","0"],["come","123","2","1.65","0"],["come","122","2","1.88","0"],["cook","122","0","2.25","0"],["cool","90","2","1.30","0"],["cool","60","2","0.65","0"],["cool","45","5","0.01","0"],["cool","38","6","0.01","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"35","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.55","0"],["come","123","2","1.60","0"],["come","122","2","1.65","0"],["cook","122","0","2.45","0"],["cool","90","2","1.68","0"],["cool","60","2","1.21","0"],["cool","45","5","0.58","0"],["cool","38","6","0.10","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"37","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.65","0"],["come","123","2","1.80","0"],["come","122","2","2.00","0"],["cook","122","0","2.30","0"],["cool","90","2","1.67","0"],["cool","60","2","1.08","0"],["cool","45","5","0.25","0"],["cool","38","6","0.05","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"38","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.60","0"],["come","123","2","1.65","0"],["come","122","2","1.88","0"],["cook","122","0","2.25","0"],["cool","90","2","1.25","0"],["cool","60","2","0.60","0"],["cool","45","5","0.01","0"],["cool","38","6","0.01","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"40","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.60","0"],["come","123","2","1.65","0"],["come","122","2","1.88","0"],["cook","122","0","2.25","0"],["cool","90","2","1.40","0"],["cool","60","2","0.85","0"],["cool","45","5","0.20","0"],["cool","38","6","0.15","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"3","note":"โปรแกรม 3 เฉพาะ RP10-RP15(Spout Pouch) · (*)","retorts":["RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","10","1.00","0"],["come","122","7","2.00","0"],["come","122","3","2.00","0"],["cook","122","0","2.00","0"],["cool","90","2","1.80","0"],["cool","60","2","1.30","0"],["cool","45","5","0.50","0"],["cool","40","4","0.20","0"],["cool","38","7","0.01","0"]]},{"doc":"TP002-N","no":"95","note":"","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.20","0"],["come","123","18","1.60","0"],["come","123","1","1.78","0"],["come","122","1","1.98","0"],["cook","122","0","2.30","0"],["cool","90","2","1.58","0"],["cool","60","2","0.57","0"],["cool","45","5","0.18","0"],["cool","37","6","0.01","0"],["cool","35","25","0.01","0"]]},{"doc":"TP002-N","no":"99","note":"โปรแกรม 99 เฉพาะ RP11, RP12","retorts":["RP11","RP12"],"steps":[["come","90","7","0.25","0"],["come","122","18","1.65","0"],["come","122","1","1.80","0"],["come","122","1","2.00","0"],["cook","122","0","2.42","0"],["cool","90","2","1.70","0"],["cool","60","2","1.22","0"],["cool","45","5","0.62","0"],["cool","38","6","0.30","0"],["cool","38","25","0.01","0"]]},{"doc":"TP002-N","no":"98","note":"โปรแกรม 98 เฉพาะ RP01-04, RP10-RP12 · (*)","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.70","0"],["come","123","1","1.85","0"],["come","122","1","2.05","0"],["cook","122","0","2.35","0"],["cool","90","2","1.63","0"],["cool","60","2","0.60","0"],["cool","45","5","0.15","0"],["cool","38","6","0.01","0"],["cool","38","30","0.01","0"]]},{"doc":"TP002-N","no":"5","note":"โปรแกรม 5 เฉพาะหม้อ RP01-RP04","retorts":["RP01","RP02","RP03","RP04"],"steps":[["come","90","8","0.25","0"],["come","123","18","1.60","0"],["come","123","2","1.65","0"],["come","122","2","1.80","0"],["cook","122","22","2.12","0"],["cook","122","0","2.33","0"],["cool","93","2","1.25","0"],["cool","65","2","0.70","0"],["cool","50","4","0.32","0"],["cool","38","9","0.20","0"],["cool","38","23","0.01","0"]]},{"doc":"TP002-N","no":"9","note":"Blue Buffalo","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","123","18","1.65","0"],["come","123","2","1.80","0"],["come","122","2","2.00","0"],["cook","122","0","2.30","0"],["cool","90","2","1.50","0"],["cool","60","2","0.80","0"],["cool","45","5","0.35","0"],["cool","38","6","0.20","0"],["cool","38","20","0.01","0"]]},{"doc":"TP002-N","no":"10","note":"Pet Libro","retorts":["RP01","RP02","RP03","RP04","RP10","RP11","RP12","RP13","RP14","RP15"],"steps":[["come","90","7","0.25","0"],["come","122","18","1.65","0"],["come","122","2","1.80","0"],["come","122","2","2.00","0"],["cook","122","0","2.42","0"],["cool","9","2","1.70","0"],["cool","60","2","1.22","0"],["cool","45","5","0.62","0"],["cool","38","6","0.30","0"],["cool","38","25","0.01","0"]]},{"doc":"TP002-N1","no":"20","note":"","retorts":["RP11","RP12","RP13","RP14","RP15"],"steps":[["come","60","6","0.80","0"],["come","80","4","1.20","0"],["come","100","3","1.50","0"],["come","118","3","2.00","0"],["come","122","1","2.30","0"],["come","122","2","2.50","0"],["come","122","1","2.50","0"],["cook","122","XX","2.50","0"],["cool","100","5","2.30","0"],["cool","80","5","2.00","0"],["cool","60","5","1.50","0"],["cool","40","5","1.20","0"],["cool","38","5","1.00","0"],["cool","38","5","0.50","0"],["cool","38","8","0.00","0"]]}];
+const DEFAULT_PLANTS = ["PF1", "PF2"];
+const plantsList = () => (S.config.plants || []).length ? S.config.plants : DEFAULT_PLANTS;
+const DEFAULT_RETORTS = Array.from({ length: 21 }, (_, i) => "RP" + String(i + 1).padStart(2, "0"));
+const PHASE = { come: "Come up", cook: "Cooking", cool: "Cooling" };
+const docOf = code => TP_DOCS.find(d => d.doc === code);
+const progsFor = rt => TP_PROGS.filter(p => p.retorts.includes(rt)).sort((a, b) => (+a.no - +b.no) || a.doc.localeCompare(b.doc));
+const progKey = p => p.doc + "#" + p.no;
+const progByKey = k => TP_PROGS.find(p => progKey(p) === k);
+const DEFAULT_PLANT_RETORTS = { PF1: ["RP09", "RP19", "RP20", "RP21"] };  // ตามเอกสาร TP002-F1 / TP002-T
+function plantRetorts(pl) {
+  const cfg = (S.config.plantRetorts || {})[pl];
+  if (cfg && cfg.length) return cfg;
+  const base = (S.config.retorts || []).length ? S.config.retorts : DEFAULT_RETORTS;
+  if (pl === "PF1") return DEFAULT_PLANT_RETORTS.PF1;
+  if (pl !== "PF2") return [];
+  const pf1 = new Set(((S.config.plantRetorts || {}).PF1 || []).length ? S.config.plantRetorts.PF1 : DEFAULT_PLANT_RETORTS.PF1);
+  return base.filter(r => !pf1.has(r));
+}
+const plantOfRetort = rt => { const ds = TP_DOCS.filter(d => d.retorts.includes(rt) && d.plant); return ds.length ? ds[0].plant : ""; };
+function specTable(p, opts = {}) {
+  const d = docOf(p.doc) || {}; const hasHold = p.steps.some(s => s.length > 4);
+  let prev = "";
+  const rows = p.steps.map((s, i) => { const [ph, t, tm, pr, hd] = s; const first = ph !== prev; prev = ph;
+    const xx = /^xx$/i.test(tm);  // แสดงตามเอกสาร: "XX" = เวลาฆ่าเชื้อตามตารางของผลิตภัณฑ์
+    return `<tr class="ph-${ph}${first ? " first" : ""}"><td class="n">${i + 1}</td><td class="ph">${first ? PHASE[ph] : ""}</td><td class="num">${esc(t)}</td>
+      <td class="num">${xx ? `<span class="xx" title="เวลาฆ่าเชื้อตามตารางของผลิตภัณฑ์ (คีย์ก่อนเริ่ม)">XX</span>` : esc(tm)}</td><td class="num">${esc(pr)}</td>${hasHold ? `<td class="num">${esc(hd ?? "")}</td>` : ""}</tr>`; }).join("");
+  const cookT = p.steps.filter(s => s[0] === "cook").map(s => s[1]);
+  const cu = p.steps.filter(s => s[0] === "come").reduce((a, s) => a + (parseFloat(s[2]) || 0), 0);
+  return `<div class="spec">
+    <div class="spec-h"><div><b>โปรแกรม ${esc(p.no)}</b> <span class="tag">${esc(p.doc)} Rev.${esc(d.rev || "")}</span>${p.note ? ` <span class="tag hold">${esc(p.note)}</span>` : ""}</div>
+      <div class="sub">${esc(d.title || "")} · เริ่มใช้ ${esc(d.eff || "")} · ใช้กับ ${esc(p.retorts.join(", "))}</div></div>
+    <div class="spec-k"><span>อุณหภูมิฆ่าเชื้อ <b>${esc([...new Set(cookT)].join(" / "))} °C</b></span><span>Come up รวม <b>${cu} นาที</b></span><span>${p.steps.length} ขั้นตอน</span></div>
+    <div class="tscroll"><table class="tbl spec-t"><thead><tr><th>#</th><th>ช่วง</th><th class="num">อุณหภูมิ (°C)</th><th class="num">เวลา (นาที)</th><th class="num">ความดัน (Bar)</th>${hasHold ? `<th class="num">Holding (นาที)</th>` : ""}</tr></thead><tbody>${rows}</tbody></table></div>
+    ${opts.foot === false ? "" : `<p class="sub" style="margin:6px 0 0">"XX" = เวลาฆ่าเชื้อของแต่ละผลิตภัณฑ์ตามตารางฆ่าเชื้อ ที่พนักงานคุม Retort ต้องคีย์ก่อนเริ่มฆ่าเชื้อ · ค่าทั้งหมดแสดงตามเอกสาร ${esc(p.doc)} Rev.${esc(d.rev || "")}</p>`}
+  </div>`;
+}
+function showSpec(key) { const p = progByKey(key); if (!p) return; modal(specTable(p) + `<button class="blk" data-close style="margin-top:14px">ปิด</button>`); }
+
+/* ---------- state ---------- */
+// ชื่อผู้บันทึก ใช้ชื่อเดียวกับฟอร์มตรวจพื้นที่ (เก็บในเครื่องนี้)
+function getName() { try { const v = localStorage.getItem("pc_inspector"); if (v) return v; } catch {} const m = document.cookie.match(/(?:^|; )pc_name=([^;]*)/); return m ? decodeURIComponent(m[1]) : ""; }
+function setName(n) { n = (n || "").trim().slice(0, 60); try { localStorage.setItem("pc_inspector", n); } catch {} document.cookie = `pc_name=${encodeURIComponent(n)}; max-age=${60*60*24*400}; path=/; samesite=lax`; }
+const S = {
+  user: getName(),
+  view: lsGet("rt_view", "log"),
+  items: {}, config: migrate(null)[0],
+  pin: "", canAdmin: false, loaded: false,
+  draft: null, editingId: null,
+  f: lsGet("rt_filter", { range: "30", from: "", to: "", cat: "all", retort: "all", metric: "count" }),
+  charts: {}
+};
+function setSync(ok) { const s = $("#sync"); s.classList.toggle("on", !!ok); $("#syncTxt").textContent = ok ? "ซิงก์แล้ว" : "ออฟไลน์"; }
+const catById = id => S.config.categories.find(c => c.id === id);
+function catRank() { const m = {}; Object.values(S.items).forEach(x => m[x.category] = (m[x.category] || 0) + 1); return S.config.categories.map(c => c.id).sort((a, b) => (m[b] || 0) - (m[a] || 0) || S.config.categories.findIndex(c => c.id === a) - S.config.categories.findIndex(c => c.id === b)); }
+const catColor = id => { const i = catRank().indexOf(id); return i >= 0 && i < 5 ? SERIES[i] : OTHER; };
+
+async function api(url, opt) {
+  const r = await fetch(url, opt);
+  if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m; } catch {} const e = new Error(m); e.status = r.status; throw e; }
+  return r.json();
+}
+const jpost = (url, body) => api(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+async function saveItem(x) {
+  x.updatedBy = S.user;
+  try { const r = await jpost("/api/retort/problems", x); S.items[x.id] = normItem(r.item); setSync(true); return true; }
+  catch (e) { if (e.status === 401) { showLock(true); return false; } setSync(false); toast("บันทึกไม่สำเร็จ: " + e.message); return false; }
+}
+async function deleteItem(id) {
+  let pin = "";
+  for (let k = 0; k < 2; k++) {
+    try { await api(`/api/retort/problems/${encodeURIComponent(id)}?pin=${encodeURIComponent(pin)}`, { method: "DELETE" }); delete S.items[id]; return true; }
+    catch (e) { if (e.status === 403 && k === 0) { pin = prompt("ใส่ PIN ผู้ดูแลเพื่อลบ") || ""; if (!pin) return false; continue; } toast(e.message); return false; }
+  }
+}
+async function saveConfig() {
+  if (!S.canAdmin) return;
+  try { const r = await jpost("/api/retort/config", { pin: S.pin, config: S.config }); S.config = migrate(r.config)[0]; setSync(true); }
+  catch (e) { toast("บันทึกการตั้งค่าไม่สำเร็จ: " + e.message); if (e.status === 403) { S.canAdmin = false; S.pin = ""; } }
+}
+let lastSync = 0;
+async function syncAll(full) {
+  try {
+    const r = await api("/api/retort?since=" + (full ? 0 : lastSync));
+    let ch = false;
+    if (r.config) { const [c] = migrate(r.config); if ((c.updatedAt || 0) !== (S.config.updatedAt || 0)) { S.config = c; ch = true; } }
+    if (full) { S.items = {}; ch = true; }
+    r.items.forEach(x => { normItem(x); const loc = S.items[x.id]; if (!loc || (x.updatedAt || 0) > (loc.updatedAt || 0)) { S.items[x.id] = x; ch = true; } });
+    const alive = new Set(r.ids); Object.keys(S.items).forEach(id => { if (!alive.has(id)) { delete S.items[id]; ch = true; } });
+    lastSync = r.now; S.loaded = true; setSync(true);
+    if (ch) softRender();
+  } catch (e) { if (e.status === 401) { showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
+}
+function showLock(on) { $("#lock").classList.toggle("hide", !on); if (on) setTimeout(() => $("#lockPin").focus(), 50); }
+$("#lockForm").onsubmit = async e => {
+  e.preventDefault(); const pin = $("#lockPin").value.trim(); if (!pin) return;
+  try { await jpost("/api/retort/login", { pin }); $("#lockPin").value = ""; $("#lockErr").textContent = ""; showLock(false); await syncAll(true); }
+  catch (err) { $("#lockErr").textContent = err.message || "รหัสไม่ถูกต้อง"; $("#lockPin").select(); }
+};
+async function unlockAdmin() {
+  const pin = prompt("ใส่รหัสแก้ไขหัวข้อ (รหัสเดียวกับหน้าแก้ไข Checklist)"); if (!pin) return false;
+  try { await jpost("/api/admin/check", { pin }); S.pin = pin; S.canAdmin = true; toast("ปลดล็อกการแก้ไขแล้ว"); return true; }
+  catch (e) { toast(e.message || "รหัสไม่ถูกต้อง"); return false; }
+}
+function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ($("#modalRoot").innerHTML) return; render(); }
+
+/* ---------- shell ---------- */
+const VIEWS = [["log", "บันทึก", "plus"], ["list", "รายการ", "list"], ["analyze", "วิเคราะห์", "chart"], ["progs", "โปรแกรม", "thermo"], ["ai", "AI", "spark"], ["settings", "ตั้งค่า", "settings"]];
+function render() {
+  $("#userBtn").textContent = initials(S.user);
+  $("#nav").innerHTML = VIEWS.map(([k, l, ic]) => `<button data-view="${k}" class="${S.view === k ? "on" : ""}">${I(ic)}${l}</button>`).join("");
+  $("#main").classList.toggle("wide", S.view === "analyze" || S.view === "list");
+  $("#main").classList.toggle("xwide", S.view === "analyze");
+  $("#main").classList.toggle("vset", S.view === "settings");
+  S.charts = {}; $("#main").classList.remove("split");
+  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, ai: viewAI, settings: viewSettings })[S.view || "log"]();
+  if (!S.user) askName(true);
+}
+$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
+$("#userBtn").onclick = () => askName(false);
+
+/* ---------- log form ---------- */
+function newDraft() {
+  const t = nowHM();
+  return { id: uid("p"), date: todayISO(), time: t, shift: shiftOf(t), plant: (lsGet("rt_last", {}) || {}).plant || "", retort: "", program: "", programDoc: "", product: "", batch: "", category: "", cause: "", causeOther: "", values: {}, duration: "", detail: "", action: "", impact: "none", photos: [], by: S.user, createdAt: Date.now() };
+}
+function retortList() {
+  const seen = {}; Object.values(S.items).sort((a, b) => b.createdAt - a.createdAt).forEach(x => { if (x.retort) seen[x.retort] = (seen[x.retort] || 0) + 1; });
+  const fromCfg = (S.config.retorts || []).length ? S.config.retorts : DEFAULT_RETORTS;
+  return [...new Set([...fromCfg, ...Object.keys(seen)])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).slice(0, 40);
+}
+const STEPS = ["เวลา", "พื้นที่", "หม้อ", "ปัญหา", "สาเหตุ"];
+function stepHead(d) {
+  const cat = catById(d.category); const st = S.step;
+  const vals = [`${d.time} ${d.shift}`, d.plant, d.retort, cat ? cat.name : "", ""];
+  return `<div class="steps">${STEPS.map((l, i) => { const k = i + 1; const v = vals[i]; const cls = k === st ? "on" : k < st ? "done" : "";
+    return `<button class="st ${cls}" ${k < st ? `data-step="${k}"` : "disabled"}><span class="no">${k < st ? I("check") : k}</span><span class="tx"><small>${l}</small>${k < st && v ? `<b>${esc(v)}</b>` : ""}</span></button>`; }).join("")}</div>`;
+}
+const photoUrl = f => "/api/retort/photo/" + encodeURIComponent(f);
+const SHIFT_HINT = "DS 07:00–17:30 · NS 17:31–06:59";
+function catHead(d, changeStep) {
+  const cat = catById(d.category); if (!cat) return ""; const G = grpOf(cat);
+  return `<div class="catsel" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><div><small>${dmy(d.date)} ${esc(d.time)} กะ ${d.shift} · ${esc(d.plant)} · ${esc(d.retort)}</small><b>${esc(cat.name)}</b></div><button class="ghost sm" ${changeStep}>เปลี่ยน</button></div>`;
+}
+function viewLog() {
+  if (!S.draft) { S.draft = newDraft(); S.step = 1; S.more = false; S.catPick = true; }
+  if (S.justSaved) return viewSaved();
+  const d = S.draft; d.photos = d.photos || [];
+  const cats = S.config.categories.filter(c => c.active || c.id === d.category); const cat = catById(d.category);
+  const editing = !!S.editingId;
+  let h = editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไขรายการที่บันทึกไว้ <button class="ghost sm" id="cancelEdit">ยกเลิก</button></div></div>` : "";
+  h += stepHead(d);
+  const all = Object.values(S.items), t0 = todayISO(), w0 = addDays(t0, -6);
+  const stat = f => { const L = all.filter(f); return { today: L.filter(x => x.date === t0).length, week: L.filter(x => x.date >= w0 && x.date <= t0).length }; };
+  const badge = st => `<span class="zbadge ${st.today ? "ng" : "ok"}">${st.today ? `วันนี้พบปัญหา ${st.today} ครั้ง` : "วันนี้ยังไม่มีปัญหา ✓"}</span><span class="zsub2">7 วัน ${st.week} ครั้ง</span>`;
+  const last = lsGet("rt_last", {}) || {};
+  if (S.step === 1) {
+    h += `<h2 class="q">เวลาบันทึก</h2>
+      <div class="card timecard">
+        <div class="tc-top"><div><div class="tc-date">${thDate(d.date)}</div><div class="tc-time" id="tcTime">${esc(d.time)} น.</div></div>
+          <div class="shiftbig ${d.shift}" id="shiftBig"><small>กะ</small><b>${d.shift}</b></div></div>
+        <div class="grid" style="margin-top:14px">
+          <label class="f"><span class="lab">วันที่</span><input type="date" data-k="date" value="${d.date}"></label>
+          <label class="f"><span class="lab">เวลา</span><input type="time" data-k="time" value="${d.time}"></label></div>
+        <div class="row sp" style="margin-top:10px;flex-wrap:wrap"><small class="hint" style="margin:0">กะคำนวณจากเวลาอัตโนมัติ · ${SHIFT_HINT}</small><button class="ghost sm" id="nowBtn">${I("clock")}ใช้เวลาปัจจุบัน</button></div>
+      </div>
+      <button class="pri blk savebig" id="timeOk">ถัดไป${I("right")}</button>`;
+  } else if (S.step === 2) {
+    h += `<h2 class="q">เลือกพื้นที่</h2>${pickBar("plant", "ค้นหา หรือเพิ่มพื้นที่ใหม่ เช่น PF3")}<div class="zcards two">${plantsList().map(pl => { const rs = plantRetorts(pl);
+      return `<button class="zc big2 ${d.plant === pl ? "on" : ""}" data-plant="${esc(pl)}" data-s="${esc(pl.toLowerCase())}"><b>${esc(pl)}<span class="gtag">${rs.length} หม้อ</span></b>
+        <span class="zrow">${badge(stat(x => x.plant === pl))}${last.plant === pl ? `<span class="zsub2">· ล่าสุด</span>` : ""}</span>${I("right")}</button>`; }).join("")}</div>`;
+  } else if (S.step === 3) {
+    const rl = plantRetorts(d.plant);
+    h += `<h2 class="q">${esc(d.plant)} · เลือกหม้อ <span class="sub" style="font-weight:400">${rl.length} หม้อ</span></h2>
+      ${pickBar("retort", "ค้นหาหม้อ หรือพิมพ์หม้อใหม่ เช่น RP22")}
+      <div class="zcards">${rl.map(r => { const n = progsFor(r).length;
+      return `<button class="zc ${d.retort === r ? "on" : ""}" data-retort="${esc(r)}" data-s="${esc(r.toLowerCase())}"><b>${esc(r)}</b><span class="zs">${n ? `${n} โปรแกรม` : "ยังไม่มีตารางโปรแกรม"}</span><span class="zrow">${badge(stat(x => x.retort === r))}</span>${I("right")}</button>`; }).join("")}</div>`;
+  } else if (S.step === 4 && (S.catPick || !cat)) {
+    const wk = {}; all.filter(x => x.date >= w0 && x.date <= t0 && x.retort === d.retort).forEach(x => wk[x.category] = (wk[x.category] || 0) + 1);
+    h += `<h2 class="q">${esc(d.retort)} · เกิดปัญหาอะไร? <span class="sub" style="font-weight:400">${cats.length} หัวข้อ</span></h2>
+      ${pickBar("category", "ค้นหาปัญหา หรือเพิ่มหัวข้อใหม่")}
+      <div class="biglist catlist">${cats.map((c, i) => { const G = grpOf(c); const nc = (c.causes || []).length;
+        return `<button class="big cat ${d.category === c.id ? "on" : ""}" data-cat="${c.id}" data-s="${esc((i + 1) + " " + c.name + " " + (c.causes || []).join(" ")).toLowerCase()}" data-n="${esc(c.name.toLowerCase())}" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><span class="nm"><span class="cn"><em>${i + 1}</em>${esc(c.name)}</span><small>${nc ? esc(c.causes.join(" · ")) : G.name}</small></span>${wk[c.id] ? `<span class="wk" title="หม้อนี้ 7 วันล่าสุด">${wk[c.id]}</span>` : ""}${I("right")}</button>`; }).join("")}</div>
+      ${cats.length ? "" : `<p class="sub">ยังไม่มีหัวข้อ เพิ่มได้ที่หน้า ตั้งค่า</p>`}`;
+  } else if (S.step === 4) {
+    h += catHead(d, `id="catChange"`) + `<h2 class="q">ถ่ายรูปปัญหา <span class="sub" style="font-weight:400">${d.photos.length ? `${d.photos.length} รูป` : "รูปจะมีเวลาประทับอัตโนมัติ"}</span></h2>
+      <div class="card">
+        <label class="camBtn" id="camLbl"><input type="file" accept="image/*" capture="environment" id="camIn" hidden>${I("camera")}<span><b>เปิดกล้องถ่ายรูป</b><small>ประทับ i-Tail Corporation: Retort Analysis · วันที่ เวลา กะ</small></span></label>
+        <label class="ghost sm galBtn"><input type="file" accept="image/*" id="galIn" multiple hidden>${I("image")}เลือกจากคลังรูป</label>
+        <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${photoUrl(f)}" alt="" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
+        <div id="upState" class="sub"></div>
+      </div>
+      <button class="pri blk savebig" id="photoOk">${d.photos.length ? "ถัดไป" : "ถัดไป (ไม่ถ่ายรูป)"}${I("right")}</button>`;
+  } else {
+    const progs = progsFor(d.retort); const sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
+    const curCause = d.cause === "__other" ? d.causeOther : (d.cause || "");
+    h += catHead(d, `data-step="4"`) + `${d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${photoUrl(f)}" alt="" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+      <div class="card formcard">
+        <label class="f"><span class="lab">สาเหตุ <span class="req">*</span></span><textarea id="causeIn" rows="2" placeholder="กรอกสาเหตุของปัญหา">${esc(curCause)}</textarea></label>
+        <div style="margin-top:10px">${pickBar("cause", "ค้นหาสาเหตุ หรือเพิ่มสาเหตุใหม่เข้ารายการ")}</div>
+        <div class="sugg">${[...(cat.causes || []), UNKNOWN].map(c => `<button class="chip ${curCause === c ? "on" : ""}" data-sug="${esc(c)}" data-s="${esc(c.toLowerCase())}">${esc(c)}</button>`).join("")}</div>
+        <label class="f" style="margin-top:14px"><span class="lab">การแก้ไข</span><textarea data-k="action" rows="3" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(d.action)}</textarea></label>
+        <div style="margin-top:14px"><span class="lab">ผลต่อสินค้า</span><div class="seg"><button data-impact="none" class="${d.impact === "none" ? "on" : ""}">ไม่กระทบสินค้า</button><button data-impact="hold" class="${d.impact === "hold" ? "on warnc" : ""}">Hold สินค้า</button></div></div>
+        <label class="f" style="margin-top:14px"><span class="lab">โปรแกรมที่ใช้ (ถ้ามี)</span>
+          <div class="row"><select id="progSel"><option value="">ไม่ระบุ</option>${progs.map(p => `<option value="${esc(progKey(p))}" ${sel && progKey(sel) === progKey(p) ? "selected" : ""}>โปรแกรม ${esc(p.no)}${progs.filter(x => x.no === p.no).length > 1 ? ` (${esc(p.doc)})` : ""}${p.note ? " · " + esc(p.note.replace(/^โปรแกรม \S+ /, "")) : ""}</option>`).join("")}</select>${sel ? `<button class="soft sm" id="progSpec" style="flex:0 0 auto">ดูค่าควบคุม</button>` : ""}</div></label>
+      </div>
+      <button class="more" id="moreBtn">${I(S.more ? "up" : "down")}${S.more ? "ซ่อนรายละเอียด" : "เพิ่มรายละเอียด (ไม่บังคับ)"}<span class="sub">ระยะเวลา · สินค้า · Batch</span></button>
+      <div class="card ${S.more ? "" : "hide"}" id="moreBox"><div class="grid">
+        ${(cat.fields || []).map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
+        <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}"></label>
+        <label class="f"><span class="lab">สินค้า</span><input data-k="product" value="${esc(d.product)}"></label>
+        <label class="f"><span class="lab">Batch</span><input data-k="batch" value="${esc(d.batch)}"></label>
+        <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail">${esc(d.detail)}</textarea></label>
+      </div></div>
+      <div class="card signcard"><span class="lab">ลงนามผู้บันทึก <span class="req">*</span></span>
+        <input id="signIn" data-k="by" value="${esc(d.by || S.user)}" placeholder="ชื่อผู้บันทึก" autocomplete="off">
+        <div class="signline"><span>(${esc(d.by || S.user || "................")})</span><small>วันที่ ${dmy(d.date)} เวลา ${esc(d.time)} น. กะ ${d.shift}</small></div></div>
+      <div id="formErr"></div>
+      <button class="pri blk savebig" id="saveBtn">${I("check")}${editing ? "บันทึกการแก้ไข" : "บันทึก"}</button>`;
+  }
+  const wide = matchMedia("(min-width:1000px)").matches;
+  if (wide) {
+    const t = todayISO(), w7 = addDays(t, -6);
+    const today = all.filter(x => x.date === t), week = all.filter(x => x.date >= w7 && x.date <= t);
+    const topW = groupSum(week.map(x => ({ ...x })), x => x.category)[0];
+    const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 6);
+    const side = `<div class="card">${sec("chart", "สรุปเร็ว")}
+        <div class="cmpbox"><div><b>${today.length}</b><span>ปัญหาวันนี้</span></div><div><b>${week.length}</b><span>7 วันล่าสุด</span></div></div>
+        ${topW ? `<div class="sub">เกิดบ่อยสุดใน 7 วัน: <b style="color:var(--ink)">${esc(catById(topW[0])?.name || "-")}</b> (${topW[1]} ครั้ง)</div>` : `<div class="sub">7 วันล่าสุดยังไม่มีปัญหา</div>`}</div>
+      <div class="card">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.length ? recent.map(itemRow).join("") : `<p class="sub">ยังไม่มีบันทึก</p>`}</div>`;
+    h = `<div class="logL">${h}</div><aside class="logR">${side}</aside>`;
+  } else if (S.step <= 2 && !editing) {
+    const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
+    if (recent.length) h += `<div class="card" style="margin-top:18px">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.map(itemRow).join("")}</div>`;
+  }
+  $("#main").classList.toggle("split", wide);
+  $("#main").innerHTML = h;
+  wireLog();
+}
+function viewSaved() {
+  const x = S.justSaved; const c = catById(x.category);
+  $("#main").innerHTML = `<div class="card done-card"><div class="okic">${I("check")}</div><h2>บันทึกแล้ว</h2>
+    <p class="sub" style="margin:6px 0 0">${esc(c ? c.name : "")} · ${esc(x.retort)}<br>${esc(causeText(x))}</p></div>
+    <button class="pri blk savebig" id="again">${I("plus")}บันทึกปัญหาอื่น</button>
+    <button class="blk" id="seeAn" style="margin-top:10px">${I("chart")}ดูสรุป</button>`;
+  $("#again").onclick = () => { S.justSaved = null; S.draft = null; render(); };
+  $("#seeAn").onclick = () => { S.justSaved = null; S.draft = null; S.view = "analyze"; lsSet("rt_view", S.view); render(); };
+}
+function causeText(x) { return x.cause === "__other" ? (x.causeOther || "อื่นๆ") : x.cause; }
+const fmtTs = ms => { if (!ms) return ""; const d = new Date(ms); return `${dmy(iso(d))} ${pad(d.getHours())}:${pad(d.getMinutes())} น.`; };
+const apprTag = x => x.approvedBy
+  ? `<span class="tag ok" title="อนุมัติเมื่อ ${esc(fmtTs(x.approvedAt))}">${I("check")} อนุมัติ · ${esc(x.approvedBy)}</span>`
+  : `<span class="tag wait">รออนุมัติ</span>`;
+function approveItem(id, undo) {
+  const x = S.items[id]; if (!x) return;
+  const last = lsGet("rt_approver", "") || S.user;
+  modal(`<h2>${undo ? "ยกเลิกการอนุมัติ" : "อนุมัติรายการนี้"}</h2>
+    <p class="sub" style="margin:2px 0 12px">${esc(causeText(x))} · ${esc(x.retort || "")} · ${dmy(x.date)} ${esc(x.time)}</p>
+    ${undo ? "" : `<label class="f"><span class="lab">ชื่อผู้อนุมัติ <span class="req">*</span></span><input id="apName" value="${esc(last)}" placeholder="ชื่อผู้อนุมัติ" autocomplete="off"></label>`}
+    <p class="sub" id="apErr" style="color:var(--bad);min-height:20px;margin:8px 0 0"></p>
+    <div class="row" style="margin-top:6px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="apOk">${I("check")}${undo ? "ยืนยันยกเลิก" : "อนุมัติ"}</button></div>`, box => {
+    const nm = box.querySelector("#apName");
+    setTimeout(() => (nm || box.querySelector("#apOk")).focus(), 50);
+    box.querySelector("#apOk").onclick = async () => {
+      const name = nm ? nm.value.trim() : "";
+      if (!undo && !name) { box.querySelector("#apErr").textContent = "กรุณาใส่ชื่อผู้อนุมัติ"; return; }
+      try {
+        const r = await jpost(`/api/retort/problems/${encodeURIComponent(id)}/approve`, { name, undo: !!undo });
+        S.items[id] = normItem(r.item); if (name) lsSet("rt_approver", name);
+        closeModal(); toast(undo ? "ยกเลิกการอนุมัติแล้ว" : `อนุมัติแล้ว · ${name}`); render();
+      } catch (e) { if (e.status === 401) { closeModal(); showLock(true); return; } box.querySelector("#apErr").textContent = e.status === 405 ? "เซิร์ฟเวอร์ยังเป็นเวอร์ชันเก่า: วาง main.py ใหม่แล้วรีสตาร์ทเซิร์ฟเวอร์" : e.message; }
+    };
+    if (nm) nm.onkeydown = e => { if (e.key === "Enter") box.querySelector("#apOk").click(); };
+  });
+}
+function itemRow(x) {
+  const c = catById(x.category);
+  return `<button class="item" data-edit="${x.id}"><span class="bar" style="background:${catColor(x.category)}"></span><span class="b"><b>${esc(causeText(x) || "ไม่ระบุสาเหตุ")}</b>
+    <span class="meta">${esc(c ? c.name : "หัวข้อที่ถูกลบ")} · ${esc([x.plant, x.retort || "-", x.program ? "P" + x.program : ""].filter(Boolean).join(" "))} · ${dmy(x.date)} ${esc(x.time)} ${x.shift}${x.duration ? ` · ${esc(x.duration)} นาที` : ""}${x.by ? ` · บันทึก ${esc(x.by)}` : ""}</span></span><span class="tags">${apprTag(x)}<span>${(x.photos || []).length ? `<span class="tag">${I("camera")} ${x.photos.length}</span> ` : ""}${x.impact === "hold" ? '<span class="tag hold">Hold</span>' : ""}${x.demo ? ' <span class="tag">Demo</span>' : ""}</span></span></button>`;
+}
+/* ---------- รูปถ่าย + เวลาประทับ ---------- */
+const STAMP_L1 = "i-Tail Corporation: Retort Analysis";
+function loadImg(file) {
+  return new Promise((res, rej) => { const u = URL.createObjectURL(file); const im = new Image(); im.onload = () => { res(im); setTimeout(() => URL.revokeObjectURL(u), 1000); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error("เปิดรูปไม่ได้")); }; im.src = u; });
+}
+async function stampPhoto(file) {
+  const im = await loadImg(file);
+  const max = 1600, k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+  const w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k);
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const g = cv.getContext("2d");
+  g.drawImage(im, 0, 0, w, h);
+  const n = new Date(); const hm = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  const l2 = `${dmy(iso(n))}  ${hm} น.  กะ ${shiftOf(hm)}`;
+  const fs = Math.max(16, Math.round(Math.min(w, h) * 0.042));
+  try { await document.fonts.load(`700 ${fs}px Sarabun`); } catch {}
+  g.font = `700 ${fs}px Sarabun, sans-serif`; g.textBaseline = "top";
+  const padd = Math.round(fs * 0.6), lh = Math.round(fs * 1.35);
+  const tw = Math.max(g.measureText(STAMP_L1).width, g.measureText(l2).width);
+  const bx = Math.round(fs * 0.5), by = h - bx - (lh * 2 + padd * 2);
+  g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(bx, by, tw + padd * 2, lh * 2 + padd * 2 - Math.round(fs * 0.2));
+  g.fillStyle = "#f59e0b"; g.fillRect(bx, by, Math.max(4, Math.round(fs * 0.18)), lh * 2 + padd * 2 - Math.round(fs * 0.2));
+  g.fillStyle = "#fff"; g.shadowColor = "rgba(0,0,0,.6)"; g.shadowBlur = 2;
+  g.fillText(STAMP_L1, bx + padd, by + padd);
+  g.fillText(l2, bx + padd, by + padd + lh);
+  return await new Promise(r => cv.toBlob(r, "image/jpeg", 0.86));
+}
+async function addPhotos(files) {
+  const d = S.draft; const st = $("#upState");
+  for (const f of files) {
+    if (d.photos.length >= 8) { toast("แนบรูปได้สูงสุด 8 รูป"); break; }
+    try {
+      if (st) st.innerHTML = `<span class="ai-dots"><i></i><i></i><i></i></span>กำลังประทับเวลาและอัปโหลดรูป…`;
+      const blob = await stampPhoto(f); const fd = new FormData(); fd.append("file", blob, "photo.jpg");
+      const r = await fetch("/api/retort/photo", { method: "POST", body: fd });
+      if (r.status === 401) { showLock(true); break; }
+      if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m; } catch {} throw new Error(m); }
+      d.photos.push((await r.json()).file);
+    } catch (e) { toast("อัปโหลดรูปไม่สำเร็จ: " + e.message); }
+  }
+  if (S.view === "log" && S.step === 4) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
+}
+function zoomPhoto(f) { modal(`<img src="${photoUrl(f)}" alt="" style="width:100%;border-radius:12px;display:block"><button class="blk" data-close style="margin-top:12px">ปิด</button>`); }
+function pickBar(kind, ph) {
+  return `<div class="addbar" data-kind="${kind}"><span class="gic">${I("search")}</span><input class="pickIn" placeholder="${esc(ph)}" autocomplete="off" maxlength="${kind === "plant" || kind === "retort" ? 20 : 120}"${kind === "plant" || kind === "retort" ? ' autocapitalize="characters"' : ""}><button class="pri pickAdd" disabled>${I("plus")}เพิ่ม</button></div><div class="pickHint"></div>`;
+}
+function pickFilter(inp) {
+  const bar = inp.closest(".addbar"); const q = inp.value.trim().toLowerCase(); const scope = bar.parentElement.parentElement;
+  const items = [...scope.querySelectorAll("[data-s]")]; let vis = 0, exact = null;
+  items.forEach(el => { const ok = !q || el.dataset.s.includes(q); el.classList.toggle("hide", !ok); if (ok) vis++; if (q && (el.dataset.n || el.dataset.s) === q) exact = el; });
+  const btn = bar.querySelector(".pickAdd"); btn.disabled = !q || !!exact;
+  const hint = bar.nextElementSibling;
+  if (hint) hint.innerHTML = q && !vis ? `ไม่พบ "<b>${esc(inp.value.trim())}</b>" — กด <b>เพิ่ม</b> เพื่อเพิ่มเข้ารายการ` : q ? `พบ ${vis} รายการ${exact ? "" : " · หรือกด เพิ่ม เพื่อเพิ่มใหม่"}` : "";
+  return { exact, vis: items.filter(el => !el.classList.contains("hide")) };
+}
+async function addOption(kind, name) {
+  const d = S.draft; name = String(name || "").replace(/\s+/g, " ").trim();
+  if (kind === "plant" || kind === "retort") { name = name.toUpperCase(); if (!/^[A-Z0-9][A-Z0-9 _./-]{0,19}$/.test(name)) { toast("ใช้ตัวอักษร/ตัวเลข ไม่เกิน 20 ตัว"); return; } }
+  if (!name) return;
+  const body = { kind, name };
+  if (kind === "retort") { body.plant = d.plant; body.base = plantRetorts(d.plant); }
+  if (kind === "category" || kind === "cause") { body.base = S.config.categories; body.category = d.category; }
+  let label = { plant: "พื้นที่", retort: "หม้อ", category: "หัวข้อปัญหา", cause: "สาเหตุ" }[kind];
+  try { const r = await jpost("/api/retort/add", body); S.config = migrate(r.config)[0]; toast(`เพิ่ม${label} "${name}" แล้ว`); }
+  catch (e) { if (e.status === 401) { showLock(true); return; } toast(`เพิ่ม${label}ไม่สำเร็จ: ` + e.message); return; }
+  const go = n => { S.step = n; viewLog(); window.scrollTo(0, 0); };
+  if (kind === "plant") { d.plant = name; d.retort = ""; d.program = ""; d.programDoc = ""; lsSet("rt_last", { ...lsGet("rt_last", {}), plant: name }); go(3); }
+  else if (kind === "retort") { if (d.retort !== name) { d.retort = name; d.program = ""; d.programDoc = ""; } go(4); }
+  else if (kind === "category") { const c = S.config.categories.find(x => x.name.toLowerCase() === name.toLowerCase()); if (c) { if (d.category !== c.id) { d.category = c.id; d.cause = ""; d.causeOther = ""; d.values = {}; } S.catPick = false; } go(4); }
+  else { const y = window.scrollY; viewLog(); window.scrollTo(0, y); const ci = $("#causeIn"); if (ci) { ci.value = name; ci.dispatchEvent(new Event("input", { bubbles: true })); } }
+}
+function wireLog() {
+  const d = S.draft; const m = $("#main");
+  const go = n => { S.step = n; if (n === 4 && !d.category) S.catPick = true; viewLog(); window.scrollTo(0, 0); };
+  const setTime = () => { d.shift = shiftOf(d.time); const sb = $("#shiftBig"); if (sb) { sb.className = "shiftbig " + d.shift; sb.querySelector("b").textContent = d.shift; } const tt = $("#tcTime"); if (tt) tt.textContent = d.time + " น."; const td = $(".tc-date"); if (td) td.textContent = thDate(d.date); };
+  m.oninput = e => { const t = e.target; if (t.dataset.k) d[t.dataset.k] = t.value; if (t.dataset.v) d.values[t.dataset.v] = t.value;
+    if (t.dataset.k === "time" || t.dataset.k === "date") setTime();
+    if (t.id === "signIn") { const s = m.querySelector(".signline span"); if (s) s.textContent = `(${t.value || "................"})`; }
+    if (t.classList.contains("pickIn")) pickFilter(t);
+    if (t.id === "causeIn") m.querySelectorAll("[data-sug]").forEach(b => b.classList.toggle("on", b.dataset.sug === t.value.trim())); };
+  m.onkeydown = e => { if (e.key === "Enter" && e.target.classList.contains("pickIn")) { e.preventDefault(); const { exact, vis } = pickFilter(e.target); const t = exact || (vis.length === 1 ? vis[0] : null);
+    if (t) t.click(); else if (e.target.value.trim()) addOption(e.target.closest(".addbar").dataset.kind, e.target.value); } };
+  m.onchange = e => { const t = e.target;
+    if (t.id === "camIn" || t.id === "galIn") { const fs = [...t.files]; t.value = ""; if (fs.length) addPhotos(fs); }
+    else if (t.id === "progSel") { const p = progByKey(t.value); d.program = p ? p.no : ""; d.programDoc = p ? p.doc : ""; const y = window.scrollY; viewLog(); window.scrollTo(0, y); } };
+  m.onclick = e => {
+    const im = e.target.closest("[data-zoom]"); if (im) { zoomPhoto(im.dataset.zoom); return; }
+    const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (ds.cat) { if (d.category !== ds.cat) { d.category = ds.cat; d.cause = ""; d.causeOther = ""; d.values = {}; } S.catPick = false; go(4); }
+    else if (b.id === "catChange") { S.catPick = true; go(4); }
+    else if (ds.step) { if (+ds.step === 4) S.catPick = true; go(+ds.step); }
+    else if (b.id === "nowBtn") { const n = nowHM(); d.date = todayISO(); d.time = n; m.querySelector('[data-k=date]').value = d.date; m.querySelector('[data-k=time]').value = n; setTime(); }
+    else if (b.id === "timeOk") { if (!d.date || !d.time) { toast("ใส่วันที่และเวลา"); return; } d.shift = shiftOf(d.time); go(2); }
+    else if (ds.plant) { if (d.plant !== ds.plant) { d.plant = ds.plant; d.retort = ""; d.program = ""; d.programDoc = ""; } lsSet("rt_last", { ...lsGet("rt_last", {}), plant: d.plant }); go(3); }
+    else if (ds.retort != null) { if (d.retort !== ds.retort) { d.retort = ds.retort; d.program = ""; d.programDoc = ""; } go(4); }
+    else if (b.classList.contains("pickAdd")) { const bar = b.closest(".addbar"); addOption(bar.dataset.kind, bar.querySelector(".pickIn").value); }
+    else if (ds.delph != null) { d.photos.splice(+ds.delph, 1); const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
+    else if (b.id === "photoOk") go(5);
+    else if (ds.sug) { const ci = $("#causeIn"); ci.value = ds.sug; m.querySelectorAll("[data-sug]").forEach(x => x.classList.toggle("on", x === b)); $("#formErr").innerHTML = ""; }
+    else if (b.id === "progSpec") { if (d.programDoc) showSpec(d.programDoc + "#" + d.program); }
+    else if (ds.impact) { d.impact = ds.impact; m.querySelectorAll("[data-impact]").forEach(x => { x.classList.toggle("on", x === b); x.classList.toggle("warnc", x === b && ds.impact === "hold"); }); }
+    else if (b.id === "moreBtn") { S.more = !S.more; $("#moreBox").classList.toggle("hide", !S.more); b.firstElementChild.outerHTML = I(S.more ? "up" : "down"); b.childNodes[1].textContent = S.more ? "ซ่อนรายละเอียด" : "เพิ่มรายละเอียด (ไม่บังคับ)"; }
+    else if (b.id === "saveBtn") submitLog();
+    else if (b.id === "cancelEdit") { S.editingId = null; S.draft = null; S.view = "list"; render(); }
+    else if (ds.edit) showItem(ds.edit);
+    else if (ds.viewGo) { S.view = ds.viewGo; render(); }
+  };
+}
+async function submitLog() {
+  const d = S.draft; const cat = catById(d.category);
+  const txt = ($("#causeIn") ? $("#causeIn").value : "").trim();
+  const err = msg => { $("#formErr").innerHTML = `<div class="alert a-bad" style="margin-top:12px">${I("alert")}<div>${msg}</div></div>`; $("#formErr").scrollIntoView({ block: "center" }); };
+  if (!txt) { $("#causeIn").classList.add("err"); return err(`กรอกสาเหตุ ถ้ายังไม่รู้ เลือก "${UNKNOWN}"`); }
+  d.by = String(d.by || "").trim(); if (!d.by) { $("#signIn").classList.add("err"); return err("ลงนามผู้บันทึก"); }
+  const match = [...(cat.causes || []), UNKNOWN].find(c => c.toLowerCase() === txt.toLowerCase());
+  if (match) { d.cause = match; d.causeOther = ""; } else { d.cause = "__other"; d.causeOther = txt; }
+  d.retort = String(d.retort).trim().toUpperCase(); d.shift = shiftOf(d.time);
+  lsSet("rt_last", { ...lsGet("rt_last", {}), category: d.category, plant: d.plant });
+  const wasEdit = !!S.editingId; const saved = JSON.parse(JSON.stringify(d));
+  const btn = $("#saveBtn"); if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก…"; }
+  if (!(await saveItem(saved))) { if (btn) { btn.disabled = false; btn.innerHTML = `${I("check")}${wasEdit ? "บันทึกการแก้ไข" : "บันทึก"}`; } return; }
+  saved.updatedAt = S.items[saved.id].updatedAt;
+  S.editingId = null; S.draft = null;
+  if (wasEdit) { toast("แก้ไขแล้ว"); S.view = "list"; } else S.justSaved = saved;
+  render(); window.scrollTo(0, 0);
+}
+function openEdit(id) {
+  const x = S.items[id]; if (!x) return;
+  S.draft = JSON.parse(JSON.stringify(x)); S.draft.values = S.draft.values || {}; S.draft.photos = S.draft.photos || []; S.draft.by = S.draft.by || S.user;
+  S.editingId = id; S.step = 5; S.catPick = false; S.more = true; S.justSaved = null; S.view = "log"; render(); window.scrollTo(0, 0);
+}
+
+/* ---------- filtered data ---------- */
+function rangeOf() {
+  const f = S.f, t = todayISO();
+  if (f.range === "custom" && f.from && f.to) return [f.from, f.to];
+  if (f.range === "year") return [t.slice(0, 4) + "-01-01", t];
+  const n = parseInt(f.range, 10) || 30; return [addDays(t, -(n - 1)), t];
+}
+function filtered(from, to, ignoreCat) {
+  return Object.values(S.items).filter(x => x.date >= from && x.date <= to && (ignoreCat || S.f.cat === "all" || x.category === S.f.cat) && (S.f.retort === "all" || x.retort === S.f.retort) && (!S.f.plant || S.f.plant === "all" || x.plant === S.f.plant));
+}
+const metricOf = x => S.f.metric === "minutes" ? (num(x.duration) || 0) : 1;
+const fmtN = v => S.f.metric === "minutes" ? `${Math.round(v)} นาที` : `${v} ครั้ง`;
+
+/* ---------- list view ---------- */
+function filterBar(withMetric) {
+  const f = S.f; const retorts = [...new Set(Object.values(S.items).map(x => x.retort).filter(Boolean))].sort();
+  return `<div class="filters">
+    <select id="fRange"><option value="7">7 วันล่าสุด</option><option value="30">30 วันล่าสุด</option><option value="90">90 วันล่าสุด</option><option value="year">ปีนี้</option><option value="custom">กำหนดเอง</option></select>
+    ${f.range === "custom" ? `<input type="date" id="fFrom" value="${f.from}" style="width:auto;min-height:42px;font-size:15px;padding:8px 10px;background:#fff"><input type="date" id="fTo" value="${f.to}" style="width:auto;min-height:42px;font-size:15px;padding:8px 10px;background:#fff">` : ""}
+    <select id="fCat"><option value="all">ทุกหัวข้อ</option>${S.config.categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select>
+    <select id="fPlant"><option value="all">ทุกพื้นที่</option>${plantsList().map(p => `<option>${p}</option>`).join("")}</select>
+    <select id="fRet"><option value="all">ทุกหม้อ</option>${retorts.map(r => `<option>${esc(r)}</option>`).join("")}</select>
+    ${withMetric ? `<div class="seg"><button data-metric="count" class="${f.metric === "count" ? "on" : ""}">นับครั้ง</button><button data-metric="minutes" class="${f.metric === "minutes" ? "on" : ""}">รวมนาที</button></div>` : ""}
+  </div>`;
+}
+function wireFilters() {
+  const f = S.f; const save = () => { lsSet("rt_filter", f); render(); };
+  $("#fRange").value = f.range; $("#fCat").value = f.cat; $("#fRet").value = [...$("#fRet").options].some(o => o.value === f.retort) ? f.retort : "all";
+  $("#fRange").onchange = e => { f.range = e.target.value; if (f.range === "custom" && !f.from) { const [a, b] = [addDays(todayISO(), -29), todayISO()]; f.from = a; f.to = b; } save(); };
+  $("#fCat").onchange = e => { f.cat = e.target.value; save(); };
+  $("#fRet").onchange = e => { f.retort = e.target.value; save(); };
+  $("#fPlant").value = f.plant || "all"; $("#fPlant").onchange = e => { f.plant = e.target.value; save(); };
+  if ($("#fFrom")) { $("#fFrom").onchange = e => { f.from = e.target.value; save(); }; $("#fTo").onchange = e => { f.to = e.target.value; save(); }; }
+  document.querySelectorAll("[data-metric]").forEach(b => b.onclick = () => { f.metric = b.dataset.metric; save(); });
+}
+const itemText = x => { const c = catById(x.category); return [x.plant, x.retort, x.program && "p" + x.program, c && c.name, causeText(x), x.action, x.detail, x.product, x.batch, x.by, x.shift, dmy(x.date), x.time].filter(Boolean).join(" ").toLowerCase(); };
+function viewList() {
+  const [from, to] = rangeOf();
+  const inRange = filtered(from, to).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+  const ap = S.f.appr || "all";
+  const all = inRange.filter(x => ap === "all" || (ap === "done") === !!x.approvedBy);
+  const nWait = inRange.filter(x => !x.approvedBy).length;
+  S.q = S.q || "";
+  let h = `<div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>` + filterBar(false);
+  h += `<div class="seg mb" style="max-width:460px">${[["all", "ทั้งหมด"], ["wait", `รออนุมัติ (${nWait})`], ["done", "อนุมัติแล้ว"]].map(([v, l]) => `<button data-appr="${v}" class="${ap === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
+  h += `<div class="card" id="listCard"></div>`;
+  $("#main").innerHTML = h; wireFilters();
+  document.querySelectorAll("[data-appr]").forEach(b => b.onclick = () => { S.f.appr = b.dataset.appr; lsSet("rt_filter", S.f); viewList(); });
+  let L = all;
+  const draw = () => {
+    const words = S.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    L = words.length ? all.filter(x => { const t = itemText(x); return words.every(w => t.includes(w)); }) : all;
+    $("#listCard").innerHTML = sec("list", `รายการปัญหา (${L.length}${words.length ? ` จาก ${all.length}` : ""})`, `${dmy(from)} – ${dmy(to)}${words.length ? ` · ค้นหา "${esc(S.q.trim())}"` : ""}`, `<button class="soft sm" id="csvBtn">${I("download")}CSV</button>`)
+      + (L.length ? L.slice(0, 300).map(itemRow).join("") + (L.length > 300 ? `<p class="sub" style="text-align:center">แสดง 300 รายการแรก · พิมพ์ค้นหาหรือเลือกช่วงวันที่ให้แคบลง</p>` : "") : `<div class="empty"><div class="ic">${I(words.length ? "search" : "list")}</div><h3>${words.length ? "ไม่พบรายการที่ค้นหา" : "ไม่มีรายการในช่วงนี้"}</h3>${words.length ? `<p class="sub">ลองเปลี่ยนคำค้น หรือขยายช่วงวันที่ด้านบน</p>` : ""}</div>`);
+    $("#csvBtn").onclick = () => exportCsv(L, from, to);
+  };
+  draw();
+  $("#listQ").oninput = e => { S.q = e.target.value; draw(); };
+  if ($("#listQx")) $("#listQx").onclick = () => { S.q = ""; viewList(); };
+  $("#main").onclick = e => { const b = e.target.closest("[data-edit]"); if (b) showItem(b.dataset.edit); };
+}
+function showItem(id) {
+  const x = S.items[id]; if (!x) return; const c = catById(x.category);
+  const kv = (k, v) => v ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">${k}</span><span class="v" style="font-weight:500;white-space:pre-wrap">${esc(v)}</span></div>` : "";
+  const vals = (c?.fields || []).map(fl => x.values?.[fl.key] ? kv(fl.label, `${x.values[fl.key]} ${fl.unit || ""}`) : "").join("");
+  modal(`<h2>${esc(causeText(x))}</h2><p class="sub" style="margin:2px 0 12px">${esc(c ? c.name : "")}</p>
+    ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}${kv("สินค้า / Batch", [x.product, x.batch].filter(Boolean).join(" / "))}
+    ${vals}${kv("ระยะเวลา", x.duration ? x.duration + " นาที" : "")}${kv("รายละเอียด", x.detail)}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? "Hold สินค้า" : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
+  ? `<div class="apprbox ok">${I("check")}<div><b>อนุมัติแล้ว · ${esc(x.approvedBy)}</b><small>${esc(fmtTs(x.approvedAt))}</small></div></div>`
+  : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>ผู้อนุมัติกดปุ่ม อนุมัติ ด้านล่าง</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${photoUrl(f)}" alt="" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+    ${x.approvedBy
+      ? `<button class="blk" id="mUnappr" style="margin-top:16px">${I("x")}ยกเลิกอนุมัติ</button>`
+      : `<button class="blk pri savebig" id="mAppr" style="margin-top:16px">${I("check")}อนุมัติ</button>`}
+    <div class="row" style="margin-top:10px"><button class="blk danger" id="mDel">${I("trash")}ลบ</button><button class="blk" id="mEdit">${I("pen")}แก้ไข</button></div>
+    <button class="ghost blk" data-close style="margin-top:6px">ปิด</button>`, box => {
+    box.querySelector("#mEdit").onclick = () => { closeModal(); openEdit(id); };
+    const ap = box.querySelector("#mAppr"); if (ap) ap.onclick = () => approveItem(id, false);
+    const un = box.querySelector("#mUnappr"); if (un) un.onclick = () => approveItem(id, true);
+    box.querySelectorAll("[data-mzoom]").forEach(im => im.onclick = () => window.open(photoUrl(im.dataset.mzoom), "_blank"));
+    const sp = box.querySelector("#mSpec"); if (sp) sp.onclick = () => showSpec(x.programDoc + "#" + x.program);
+    box.querySelector("#mDel").onclick = () => confirmBox("ลบรายการนี้?", async () => { if (await deleteItem(id)) { toast("ลบแล้ว"); render(); } });
+  });
+}
+
+/* ---------- โปรแกรมฆ่าเชื้อ: ดูค่าควบคุมของแต่ละโปรแกรม ---------- */
+function viewProgs() {
+  const f = S.pf || (S.pf = { rt: lsGet("rt_pf_rt", ""), q: "", open: "" });
+  const rets = [...new Set(TP_PROGS.flatMap(p => p.retorts))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  if (f.rt && !rets.includes(f.rt)) f.rt = "";
+  const L = TP_PROGS.filter(p => (!f.rt || p.retorts.includes(f.rt)) && (!f.q || p.no === f.q.trim()))
+    .sort((a, b) => (+a.no - +b.no) || a.doc.localeCompare(b.doc));
+  let h = `<div class="alert a-info">${I("info")}<div>ค่าควบคุมจากเอกสาร Thermal Process Specification (SQCTP001) · เลือกหม้อเพื่อดูเฉพาะโปรแกรมที่ใช้กับหม้อนั้น แล้วกดโปรแกรมเพื่อดูค่า</div></div>
+    <div class="retbar"><span class="lab" style="margin:0 0 6px 2px">หม้อ</span><div class="retscroll"><button class="chip ${!f.rt ? "on" : ""}" data-prt="">ทุกหม้อ</button>${rets.map(r => `<button class="chip ${f.rt === r ? "on" : ""}" data-prt="${r}">${r}</button>`).join("")}</div></div>
+    <div class="row" style="margin-bottom:12px"><input id="pq" inputmode="numeric" value="${esc(f.q)}" placeholder="ค้นหาเลขโปรแกรม เช่น 7"></div>
+    <div class="card">${sec("thermo", `โปรแกรม (${L.length})`, f.rt ? `ที่ใช้กับ ${f.rt}${plantOfRetort(f.rt) ? " · " + plantOfRetort(f.rt) : ""}` : "ทุกเอกสาร")}
+    ${L.length ? L.map(p => { const k = progKey(p), d = docOf(p.doc) || {}, op = f.open === k;
+      const cook = [...new Set(p.steps.filter(s => s[0] === "cook").map(s => s[1]))].join("/");
+      return `<div class="pgrow ${op ? "open" : ""}"><button class="pgh" data-popen="${esc(k)}"><span class="pno">${esc(p.no)}</span><span class="b"><b>${esc(p.doc)} <small>Rev.${esc(d.rev || "")}</small></b><span class="meta">${esc(p.retorts.join(", "))} · Cooking ${esc(cook)} °C${p.note ? " · " + esc(p.note) : ""}</span></span>${I(op ? "up" : "down")}</button>${op ? specTable(p) : ""}</div>`; }).join("") : `<p class="sub">ไม่พบโปรแกรม</p>`}</div>`;
+  $("#main").innerHTML = h;
+  const m = $("#main");
+  m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.prt != null) { f.rt = b.dataset.prt; lsSet("rt_pf_rt", f.rt); f.open = ""; viewProgs(); }
+    else if (b.dataset.popen) { f.open = f.open === b.dataset.popen ? "" : b.dataset.popen; const y = window.scrollY; viewProgs(); window.scrollTo(0, y); } };
+  m.oninput = e => { if (e.target.id === "pq") { f.q = e.target.value; clearTimeout(S.pqT); S.pqT = setTimeout(() => { viewProgs(); const q = $("#pq"); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 300); } };
+}
+
+/* ---------- ผู้ช่วย AI ---------- */
+const AI = { msgs: [], busy: false, status: null, range: lsGet("rt_ai_range", "30"), plant: lsGet("rt_ai_plant", "all") };
+const AI_QUICK = [
+  "สรุปภาพรวมปัญหาในช่วงนี้ เทียบกับช่วงก่อนหน้า",
+  "ปัญหาไหนน่าห่วงที่สุด และควรแก้อะไรก่อน (จัดลำดับความสำคัญ)",
+  "วิเคราะห์สาเหตุรากของปัญหาอันดับ 1 แบบ 5 Why และเสนอแนวทางป้องกัน",
+  "หม้อ / โปรแกรม / กะ ไหนมีปัญหามากผิดปกติ",
+  "ร่างสรุปสั้น ๆ สำหรับรายงานหัวหน้าประจำสัปดาห์"
+];
+function aiRange() { const n = parseInt(AI.range, 10) || 30, t = todayISO(), from = addDays(t, -(n - 1)); return { n, from, to: t, pFrom: addDays(from, -n), pTo: addDays(from, -1) }; }
+function buildAiContext() {
+  const { n, from, to, pFrom, pTo } = aiRange();
+  const okP = x => AI.plant === "all" || x.plant === AI.plant;
+  const all = Object.values(S.items).filter(okP);
+  const L = all.filter(x => x.date >= from && x.date <= to).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+  const P = all.filter(x => x.date >= pFrom && x.date <= pTo);
+  const cname = id => catById(id)?.name || "หัวข้อที่ถูกลบ";
+  const cnt = (arr, k) => { const m = {}; arr.forEach(x => { const v = k(x) || "-"; m[v] = (m[v] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const fmt = rows => rows.map(([k, v]) => `${k}: ${v}`).join(" | ") || "-";
+  const pc = Object.fromEntries(cnt(P, x => cname(x.category)));
+  let t = `ช่วงที่วิเคราะห์: ${from} ถึง ${to} (${n} วัน) · พื้นที่: ${AI.plant === "all" ? "ทุกพื้นที่ (PF1, PF2)" : AI.plant}\n`;
+  t += `จำนวนปัญหา: ${L.length} ครั้ง · ช่วงก่อนหน้า (${pFrom} ถึง ${pTo}): ${P.length} ครั้ง · Hold สินค้า: ${L.filter(x => x.impact === "hold").length} ครั้ง · รวมเวลาที่เกิดปัญหา: ${Math.round(L.reduce((a, x) => a + (num(x.duration) || 0), 0))} นาที\n\n`;
+  t += `แยกตามหัวข้อปัญหา (ช่วงนี้ / ช่วงก่อน):\n` + cnt(L, x => cname(x.category)).map(([k, v]) => `- ${k}: ${v} / ${pc[k] || 0}`).join("\n") + "\n";
+  t += `\nแยกตามสาเหตุ: ${fmt(cnt(L, x => causeText(x)))}\nแยกตามหม้อ: ${fmt(cnt(L, x => x.retort))}\nแยกตามโปรแกรม: ${fmt(cnt(L, x => x.program ? "P" + x.program : "ไม่ระบุ"))}\nแยกตามพื้นที่: ${fmt(cnt(L, x => x.plant || "ไม่ระบุ"))}\nแยกตามกะ: ${fmt(cnt(L, x => x.shift))}\n`;
+  t += `\nรายการปัญหา (ใหม่ไปเก่า, สูงสุด 300 รายการ) รูปแบบ: วันที่ เวลา กะ | พื้นที่ หม้อ โปรแกรม | หัวข้อ | สาเหตุ | นาที | ผลต่อสินค้า | ค่าที่วัด | รายละเอียด | การแก้ไข\n`;
+  t += L.slice(0, 300).map(x => {
+    const c = catById(x.category); const vals = (c?.fields || []).filter(f => x.values?.[f.key]).map(f => `${f.label} ${x.values[f.key]}${f.unit || ""}`).join(", ");
+    return [`${x.date} ${x.time} ${x.shift}`, [x.plant, x.retort, x.program ? "P" + x.program + (x.programDoc ? "(" + x.programDoc + ")" : "") : ""].filter(Boolean).join(" "), cname(x.category), causeText(x) || "-", x.duration || "-", x.impact === "hold" ? "Hold" : "ไม่กระทบ", vals || "-", (x.detail || "-").replace(/\s+/g, " ").slice(0, 300), (x.action || "-").replace(/\s+/g, " ").slice(0, 300)].join(" | ");
+  }).join("\n");
+  const used = [...new Set(L.filter(x => x.programDoc && x.program).map(x => x.programDoc + "#" + x.program))].map(progByKey).filter(Boolean).slice(0, 25);
+  if (used.length) t += `\n\nค่าควบคุมของโปรแกรมที่ปรากฏในข้อมูล (จากเอกสาร Thermal Process Specification) รูปแบบ ขั้น:ช่วง อุณหภูมิ°C/เวลานาที/ความดันBar, XX = เวลาฆ่าเชื้อตามตารางผลิตภัณฑ์:\n` +
+    used.map(p => `- โปรแกรม ${p.no} (${p.doc} Rev.${docOf(p.doc)?.rev || ""}, ใช้กับ ${p.retorts.join(",")}${p.note ? ", " + p.note : ""}): ` + p.steps.map((s2, i) => `${i + 1}:${PHASE[s2[0]]} ${s2[1]}/${s2[2]}/${s2[3]}`).join("; ")).join("\n");
+  return { text: t, count: L.length };
+}
+function mdLite(s) {
+  const lines = esc(s).split("\n"); let h = "", list = "";
+  const inl = x => x.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  const close = () => { if (list) { h += `</${list}>`; list = ""; } };
+  lines.forEach(l => {
+    let m;
+    if ((m = l.match(/^\s*#{1,4}\s+(.*)$/))) { close(); h += `<h4>${inl(m[1])}</h4>`; }
+    else if ((m = l.match(/^\s*[-*•]\s+(.*)$/))) { if (list !== "ul") { close(); h += "<ul>"; list = "ul"; } h += `<li>${inl(m[1])}</li>`; }
+    else if ((m = l.match(/^\s*\d+[.)]\s+(.*)$/))) { if (list !== "ol") { close(); h += "<ol>"; list = "ol"; } h += `<li>${inl(m[1])}</li>`; }
+    else if (!l.trim()) { close(); }
+    else { close(); h += `<p>${inl(l)}</p>`; }
+  });
+  close(); return h;
+}
+async function aiStatus() { try { AI.status = await api("/api/retort/ai/status"); } catch (e) { if (e.status === 401) showLock(true); AI.status = { configured: false }; } }
+function viewAI() {
+  if (!AI.status) { $("#main").innerHTML = `<div class="card empty"><p class="sub">กำลังโหลด…</p></div>`; aiStatus().then(() => { if (S.view === "ai") viewAI(); }); return; }
+  const ctx = buildAiContext();
+  let h = "";
+  if (!AI.status.configured) h += `<div class="alert a-warn">${I("alert")}<div style="flex:1">ยังไม่ได้ตั้งค่า <b>AI API Key</b> · ผู้ดูแลตั้งค่าได้ที่หน้า <b>ตั้งค่า</b> (ใช้รหัสแก้ไข)</div><button class="pri sm" data-view-go2="settings">ไปตั้งค่า</button></div>`;
+  h += `<div class="card ai-head">${sec("spark", "ผู้ช่วย AI วิเคราะห์ปัญหา Retort", `วิเคราะห์จากข้อมูลที่บันทึกในช่วงที่เลือก (${ctx.count} รายการ)`)}
+    <div class="ai-opts"><div class="seg">${[["7", "7 วัน"], ["30", "30 วัน"], ["90", "90 วัน"]].map(([v, l]) => `<button data-airng="${v}" class="${AI.range === v ? "on" : ""}">${l}</button>`).join("")}</div>
+      <div class="seg">${[["all", "ทุกพื้นที่"], ...plantsList().map(p => [p, p])].map(([v, l]) => `<button data-aiplant="${v}" class="${AI.plant === v ? "on" : ""}">${l}</button>`).join("")}</div>
+      ${AI.msgs.length ? `<button class="ghost sm" id="aiClear">${I("trash")}เริ่มใหม่</button>` : ""}</div>
+    ${AI.msgs.length ? "" : `<div class="ai-quick">${AI_QUICK.map((q, i) => `<button class="chip" data-aiq="${i}">${esc(q)}</button>`).join("")}</div>`}</div>
+    <div class="ai-chat" id="aiChat">${AI.msgs.map(m => `<div class="ai-msg ${m.role}">${m.role === "ai" ? `<div class="ai-av">${I("spark")}</div>` : ""}<div class="ai-b">${m.role === "ai" ? mdLite(m.text) + (m.model ? `<div class="ai-meta">AI อาจผิดพลาดได้ ตรวจสอบกับข้อมูลจริงก่อนนำไปใช้</div>` : "") : esc(m.text)}</div></div>`).join("")}
+      ${AI.busy ? `<div class="ai-msg ai"><div class="ai-av">${I("spark")}</div><div class="ai-b"><span class="ai-dots"><i></i><i></i><i></i></span> กำลังวิเคราะห์…</div></div>` : ""}</div>
+    <form class="ai-input" id="aiForm"><textarea id="aiQ" rows="2" placeholder="ถามเกี่ยวกับปัญหา Retort เช่น ทำไม Main steam ตกบ่อยที่ RP12" ${AI.busy ? "disabled" : ""}></textarea><button class="pri" type="submit" ${AI.busy ? "disabled" : ""}>${I("send")}ถาม</button></form>`;
+  $("#main").innerHTML = h;
+  const m = $("#main");
+  m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.airng) { AI.range = b.dataset.airng; lsSet("rt_ai_range", AI.range); viewAI(); }
+    else if (b.dataset.aiplant) { AI.plant = b.dataset.aiplant; lsSet("rt_ai_plant", AI.plant); viewAI(); }
+    else if (b.dataset.aiq != null) askAI(AI_QUICK[+b.dataset.aiq]);
+    else if (b.id === "aiClear") { AI.msgs = []; viewAI(); }
+    else if (b.dataset.viewGo2) { S.view = b.dataset.viewGo2; lsSet("rt_view", S.view); render(); } };
+  $("#aiForm").onsubmit = e => { e.preventDefault(); const q = $("#aiQ").value.trim(); if (q) askAI(q); };
+  $("#aiQ").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#aiForm").requestSubmit(); } };
+  const ch = $("#aiChat"); if (AI.msgs.length) ch.lastElementChild?.scrollIntoView({ block: "nearest" });
+}
+async function askAI(q) {
+  if (AI.busy) return;
+  AI.msgs.push({ role: "user", text: q }); AI.busy = true; viewAI();
+  try {
+    const r = await jpost("/api/retort/ai", { context: buildAiContext().text, messages: AI.msgs.map(m => ({ role: m.role, text: m.text })) });
+    AI.msgs.push({ role: "ai", text: r.text, model: r.model });
+  } catch (e) {
+    if (e.status === 401) showLock(true);
+    AI.msgs.push({ role: "ai", text: "**เกิดข้อผิดพลาด:** " + e.message });
+  }
+  AI.busy = false; if (S.view === "ai") viewAI();
+}
+
+/* ---------- analysis ---------- */
+function granOf(from, to) {
+  const n = daysBetween(from, to) + 1; const g = S.f.gran || "auto";
+  if (g !== "auto") return g;
+  return n <= 10 ? "day" : n <= 200 ? "week" : "month";
+}
+function granBar(from, to) { const g = granOf(from, to); return `<div class="seg gran">${[["day","รายวัน"],["week","รายสัปดาห์"],["month","รายเดือน"]].map(([v, l]) => `<button data-gran="${v}" class="${g === v ? "on" : ""}">${l}</button>`).join("")}</div>`; }
+function wireGran() { document.querySelectorAll("[data-gran]").forEach(b => b.onclick = () => { S.f.gran = b.dataset.gran; lsSet("rt_filter", S.f); const y = window.scrollY; render(); window.scrollTo(0, y); }); }
+function bucketsOf(from, to) {
+  const n = daysBetween(from, to) + 1; const out = []; const g = granOf(from, to);
+  if (g === "day") { for (let i = 0; i < n; i++) { const d = addDays(from, i); out.push({ key: d, from: d, to: d, label: dmy(d).slice(0, 5) }); } return { unit: "วัน", list: out }; }
+  if (g === "week") {
+    let e = to; while (e >= from) { const st = addDays(e, -6) < from ? from : addDays(e, -6); out.unshift({ key: st, from: st, to: e, label: dmy(st).slice(0, 5) }); e = addDays(st, -1); }
+    return { unit: "สัปดาห์", list: out };
+  }
+  let d = new Date(from + "T00:00:00"); d.setDate(1);
+  const TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  while (iso(d) <= to) { const s = iso(d); const e = new Date(d); e.setMonth(e.getMonth() + 1); e.setDate(0); out.push({ key: s, from: s < from ? from : s, to: iso(e) > to ? to : iso(e), label: TH[d.getMonth()] + " " + String(d.getFullYear() + 543).slice(2) }); d.setMonth(d.getMonth() + 1); }
+  return { unit: "เดือน", list: out };
+}
+function groupSum(L, keyFn) { const m = new Map(); L.forEach(x => { const k = keyFn(x); m.set(k, (m.get(k) || 0) + metricOf(x)); }); return [...m.entries()].sort((a, b) => b[1] - a[1]); }
+function hbars(rows, total, colorFn, cum) {
+  if (!rows.length) return `<p class="sub">ไม่มีข้อมูล</p>`;
+  const max = rows[0][1] || 1; let acc = 0;
+  return rows.map(([k, v]) => { acc += v; const pct = total ? Math.round(v / total * 100) : 0; const cp = total ? Math.round(acc / total * 100) : 0;
+    return `<div class="hb" title="${esc(k)}: ${fmtN(v)}"><span class="n">${esc(k)}</span><span class="v">${fmtN(v)}<small>${pct}%${cum ? ` · สะสม ${cp}%` : ""}</small></span><div class="track"><div class="fill" style="width:${v / max * 100}%;background:${colorFn ? colorFn(k) : SERIES[0]}"></div></div></div>`; }).join("");
+}
+function modeBar() { return `<div class="seg mb" style="max-width:360px"><button data-mode="simple" class="${S.f.mode !== "detail" ? "on" : ""}">สรุปง่าย</button><button data-mode="detail" class="${S.f.mode === "detail" ? "on" : ""}">ละเอียด</button></div>`; }
+function wireMode() { document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { S.f.mode = b.dataset.mode; lsSet("rt_filter", S.f); render(); window.scrollTo(0, 0); }); }
+function viewSimple() {
+  const n = ["7", "30", "90"].includes(S.f.range) ? parseInt(S.f.range, 10) : 30;
+  const to = todayISO(), from = addDays(to, -(n - 1)), pTo = addDays(from, -1), pFrom = addDays(pTo, -(n - 1));
+  const inR = (x, a, b) => x.date >= a && x.date <= b; const all = Object.values(S.items);
+  const rets = [...new Set([...(S.config.retorts || []), ...all.map(x => x.retort).filter(Boolean)])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const sel = S.f.retort !== "all" && rets.includes(S.f.retort) ? S.f.retort : "all";
+  const okR = x => sel === "all" || x.retort === sel;
+  const Lall = all.filter(x => inR(x, from, to));
+  const L = Lall.filter(okR), P = all.filter(x => inR(x, pFrom, pTo) && okR(x));
+  const cnt = (arr, k) => { const m = {}; arr.forEach(x => { const v = k(x); m[v] = (m[v] || 0) + 1; }); return m; };
+  const cL = cnt(L, x => x.category), cP = cnt(P, x => x.category);
+  const top = Object.entries(cL).sort((a, b) => b[1] - a[1]);
+  const rL = Object.entries(cnt(Lall, x => x.retort || "-")).sort((a, b) => b[1] - a[1]);
+  const diff = L.length - P.length;
+  const chg = (a, b) => { const d = a - b; return d > 0 ? `<span class="chg up">${I("up")}${d}</span>` : d < 0 ? `<span class="chg down">${I("down")}${-d}</span>` : `<span class="chg">เท่าเดิม</span>`; };
+  const rising = Object.keys(cL).map(k => [k, (cL[k] || 0) - (cP[k] || 0)]).filter(x => x[1] >= 2).sort((a, b) => b[1] - a[1])[0];
+  let h = modeBar() + `<div class="seg mb" style="max-width:360px">${[["7","7 วัน"],["30","30 วัน"],["90","90 วัน"]].map(([v, l]) => `<button data-rng="${v}" class="${String(n) === v ? "on" : ""}">${l}</button>`).join("")}</div>
+    <div class="retbar"><span class="lab" style="margin:0 0 6px 2px">ดูหม้อ</span><div class="retscroll"><button data-sret="all" class="chip ${sel === "all" ? "on" : ""}">ทุกหม้อรวมกัน</button>${rets.map(r => `<button data-sret="${esc(r)}" class="chip ${sel === r ? "on" : ""}">${esc(r)}</button>`).join("")}</div></div>`;
+  if (!all.length) { $("#main").innerHTML = h + `<div class="card empty"><div class="ic">${I("chart")}</div><h2>ยังไม่มีข้อมูล</h2><p class="sub">เริ่มบันทึกปัญหาที่หน้า บันทึก แล้วสรุปจะขึ้นที่นี่</p></div>`; wireSimple(); return; }
+  const who = sel === "all" ? `ทุกหม้อ (${rets.length} หม้อ)` : sel;
+  h += `<div class="card hero"><div class="sub"><b style="color:var(--ink)">${esc(who)}</b> · ${n} วันที่ผ่านมา เกิดปัญหา</div><div class="big">${L.length} <span>ครั้ง</span></div>
+    <div class="cmp ${diff > 0 ? "up" : diff < 0 ? "down" : ""}">${diff > 0 ? `${I("up")}มากกว่า ${n} วันก่อนหน้า ${diff} ครั้ง` : diff < 0 ? `${I("down")}น้อยกว่า ${n} วันก่อนหน้า ${-diff} ครั้ง` : `เท่ากับ ${n} วันก่อนหน้า`} <span class="sub">(ก่อนหน้า ${P.length} ครั้ง)</span></div></div>`;
+  if (rising) h += `<div class="alert a-warn">${I("alert")}<div><b>ต้องจับตา:</b> ${esc(catById(rising[0])?.name || "")} เพิ่มขึ้น ${rising[1]} ครั้งจากช่วงก่อน</div></div>`;
+  h += `<div class="dgrid"><div class="card">${sec("bars", "เรื่องที่เกิดบ่อยที่สุด", "กดเพื่อดูสาเหตุ")}${top.length ? top.slice(0, 5).map(([k, v], i) => `<button class="rank" data-cat-go="${k}"><span class="rk r${i}">${i + 1}</span><span class="nm"><b>${esc(catById(k)?.name || "หัวข้อที่ถูกลบ")}</b><span class="track"><span class="fill" style="width:${v / top[0][1] * 100}%"></span></span></span><span class="ct"><b>${v}</b> ครั้ง${chg(v, cP[k] || 0)}</span></button>`).join("") : `<p class="sub">ช่วงนี้ไม่มีปัญหา</p>`}</div>
+    <div class="card">${sec("grid", sel === "all" ? "Retort ที่เกิดบ่อย" : `${esc(sel)} เทียบกับหม้ออื่น`, sel === "all" ? "กดเพื่อดูเฉพาะหม้อนั้น" : `${n} วันที่ผ่านมา`)}${(() => {
+      if (sel !== "all") { const idx = rL.findIndex(x => x[0] === sel); const pct = Lall.length ? Math.round(L.length / Lall.length * 100) : 0;
+        return `<div class="cmpbox"><div><b>${pct}%</b><span>ของปัญหาทุกหม้อ</span></div><div><b>${idx >= 0 ? "อันดับ " + (idx + 1) : "-"}</b><span>จาก ${rL.length} หม้อที่มีปัญหา</span></div></div><button class="soft blk" data-sret="all">ดูทุกหม้อรวมกัน</button>`; }
+      return rL.length ? rL.slice(0, 5).map(([k, v], i) => `<button class="rank" data-sret="${esc(k)}"><span class="rk">${i + 1}</span><span class="nm"><b>${esc(k)}</b><span class="track"><span class="fill" style="width:${v / rL[0][1] * 100}%"></span></span></span><span class="ct"><b>${v}</b> ครั้ง</span></button>`).join("") : `<p class="sub">-</p>`; })()}</div>
+    <div class="card span2">${sec("trend", `จำนวนปัญหาตามเวลา · ${esc(sel === "all" ? "ทุกหม้อ" : sel)}`, "")}${granBar(from, to)}<div class="chart" style="height:220px"><div class="svgc" id="cSimple"></div></div></div></div>`;
+  $("#main").innerHTML = h; wireSimple(); wireGran();
+  const B = bucketsOf(from, to);
+  svgChart($("#cSimple"), B, [{ name: "จำนวนปัญหา", color: SERIES[0], data: B.list.map(b => L.filter(x => x.date >= b.from && x.date <= b.to).length) }], v => `${v} ครั้ง`, true);
+}
+function wireSimple() {
+  wireMode();
+  document.querySelectorAll("[data-rng]").forEach(b => b.onclick = () => { S.f.range = b.dataset.rng; lsSet("rt_filter", S.f); render(); });
+  document.querySelectorAll("[data-cat-go]").forEach(b => b.onclick = () => { S.f.mode = "detail"; S.f.cat = b.dataset.catGo; lsSet("rt_filter", S.f); render(); window.scrollTo(0, 0); });
+  document.querySelectorAll("[data-sret]").forEach(b => b.onclick = () => { S.f.retort = b.dataset.sret; lsSet("rt_filter", S.f); const y = window.scrollY; render(); window.scrollTo(0, y); });
+}
+/* ---------- วิเคราะห์: Dashboard แบบหน้า Process Control / GMP ---------- */
+const TH_MON = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+const TH_DOW = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+const thShort = s => { const d = new Date(s + "T00:00:00"); return `${d.getDate()} ${TH_MON[d.getMonth()]}`; };
+const thLong = s => { const d = new Date(s + "T00:00:00"); return `${d.getDate()} ${TH_MON[d.getMonth()]} ${d.getFullYear() + 543}`; };
+const dayList = (a, b) => { const out = []; for (let d = a; d <= b; d = addDays(d, 1)) out.push(d); return out; };
+function dashState() {
+  const D = S.d || (S.d = Object.assign({ n: 14, f1: "", t1: "", f2: "", t2: "", plant: "all", by: "cat", metric: "count" }, lsGet("rt_dash", {})));
+  return D;
+}
+const saveDash = () => lsSet("rt_dash", S.d);
+function dashRanges() {
+  const D = dashState(), t = todayISO();
+  const [f1, t1] = D.f1 && D.t1 && D.f1 <= D.t1 ? [D.f1, D.t1] : [addDays(t, -((+D.n || 14) - 1)), t];
+  const span = daysBetween(f1, t1) + 1;
+  const [f2, t2] = D.f2 && D.t2 && D.f2 <= D.t2 ? [D.f2, D.t2] : [addDays(f1, -span), addDays(f1, -1)];
+  return { f1, t1, f2, t2, custom2: !!(D.f2 && D.t2) };
+}
+const dmv = x => S.d.metric === "minutes" ? (num(x.duration) || 0) : 1;
+const dfmt = v => S.d.metric === "minutes" ? `${Math.round(v)} นาที` : `${v} ครั้ง`;
+const dunit = () => S.d.metric === "minutes" ? "นาที" : "ครั้ง";
+function dItems(from, to, plant) { return Object.values(S.items).filter(x => x.date >= from && x.date <= to && (plant === "all" || x.plant === plant)); }
+function dKey(x) { return S.d.by === "retort" ? (x.retort || "-") : x.category; }
+function dName(k) { return S.d.by === "retort" ? k : (catById(k)?.name || "หัวข้อที่ถูกลบ"); }
+function dSub(k, L) {
+  if (S.d.by === "retort") { const ps = [...new Set(L.filter(x => (x.retort || "-") === k).map(x => x.plant).filter(Boolean))]; return ps.join(", ") || "ไม่ระบุพื้นที่"; }
+  return grpOf(catById(k)).name;
+}
+const sumBy = (L, f) => { const m = {}; L.forEach(x => { const k = f(x); m[k] = (m[k] || 0) + dmv(x); }); return m; };
+function chgPill(a, b, big) {
+  const d = a - b; if (!a && !b) return `<span class="cpill z">–</span>`;
+  const t = S.d.metric === "minutes" ? Math.round(Math.abs(d)) : Math.abs(d);
+  return d > 0 ? `<span class="cpill up">▲ +${t}</span>` : d < 0 ? `<span class="cpill dn">▼ -${t}</span>` : `<span class="cpill z">เท่าเดิม</span>`;
+}
+function viewAnalyze() {
+  const D = dashState(); const R = dashRanges();
+  if (!Object.keys(S.items).length) {
+    $("#main").innerHTML = `<div class="card empty"><div class="ic">${I("chart")}</div><h2>ยังไม่มีข้อมูลให้วิเคราะห์</h2><p class="sub">เริ่มบันทึกปัญหาที่หน้า บันทึก แล้วกลับมาดูที่นี่</p><button class="pri" data-go-log style="margin-top:12px">${I("plus")}บันทึกปัญหา</button></div>`;
+    $("[data-go-log]").onclick = () => { S.view = "log"; render(); }; return;
+  }
+  const plants = plantsList();
+  const A1 = dItems(R.f1, R.t1, "all");
+  const L1 = dItems(R.f1, R.t1, D.plant), L2 = dItems(R.f2, R.t2, D.plant);
+  const tot1 = L1.reduce((a, x) => a + dmv(x), 0), tot2 = L2.reduce((a, x) => a + dmv(x), 0);
+  const days1 = daysBetween(R.f1, R.t1) + 1, days2 = daysBetween(R.f2, R.t2) + 1;
+  const m1 = sumBy(L1, dKey), m2 = sumBy(L2, dKey);
+  const keys = [...new Set([...Object.keys(m1), ...Object.keys(m2)])];
+  const rows = keys.map(k => ({ k, a: m1[k] || 0, b: m2[k] || 0 })).filter(r => r.a > 0 || r.b > 0).sort((p, q) => q.a - p.a || q.b - p.b);
+  const worst = [...rows].filter(r => r.a - r.b > 0).sort((p, q) => (q.a - q.b) - (p.a - p.b))[0];
+  const best = [...rows].filter(r => r.a - r.b < 0).sort((p, q) => (p.a - p.b) - (q.a - q.b))[0];
+  const diff = tot1 - tot2, pct = tot2 ? Math.round(diff / tot2 * 100) : null;
+  const plantLabel = D.plant === "all" ? "ทุกพื้นที่" : D.plant;
+  const byLabel = D.by === "retort" ? "แยกตามหม้อ" : "แยกตามปัญหา";
+  const pr = `${thShort(R.f1)} – ${thShort(R.t1)}`, pr2 = `${thShort(R.f2)} – ${thShort(R.t2)}`;
+  let h = `<div class="dash">
+  <div class="dhead"><div class="dh-l"><b>Dashboard</b><span>วิเคราะห์ปัญหา Retort ย้อนหลัง · เทียบ 2 ช่วง · แตะรายการเพื่อดูกราฟแนวโน้ม</span></div></div>
+  <div class="drange">
+    <div class="rcard"><div class="rc-h"><span class="rlab r1">ช่วงที่ 1</span><span class="rc-d">${pr} · ${days1} วัน</span><div class="seg dseg">${[7, 14, 30, 90].map(n => `<button data-dn="${n}" class="${!D.f1 && +D.n === n ? "on" : ""}">${n} วัน</button>`).join("")}</div></div>
+      <div class="rc-b"><span class="rc-or">หรือเลือกวันที่</span><div class="rc-dates"><input type="date" id="dF1" value="${R.f1}"><span>–</span><input type="date" id="dT1" value="${R.t1}"><button class="pri sm" id="dGo1">แสดง</button></div></div></div>
+    <div class="rcard"><div class="rc-h"><span class="rlab r2">ช่วงที่ 2 (เทียบ)</span><span class="rc-d">${pr2} · ${days2} วัน</span><div class="seg dseg"><button id="dPrev" class="${R.custom2 ? "" : "on"}">ช่วงก่อนหน้า</button></div></div>
+      <div class="rc-b"><span class="rc-or">หรือเลือกวันที่</span><div class="rc-dates"><input type="date" id="dF2" value="${R.f2}"><span>–</span><input type="date" id="dT2" value="${R.t2}"><button class="pri sm" id="dGo2">เทียบ</button></div></div></div>
+  </div>
+  <div class="dtitle"><div><h2>ปัญหาที่พบบ่อย <em>Top 10</em></h2><div class="sub">${byLabel} · ${plantLabel} · ${days1} วันล่าสุด (${pr})</div></div>
+    <div class="seg dseg2">${[["cat", "ตามปัญหา"], ["retort", "ตามหม้อ"]].map(([v, l]) => `<button data-dby="${v}" class="${D.by === v ? "on" : ""}">${l}</button>`).join("")}</div></div>
+  <div class="dpanel">
+    <div class="dp-h"><span class="dp-ic">${I("bars")}</span>
+      ${[...plants, "all"].map(p => { const n = A1.filter(x => p === "all" || x.plant === p).reduce((a, x) => a + dmv(x), 0);
+        return `<button class="pchip ${D.plant === p ? "on" : ""}" data-dpl="${esc(p)}">${p === "all" ? "ทุกพื้นที่" : esc(p)}<span>${S.d.metric === "minutes" ? Math.round(n) : n}</span></button>`; }).join("")}
+      <div class="seg dseg3">${[["count", "จำนวนครั้ง"], ["minutes", "รวมนาที"]].map(([v, l]) => `<button data-dm="${v}" class="${D.metric === v ? "on" : ""}">${l}</button>`).join("")}</div>
+    </div>
+    <div class="dp-b">
+      <div class="dkpis">
+        <div class="dk"><small>ช่วงที่ 1 · ${pr}</small><b class="c1">${S.d.metric === "minutes" ? Math.round(tot1) : tot1} <i>${dunit()}</i></b><span>เฉลี่ย ${(tot1 / days1).toFixed(1)} ${dunit()}/วัน · ${days1} วัน</span></div>
+        <div class="dk"><small>ช่วงที่ 2 · ${pr2}</small><b class="c2">${S.d.metric === "minutes" ? Math.round(tot2) : tot2} <i>${dunit()}</i></b><span>เฉลี่ย ${(tot2 / days2).toFixed(1)} ${dunit()}/วัน · ${days2} วัน</span></div>
+        <div class="dk ${diff > 0 ? "bad" : diff < 0 ? "good" : ""}"><small>${esc(plantLabel)} · ภาพรวม</small><b>${diff > 0 ? "▲" : diff < 0 ? "▼" : ""} ${pct == null ? (diff ? Math.abs(S.d.metric === "minutes" ? Math.round(diff) : diff) + " " + dunit() : "0%") : Math.abs(pct) + "%"}</b><span>${diff > 0 ? "พบปัญหาเพิ่มขึ้น (แย่ลง)" : diff < 0 ? "พบปัญหาลดลง (ดีขึ้น)" : "เท่าเดิม"}</span></div>
+      </div>
+      <div class="dwb">
+        <div class="dwb-c bad">${worst ? `<small>▲ แย่ลงมากที่สุด</small><b>${esc(dName(worst.k))}</b><span class="sub">${esc(dSub(worst.k, [...L1, ...L2]))}</span><div>${dfmt(worst.b)} → <b>${dfmt(worst.a)}</b> ${chgPill(worst.a, worst.b)}</div>` : `<small>▲ แย่ลงมากที่สุด</small><b class="muted">ไม่มีรายการที่แย่ลง</b>`}</div>
+        <div class="dwb-c good">${best ? `<small>▼ ดีขึ้นมากที่สุด</small><b>${esc(dName(best.k))}</b><span class="sub">${esc(dSub(best.k, [...L1, ...L2]))}</span><div>${dfmt(best.b)} → <b>${dfmt(best.a)}</b> ${chgPill(best.a, best.b)}</div>` : `<small>▼ ดีขึ้นมากที่สุด</small><b class="muted">ไม่มีรายการที่ดีขึ้น</b>`}</div>
+      </div>
+      ${cmpBars(rows.slice(0, 10), pr, pr2, [...L1, ...L2])}
+    </div>
+  </div>
+  ${heatSection(R, L1, L2)}
+  ${moreSection(L1, tot1)}
+  </div>`;
+  $("#main").innerHTML = h; wireDash();
+}
+function cmpBars(rows, pr, pr2, L) {
+  if (!rows.length) return `<div class="empty"><div class="ic">${I("check")}</div><h3>ไม่พบปัญหาในช่วงที่เลือก</h3></div>`;
+  const mx = Math.max(1, ...rows.flatMap(r => [r.a, r.b]));
+  const st = mx <= 4 ? 1 : Math.ceil(mx / 4); const top = Math.ceil(mx / st) * st; const ticks = []; for (let v = 0; v <= top; v += st) ticks.push(v);
+  return `<div class="cb-leg"><span><i class="c1"></i><b>ช่วงที่ 1</b> ${pr}</span><span><i class="c2"></i><b>ช่วงที่ 2</b> ${pr2}</span><em>เรียงตามจำนวนช่วงนี้ · ▲ แย่ลง ▼ ดีขึ้น · แตะเพื่อดูแนวโน้ม</em></div>
+  <div class="cb">
+    <div class="cb-row cb-ax"><span></span><span class="cb-track">${ticks.map(v => `<i style="left:${v / top * 100}%">${v}</i>`).join("")}</span><span class="cb-ch">เปลี่ยนแปลง</span></div>
+    ${rows.map((r, i) => `<button class="cb-row" data-trend="${esc(r.k)}"><span class="cb-n"><em>${i + 1}</em><span><b>${esc(dName(r.k))}</b><small>${esc(dSub(r.k, L))}</small></span></span>
+      <span class="cb-track">${ticks.map(v => `<s style="left:${v / top * 100}%"></s>`).join("")}
+        <span class="bar1" style="width:${r.a / top * 100}%"></span><label class="v1" style="left:${r.a / top * 100}%">${S.d.metric === "minutes" ? Math.round(r.a) : r.a}</label>
+        <span class="bar2" style="width:${r.b / top * 100}%"></span><label class="v2" style="left:${r.b / top * 100}%">${S.d.metric === "minutes" ? Math.round(r.b) : r.b}</label></span>
+      <span class="cb-ch">${chgPill(r.a, r.b)}</span></button>`).join("")}
+  </div>`;
+}
+function heatSection(R, L1, L2) {
+  const days = dayList(R.f1, R.t1).slice(-31);
+  const m1 = sumBy(L1, dKey), m2 = sumBy(L2, dKey);
+  const keys = Object.keys(m1).filter(k => m1[k] > 0).sort((a, b) => m1[b] - m1[a]);
+  if (!keys.length) return "";
+  const groups = {};
+  keys.forEach(k => { const g = S.d.by === "retort" ? (dSub(k, L1).split(",")[0] || "อื่นๆ") : (catById(k)?.grp || "other"); (groups[g] = groups[g] || []).push(k); });
+  const gOrder = Object.keys(groups).sort((a, b) => groups[b].reduce((s, k) => s + m1[k], 0) - groups[a].reduce((s, k) => s + m1[k], 0));
+  const cell = {}; L1.forEach(x => { const k = dKey(x) + "|" + x.date; cell[k] = (cell[k] || 0) + dmv(x); });
+  const mxc = Math.max(1, ...Object.values(cell));
+  const head = `<tr><th class="hn"></th>${days.map(d => { const dt = new Date(d + "T00:00:00"); return `<th class="hd${dt.getDay() === 0 ? " sun" : ""}"><small>${TH_DOW[dt.getDay()]}</small>${dt.getDate()}/${dt.getMonth() + 1}</th>`; }).join("")}<th class="hx">รวม</th><th class="hx">หม้อที่พบบ่อย</th><th class="hx">เทียบช่วง 2</th></tr>`;
+  const topRet = k => { const m = {}; L1.filter(x => dKey(x) === k).forEach(x => { const r = S.d.by === "retort" ? (causeText(x) || "-") : (x.retort || "-"); m[r] = (m[r] || 0) + 1; }); const e = Object.entries(m).sort((a, b) => b[1] - a[1])[0]; return e ? `${e[0]} (${e[1]})` : "-"; };
+  return gOrder.map(g => { const ks = groups[g]; const G = S.d.by === "retort" ? { name: g, color: "#1b2a41", icon: "factory" } : (GROUPS[g] || GROUPS.other);
+    const gt = ks.reduce((s, k) => s + m1[k], 0);
+    return `<div class="hgrp" style="--gc:${G.color}"><div class="hg-h"><span class="gic">${I(G.icon)}</span><b>${esc(G.name)}</b><span class="hchip bad">พบ ${dfmt(gt)}</span><span class="hchip">${ks.length} ${S.d.by === "retort" ? "หม้อ" : "หัวข้อ"}ที่พบปัญหา</span></div>
+      <div class="tscroll"><table class="heat">${head}${ks.map((k, i) => `<tr data-trend="${esc(k)}"><td class="hn">${S.d.by === "retort" ? `<small>${esc(dSub(k, L1))}</small>` : ""}<span><em>${i + 1}</em>${esc(dName(k))}</span></td>
+        ${days.map(d => { const v = cell[k + "|" + d] || 0; return v ? `<td class="hc on" style="--a:${(0.3 + 0.7 * v / mxc).toFixed(2)}" title="${thLong(d)} · ${dfmt(v)}">${S.d.metric === "minutes" ? Math.round(v) : v}</td>` : `<td class="hc"></td>`; }).join("")}
+        <td class="hx"><b>${S.d.metric === "minutes" ? Math.round(m1[k]) : m1[k]}</b></td><td class="hx small">${esc(S.d.by === "retort" ? "" : topRet(k))}</td><td class="hx">${chgPill(m1[k], m2[k] || 0)}</td></tr>`).join("")}</table></div></div>`; }).join("")
+    + (dayList(R.f1, R.t1).length > 31 ? `<p class="sub" style="margin:-4px 4px 12px">ตารางรายวันแสดง 31 วันล่าสุดของช่วงที่ 1</p>` : "");
+}
+function moreSection(L, total) {
+  if (!L.length) return "";
+  const byCause = groupSum(L, x => causeText(x) || "ไม่ระบุ").map(([k]) => [k, L.filter(x => (causeText(x) || "ไม่ระบุ") === k).reduce((a, x) => a + dmv(x), 0)]).sort((a, b) => b[1] - a[1]);
+  const g = f => { const m = {}; L.forEach(x => { const k = f(x); m[k] = (m[k] || 0) + dmv(x); }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const fm = v => dfmt(v);
+  const hb = (rows) => rows.map(([n, v]) => `<div class="hb"><span class="n">${esc(n)}</span><span class="v">${S.d.metric === "minutes" ? Math.round(v) : v}<small>${total ? Math.round(v / total * 100) : 0}%</small></span><span class="track"><span class="fill" style="width:${total ? v / total * 100 : 0}%"></span></span></div>`).join("");
+  return `<div class="dgrid" style="margin-top:4px">
+    <div class="card">${sec("tool", "สาเหตุที่พบบ่อย", "ช่วงที่ 1")}${hb(byCause.slice(0, 10))}</div>
+    <div class="card">${sec("clock", "แยกตามกะ / โปรแกรม", "ช่วงที่ 1")}${hb(g(x => "กะ " + x.shift))}<div style="margin-top:14px">${hb(g(x => x.program ? "โปรแกรม " + x.program : "ไม่ระบุโปรแกรม").slice(0, 8))}</div>
+      <div class="sub" style="margin-top:10px">Hold สินค้า ${L.filter(x => x.impact === "hold").length} ครั้ง · อนุมัติแล้ว ${L.filter(x => x.approvedBy).length}/${L.length}</div></div>
+  </div>`;
+}
+function wireDash() {
+  const D = S.d; const m = $("#main"); const re = () => { saveDash(); viewAnalyze(); };
+  m.onclick = e => {
+    const b = e.target.closest("button,[data-trend]"); if (!b) return; const ds = b.dataset;
+    if (ds.dn) { D.n = +ds.dn; D.f1 = D.t1 = ""; re(); }
+    else if (ds.dby) { D.by = ds.dby; re(); }
+    else if (ds.dpl) { D.plant = ds.dpl; re(); }
+    else if (ds.dm) { D.metric = ds.dm; re(); }
+    else if (b.id === "dGo1") { const f = $("#dF1").value, t = $("#dT1").value; if (!f || !t || f > t) return toast("เลือกวันที่ให้ถูกต้อง"); D.f1 = f; D.t1 = t; re(); }
+    else if (b.id === "dPrev") { D.f2 = D.t2 = ""; re(); }
+    else if (b.id === "dGo2") { const f = $("#dF2").value, t = $("#dT2").value; if (!f || !t || f > t) return toast("เลือกวันที่ให้ถูกต้อง"); D.f2 = f; D.t2 = t; re(); }
+    else if (ds.trend != null) trendModal(ds.trend, "sel");
+  };
+}
+/* ---------- ป๊อปอัปกราฟแนวโน้ม (กราฟแท่งรายวัน) ---------- */
+function trendModal(k, span) {
+  const D = S.d, R = dashRanges(), t = todayISO();
+  const [from, to] = span === "sel" ? [R.f1, R.t1] : [addDays(t, -(+span - 1)), t];
+  const L = dItems(from, to, D.plant).filter(x => dKey(x) === k);
+  const days = dayList(from, to); const weekly = days.length > 45;
+  const buckets = weekly ? (() => { const out = []; for (let i = 0; i < days.length; i += 7) { const ds = days.slice(i, i + 7); out.push({ from: ds[0], to: ds[ds.length - 1] }); } return out; })() : days.map(d => ({ from: d, to: d }));
+  buckets.forEach(b => { const xs = L.filter(x => x.date >= b.from && x.date <= b.to); b.v = xs.reduce((a, x) => a + dmv(x), 0); b.n = xs.length; });
+  const tot = L.reduce((a, x) => a + dmv(x), 0);
+  const half = Math.floor(days.length / 2), mid = days[half] || to;
+  const h1 = L.filter(x => x.date < mid).reduce((a, x) => a + dmv(x), 0), h2 = L.filter(x => x.date >= mid).reduce((a, x) => a + dmv(x), 0);
+  const pdays = [...new Set(L.map(x => x.date))].sort().reverse();
+  const mx = Math.max(1, ...buckets.map(b => b.v)); const st = mx <= 5 ? 1 : Math.ceil(mx / 5); const top = Math.ceil(mx / st) * st;
+  const W = Math.max(buckets.length * 44, 600), H = 240, PL = 34, PB = 26, PT = 22;
+  const bw = (W - PL - 10) / buckets.length;
+  let svg = ""; for (let v = 0; v <= top; v += st) { const y = PT + (H - PT - PB) * (1 - v / top); svg += `<line x1="${PL}" x2="${W - 6}" y1="${y}" y2="${y}" stroke="#eef2f6"/><text x="${PL - 8}" y="${y + 4}" text-anchor="end" class="ax">${v}</text>`; }
+  const every = Math.ceil(buckets.length / 24);
+  buckets.forEach((b, i) => { const x = PL + i * bw + bw * 0.15, w = bw * 0.7, hh = (H - PT - PB) * b.v / top, y = H - PB - hh;
+    if (b.v) svg += `<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="4" fill="#f87171"><title>${weekly ? `${thShort(b.from)} – ${thShort(b.to)}` : thLong(b.from)} · ${dfmt(b.v)}</title></rect><text x="${x + w / 2}" y="${y - 6}" text-anchor="middle" class="bv">${S.d.metric === "minutes" ? Math.round(b.v) : b.v}</text>`;
+    else svg += `<rect x="${x}" y="${H - PB - 4}" width="${w}" height="4" rx="2" fill="#bbf7d0"/>`;
+    if (!(i % every)) { const d = new Date(b.from + "T00:00:00"); svg += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle" class="ax">${d.getDate()}/${d.getMonth() + 1}</text>`; } });
+  const causes = Object.entries(L.reduce((m, x) => { const c = S.d.by === "retort" ? (catById(x.category)?.name || "-") : (causeText(x) || "ไม่ระบุ"); m[c] = (m[c] || 0) + dmv(x); return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const rets = Object.entries(L.reduce((m, x) => { const c = S.d.by === "retort" ? (causeText(x) || "ไม่ระบุ") : (x.retort || "-"); m[c] = (m[c] || 0) + dmv(x); return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const hb = rows => rows.map(([n, v]) => `<div class="hb"><span class="n">${esc(n)}</span><span class="v">${S.d.metric === "minutes" ? Math.round(v) : v}</span><span class="track"><span class="fill" style="width:${tot ? v / tot * 100 : 0}%;background:#ef4444"></span></span></div>`).join("") || `<p class="sub">ไม่มีข้อมูล</p>`;
+  const tr = h1 || h2 ? (h2 > h1 ? `<b class="up">▲ แย่ลง</b>` : h2 < h1 ? `<b class="dn">▼ ดีขึ้น</b>` : `<b>เท่าเดิม</b>`) : `<b>–</b>`;
+  modal(`<div class="tm-h"><div><small>${esc(D.plant === "all" ? "ทุกพื้นที่" : D.plant)} · ${esc(dSub(k, L))} · กราฟแนวโน้ม</small><h2>${esc(dName(k))}</h2></div><button class="tm-x" data-close>${I("x")}</button></div>
+    <div class="seg tm-seg">${[["sel", `ช่วงที่เลือก (${daysBetween(R.f1, R.t1) + 1} วัน)`], ["30", "30 วัน"], ["60", "60 วัน"], ["90", "90 วัน"]].map(([v, l]) => `<button data-tspan="${v}" class="${String(span) === v ? "on" : ""}">${l}</button>`).join("")}</div>
+    <div class="tm-k">
+      <div><small>จำนวนที่พบ</small><b class="bad">${S.d.metric === "minutes" ? Math.round(tot) : tot}</b><span>${dunit()} · ${thShort(from)} – ${thShort(to)}</span></div>
+      <div><small>แนวโน้ม</small>${tr}<span>เทียบครึ่งแรกกับครึ่งหลังของช่วง</span></div>
+      <div><small>ครึ่งแรก → ครึ่งหลัง</small><b>${S.d.metric === "minutes" ? Math.round(h1) : h1} → ${S.d.metric === "minutes" ? Math.round(h2) : h2}</b><span>${half} วัน vs ${days.length - half} วัน</span></div>
+      <div><small>วันที่พบปัญหา</small><b>${pdays.length}/${days.length}</b><span>${pdays[0] ? "ล่าสุด " + thLong(pdays[0]) : "ไม่พบในช่วงนี้"}</span></div>
+    </div>
+    <div class="tm-c"><div class="cb-leg" style="margin:0 0 6px"><span><i style="background:#f87171"></i>พบปัญหา (${dunit()})</span><span><i style="background:#bbf7d0"></i>ไม่พบ</span>${weekly ? "<em>ช่วงยาว แสดงเป็นรายสัปดาห์</em>" : ""}</div>
+      <div class="tscroll"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W, 900)}px;height:${H}px" preserveAspectRatio="none">${svg}</svg></div></div>
+    <div class="grid" style="margin-top:12px"><div>${sec("tool", S.d.by === "retort" ? "ปัญหาที่พบ" : "สาเหตุที่พบ")}${hb(causes)}</div><div>${sec(S.d.by === "retort" ? "list" : "grid", S.d.by === "retort" ? "สาเหตุที่พบ" : "หม้อที่พบ")}${hb(rets)}</div></div>
+    <h3 style="margin:16px 0 8px">วันที่พบปัญหา <span class="sub" style="font-weight:400">(แตะเพื่อดูรายการ)</span></h3>
+    <div class="tm-days">${pdays.map(d => `<button class="chip" data-tday="${d}">${thLong(d)}</button>`).join("") || `<p class="sub">ไม่พบปัญหาในช่วงนี้</p>`}</div>
+    <div id="tmList"></div>`, box => {
+    box.parentElement.classList.add("center");
+    box.querySelectorAll("[data-tspan]").forEach(b => b.onclick = () => trendModal(k, b.dataset.tspan));
+    box.querySelectorAll("[data-tday]").forEach(b => b.onclick = () => {
+      box.querySelectorAll("[data-tday]").forEach(x => x.classList.toggle("on", x === b));
+      const xs = L.filter(x => x.date === b.dataset.tday).sort((a, c) => a.time.localeCompare(c.time));
+      box.querySelector("#tmList").innerHTML = `<div class="card" style="margin-top:10px">${xs.map(itemRow).join("")}</div>`;
+      box.querySelectorAll("#tmList [data-edit]").forEach(it => it.onclick = () => { closeModal(); showItem(it.dataset.edit); });
+    });
+  }, "wide");
+}
+function crossTable(L) {
+  if (!L.length) return `<p class="sub">ไม่มีข้อมูล</p>`;
+  const lab = S.f.cat === "all" ? (x => catById(x.category)?.name || "หัวข้อที่ถูกลบ") : (x => causeText(x) || "ไม่ระบุ");
+  const causes = groupSum(L, lab).map(x => x[0]).slice(0, 15);
+  const rets = [...new Set(L.map(x => x.retort || "-"))].sort();
+  const cnt = (c, r) => L.filter(x => lab(x) === c && (x.retort || "-") === r).length;
+  return `<table class="tbl"><thead><tr><th>${S.f.cat === "all" ? "ปัญหา" : "สาเหตุ"}</th>${rets.map(r => `<th style="text-align:right">${esc(r)}</th>`).join("")}<th style="text-align:right">รวม</th></tr></thead><tbody>
+    ${causes.map(c => { const vals = rets.map(r => cnt(c, r)); const mx = Math.max(...vals);
+      return `<tr><td>${esc(c)}</td>${vals.map(v => `<td class="num" style="${v && v === mx && rets.length > 1 ? "font-weight:600;color:var(--bad)" : v ? "" : "color:#cbd5e1"}">${v || "·"}</td>`).join("")}<td class="num" style="font-weight:600">${vals.reduce((a, b) => a + b, 0)}</td></tr>`; }).join("")}
+  </tbody></table>`;
+}
+function drawTrend(L, B) {
+  const el = $("#cTrend"); if (!el) return;
+  const byCat = S.f.cat === "all";
+  let keys = byCat ? catRank().filter(id => L.some(x => x.category === id)) : groupSum(L, x => causeText(x) || "ไม่ระบุ").map(x => x[0]);
+  const keyOf = x => byCat ? x.category : (causeText(x) || "ไม่ระบุ");
+  let other = false; if (keys.length > 6) { keys = keys.slice(0, 5); other = true; }
+  if (byCat) { const top = catRank().slice(0, 5); const extra = keys.filter(k => !top.includes(k)); keys = keys.filter(k => top.includes(k)); other = other || extra.length > 0; }
+  const series = keys.map((k, i) => ({ k, name: byCat ? (catById(k)?.name || k) : k, color: byCat ? catColor(k) : SERIES[i] }));
+  if (other) series.push({ k: "__other", name: "อื่นๆ", color: OTHER });
+  const inS = new Set(keys);
+  series.forEach(sr => sr.data = B.list.map(b => L.filter(x => x.date >= b.from && x.date <= b.to && (sr.k === "__other" ? !inS.has(keyOf(x)) : keyOf(x) === sr.k)).reduce((a, x) => a + metricOf(x), 0)));
+  $("#lTrend").innerHTML = series.length > 1 ? series.map(s => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("") : "";
+  svgChart(el, B, series, fmtN, series.length === 1);
+}
+/* กราฟเส้น SVG (ไม่ต้องโหลดไลบรารีภายนอก) · ชี้/แตะเพื่อดูตัวเลข */
+function svgChart(el, B, series, fmt, area) {
+  if (!el) return;
+  const W = Math.max(280, el.clientWidth || 600), H = Math.max(160, el.clientHeight || 240), L = 34, R = 10, T = 10, Bt = 26;
+  const n = B.list.length, max = Math.max(1, ...series.flatMap(s => s.data));
+  const step = max <= 5 ? 1 : Math.ceil(max / 5 / (max > 50 ? 10 : max > 20 ? 5 : 1)) * (max > 50 ? 10 : max > 20 ? 5 : 1), top = Math.ceil(max / step) * step;
+  const x = i => L + (n <= 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1)), y = v => T + (H - T - Bt) * (1 - v / top);
+  let g = "";
+  for (let v = 0; v <= top; v += step) g += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v)}</text>`;
+  const every = Math.ceil(n / Math.max(1, Math.floor((W - L - R) / 52)));
+  B.list.forEach((b, i) => { if (!((n - 1 - i) % every)) g += `<text class="ax" x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(b.label)}</text>`; });
+  series.forEach(s => {
+    const pts = s.data.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+    if (area) g += `<path d="M${x(0)},${y(0)} L${pts.join(" L")} L${x(n - 1)},${y(0)} Z" fill="${s.color}" opacity=".12"/>`;
+    g += `<polyline fill="none" stroke="${s.color}" stroke-width="${area ? 2.5 : 2}" stroke-linejoin="round" stroke-linecap="round" points="${pts.join(" ")}"/>`;
+    if (n <= 40) g += s.data.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="#fff" stroke="${s.color}" stroke-width="2"/>`).join("");
+  });
+  g += `<line class="xh" y1="${T}" y2="${H - Bt}" stroke="#94a3b8" stroke-dasharray="3 3" visibility="hidden"/>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${g}<rect x="${L - 10}" y="0" width="${W - L - R + 20}" height="${H - Bt}" fill="transparent"/></svg><div class="tip"></div>`;
+  const svg = el.querySelector("svg"), tip = el.querySelector(".tip"), xh = el.querySelector(".xh");
+  const move = e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) * W / r.width;
+    const i = n <= 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round((sx - L) / ((W - L - R) / (n - 1)))));
+    const b = B.list[i], px = x(i);
+    xh.setAttribute("x1", px); xh.setAttribute("x2", px); xh.setAttribute("visibility", "visible");
+    const rows = series.filter(s => s.data[i] > 0 || series.length === 1);
+    tip.innerHTML = `<b>${b.from === b.to ? dmy(b.from) : `${dmy(b.from)} – ${dmy(b.to)}`}</b>` + rows.map(s => `<div><i style="background:${s.color}"></i>${series.length > 1 ? esc(s.name) + ": " : ""}${fmt(s.data[i])}</div>`).join("") +
+      (series.length > 1 ? `<div style="opacity:.8">รวม ${fmt(series.reduce((a, s) => a + s.data[i], 0))}</div>` : "");
+    tip.style.display = "block";
+    const left = px * r.width / W; tip.style.left = Math.min(Math.max(0, left + 12), el.clientWidth - tip.offsetWidth) + "px"; tip.style.top = "4px";
+  };
+  svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move);
+  svg.addEventListener("pointerleave", () => { tip.style.display = "none"; xh.setAttribute("visibility", "hidden"); });
+}
+
+/* ---------- CSV ---------- */
+async function exportCsv(L, from, to) {
+  const fieldsAll = []; S.config.categories.forEach(c => (c.fields || []).forEach(f => { if (!fieldsAll.some(x => x.key === f.key)) fieldsAll.push(f); }));
+  const head = ["วันที่", "เวลา", "กะ", "พื้นที่", "หม้อ", "โปรแกรม", "เอกสารโปรแกรม", "สินค้า", "Batch", "หัวข้อ", "สาเหตุ", ...fieldsAll.map(f => `${f.label}${f.unit ? ` (${f.unit})` : ""}`), "ระยะเวลา (นาที)", "รายละเอียด", "การแก้ไข", "ผลต่อสินค้า", "บันทึกโดย", "ผู้อนุมัติ", "เวลาอนุมัติ"];
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = L.map(x => [x.date, x.time, x.shift, x.plant, x.retort, x.program, x.programDoc, x.product, x.batch, catById(x.category)?.name || "", causeText(x), ...fieldsAll.map(f => x.values?.[f.key] ?? ""), x.duration, x.detail, x.action, x.impact === "hold" ? "Hold" : "ไม่กระทบ", x.by, x.approvedBy || "", fmtTs(x.approvedAt)]);
+  const csv = "﻿" + [head, ...rows].map(r => r.map(q).join(",")).join("\r\n");
+  const name = `retort-problems_${from}_${to}.csv`;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- settings ---------- */
+function viewSettings() {
+  const ro = !S.canAdmin;
+  let h = ro ? `<div class="alert a-warn">${I("info")}<div style="flex:1">ดูได้อย่างเดียว · ผู้ดูแลกดปลดล็อกเพื่อแก้หัวข้อ/สาเหตุ/รายชื่อ Retort</div><button class="pri sm" id="unlock">ปลดล็อกแก้ไข</button></div>` : "";
+  h += `<div class="alert a-info">${I("info")}<div>เพิ่มหัวข้อปัญหาและสาเหตุได้ที่นี่ หัวข้อที่ปิดไว้จะไม่ขึ้นในหน้าบันทึก แต่ข้อมูลเก่ายังอยู่ในการวิเคราะห์</div></div>`;
+  S.config.categories.forEach((c, ci) => {
+    h += `<div class="card"><div class="sec"><span class="ic" style="background:${grpOf(c).color}1f;color:${grpOf(c).color}">${I(grpOf(c).icon)}</span><div class="t"><input data-cname="${ci}" value="${esc(c.name)}" ${ro ? "disabled" : ""} style="font-weight:600"></div></div>
+      <div class="row sp" style="margin-bottom:6px"><span class="lab" style="margin:0">ใช้งาน</span><div class="seg" style="width:180px"><button data-cact="${ci}" data-v="1" class="${c.active ? "on" : ""}" ${ro ? "disabled" : ""}>เปิด</button><button data-cact="${ci}" data-v="0" class="${!c.active ? "on" : ""}" ${ro ? "disabled" : ""}>ปิด</button></div></div>
+      <span class="lab" style="margin-top:12px">สาเหตุ (${c.causes.length})</span>
+      ${c.causes.map((x, i) => `<div class="set-row"><input class="grow" data-cause-ed="${ci}.${i}" value="${esc(x)}" ${ro ? "disabled" : ""}>${ro ? "" : `<button class="ghost sm" data-cmv="${ci}.${i}.-1" aria-label="เลื่อนขึ้น">${I("up")}</button><button class="ghost sm danger" data-cdel="${ci}.${i}" aria-label="ลบ">${I("x")}</button>`}</div>`).join("")}
+      ${ro ? "" : `<div class="set-row"><input class="grow" id="newCause${ci}" placeholder="เพิ่มสาเหตุใหม่"><button class="soft sm" data-cadd="${ci}">${I("plus")}เพิ่ม</button></div>`}
+      ${(() => { const others = [...new Set(Object.values(S.items).filter(x => x.category === c.id && x.cause === "__other" && x.causeOther).map(x => x.causeOther.trim()))]; return others.length && !ro ? `<p class="sub" style="margin:10px 0 4px">สาเหตุที่พนักงานพิมพ์เองใน "อื่นๆ" กดเพื่อเพิ่มเป็นสาเหตุมาตรฐาน:</p><div class="chips">${others.slice(0, 15).map(o => `<button class="chip" data-promote="${ci}" data-txt="${esc(o)}">${I("plus")}${esc(o)}</button>`).join("")}</div>` : ""; })()}
+      <span class="lab" style="margin-top:16px">ช่องค่าที่วัด</span>
+      ${(c.fields || []).map((fl, i) => `<div class="set-row"><input class="grow" data-fl="${ci}.${i}.label" value="${esc(fl.label)}" ${ro ? "disabled" : ""}><input style="width:80px" data-fl="${ci}.${i}.unit" value="${esc(fl.unit || "")}" placeholder="หน่วย" ${ro ? "disabled" : ""}>${ro ? "" : `<button class="ghost sm danger" data-fdel="${ci}.${i}" aria-label="ลบ">${I("x")}</button>`}</div>`).join("")}
+      ${ro ? "" : `<button class="dash blk sm" data-fadd="${ci}" style="margin-top:8px">${I("plus")}เพิ่มช่องค่าที่วัด</button>`}
+    </div>`;
+  });
+  if (!ro) h += `<div class="card">${sec("plus", "เพิ่มหัวข้อปัญหาใหม่")}<div class="row"><input id="newCat" placeholder="เช่น Cooling ผิดปกติ, Flow rate ต่ำ"><button class="pri" id="addCat" style="flex:0 0 auto">${I("plus")}เพิ่ม</button></div></div>`;
+  const nDemo = Object.values(S.items).filter(x => x.demo).length;
+  if (nDemo && !ro) h += `<div class="card">${sec("info", "ข้อมูลตัวอย่าง (Demo)", `มีข้อมูลตัวอย่าง ${nDemo} รายการ ลบออกก่อนเริ่มใช้งานจริง`)}<button class="blk danger" id="delDemo">${I("trash")}ลบข้อมูลตัวอย่างทั้งหมด</button></div>`;
+  h += `<div class="card">${sec("spark", "ผู้ช่วย AI", AI.status ? (AI.status.configured ? `ตั้งค่าแล้ว${AI.status.from_env ? " (จาก start_server.bat)" : ""}` : "ยังไม่ได้ตั้งค่า API Key") : "")}
+    <div class="row"><input id="gemKey" type="password" placeholder="วาง API Key (ขึ้นต้นด้วย AIza…)" autocomplete="off" ${ro ? "disabled" : ""}><button class="pri" id="gemSave" style="flex:0 0 auto" ${ro ? "disabled" : ""}>บันทึก</button></div>
+    <small class="hint">สร้าง Key ได้ที่ Google AI Studio (aistudio.google.com) · Key เก็บไว้ที่เครื่อง server เท่านั้น ไม่ส่งไปที่มือถือ · เว้นว่างแล้วกดบันทึก = ลบ Key</small></div>`;
+  h += `<div class="card">${sec("grid", "หม้อของแต่ละพื้นที่", "ใช้แสดงในหน้าบันทึก (เลือกพื้นที่ → หม้อ) คั่นด้วยเครื่องหมายจุลภาค")}
+    ${plantsList().map(pl => `<label class="f" style="margin-top:8px"><span class="lab">${pl}</span><input data-plret="${pl}" value="${esc(plantRetorts(pl).join(", "))}" ${ro ? "disabled" : ""}></label>`).join("")}</div>`;
+  $("#main").innerHTML = h;
+  if (!AI.status) aiStatus().then(() => { if (S.view === "settings") { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); } });
+  if (ro) { $("#unlock").onclick = async () => { if (await unlockAdmin()) viewSettings(); }; return; }
+  $("#gemSave").onclick = async () => {
+    try { const r = await jpost("/api/retort/ai/key", { pin: S.pin, key: $("#gemKey").value.trim() }); AI.status = null; await aiStatus(); toast(r.configured ? "บันทึก API Key แล้ว" : "ลบ API Key แล้ว"); viewSettings(); }
+    catch (e) { toast(e.message); } };
+  const m = $("#main"); let t;
+  const later = () => { clearTimeout(t); t = setTimeout(saveConfig, 700); };
+  m.oninput = e => {
+    const x = e.target, ds = x.dataset;
+    if (ds.cname) { S.config.categories[+ds.cname].name = x.value; later(); }
+    else if (ds.causeEd) { const [ci, i] = ds.causeEd.split(".").map(Number); S.config.categories[ci].causes[i] = x.value; later(); }
+    else if (ds.fl) { const [ci, i, k] = ds.fl.split("."); S.config.categories[+ci].fields[+i][k] = x.value; later(); }
+    else if (ds.plret) { S.config.plantRetorts = { ...(S.config.plantRetorts || {}), [ds.plret]: x.value.split(",").map(v => v.trim().toUpperCase()).filter(Boolean) }; later(); }
+    else if (x.id === "retCfg") { S.config.retorts = x.value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean); later(); }
+  };
+  m.onclick = e => {
+    const b = e.target.closest("button"); if (!b) return; const ds = b.dataset; const C = S.config.categories;
+    const redo = () => { saveConfig(); const y = window.scrollY; viewSettings(); window.scrollTo(0, y); };
+    if (ds.cact) { C[+ds.cact].active = ds.v === "1"; redo(); }
+    else if (ds.cadd) { const inp = $("#newCause" + ds.cadd); const v = inp.value.trim(); if (v && !C[+ds.cadd].causes.includes(v)) { C[+ds.cadd].causes.push(v); redo(); } }
+    else if (ds.cdel) { const [ci, i] = ds.cdel.split(".").map(Number); confirmBox(`ลบสาเหตุ "${C[ci].causes[i]}"? รายการเก่ายังเก็บชื่อสาเหตุนี้ไว้`, () => { C[ci].causes.splice(i, 1); redo(); }); }
+    else if (ds.cmv) { const [ci, i] = ds.cmv.split(".").map(Number); if (i > 0) { const a = C[ci].causes; [a[i-1], a[i]] = [a[i], a[i-1]]; redo(); } }
+    else if (ds.promote) { const ci = +ds.promote, txt = ds.txt; if (!C[ci].causes.includes(txt)) C[ci].causes.push(txt);
+      Object.values(S.items).filter(x => x.category === C[ci].id && x.cause === "__other" && (x.causeOther || "").trim() === txt).forEach(x => { x.cause = txt; x.causeOther = ""; saveItem(x); }); redo(); toast("เพิ่มเป็นสาเหตุมาตรฐานแล้ว"); }
+    else if (ds.fadd) { const c = C[+ds.fadd]; c.fields = c.fields || []; c.fields.push({ key: uid("f"), label: "ค่าใหม่", unit: "" }); redo(); }
+    else if (ds.fdel) { const [ci, i] = ds.fdel.split(".").map(Number); C[ci].fields.splice(i, 1); redo(); }
+    else if (b.id === "delDemo") { const ids = Object.values(S.items).filter(x => x.demo).map(x => x.id); confirmBox(`ลบข้อมูลตัวอย่าง ${ids.length} รายการ?`, async () => { for (const id of ids) await deleteItem(id); toast("ลบข้อมูลตัวอย่างแล้ว"); render(); }); }
+    else if (b.id === "addCat") { const v = $("#newCat").value.trim(); if (!v) return; C.push({ id: uid("c"), name: v, active: true, causes: [], fields: [] }); redo(); toast("เพิ่มหัวข้อแล้ว เพิ่มสาเหตุต่อได้เลย"); }
+  };
+}
+
+/* ---------- modal ---------- */
+function modal(html, wire, cls) { $("#modalRoot").innerHTML = `<div class="modal"><div class="box ${cls || ""}">${html}</div></div>`; const box = $("#modalRoot .box"); box.querySelectorAll("[data-close]").forEach(b => b.onclick = closeModal); $("#modalRoot .modal").onclick = e => { if (e.target.classList.contains("modal") && S.user) closeModal(); }; wire && wire(box); }
+function closeModal() { $("#modalRoot").innerHTML = ""; }
+function confirmBox(msg, ok) { modal(`<h2>${esc(msg)}</h2><div class="row" style="margin-top:16px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="cfOk">ยืนยัน</button></div>`, box => box.querySelector("#cfOk").onclick = () => { closeModal(); ok(); }); }
+function askName(force) {
+  modal(`<h2>ชื่อผู้บันทึก</h2><p class="sub" style="margin:2px 0 12px">ใช้แสดงในรายการว่าใครบันทึก</p><input id="nm" value="${esc(S.user)}" placeholder="ชื่อเล่น หรือ ชื่อ-สกุล">
+    <div class="row" style="margin-top:14px">${force ? "" : '<button class="blk" data-close>ยกเลิก</button>'}<button class="blk pri" id="nmOk">บันทึก</button></div>`, box => {
+    box.querySelector("#nmOk").onclick = () => { const v = box.querySelector("#nm").value.trim(); if (!v) return; S.user = v; setName(v); if (S.draft && !S.editingId) S.draft.by = v; closeModal(); render(); };
+  });
+}
+
+render();
+syncAll(true);
+setInterval(() => { if (!document.hidden) syncAll(false); }, 20000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) syncAll(false); });
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (S.view === "analyze" || S.view === "log") softRender(); }, 250); });
+</script>
+</body>
+</html>
