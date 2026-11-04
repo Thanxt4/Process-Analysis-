@@ -71,6 +71,9 @@ for d in (UPLOAD_DIR, SLIDE_DIR):
     d.mkdir(parents=True, exist_ok=True)
 
 
+CUSTOMERS = ("Weruva", "Smucker")  # ลูกค้าที่เลือกให้แต่ละ Checklist ได้
+
+
 def load_areas():
     with open(AREAS_PATH, encoding="utf-8") as f:
         cfg = json.load(f)
@@ -469,6 +472,7 @@ def fetch_submissions(rd: date, area_id: Optional[str] = None):
         s["zone"] = it.get("zone", "")
         s["zone_id"] = it.get("zone_id", "")
         s["proc"] = it.get("proc", "")  # ป้ายกระบวนการ (Rawmat / จุดเตรียม / ...)
+        s["cust"] = it.get("cust", "")  # ลูกค้า Weruva / Smucker (ว่าง = ทั้งสองลูกค้า)
         try:
             s["qty"] = json.loads(s.get("qty") or "null")
         except ValueError:
@@ -1017,7 +1021,7 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
                     done[di] += bool(c)
             if visible and not it.get("hidden"):
                 row = {"id": it["id"], "no": it["no"], "name": it["name"], "extra": bool(it.get("extra")),
-                       "proc": it.get("proc", ""),
+                       "proc": it.get("proc", ""), "cust": it.get("cust", ""),
                        "codes": codes, "counts": counts, "ngs": ngs}
                 if it.get("qty"):
                     row["qty_cfg"] = it["qty"]
@@ -1203,6 +1207,11 @@ async def api_admin_save(request: Request):
                 base["proc"] = proc  # ป้ายกระบวนการ เช่น จุดเตรียม / บรรจุ
             else:
                 base.pop("proc", None)
+            cust = str(it.get("cust") or "").strip()
+            if cust in CUSTOMERS and not base.get("extra"):
+                base["cust"] = cust  # Checklist ของลูกค้า (ไม่ระบุ = ใช้กับทั้งสองลูกค้า)
+            else:
+                base.pop("cust", None)
             if "qty" in it:  # ช่องนับจำนวน (เช่น วัตถุดิบ Delay แยกห้อง)
                 q = clean_qty_cfg(it.get("qty"))
                 if q and not base.get("extra"):
