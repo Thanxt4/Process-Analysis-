@@ -547,6 +547,170 @@ table.heat{table-layout:fixed}.heat th.hn{width:250px}.heat th.hx{width:64px}.he
 .heat td.hn{min-width:0;max-width:none}.heat td.hn span{overflow:hidden}.heat th.hd,.heat td.hc{min-width:0}
 .dash .dgrid{align-items:stretch}
 @media(max-width:860px){table.heat{table-layout:auto}.heat td.hc{min-width:28px}.heat td.hn{min-width:170px}}
+/* ===== Visual refresh (v90): สี/เงา/การเคลื่อนไหว ให้ดูทันสมัยขึ้น — โครงฟอร์มบันทึกเหมือนเดิม ===== */
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+::selection{background:#fde68a;color:#1b2a41}
+*{scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}
+header.top{background:radial-gradient(520px 140px at 88% -50px,rgba(245,158,11,.24),transparent 70%),radial-gradient(420px 120px at 8% 140%,rgba(59,130,246,.18),transparent 70%),linear-gradient(135deg,#0f1f38 0%,#1b2a41 50%,#28456b 100%)}
+header.top::after{background:linear-gradient(90deg,#f59e0b,#fcd34d 50%,#f59e0b)}
+.back{transition:background .15s}.back:hover{background:rgba(255,255,255,.2)}
+.sync{background:rgba(255,255,255,.08);padding:5px 10px;border-radius:99px}
+.sync.on .d{box-shadow:0 0 0 3px rgba(52,211,153,.25);animation:rtPulse 2.4s ease-in-out infinite}
+@keyframes rtPulse{50%{box-shadow:0 0 0 6px rgba(52,211,153,.06)}}
+.av{box-shadow:0 0 0 3px rgba(245,158,11,.25)}
+button{transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s,filter .15s}
+button:focus-visible,a:focus-visible,label:focus-visible{outline:3px solid rgba(245,158,11,.6);outline-offset:2px}
+button.pri{background:linear-gradient(135deg,#1b2a41,#2c4a72);border-color:#1b2a41;box-shadow:0 8px 18px -10px rgba(27,42,65,.75)}
+button.pri:hover:not(:disabled){filter:brightness(1.1)}
+button.soft:hover{background:#d6dee9}
+button.ghost:hover{background:#f1f5f9}
+input,select,textarea{transition:border-color .15s,box-shadow .15s,background .15s}
+input:hover:not(:focus):not(:disabled),select:hover:not(:focus):not(:disabled),textarea:hover:not(:focus){border-color:#cbd5e1}
+.card{border-color:#e4eaf2}
+.sec .ic{box-shadow:inset 0 0 0 1px rgba(146,64,14,.08)}
+/* เข้าหน้าใหม่: ค่อย ๆ ลอยขึ้น (เฉพาะเปลี่ยนหน้า/ขั้นตอน ไม่เล่นซ้ำตอนซิงก์) */
+@keyframes rtRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#main.anim>*,#main.anim .dash>*,#main.anim .logL>*{animation:rtRise .34s cubic-bezier(.2,.7,.2,1) both}
+#main.anim>*:nth-child(2),#main.anim .dash>*:nth-child(2),#main.anim .logL>*:nth-child(2){animation-delay:.04s}
+#main.anim>*:nth-child(3),#main.anim .dash>*:nth-child(3),#main.anim .logL>*:nth-child(3){animation-delay:.08s}
+#main.anim>*:nth-child(4),#main.anim .dash>*:nth-child(4),#main.anim .logL>*:nth-child(4){animation-delay:.12s}
+#main.anim>*:nth-child(n+5),#main.anim .dash>*:nth-child(n+5),#main.anim .logL>*:nth-child(n+5){animation-delay:.16s}
+#main.anim .logL,#main.anim .dash{animation:none}
+/* หัวข้อคำถามในหน้าบันทึก: แถบสีส้มนำหน้า */
+h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linear-gradient(180deg,#fbbf24,#f59e0b);align-self:center;flex:0 0 auto}
+/* แถบความคืบหน้าใต้ขั้นตอน */
+.stepbar{height:4px;border-radius:4px;background:#e2e8f0;margin:-8px 2px 18px;overflow:hidden}
+.stepbar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#10b981,#f59e0b);transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.steps .st.on .no{box-shadow:0 0 0 4px rgba(245,158,11,.2)}
+/* การ์ดเวลา */
+.timecard{position:relative;overflow:hidden;background:linear-gradient(135deg,#fff 0%,#fbfcfe 55%,#fff8eb 100%)}
+.timecard::after{content:"";position:absolute;right:-60px;bottom:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.10),transparent 70%);pointer-events:none}
+.tc-time{letter-spacing:-.01em}
+.shiftbig{transition:background .2s,color .2s}
+/* สรุปวันนี้ (มือถือ) */
+.todaybar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:-6px 0 16px}
+.todaybar>div{background:#fff;border:1px solid #e3e9f1;border-radius:14px;padding:8px 6px;text-align:center;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.todaybar b{display:block;font-size:22px;font-weight:800;line-height:1.15;color:var(--navy);font-variant-numeric:tabular-nums}
+.todaybar span{font-size:12px;color:var(--mute)}
+.todaybar .bad b{color:var(--bad)}.todaybar .ok b{color:var(--ok)}.todaybar .warn b{color:#b45309}
+/* กราฟ 7 วัน ในแถบข้าง */
+.mini7{display:flex;gap:6px;height:86px;margin:2px 0 12px}
+.mini7>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.mini7 b{font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1}
+.mini7 .bw{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.mini7 .bw span{display:block;width:100%;max-width:26px;border-radius:6px 6px 2px 2px;background:#e2e8f0;min-height:4px}
+.mini7 .bw span.on{background:linear-gradient(180deg,#f87171,#dc2626)}
+.mini7 small{font-size:11px;color:var(--mute);line-height:1}.mini7 .td small{color:var(--navy);font-weight:700}
+/* แถบเมนู */
+.nav button svg.i{transition:transform .15s}
+.nav button.on svg.i{color:#d97706}
+@media(max-width:699px){
+  .nav{box-shadow:0 -6px 20px -12px rgba(15,23,42,.25)}
+  .nav button{position:relative}
+  .nav button.on{background:#fff7e6}
+  .nav button.on::before{content:"";position:absolute;top:-6px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--amber)}
+  .nav button.on svg.i{transform:translateY(-1px) scale(1.06)}
+}
+@media(min-width:700px){.nav button:hover:not(.on){color:var(--navy);background:rgba(255,255,255,.55)}}
+/* ป๊อปอัป / แจ้งเตือน */
+@keyframes rtFade{from{opacity:0}to{opacity:1}}
+@keyframes rtSheet{from{opacity:.4;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes rtToast{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes rtPop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+.modal{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:rtFade .18s ease both}
+.modal .box{animation:rtSheet .3s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 -10px 40px -10px rgba(15,23,42,.35)}
+.toast{animation:rtToast .25s ease both;box-shadow:0 14px 30px -12px rgba(15,23,42,.6);border-left:4px solid var(--amber);font-weight:500}
+.done-card .okic{animation:rtPop .55s cubic-bezier(.2,1.4,.4,1) both}
+.done-card .meta2{display:inline-flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:12px}
+.done-card .meta2 span{background:#fff;border:1px solid var(--line);border-radius:99px;padding:3px 12px;font-size:13px;color:var(--ink2)}
+/* หน้าล็อก */
+.lock{background:radial-gradient(700px 380px at 50% -40px,#2c4a72 0%,rgba(44,74,114,0) 70%),linear-gradient(180deg,#14213a,#0f1a2e)}
+.lockbox{border:0;box-shadow:0 30px 60px -20px rgba(0,0,0,.55);position:relative;overflow:hidden}
+.lockbox::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#f59e0b,#fcd34d,#f59e0b)}
+.lockbox .lk-brand{display:block;color:#b45309;font-weight:700;font-size:12px;letter-spacing:.08em;margin-bottom:4px}
+/* รายการ */
+.item .b b{font-size:15.5px}
+.tag{border-radius:99px;padding:2px 10px}
+.empty .ic{box-shadow:0 0 0 8px rgba(254,243,199,.5)}
+/* Dashboard: แถบสีบนการ์ดตัวเลข */
+.dash .dhead{display:flex;align-items:center;gap:12px;background:radial-gradient(420px 120px at 90% -30px,rgba(245,158,11,.25),transparent 70%),linear-gradient(135deg,#14213a,#1b2a41 55%,#2a4a72)}
+.dash .dhead .dh-l{flex:1;min-width:0}
+.dh-btn{flex:0 0 auto;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.28);color:#fff;min-height:40px;font-size:14px}
+.dh-btn:hover{background:rgba(255,255,255,.2)}
+.dk{position:relative;overflow:hidden;background:linear-gradient(180deg,#fff,#fbfcfe)}
+.dk::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:#2563eb}
+.dk:nth-child(2)::before{background:#94a3b8}.dk.bad::before{background:var(--bad)}.dk.good::before{background:var(--ok)}
+.dtitle h2 em.b{color:#2563eb}
+/* ===== วิเคราะห์เชิงลึก ===== */
+.ins-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.ins{border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;gap:12px;align-items:center;background:#fff;min-width:0}
+.ins>div{min-width:0}
+.ins .ii{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:#eff6ff;color:#2563eb;flex:0 0 auto}
+.ins.bad .ii{background:#fee2e2;color:var(--bad)}.ins.ok .ii{background:#dcfce7;color:var(--ok)}.ins.warn .ii{background:#fef3c7;color:#b45309}
+.ins small{display:block;font-size:12.5px;color:var(--mute);font-weight:600}
+.ins b{display:block;font-size:23px;font-weight:800;line-height:1.2;color:var(--ink);white-space:nowrap}.ins b i{font-style:normal;font-size:13px;color:var(--mute);font-weight:600}
+.ins.bad b{color:var(--bad)}
+.ins span{font-size:12.5px;color:var(--mute)}
+.notes{display:grid;gap:8px}
+.note{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:#f8fafc;font-size:14.5px;line-height:1.55;color:var(--ink2)}
+.note .ni{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e2e8f0;color:var(--navy)}
+.note .ni svg.i{width:16px;height:16px}
+.note.bad{background:#fff5f5}.note.bad .ni{background:#fee2e2;color:var(--bad)}
+.note.warn{background:#fffbeb}.note.warn .ni{background:#fef3c7;color:#b45309}
+.note.ok{background:#f0fdf4}.note.ok .ni{background:#dcfce7;color:var(--ok)}
+.note.info{background:#f5f8ff}.note.info .ni{background:#dbeafe;color:#1d4ed8}
+.note b{color:var(--ink)}
+.donut{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.donut svg{width:160px;height:160px;flex:0 0 auto;margin:0 auto}
+.donut svg circle{transition:stroke-width .15s}.donut svg circle:hover{stroke-width:6.4}
+.donut .dn-v{font-size:8.5px;font-weight:800;fill:#1b2a41}.donut .dn-u{font-size:3.8px;fill:#64748b;font-weight:600}
+.donut .dl{flex:1;min-width:210px}
+.dl-r{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:14px}
+.dl-r:last-child{border-bottom:0}
+.dl-r>i{width:12px;height:12px;border-radius:4px}
+.dl-r>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2)}
+.dl-r>b{font-variant-numeric:tabular-nums;text-align:right}.dl-r>b small{color:var(--mute);font-weight:500;margin-left:6px}
+.dl-r .tr{grid-column:2/-1;height:5px;border-radius:3px;background:#f1f5f9;overflow:hidden}.dl-r .tr s{display:block;height:100%;border-radius:3px}
+.hrs{display:flex;gap:3px;align-items:flex-end;height:150px;padding-top:18px;border-bottom:1px solid var(--line)}
+.hrs span{position:relative;flex:1;display:block;border-radius:4px 4px 0 0;background:#e2e8f0;min-height:2px;min-width:0}
+.hrs span.ds{background:linear-gradient(180deg,#fcd34d,#f59e0b)}.hrs span.ns{background:linear-gradient(180deg,#46668f,#1b2a41)}
+.hrs span.z{background:#eef2f6}
+.hrs span em{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-style:normal;font-size:10.5px;font-weight:700;color:var(--ink2);margin-bottom:2px}
+.hrs-x{display:flex;gap:3px;font-size:10.5px;color:var(--mute);margin-top:4px}.hrs-x span{flex:1;min-width:0;text-align:left;white-space:nowrap}
+.shl{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;color:var(--ink2);margin-top:14px}
+.shl span{display:inline-flex;align-items:center;gap:6px}.shl i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.shl i.ds,.split2 i.ds{background:#f59e0b}.shl i.ns,.split2 i.ns{background:#1b2a41}
+.split2{display:flex;height:12px;border-radius:99px;overflow:hidden;background:#f1f5f9;margin:8px 0 2px;gap:2px}
+.split2 i{display:block;height:100%}
+.dows{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dows div{text-align:center;border-radius:12px;padding:8px 2px;background:#f8fafc;font-size:12px;color:var(--mute);border:1px solid #f1f5f9}
+.dows div b{display:block;font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+.dows div.on{background:rgba(239,68,68,var(--a));border-color:transparent;color:#7f1d1d}.dows div.on b{color:#7f1d1d}
+.dash .dgrid .card{margin-bottom:0}
+.dash .dgrid+.dtitle,.dash .dgrid+.hgrp{margin-top:18px}
+@media(max-width:860px){.ins-grid{grid-template-columns:1fr 1fr}.ins{flex-direction:column;align-items:flex-start;gap:8px}}
+@media(max-width:560px){.hrs span em{display:none}.ins b{font-size:20px}.dh-btn span{display:none}}
+@media(max-width:1100px){.drange{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:860px){.cb-row{grid-template-columns:minmax(0,1fr) 76px;padding:10px 2px}.cb-row .cb-track{margin-right:28px}.dp-b{padding:14px}}
+@media(max-width:560px){.rcard{min-width:0}.rc-dates{width:100%;flex-wrap:wrap}.rc-dates input[type=date]{flex:1 1 120px;min-width:0;width:auto}.rc-dates button{flex:1 0 100%}.rc-h .dseg{margin-left:0;max-width:100%;overflow-x:auto}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
+/* พิมพ์รายงาน (หน้าวิเคราะห์) */
+@page{size:A4 landscape;margin:10mm}
+@media print{
+  body{background:#fff!important;padding:0!important}
+  header.top,.nav,.drange .rc-b,.dh-btn,.dseg,.dseg2,.dseg3,#modalRoot,.toast{display:none!important}
+  .card,.dpanel,.hgrp{box-shadow:none!important}
+  .dk,.ins,.note,.cb-row,.dwb-c,.dash .dgrid>.card,.heat tr{break-inside:avoid}
+  .dtitle{break-after:avoid}
+  .dkpis{grid-template-columns:repeat(3,1fr)!important}.dwb{grid-template-columns:1fr 1fr!important}
+  .ins-grid{grid-template-columns:repeat(4,1fr)!important}.ins{flex-direction:row!important;align-items:center!important}
+  .dash .dgrid{grid-template-columns:1fr 1fr!important}.dash .dgrid .span2{grid-column:1/-1}
+  .cb-row{grid-template-columns:minmax(200px,30%) 1fr 96px!important}.cb-row .cb-track,.cb-row .cb-ch{grid-column:auto!important;grid-row:auto!important}.cb-ax{display:grid!important}
+  .dash .dhead{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #main{animation:none!important}#main *{animation:none!important}
+  .wrap{max-width:none;padding:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 </head>
 <body>
@@ -561,7 +725,7 @@ table.heat{table-layout:fixed}.heat th.hn{width:250px}.heat th.hx{width:64px}.he
 <div id="modalRoot"></div>
 <div class="lock hide" id="lock"><form class="lockbox" id="lockForm">
   <div class="okic" style="background:var(--accbg);color:var(--acc)"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-  <h2>Retort Analysis</h2><p class="sub" style="margin:4px 0 14px">ใส่รหัสผ่านเพื่อเข้าใช้งาน</p>
+  <small class="lk-brand">LINE QC</small><h2>Retort Analysis</h2><p class="sub" style="margin:4px 0 14px">ใส่รหัสผ่านเพื่อเข้าใช้งาน</p>
   <input type="password" id="lockPin" inputmode="numeric" autocomplete="current-password" placeholder="รหัสผ่าน" style="text-align:center;font-size:22px;letter-spacing:6px">
   <p class="sub" id="lockErr" style="color:var(--bad);min-height:20px;margin:8px 0 0"></p>
   <button class="pri blk savebig" type="submit" style="margin-top:6px">เข้าใช้งาน</button>
@@ -593,6 +757,10 @@ const IP = {
   camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/>',
   image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  pie:'<path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
+  printer:'<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', factory:'<path d="M3 21V10l6 4V10l6 4V4h6v17z"/><path d="M7 17h2M12 17h2M17 17h2"/>'
 };
 const I = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${IP[n] || ""}</svg>`;
@@ -808,8 +976,12 @@ function render() {
   $("#main").classList.toggle("vset", S.view === "settings");
   S.charts = {}; $("#main").classList.remove("split");
   ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, ai: viewAI, settings: viewSettings })[S.view || "log"]();
+  if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
 }
+/* เล่นแอนิเมชันเข้าหน้าเฉพาะตอนเปลี่ยนหน้า/ขั้นตอน (ไม่เล่นซ้ำตอนซิงก์ข้อมูลหรือเปลี่ยนตัวกรอง) */
+let animKey = "";
+function markAnim(k) { $("#main").classList.toggle("anim", k !== animKey); animKey = k; }
 $("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
 $("#userBtn").onclick = () => askName(false);
 
@@ -828,7 +1000,8 @@ function stepHead(d) {
   const cat = catById(d.category); const st = S.step;
   const vals = [`${d.time} ${d.shift}`, d.plant, d.retort, cat ? cat.name : "", ""];
   return `<div class="steps">${STEPS.map((l, i) => { const k = i + 1; const v = vals[i]; const cls = k === st ? "on" : k < st ? "done" : "";
-    return `<button class="st ${cls}" ${k < st ? `data-step="${k}"` : "disabled"}><span class="no">${k < st ? I("check") : k}</span><span class="tx"><small>${l}</small>${k < st && v ? `<b>${esc(v)}</b>` : ""}</span></button>`; }).join("")}</div>`;
+    return `<button class="st ${cls}" ${k < st ? `data-step="${k}"` : "disabled"}><span class="no">${k < st ? I("check") : k}</span><span class="tx"><small>${l}</small>${k < st && v ? `<b>${esc(v)}</b>` : ""}</span></button>`; }).join("")}</div>
+    <div class="stepbar" aria-hidden="true"><i style="width:${Math.round(st / STEPS.length * 100)}%"></i></div>`;
 }
 const photoUrl = f => "/api/retort/photo/" + encodeURIComponent(f);
 const SHIFT_HINT = "DS 07:00–17:30 · NS 17:31–06:59";
@@ -848,6 +1021,11 @@ function viewLog() {
   const stat = f => { const L = all.filter(f); return { today: L.filter(x => x.date === t0).length, week: L.filter(x => x.date >= w0 && x.date <= t0).length }; };
   const badge = st => `<span class="zbadge ${st.today ? "ng" : "ok"}">${st.today ? `วันนี้พบปัญหา ${st.today} ครั้ง` : "วันนี้ยังไม่มีปัญหา ✓"}</span><span class="zsub2">7 วัน ${st.week} ครั้ง</span>`;
   const last = lsGet("rt_last", {}) || {};
+  const wide = matchMedia("(min-width:1000px)").matches;
+  if (S.step === 1 && !wide && !editing && all.length) {
+    const nT = all.filter(x => x.date === t0).length, nW = all.filter(x => x.date >= w0 && x.date <= t0).length, nA = all.filter(x => !x.approvedBy).length;
+    h += `<div class="todaybar"><div class="${nT ? "bad" : "ok"}"><b>${nT}</b><span>ปัญหาวันนี้</span></div><div><b>${nW}</b><span>7 วันล่าสุด</span></div><div class="${nA ? "warn" : "ok"}"><b>${nA}</b><span>รออนุมัติ</span></div></div>`;
+  }
   if (S.step === 1) {
     h += `<h2 class="q">เวลาบันทึก</h2>
       <div class="card timecard">
@@ -912,14 +1090,16 @@ function viewLog() {
       <div id="formErr"></div>
       <button class="pri blk savebig" id="saveBtn">${I("check")}${editing ? "บันทึกการแก้ไข" : "บันทึก"}</button>`;
   }
-  const wide = matchMedia("(min-width:1000px)").matches;
   if (wide) {
     const t = todayISO(), w7 = addDays(t, -6);
     const today = all.filter(x => x.date === t), week = all.filter(x => x.date >= w7 && x.date <= t);
     const topW = groupSum(week.map(x => ({ ...x })), x => x.category)[0];
     const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 6);
-    const side = `<div class="card">${sec("chart", "สรุปเร็ว")}
+    const d7 = dayList(w7, t).map(d => [d, week.filter(x => x.date === d).length]); const mx7 = Math.max(1, ...d7.map(r => r[1]));
+    const nWait = all.filter(x => !x.approvedBy).length;
+    const side = `<div class="card">${sec("chart", "สรุปเร็ว", nWait ? `รออนุมัติ ${nWait} รายการ` : "อนุมัติครบแล้ว")}
         <div class="cmpbox"><div><b>${today.length}</b><span>ปัญหาวันนี้</span></div><div><b>${week.length}</b><span>7 วันล่าสุด</span></div></div>
+        <div class="mini7">${d7.map(([d, v]) => `<div class="${d === t ? "td" : ""}" title="${thLong(d)} · ${v} ครั้ง"><b>${v || ""}</b><span class="bw"><span class="${v ? "on" : ""}" style="height:${v ? Math.max(8, v / mx7 * 100) : 0}%"></span></span><small>${TH_DOW[new Date(d + "T00:00:00").getDay()]}</small></div>`).join("")}</div>
         ${topW ? `<div class="sub">เกิดบ่อยสุดใน 7 วัน: <b style="color:var(--ink)">${esc(catById(topW[0])?.name || "-")}</b> (${topW[1]} ครั้ง)</div>` : `<div class="sub">7 วันล่าสุดยังไม่มีปัญหา</div>`}</div>
       <div class="card">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.length ? recent.map(itemRow).join("") : `<p class="sub">ยังไม่มีบันทึก</p>`}</div>`;
     h = `<div class="logL">${h}</div><aside class="logR">${side}</aside>`;
@@ -928,13 +1108,16 @@ function viewLog() {
     if (recent.length) h += `<div class="card" style="margin-top:18px">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.map(itemRow).join("")}</div>`;
   }
   $("#main").classList.toggle("split", wide);
+  markAnim("log" + S.step + (S.catPick ? "c" : "") + (editing ? "e" : ""));
   $("#main").innerHTML = h;
   wireLog();
 }
 function viewSaved() {
   const x = S.justSaved; const c = catById(x.category);
+  markAnim("saved" + x.id);
   $("#main").innerHTML = `<div class="card done-card"><div class="okic">${I("check")}</div><h2>บันทึกแล้ว</h2>
-    <p class="sub" style="margin:6px 0 0">${esc(c ? c.name : "")} · ${esc(x.retort)}<br>${esc(causeText(x))}</p></div>
+    <p class="sub" style="margin:6px 0 0">${esc(c ? c.name : "")} · ${esc(x.retort)}<br>${esc(causeText(x))}</p>
+    <div class="meta2"><span>${dmy(x.date)} ${esc(x.time)} น.</span><span>กะ ${esc(x.shift)}</span>${x.plant ? `<span>${esc(x.plant)}</span>` : ""}${(x.photos || []).length ? `<span>รูป ${x.photos.length}</span>` : ""}${x.impact === "hold" ? `<span style="color:var(--warn)">Hold สินค้า</span>` : ""}</div></div>
     <button class="pri blk savebig" id="again">${I("plus")}บันทึกปัญหาอื่น</button>
     <button class="blk" id="seeAn" style="margin-top:10px">${I("chart")}ดูสรุป</button>`;
   $("#again").onclick = () => { S.justSaved = null; S.draft = null; render(); };
@@ -1304,8 +1487,8 @@ function granOf(from, to) {
 }
 function granBar(from, to) { const g = granOf(from, to); return `<div class="seg gran">${[["day","รายวัน"],["week","รายสัปดาห์"],["month","รายเดือน"]].map(([v, l]) => `<button data-gran="${v}" class="${g === v ? "on" : ""}">${l}</button>`).join("")}</div>`; }
 function wireGran() { document.querySelectorAll("[data-gran]").forEach(b => b.onclick = () => { S.f.gran = b.dataset.gran; lsSet("rt_filter", S.f); const y = window.scrollY; render(); window.scrollTo(0, y); }); }
-function bucketsOf(from, to) {
-  const n = daysBetween(from, to) + 1; const out = []; const g = granOf(from, to);
+function bucketsOf(from, to, gran) {
+  const n = daysBetween(from, to) + 1; const out = []; const g = gran || granOf(from, to);
   if (g === "day") { for (let i = 0; i < n; i++) { const d = addDays(from, i); out.push({ key: d, from: d, to: d, label: dmy(d).slice(0, 5) }); } return { unit: "วัน", list: out }; }
   if (g === "week") {
     let e = to; while (e >= from) { const st = addDays(e, -6) < from ? from : addDays(e, -6); out.unshift({ key: st, from: st, to: e, label: dmy(st).slice(0, 5) }); e = addDays(st, -1); }
@@ -1419,7 +1602,7 @@ function viewAnalyze() {
   const byLabel = D.by === "retort" ? "แยกตามหม้อ" : "แยกตามปัญหา";
   const pr = `${thShort(R.f1)} – ${thShort(R.t1)}`, pr2 = `${thShort(R.f2)} – ${thShort(R.t2)}`;
   let h = `<div class="dash">
-  <div class="dhead"><div class="dh-l"><b>Dashboard</b><span>วิเคราะห์ปัญหา Retort ย้อนหลัง · เทียบ 2 ช่วง · แตะรายการเพื่อดูกราฟแนวโน้ม</span></div></div>
+  <div class="dhead"><div class="dh-l"><b>Dashboard</b><span>วิเคราะห์ปัญหา Retort ย้อนหลัง · เทียบ 2 ช่วง · แตะรายการเพื่อดูกราฟแนวโน้ม</span></div><button class="dh-btn sm" id="dPrint">${I("printer")}<span>พิมพ์ / PDF</span></button></div>
   <div class="drange">
     <div class="rcard"><div class="rc-h"><span class="rlab r1">ช่วงที่ 1</span><span class="rc-d">${pr} · ${days1} วัน</span><div class="seg dseg">${[7, 14, 30, 90].map(n => `<button data-dn="${n}" class="${!D.f1 && +D.n === n ? "on" : ""}">${n} วัน</button>`).join("")}</div></div>
       <div class="rc-b"><span class="rc-or">หรือเลือกวันที่</span><div class="rc-dates"><input type="date" id="dF1" value="${R.f1}"><span>–</span><input type="date" id="dT1" value="${R.t1}"><button class="pri sm" id="dGo1">แสดง</button></div></div></div>
@@ -1447,10 +1630,103 @@ function viewAnalyze() {
       ${cmpBars(rows.slice(0, 10), pr, pr2, [...L1, ...L2])}
     </div>
   </div>
+  <div class="dtitle"><div><h2>เจาะลึก <em class="b">Insight</em></h2><div class="sub">${esc(plantLabel)} · ช่วงที่ 1 (${pr})</div></div></div>
+  ${insightSection(R, L1)}
+  <div class="dgrid" style="margin-top:16px">
+    <div class="card span2">${sec("trend", "แนวโน้มตามเวลา", "เส้นทึบ = ช่วงที่ 1 · เส้นประ = ค่าเฉลี่ยของช่วงที่ 2 (ปรับตามจำนวนวัน) · ชี้/แตะกราฟเพื่อดูตัวเลข")}<div class="chart"><div class="svgc" id="cDash"></div></div><div class="legend" id="lDash"></div></div>
+    ${groupSection(L1)}
+    ${hourSection(L1)}
+  </div>
+  ${L1.length ? `<div class="dtitle"><div><h2>ตารางรายวัน</h2><div class="sub">แยกตามกลุ่ม · สีเข้ม = พบมาก · แตะแถวเพื่อดูกราฟแนวโน้ม</div></div></div>` : ""}
   ${heatSection(R, L1, L2)}
   ${moreSection(L1, tot1)}
   </div>`;
   $("#main").innerHTML = h; wireDash();
+  drawDashTrend(R, L1, L2);
+}
+/* ---------- วิเคราะห์เชิงลึก: ข้อสังเกตอัตโนมัติ · แนวโน้ม · สัดส่วนกลุ่ม · ช่วงเวลา ---------- */
+const dv = v => S.d.metric === "minutes" ? Math.round(v) : v;
+const hourOf = x => { const h = parseInt(String(x.time || "").split(":")[0], 10); return h >= 0 && h < 24 ? h : -1; };
+function insightSection(R, L1) {
+  const days1 = daysBetween(R.f1, R.t1) + 1, n = L1.length;
+  if (!n) return `<div class="card"><div class="note ok"><span class="ni">${I("check")}</span><div>ช่วงที่ 1 <b>ไม่พบปัญหาเลย</b> ตลอด ${days1} วัน</div></div></div>`;
+  const daysWith = new Set(L1.map(x => x.date)).size;
+  const hold = L1.filter(x => x.impact === "hold").length, wait = L1.filter(x => !x.approvedBy).length;
+  const withDur = L1.filter(x => num(x.duration) != null); const mins = Math.round(withDur.reduce((a, x) => a + num(x.duration), 0));
+  const tile = (cls, ic, lab, val, unit, sub) => `<div class="ins ${cls}"><span class="ii">${I(ic)}</span><div><small>${lab}</small><b>${val} <i>${unit}</i></b><span>${sub}</span></div></div>`;
+  let h = `<div class="ins-grid">
+    ${tile(daysWith / days1 > .5 ? "bad" : "", "calendar", "วันที่พบปัญหา", daysWith, `/ ${days1} วัน`, `ไม่มีปัญหา ${days1 - daysWith} วัน`)}
+    ${tile("warn", "clock", "เวลาที่เกิดปัญหารวม", mins.toLocaleString(), "นาที", withDur.length ? `เฉลี่ย ${Math.round(mins / withDur.length)} นาที/ครั้ง` : "ยังไม่มีการกรอกระยะเวลา")}
+    ${tile(hold ? "bad" : "ok", "alert", "Hold สินค้า", hold, "ครั้ง", `${Math.round(hold / n * 100)}% ของปัญหาทั้งหมด`)}
+    ${tile(wait ? "warn" : "ok", "check", "รออนุมัติ", wait, "รายการ", `อนุมัติแล้ว ${n - wait}/${n}`)}
+  </div>`;
+  const notes = []; const byR = S.d.by === "retort", unitK = byR ? "หม้อ" : "หัวข้อ";
+  // 80/20: กี่รายการแรกที่รวมกันได้ ≥ 80%
+  const ranked = Object.entries(sumBy(L1, dKey)).sort((a, b) => b[1] - a[1]); const tot = ranked.reduce((a, r) => a + r[1], 0);
+  if (tot > 0 && ranked.length >= 3) { let acc = 0, k = 0; for (const [, v] of ranked) { acc += v; k++; if (acc / tot >= .8) break; }
+    if (k < ranked.length) { const names = ranked.slice(0, Math.min(k, 3)).map(([key]) => dName(key));
+      notes.push(["info", "target", `<b>${k} ${unitK}แรก</b> (${esc(names.join(", "))}${k > 3 ? " …" : ""}) คิดเป็น <b>${Math.round(acc / tot * 100)}%</b> ของทั้งหมด จาก ${ranked.length} ${unitK} — แก้กลุ่มนี้ก่อนจะลดปัญหาได้มากที่สุด (หลัก 80/20)`]); } }
+  // ปัญหาเดิมเกิดซ้ำที่หม้อเดิม
+  const rep = {}; L1.forEach(x => { if (x.retort) { const k = x.retort + "|" + x.category; rep[k] = (rep[k] || 0) + 1; } });
+  Object.entries(rep).filter(([, v]) => v >= 3).sort((a, b) => b[1] - a[1]).slice(0, 2).forEach(([k, v]) => { const [r, c] = k.split("|");
+    notes.push(["bad", "alert", `<b>${esc(r)} · ${esc(catById(c)?.name || "หัวข้อที่ถูกลบ")}</b> เกิดซ้ำ ${v} ครั้ง — ควรวิเคราะห์สาเหตุราก (5 Why) และวางแผนป้องกัน`]); });
+  // หม้อที่พบมากที่สุด
+  if (!byR) { const rr = Object.entries(L1.reduce((m, x) => { const r = x.retort || "-"; m[r] = (m[r] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]);
+    if (rr.length > 1 && rr[0][1] >= 3) notes.push(["info", "grid", `หม้อที่พบปัญหามากที่สุด <b>${esc(rr[0][0])}</b> ${rr[0][1]} ครั้ง (${Math.round(rr[0][1] / n * 100)}% ของทั้งหมด)`]); }
+  // กะ
+  const ds = L1.filter(x => x.shift === "DS").length, ns = n - ds;
+  if (n >= 5 && Math.max(ds, ns) >= Math.max(1, Math.min(ds, ns)) * 1.5) notes.push(["warn", "clock", `กะ <b>${ns > ds ? "NS" : "DS"}</b> พบปัญหามากกว่าอย่างชัดเจน (${Math.max(ds, ns)} เทียบ ${Math.min(ds, ns)} ครั้ง)`]);
+  // ช่วง 3 ชั่วโมงที่พบบ่อย
+  const hr = Array(24).fill(0); L1.forEach(x => { const h = hourOf(x); if (h >= 0) hr[h]++; });
+  let bi = 0, bv = -1; for (let i = 0; i < 24; i++) { const v = hr[i] + hr[(i + 1) % 24] + hr[(i + 2) % 24]; if (v > bv) { bv = v; bi = i; } }
+  if (n >= 5 && bv / n >= .25) notes.push(["info", "clock", `ช่วงเวลาที่พบบ่อยที่สุด <b>${pad(bi)}:00–${pad((bi + 3) % 24)}:00 น.</b> (${bv} ครั้ง · ${Math.round(bv / n * 100)}%)`]);
+  // ยังไม่ทราบสาเหตุ
+  const unk = L1.filter(x => causeText(x) === UNKNOWN).length;
+  if (unk) notes.push(["warn", "search", `ยังไม่ทราบสาเหตุ <b>${unk} รายการ</b> (${Math.round(unk / n * 100)}%) — ควรติดตามหาสาเหตุเพื่อป้องกันการเกิดซ้ำ`]);
+  if (!notes.length) notes.push(["ok", "check", "ไม่พบรูปแบบผิดปกติที่ต้องจับตาในช่วงนี้"]);
+  h += `<div class="notes">${notes.map(([c, ic, t]) => `<div class="note ${c}"><span class="ni">${I(ic)}</span><div>${t}</div></div>`).join("")}</div>`;
+  return `<div class="card">${sec("spark", "ข้อสังเกตอัตโนมัติ", "ระบบคำนวณจากข้อมูลที่บันทึก · ใช้ประกอบการประชุม/รายงาน")}${h}</div>`;
+}
+function drawDashTrend(R, L1, L2) {
+  const el = $("#cDash"); if (!el) return;
+  const n = daysBetween(R.f1, R.t1) + 1; const B = bucketsOf(R.f1, R.t1, n <= 45 ? "day" : n <= 200 ? "week" : "month");
+  const days2 = daysBetween(R.f2, R.t2) + 1, tot2 = L2.reduce((a, x) => a + dmv(x), 0);
+  const d1 = B.list.map(b => L1.filter(x => x.date >= b.from && x.date <= b.to).reduce((a, x) => a + dmv(x), 0));
+  const avg = B.list.map(b => tot2 / days2 * (daysBetween(b.from, b.to) + 1));
+  const series = [{ name: "ช่วงที่ 1", color: "#2563eb", data: d1 }, { name: "เฉลี่ยช่วงที่ 2", color: "#94a3b8", data: avg, dash: true }];
+  $("#lDash").innerHTML = `<span><i style="background:#2563eb"></i>ช่วงที่ 1 (${B.unit === "วัน" ? "รายวัน" : "ราย" + B.unit})</span><span><i style="background:#94a3b8"></i>เฉลี่ยช่วงที่ 2</span>`;
+  svgChart(el, B, series, v => S.d.metric === "minutes" ? `${Math.round(v)} นาที` : `${Math.round(v * 10) / 10} ครั้ง`, true);
+}
+function groupSection(L1) {
+  const m = {}; L1.forEach(x => { const g = catById(x.category)?.grp || "other"; m[g] = (m[g] || 0) + dmv(x); });
+  const rows = Object.entries(m).filter(r => r[1] > 0).sort((a, b) => b[1] - a[1]); const tot = rows.reduce((a, r) => a + r[1], 0);
+  const head = sec("pie", "สัดส่วนตามกลุ่มปัญหา", "ช่วงที่ 1 · " + (S.d.metric === "minutes" ? "รวมนาที" : "จำนวนครั้ง"));
+  if (!tot) return `<div class="card">${head}<p class="sub">ไม่มีข้อมูล</p></div>`;
+  let off = 0; const gap = rows.length > 1 ? .6 : 0;
+  const segs = rows.map(([g, v]) => { const G = GROUPS[g] || GROUPS.other, p = v / tot * 100, len = Math.max(.01, p - gap);
+    const s = `<circle r="15.9155" cx="21" cy="21" fill="none" stroke="${G.color}" stroke-width="5.4" stroke-dasharray="${len.toFixed(2)} ${(100 - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}"><title>${esc(G.name)} · ${dfmt(dv(v))} (${Math.round(p)}%)</title></circle>`; off += p; return s; }).join("");
+  return `<div class="card">${head}<div class="donut">
+    <svg viewBox="0 0 42 42" role="img" aria-label="สัดส่วนตามกลุ่มปัญหา"><circle r="15.9155" cx="21" cy="21" fill="none" stroke="#f1f5f9" stroke-width="5.4"/><g transform="rotate(-90 21 21)">${segs}</g>
+      <text x="21" y="22" text-anchor="middle" class="dn-v">${dv(tot)}</text><text x="21" y="27" text-anchor="middle" class="dn-u">${dunit()}</text></svg>
+    <div class="dl">${rows.map(([g, v]) => { const G = GROUPS[g] || GROUPS.other, p = Math.round(v / tot * 100);
+      return `<div class="dl-r"><i style="background:${G.color}"></i><span>${esc(G.name)}</span><b>${dv(v)}<small>${p}%</small></b><span class="tr"><s style="width:${v / rows[0][1] * 100}%;background:${G.color}"></s></span></div>`; }).join("")}</div>
+  </div></div>`;
+}
+function hourSection(L1) {
+  const head = sec("clock", "ช่วงเวลาที่เกิดปัญหา", "ช่วงที่ 1 · แยกตามชั่วโมง กะ และวันในสัปดาห์");
+  if (!L1.length) return `<div class="card">${head}<p class="sub">ไม่มีข้อมูล</p></div>`;
+  const hr = Array(24).fill(0); L1.forEach(x => { const h = hourOf(x); if (h >= 0) hr[h] += dmv(x); }); const mx = Math.max(1, ...hr);
+  const ds = L1.filter(x => x.shift === "DS").reduce((a, x) => a + dmv(x), 0), ns = L1.filter(x => x.shift !== "DS").reduce((a, x) => a + dmv(x), 0), tot = ds + ns;
+  const dow = Array(7).fill(0); L1.forEach(x => { dow[new Date(x.date + "T00:00:00").getDay()] += dmv(x); }); const mxd = Math.max(1, ...dow);
+  const pc = v => tot ? Math.round(v / tot * 100) : 0;
+  return `<div class="card">${head}
+    <div class="hrs">${hr.map((v, i) => `<span class="${v ? (shiftOf(pad(i) + ":00") === "DS" ? "ds" : "ns") : "z"}" style="height:${v ? Math.max(4, v / mx * 100) : 0}%" title="${pad(i)}:00–${pad(i)}:59 น. · ${dfmt(dv(v))}">${v ? `<em>${dv(v)}</em>` : ""}</span>`).join("")}</div>
+    <div class="hrs-x">${hr.map((_, i) => `<span>${i % 3 ? "" : pad(i)}</span>`).join("")}</div>
+    <div class="shl"><span><i class="ds"></i>กะ DS <b>${dv(ds)}</b> (${pc(ds)}%)</span><span><i class="ns"></i>กะ NS <b>${dv(ns)}</b> (${pc(ns)}%)</span><span class="sub" style="font-size:12px">${SHIFT_HINT}</span></div>
+    <div class="split2">${ds ? `<i class="ds" style="width:${pc(ds)}%"></i>` : ""}${ns ? `<i class="ns" style="flex:1"></i>` : ""}</div>
+    <span class="lab" style="margin:14px 0 6px 2px">วันในสัปดาห์</span>
+    <div class="dows">${[1, 2, 3, 4, 5, 6, 0].map(d => `<div class="${dow[d] ? "on" : ""}" style="--a:${(0.1 + 0.55 * dow[d] / mxd).toFixed(2)}" title="วัน${TH_DAYS[d]} · ${dfmt(dv(dow[d]))}">${TH_DOW[d]}<b>${dv(dow[d])}</b></div>`).join("")}</div>
+  </div>`;
 }
 function cmpBars(rows, pr, pr2, L) {
   if (!rows.length) return `<div class="empty"><div class="ic">${I("check")}</div><h3>ไม่พบปัญหาในช่วงที่เลือก</h3></div>`;
@@ -1494,14 +1770,16 @@ function moreSection(L, total) {
   const hb = (rows) => rows.map(([n, v]) => `<div class="hb"><span class="n">${esc(n)}</span><span class="v">${S.d.metric === "minutes" ? Math.round(v) : v}<small>${total ? Math.round(v / total * 100) : 0}%</small></span><span class="track"><span class="fill" style="width:${total ? v / total * 100 : 0}%"></span></span></div>`).join("");
   return `<div class="dgrid" style="margin-top:4px">
     <div class="card">${sec("tool", "สาเหตุที่พบบ่อย", "ช่วงที่ 1")}${hb(byCause.slice(0, 10))}</div>
-    <div class="card">${sec("clock", "แยกตามกะ / โปรแกรม", "ช่วงที่ 1")}${hb(g(x => "กะ " + x.shift))}<div style="margin-top:14px">${hb(g(x => x.program ? "โปรแกรม " + x.program : "ไม่ระบุโปรแกรม").slice(0, 8))}</div>
-      <div class="sub" style="margin-top:10px">Hold สินค้า ${L.filter(x => x.impact === "hold").length} ครั้ง · อนุมัติแล้ว ${L.filter(x => x.approvedBy).length}/${L.length}</div></div>
+    <div class="card">${sec("factory", "แยกตามพื้นที่ / โปรแกรม", "ช่วงที่ 1")}${hb(g(x => x.plant || "ไม่ระบุพื้นที่"))}
+      <span class="lab" style="margin:16px 0 4px 2px">โปรแกรมที่ใช้ตอนเกิดปัญหา</span>${(() => { const P = g(x => x.program ? "โปรแกรม " + x.program : "").filter(r => r[0]); const none = L.filter(x => !x.program).length;
+        return (P.length ? hb(P.slice(0, 8)) : `<p class="sub" style="margin:4px 2px">ยังไม่มีรายการที่ระบุโปรแกรม</p>`) + (none && P.length ? `<div class="sub" style="margin-top:6px">ไม่ระบุโปรแกรม ${none} รายการ</div>` : ""); })()}</div>
   </div>`;
 }
 function wireDash() {
   const D = S.d; const m = $("#main"); const re = () => { saveDash(); viewAnalyze(); };
   m.onclick = e => {
     const b = e.target.closest("button,[data-trend]"); if (!b) return; const ds = b.dataset;
+    if (b.id === "dPrint") { window.print(); return; }
     if (ds.dn) { D.n = +ds.dn; D.f1 = D.t1 = ""; re(); }
     else if (ds.dby) { D.by = ds.dby; re(); }
     else if (ds.dpl) { D.plant = ds.dpl; re(); }
@@ -1597,11 +1875,12 @@ function svgChart(el, B, series, fmt, area) {
   for (let v = 0; v <= top; v += step) g += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v)}</text>`;
   const every = Math.ceil(n / Math.max(1, Math.floor((W - L - R) / 52)));
   B.list.forEach((b, i) => { if (!((n - 1 - i) % every)) g += `<text class="ax" x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(b.label)}</text>`; });
+  const hasDash = series.some(s => s.dash);  // เส้นประ = เส้นอ้างอิง (เช่น ค่าเฉลี่ยช่วงก่อน) ไม่นำไปรวม
   series.forEach(s => {
     const pts = s.data.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
-    if (area) g += `<path d="M${x(0)},${y(0)} L${pts.join(" L")} L${x(n - 1)},${y(0)} Z" fill="${s.color}" opacity=".12"/>`;
-    g += `<polyline fill="none" stroke="${s.color}" stroke-width="${area ? 2.5 : 2}" stroke-linejoin="round" stroke-linecap="round" points="${pts.join(" ")}"/>`;
-    if (n <= 40) g += s.data.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="#fff" stroke="${s.color}" stroke-width="2"/>`).join("");
+    if (area && !s.dash) g += `<path d="M${x(0)},${y(0)} L${pts.join(" L")} L${x(n - 1)},${y(0)} Z" fill="${s.color}" opacity=".12"/>`;
+    g += `<polyline fill="none" stroke="${s.color}" stroke-width="${area ? 2.5 : 2}" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ' stroke-dasharray="6 5"' : ""} points="${pts.join(" ")}"/>`;
+    if (n <= 40 && !s.dash) g += s.data.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="#fff" stroke="${s.color}" stroke-width="2"/>`).join("");
   });
   g += `<line class="xh" y1="${T}" y2="${H - Bt}" stroke="#94a3b8" stroke-dasharray="3 3" visibility="hidden"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${g}<rect x="${L - 10}" y="0" width="${W - L - R + 20}" height="${H - Bt}" fill="transparent"/></svg><div class="tip"></div>`;
@@ -1611,9 +1890,9 @@ function svgChart(el, B, series, fmt, area) {
     const i = n <= 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round((sx - L) / ((W - L - R) / (n - 1)))));
     const b = B.list[i], px = x(i);
     xh.setAttribute("x1", px); xh.setAttribute("x2", px); xh.setAttribute("visibility", "visible");
-    const rows = series.filter(s => s.data[i] > 0 || series.length === 1);
+    const rows = series.filter(s => s.data[i] > 0 || series.length === 1 || hasDash);
     tip.innerHTML = `<b>${b.from === b.to ? dmy(b.from) : `${dmy(b.from)} – ${dmy(b.to)}`}</b>` + rows.map(s => `<div><i style="background:${s.color}"></i>${series.length > 1 ? esc(s.name) + ": " : ""}${fmt(s.data[i])}</div>`).join("") +
-      (series.length > 1 ? `<div style="opacity:.8">รวม ${fmt(series.reduce((a, s) => a + s.data[i], 0))}</div>` : "");
+      (series.length > 1 && !hasDash ? `<div style="opacity:.8">รวม ${fmt(series.reduce((a, s) => a + s.data[i], 0))}</div>` : "");
     tip.style.display = "block";
     const left = px * r.width / W; tip.style.left = Math.min(Math.max(0, left + 12), el.clientWidth - tip.offsetWidth) + "px"; tip.style.top = "4px";
   };
