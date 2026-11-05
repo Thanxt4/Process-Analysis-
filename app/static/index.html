@@ -148,7 +148,10 @@ a.zbtn{text-decoration:none;color:inherit}
 .zbtn.grp.rt .badge.ok{background:#dcfce7;color:#166534}
 .zbtn.grp .gtag{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--navy);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:2px}
 .hm tr.grp th,.hm tr.grp td{background:#eef2ff;color:var(--navy);text-align:left;font-weight:700;padding:6px 8px}
-.ed-grp{font-weight:700;color:var(--navy);margin:16px 0 8px;font-size:15px;border-bottom:2px solid var(--line);padding-bottom:4px}
+.ed-grp{font-weight:700;color:var(--navy);margin:16px 0 8px;font-size:15px;border-bottom:2px solid var(--line);padding-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ed-bulk{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);flex-wrap:wrap}
+.ed-bulk button{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700}
+.ed-bulk button:hover{border-color:var(--navy)}
 .zcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
 .zhead{padding:12px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);background:#f8fafc}
 .zhead .t{flex:1}
@@ -1024,9 +1027,8 @@ const FS = () => (formRound && formRound !== CFG.current_round && FSTATUS) ? FST
 const isG = z => z && z.deck === "gmp";
 /* ป้ายกระบวนการของรายการ (Rawmat / จุดเตรียม / บรรจุ / Retort&Store) */
 const CUSTS = ["Weruva", "Smucker"];
-const NO_CUST = "none";  // Checklist ที่ไม่ใช่ของลูกค้า · ค่าว่าง = ใช้กับทั้งสองลูกค้า
-const BOTH_CUST = CUSTS.join(", ");  // "Weruva, Smucker"
-const custKey = it => !it || it.extra || it.cust === NO_CUST ? "none" : CUSTS.includes(it.cust) ? it.cust : "both";
+const BOTH = "both", BOTH_CUST = CUSTS.join(", ");  // ทั้งสองลูกค้า = "Weruva, Smucker" · ไม่ระบุ (ค่าว่าง) = ไม่มีลูกค้า
+const custKey = it => !it || it.extra ? "none" : it.cust === BOTH ? "both" : CUSTS.includes(it.cust) ? it.cust : "none";
 const custText = it => { const k = custKey(it); return k === "none" ? "" : k === "both" ? BOTH_CUST : k; };
 const custTag = it => { const k = custKey(it); if(k === "none") return "";
   return `<span class="ctag c-${k.toLowerCase()}" title="Checklist ของลูกค้า ${esc(custText(it))}">${esc(custText(it))}</span>`; };
@@ -2450,7 +2452,7 @@ function renderEditor(){
         <input type="text" class="e-no" value="${esc(it.no)}" ${it.extra?"disabled":""} placeholder="ลำดับ">
         <input type="text" class="e-name" value="${esc(it.name)}" placeholder="ชื่อรายการตรวจ">
         ${it.extra ? `<span></span>` : `<select class="e-proc" title="อยู่ในกระบวนการไหน"><option value="">— กระบวนการ —</option>${(CFG.process_tags||[]).map(t=>`<option ${t===it.proc?"selected":""}>${esc(t)}</option>`).join("")}</select>`}
-        ${it.extra ? `<span></span>` : `<select class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน"><option value="">${BOTH_CUST}</option>${CUSTS.map(c => `<option value="${c}" ${c===it.cust?"selected":""}>${c}</option>`).join("")}<option value="${NO_CUST}" ${it.cust===NO_CUST?"selected":""}>ไม่มีลูกค้า</option></select>`}
+        ${it.extra ? `<span></span>` : `<select class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน"><option value="">ไม่มีลูกค้า</option><option value="${BOTH}" ${custKey(it)==="both"?"selected":""}>${BOTH_CUST}</option>${CUSTS.map(c => `<option value="${c}" ${c===it.cust?"selected":""}>${c}</option>`).join("")}</select>`}
         <div class="acts">${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
         <button type="button" class="down" ${ii>=z.items.filter(x=>!x.extra).length-1?"disabled":""} title="เลื่อนลง">▼</button>
         <button type="button" class="del" title="ลบรายการ"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:`<span class="note">หัวข้อเพิ่มเติม</span>`}</div>
@@ -2464,7 +2466,7 @@ function renderEditor(){
       <button type="button" class="del zdel" title="ลบพื้นที่นี้"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>
       ${rows}<button type="button" class="additem">＋ เพิ่มรายการ</button></div>`;
   };
-  const sect = (deck, title) => `<div class="ed-grp">${title}</div>` +
+  const sect = (deck, title) => `<div class="ed-grp"><span>${title}</span><span class="ed-bulk">ลูกค้าทุกหัวข้อ: <button type="button" data-bulk="${deck}" data-v="">ไม่มีลูกค้า</button><button type="button" data-bulk="${deck}" data-v="${BOTH}">${BOTH_CUST}</button></span></div>` +
     editZones.map((z, zi) => ((z.deck || "pc") === deck ? block(z, zi) : "")).join("") +
     `<button type="button" class="btn ghost addpage addzone" data-deck="${deck}">＋ เพิ่มพื้นที่${deck==="pc"?"":" " + deckName(deck)}</button>`;
   $("#editZones").innerHTML = sect("pc", "Process Control") + sect("gmp", "GMP") + (editZones.some(z => z.deck === "retort") ? sect("retort", "Retort Analysis (แบบเก่า)") : "");
@@ -2484,6 +2486,10 @@ $("#editZones").addEventListener("input", e => {
 });
 $("#editZones").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.bulk != null){  // ตั้งลูกค้าของทุกหัวข้อในกลุ่มนี้ (ยังไม่บันทึกจนกว่าจะกด บันทึกการแก้ไข)
+    let n = 0; editZones.forEach(z => { if((z.deck || "pc") === b.dataset.bulk) z.items.forEach(it => { if(!it.extra){ it.cust = b.dataset.v; n++; } }); });
+    renderEditor(); toast(`ตั้ง ${n} หัวข้อเป็น "${b.dataset.v ? BOTH_CUST : "ไม่มีลูกค้า"}" แล้ว · กด บันทึกการแก้ไข เพื่อยืนยัน`); return;
+  }
   if(b.classList.contains("addzone")){
     editZones.push({name:"", owner:"", deck:b.dataset.deck, items:[{no:1, name:""}]}); renderEditor();
     const zi = editZones.length-1; $("#editZones").querySelector(`.ez[data-z="${zi}"] .e-zname`).focus(); return;

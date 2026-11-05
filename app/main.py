@@ -72,7 +72,7 @@ for d in (UPLOAD_DIR, SLIDE_DIR):
 
 
 CUSTOMERS = ("Weruva", "Smucker")  # ลูกค้าที่เลือกให้แต่ละ Checklist ได้
-NO_CUST = "none"  # Checklist ที่ไม่ใช่ของลูกค้า (ว่าง = ใช้กับทั้งสองลูกค้า)
+BOTH_CUST = "both"  # Checklist ที่ใช้กับทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)
 NO_ACT = "ไม่มีกิจกรรม"  # ผลการตรวจแบบที่ 3: ไปตรวจแล้วแต่จุดนั้นไม่มีกิจกรรม → ไม่นับในกราฟ/การวิเคราะห์
 STATUSES = ("ปกติ", "พบปัญหา", NO_ACT)
 
@@ -475,7 +475,7 @@ def fetch_submissions(rd: date, area_id: Optional[str] = None):
         s["zone"] = it.get("zone", "")
         s["zone_id"] = it.get("zone_id", "")
         s["proc"] = it.get("proc", "")  # ป้ายกระบวนการ (Rawmat / จุดเตรียม / ...)
-        s["cust"] = it.get("cust", "")  # ลูกค้า Weruva / Smucker (ว่าง = ทั้งสองลูกค้า · none = ไม่มีลูกค้า)
+        s["cust"] = it.get("cust", "")  # ลูกค้า: Weruva / Smucker / both (ว่าง = ไม่มีลูกค้า)
         try:
             s["qty"] = json.loads(s.get("qty") or "null")
         except ValueError:
@@ -1216,8 +1216,8 @@ async def api_admin_save(request: Request):
             else:
                 base.pop("proc", None)
             cust = str(it.get("cust") or "").strip()
-            if (cust in CUSTOMERS or cust == NO_CUST) and not base.get("extra"):
-                base["cust"] = cust  # Checklist ของลูกค้า · none = ไม่มีลูกค้า (ไม่ระบุ = ใช้กับทั้งสองลูกค้า)
+            if (cust in CUSTOMERS or cust == BOTH_CUST) and not base.get("extra"):
+                base["cust"] = cust  # Checklist ของลูกค้า · both = ทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)
             else:
                 base.pop("cust", None)
             if "qty" in it:  # ช่องนับจำนวน (เช่น วัตถุดิบ Delay แยกห้อง)
