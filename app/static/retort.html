@@ -777,6 +777,16 @@ button.big.cat.on .ck{background:var(--gc);border-color:var(--gc)}
 .fsheet .mf select,.fsheet .mf input{min-height:46px;font-size:16px;background-color:#fff}
 @media(min-width:700px){.modal .box.fsheet{max-width:520px}}
 @media(max-width:560px){.fbtn span{display:none}.fbtn{padding:0;min-width:54px}}
+/* ปุ่มถ่ายรูป / คลังรูป: สองปุ่มขนาดเท่ากัน */
+.phbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.phb{display:flex;align-items:center;justify-content:center;gap:10px;min-height:72px;padding:12px;border-radius:16px;cursor:pointer;transition:transform .08s,filter .15s;text-align:left}
+.phb svg.i{width:30px;height:30px;flex:0 0 auto}.phb span{display:flex;flex-direction:column;line-height:1.25}.phb b{font-size:17px}.phb small{font-size:12px;opacity:.8}
+.phb.cam{background:linear-gradient(135deg,#1b2a41,#2a4466);color:#fff;box-shadow:0 10px 22px -12px rgba(27,42,65,.7)}.phb.cam svg.i{color:var(--amber)}
+.phb.gal{background:#fff;color:var(--navy);border:1.5px solid #c9d4e3}.phb.gal svg.i{color:var(--navy)}
+.phb:active{transform:scale(.98)}.phb:hover{filter:brightness(1.05)}
+.phb.dis{opacity:.45;cursor:default;pointer-events:none}
+.phhint{display:block;font-size:12px;color:var(--mute);margin:8px 2px 0;text-align:center}
+@media(max-width:380px){.phb{flex-direction:column;gap:4px;text-align:center}.phb span{align-items:center}}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
@@ -1370,10 +1380,7 @@ function viewLog() {
   } else if (S.step === 4) {
     h += catHead(d, `id="catChange"`) + `<h2 class="q">ถ่ายรูปปัญหา <span class="sub" style="font-weight:400">${d.photos.length ? `${d.photos.length} รูป` : "รูปจะมีเวลาประทับอัตโนมัติ"}</span></h2>
       <div class="card">
-        <label class="camBtn" id="camLbl"><input type="file" accept="image/*" capture="environment" id="camIn" hidden>${I("camera")}<span><b>เปิดกล้องถ่ายรูป</b><small>ประทับ ${esc(U.stamp)} · วันที่ เวลา กะ</small></span></label>
-        <label class="ghost sm galBtn"><input type="file" accept="image/*" id="galIn" multiple hidden>${I("image")}เลือกจากคลังรูป</label>
-        <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
-        <div id="upState" class="sub"></div>
+        ${photoPicker(d)}
         ${(() => { const pts = d.photos.map(f => (d.ptimes || {})[f]).filter(Boolean); if (!pts.length) return "";
           const t0 = Math.min(...pts), at = new Date(t0), hm = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
           if (Math.abs(at - new Date(`${d.date}T${d.time}:00`)) <= 10 * 60e3) return "";
@@ -1384,7 +1391,7 @@ function viewLog() {
     const progs = progsFor(d.retort); const sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
     const cs = d.cats.map(catById).filter(Boolean), many = cs.length > 1;
     const fields = []; cs.forEach(c => (c.fields || []).forEach(fl => { if (!fields.some(x => x.key === fl.key)) fields.push(fl); }));
-    h += catHead(d, `data-step="4"`) + `${d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+    h += catHead(d, `data-step="4"`) + `${editing ? `<div class="card">${sec("camera", "รูปถ่าย", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · เพิ่มรูปได้")}${photoPicker(d)}</div>` : d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
       ${U.form.more ? `<div class="card detcard">${sec("list", "รายละเอียด", many ? "ใช้ร่วมกันทุกปัญหา · ระยะเวลา · สินค้า · Batch" : "ระยะเวลา · สินค้า · Batch")}<div class="grid">
         ${fields.map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
         <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}"></label>
@@ -1552,7 +1559,17 @@ async function addPhotos(files, fromCamera) {
       if (pt.src !== "now") toast(`ประทับเวลาถ่ายจริง ${dmy(iso(pt.at))} ${pad(pt.at.getHours())}:${pad(pt.at.getMinutes())} น.`);
     } catch (e) { toast("อัปโหลดรูปไม่สำเร็จ: " + e.message); }
   }
-  if (S.view === "log" && S.step === 4) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
+  if (S.view === "log" && (S.step === 4 || S.step === 5)) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
+}
+function photoPicker(d) {
+  const full = d.photos.length >= U.form.maxPhotos;
+  return `<div class="phbtns">
+      <label class="phb cam ${full ? "dis" : ""}"><input type="file" accept="image/*" capture="environment" id="camIn" hidden ${full ? "disabled" : ""}>${I("camera")}<span><b>ถ่ายรูป</b><small>เปิดกล้อง</small></span></label>
+      <label class="phb gal ${full ? "dis" : ""}"><input type="file" accept="image/*" id="galIn" multiple hidden ${full ? "disabled" : ""}>${I("image")}<span><b>คลังรูป</b><small>เลือกจากเครื่อง</small></span></label>
+    </div>
+    <small class="phhint">${full ? `ครบ ${U.form.maxPhotos} รูปแล้ว · ลบรูปเดิมก่อนถ้าจะเพิ่ม` : `ประทับ ${esc(U.stamp)} · วันที่ เวลา กะ (รูปจากคลังใช้เวลาที่ถ่ายจริง)`}</small>
+    <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
+    <div id="upState" class="sub"></div>`;
 }
 function zoomPhoto(f) { modal(`<img src="${photoUrl(f)}" alt="" style="width:100%;border-radius:12px;display:block"><button class="blk" data-close style="margin-top:12px">ปิด</button>`); }
 const catNextLabel = d => d.cats.length ? `ถัดไป · เลือกแล้ว ${d.cats.length} ปัญหา ${I("right")}` : "เลือกปัญหาอย่างน้อย 1 ข้อ";
