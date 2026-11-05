@@ -693,6 +693,37 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 @media(max-width:1100px){.drange{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:860px){.cb-row{grid-template-columns:minmax(0,1fr) 76px;padding:10px 2px}.cb-row .cb-track{margin-right:28px}.dp-b{padding:14px}}
 @media(max-width:560px){.rcard{min-width:0}.rc-dates{width:100%;flex-wrap:wrap}.rc-dates input[type=date]{flex:1 1 120px;min-width:0;width:auto}.rc-dates button{flex:1 0 100%}.rc-h .dseg{margin-left:0;max-width:100%;overflow-x:auto}}
+/* ===== แท็บ ปรับแต่ง ===== */
+.sw{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:15px;position:relative}
+.sw:last-child{border-bottom:0}
+.sw input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;pointer-events:none}
+.sw i{flex:0 0 auto;width:46px;height:28px;border-radius:99px;background:#cbd5e1;position:relative;transition:background .15s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.3);transition:transform .18s cubic-bezier(.2,.8,.2,1)}
+.sw input:checked+i{background:var(--ok)}
+.sw input:checked+i::after{transform:translateX(18px)}
+.sw input:focus-visible+i{outline:3px solid rgba(245,158,11,.6);outline-offset:2px}
+.sw input:disabled+i{opacity:.45}.sw:has(input:disabled){cursor:default}
+.sw span{flex:1;min-width:0;line-height:1.35}.sw small{display:block;color:var(--mute);font-size:12.5px}
+.sw.mini{padding:0;border:0;flex:0 0 auto}
+.segfit button{min-width:0;padding-left:4px;padding-right:4px}
+.colrow{display:flex;align-items:center;gap:8px;min-width:0}
+.colrow input[type=color]{width:50px;height:46px;min-height:0;padding:3px;border-radius:12px;cursor:pointer;flex:0 0 auto;background:#fff}
+.colrow input.hex{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:15px;min-width:0}
+.colrow select{min-height:46px;font-size:14.5px;padding:6px 34px 6px 10px;min-width:0}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.swatch{min-height:42px;padding:4px 12px 4px 5px;border-radius:99px;gap:8px;font-size:13.5px;background:#fff}
+.swatch i{width:30px;height:30px;border-radius:50%;display:block;background:linear-gradient(135deg,var(--a) 0 55%,var(--b) 55% 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.swatch.on{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy);font-weight:600}
+.tabrow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #f1f5f9}
+.tabrow .ti{width:38px;height:38px;border-radius:11px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:var(--navy);flex:0 0 auto}
+.tabrow input[type=text]{min-height:42px;font-size:15px;padding:8px 10px;flex:1;min-width:0}
+.tabrow .mv{width:38px;min-height:38px;padding:0;flex:0 0 auto}.tabrow .mv:disabled{opacity:.3}
+.grow5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.grow5 input{min-height:44px;font-size:14.5px;padding:8px 6px;text-align:center}
+.grprow{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(0,190px);gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9}
+.grprow .gic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--gc)}
+.grprow input:not([type=color]){min-height:46px;font-size:15px;padding:8px 10px}
+@media(max-width:560px){.grprow{grid-template-columns:42px minmax(0,1fr)}.grprow .colrow{grid-column:2}.grow5{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -760,6 +791,7 @@ const IP = {
   calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
   target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   pie:'<path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
+  palette:'<circle cx="13.5" cy="6.5" r="1.3"/><circle cx="17.5" cy="10.5" r="1.3"/><circle cx="8.5" cy="7.5" r="1.3"/><circle cx="6.5" cy="12.5" r="1.3"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.3A5.7 5.7 0 0 0 22 9.7C22 5.4 17.5 2 12 2z"/>',
   printer:'<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', factory:'<path d="M3 21V10l6 4V10l6 4V4h6v17z"/><path d="M7 17h2M12 17h2M17 17h2"/>'
 };
@@ -783,7 +815,11 @@ const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JS
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 function toast(m) { const t = document.createElement("div"); t.className = "toast"; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
 // กะ: DS 07:00–17:30 · NS 17:31–06:59
-const shiftOf = hm => { const [h, mi] = String(hm || "12:00").split(":").map(n => parseInt(n, 10) || 0); const t = h * 60 + mi; return t >= 420 && t <= 1050 ? "DS" : "NS"; };
+// เวลากะ DS แก้ได้ที่แท็บ ปรับแต่ง (ค่าตั้งต้น 07:00–17:30)
+const hmMin = s => { const [h, mi] = String(s || "12:00").split(":").map(n => parseInt(n, 10) || 0); return h * 60 + mi; };
+const minHM = m => { m = ((m % 1440) + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
+const shiftOf = hm => { const t = hmMin(hm); return t >= hmMin(U.dsStart) && t <= hmMin(U.dsEnd) ? "DS" : "NS"; };
+const shiftHint = () => `DS ${U.dsStart}–${U.dsEnd} · NS ${minHM(hmMin(U.dsEnd) + 1)}–${minHM(hmMin(U.dsStart) - 1)}`;
 const TH_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 const thDate = s => { const d = new Date(s + "T00:00:00"); return isNaN(d) ? "" : `วัน${TH_DAYS[d.getDay()]}ที่ ${dmy(s)}`; };
 const SERIES = ["--s1","--s2","--s3","--s4","--s5","--s6"].map(v => getComputedStyle(document.documentElement).getPropertyValue(v).trim());
@@ -803,6 +839,80 @@ const GROUPS = {
   other: { name: "อื่นๆ", color: "#64748b", icon: "tag" }
 };
 const grpOf = c => GROUPS[(c && c.grp) || "other"] || GROUPS.other;
+const GROUPS_DEFAULT = JSON.parse(JSON.stringify(GROUPS));
+const GROUP_ICONS = ["bolt", "gauge", "drop", "thermo", "user", "tool", "chart", "tag", "alert", "factory", "settings", "clock", "camera", "grid", "target"];
+
+/* ---------- ปรับแต่งหน้าจอ: เก็บใน config.ui บนเซิร์ฟเวอร์ (ทุกเครื่องเห็นเหมือนกัน) ---------- */
+const UI_DEFAULT = {
+  brand: "LINE QC / RETORT ANALYSIS", title: "บันทึกปัญหา Retort", subtitle: "หาสาเหตุ · วิเคราะห์แนวโน้ม",
+  stamp: "i-Tail Corporation: Retort Analysis",
+  navy: "#1b2a41", amber: "#f59e0b", scale: 100,
+  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
+    { k: "progs", label: "โปรแกรม", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
+  defaultTab: "log",
+  dsStart: "07:00", dsEnd: "17:30",
+  steps: ["เวลา", "พื้นที่", "หม้อ", "ปัญหา", "สาเหตุ"],
+  form: { photo: true, action: true, impact: true, program: true, more: true, todaybar: true, recent: true, maxPhotos: 8 },
+  dash: { insight: true, trend: true, groups: true, hours: true, heat: true, more: true, days: 14 },
+  groups: {}, aiQuick: null
+};
+const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", ai: "spark", settings: "settings", ui: "palette" };
+let U = JSON.parse(JSON.stringify(UI_DEFAULT));
+/* รวมค่าตั้งต้นกับค่าที่บันทึกไว้ และตรวจทุกค่า (สี/เวลา/ข้อความ) ก่อนใช้ */
+function uiCfg(raw) {
+  const c = raw && typeof raw === "object" ? raw : {}, D = UI_DEFAULT;
+  const str = (v, d, n) => typeof v === "string" && v.trim() ? v.replace(/\s+/g, " ").trim().slice(0, n) : d;
+  const hex = (v, d) => /^#[0-9a-f]{6}$/i.test(v || "") ? v.toLowerCase() : d;
+  const hm = (v, d) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v || "") ? v : d;
+  const bool = (v, d) => typeof v === "boolean" ? v : d;
+  const seen = new Set(); let tabs = (Array.isArray(c.tabs) ? c.tabs : []).filter(t => t && D.tabs.some(x => x.k === t.k) && !seen.has(t.k) && seen.add(t.k));
+  D.tabs.forEach(t => { if (!tabs.some(x => x.k === t.k)) tabs.push(t); });
+  tabs = tabs.map(t => { const d = D.tabs.find(x => x.k === t.k); return { k: t.k, label: str(t.label, d.label, 20), show: t.k === "ui" || bool(t.show, true) }; });
+  let dsStart = hm(c.dsStart, D.dsStart), dsEnd = hm(c.dsEnd, D.dsEnd); if (hmMin(dsStart) >= hmMin(dsEnd)) { dsStart = D.dsStart; dsEnd = D.dsEnd; }
+  const f = c.form || {}, ds = c.dash || {}, groups = {};
+  Object.keys(GROUPS_DEFAULT).forEach(g => { const o = (c.groups || {})[g] || {}, d = GROUPS_DEFAULT[g];
+    groups[g] = { name: str(o.name, d.name, 40), color: hex(o.color, d.color), icon: GROUP_ICONS.includes(o.icon) ? o.icon : d.icon }; });
+  return {
+    brand: str(c.brand, D.brand, 60), title: str(c.title, D.title, 60), subtitle: str(c.subtitle, D.subtitle, 80), stamp: str(c.stamp, D.stamp, 60),
+    navy: hex(c.navy, D.navy), amber: hex(c.amber, D.amber), scale: Math.min(130, Math.max(85, parseInt(c.scale, 10) || 100)),
+    tabs, defaultTab: tabs.some(t => t.k === c.defaultTab && t.show) ? c.defaultTab : tabs.find(t => t.show).k,
+    dsStart, dsEnd, steps: D.steps.map((s, i) => str((c.steps || [])[i], s, 16)),
+    form: Object.fromEntries(Object.entries(D.form).map(([k, v]) => [k, k === "maxPhotos" ? Math.min(8, Math.max(1, parseInt(f[k], 10) || v)) : bool(f[k], v)])),
+    dash: Object.fromEntries(Object.entries(D.dash).map(([k, v]) => [k, k === "days" ? ([7, 14, 30, 90].includes(+ds[k]) ? +ds[k] : v) : bool(ds[k], v)])),
+    groups, aiQuick: Array.isArray(c.aiQuick) ? c.aiQuick.map(q => str(q, "", 200)).filter(Boolean).slice(0, 12) : null
+  };
+}
+/* ธีมสี: เปลี่ยนทุกเฉดของสีหลัก (กรมท่า) และสีเน้น (ส้ม) ใน stylesheet ตามสีที่เลือก โดยคงความเข้ม/อ่อนเดิมของแต่ละเฉด */
+const NAVY_FAM = ["#1b2a41", "#14213a", "#0f1f38", "#10203a", "#0f1a2e", "#0f2a47", "#24364f", "#26405f", "#28456b", "#24406a", "#2a4466", "#2a4a72", "#2c4a72", "#3b5577", "#46668f"];
+const AMBER_FAM = ["#f59e0b", "#fbbf24", "#fcd34d", "#fde68a", "#d97706", "#92400e", "#fef3c7", "#fffbeb", "#fff7e6", "#fff8eb"];
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+function rgbHsl([r, g, b]) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, s = 0;
+  if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+  return [h, s * 100, l * 100]; }
+function hslHex(h, s, l) { h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(100, s)) / 100; l = Math.max(0, Math.min(100, l)) / 100;
+  const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return "#" + [f(0), f(8), f(4)].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join(""); }
+function shadeLike(shade, base, nb) {
+  const [sh, ss, sl] = rgbHsl(hexRgb(shade)), [bh, bs, bl] = rgbHsl(hexRgb(base)), [nh, ns, nl] = rgbHsl(hexRgb(nb));
+  const l = sl >= bl ? nl + (sl - bl) / (100 - bl || 1) * (100 - nl) : nl - (bl - sl) / (bl || 1) * nl;
+  return hslHex(nh + (sh - bh), bs ? ns * ss / bs : ns, l);
+}
+const BASE_CSS = document.querySelector("style").textContent; let themeKey = UI_DEFAULT.navy + UI_DEFAULT.amber;
+function applyTheme(navy, amber) {
+  if (navy + amber === themeKey) return; themeKey = navy + amber;
+  const st = document.querySelector("style"); $("meta[name=theme-color]").content = navy;
+  if (navy === UI_DEFAULT.navy && amber === UI_DEFAULT.amber) { st.textContent = BASE_CSS; return; }
+  const map = {}; NAVY_FAM.forEach(h => map[h] = shadeLike(h, UI_DEFAULT.navy, navy)); AMBER_FAM.forEach(h => map[h] = shadeLike(h, UI_DEFAULT.amber, amber));
+  const rgb = { "27,42,65": hexRgb(navy).join(","), "44,74,114": hexRgb(map["#2c4a72"]).join(","), "245,158,11": hexRgb(amber).join(",") };
+  st.textContent = BASE_CSS.replace(/#[0-9a-fA-F]{6}\b/g, m => map[m.toLowerCase()] || m).replace(/rgba\((27,42,65|44,74,114|245,158,11),/g, (m, k) => `rgba(${rgb[k]},`);
+}
+function applyUI() {
+  U = uiCfg(S.config.ui);
+  $(".ttl .brand").textContent = U.brand; $("#title").textContent = U.title; $("#subtitle").textContent = U.subtitle;
+  Object.keys(U.groups).forEach(g => Object.assign(GROUPS[g], U.groups[g]));
+  applyTheme(U.navy, U.amber);
+  document.body.style.zoom = U.scale === 100 ? "" : String(U.scale / 100);
+}
 /* รายการปัญหา Retort ปัจจุบัน (อัปเดต 04/11/26) — เรียงตามลำดับที่ใช้หน้างาน */
 const DEFAULT_CONFIG = {
   version: CFG_VERSION,
@@ -922,7 +1032,7 @@ function getName() { try { const v = localStorage.getItem("pc_inspector"); if (v
 function setName(n) { n = (n || "").trim().slice(0, 60); try { localStorage.setItem("pc_inspector", n); } catch {} document.cookie = `pc_name=${encodeURIComponent(n)}; max-age=${60*60*24*400}; path=/; samesite=lax`; }
 const S = {
   user: getName(),
-  view: lsGet("rt_view", "log"),
+  view: lsGet("rt_view", ""), viewAuto: !lsGet("rt_view", ""),
   items: {}, config: migrate(null)[0],
   pin: "", canAdmin: false, loaded: false,
   draft: null, editingId: null,
@@ -953,9 +1063,9 @@ async function deleteItem(id) {
   }
 }
 async function saveConfig() {
-  if (!S.canAdmin) return;
-  try { const r = await jpost("/api/retort/config", { pin: S.pin, config: S.config }); S.config = migrate(r.config)[0]; setSync(true); }
-  catch (e) { toast("บันทึกการตั้งค่าไม่สำเร็จ: " + e.message); if (e.status === 403) { S.canAdmin = false; S.pin = ""; } }
+  if (!S.canAdmin) return false;
+  try { const r = await jpost("/api/retort/config", { pin: S.pin, config: S.config }); S.config = migrate(r.config)[0]; setSync(true); return true; }
+  catch (e) { toast("บันทึกการตั้งค่าไม่สำเร็จ: " + e.message); if (e.status === 403) { S.canAdmin = false; S.pin = ""; } return false; }
 }
 let lastSync = 0;
 async function syncAll(full) {
@@ -984,23 +1094,31 @@ async function unlockAdmin() {
 function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ($("#modalRoot").innerHTML) return; render(); }
 
 /* ---------- shell ---------- */
-const VIEWS = [["log", "บันทึก", "plus"], ["list", "รายการ", "list"], ["analyze", "วิเคราะห์", "chart"], ["progs", "โปรแกรม", "thermo"], ["ai", "AI", "spark"], ["settings", "ตั้งค่า", "settings"]];
+function renderNav() {
+  const vis = U.tabs.filter(t => t.show);
+  // เครื่องที่ยังไม่เคยเลือกแท็บ: เปิดแท็บเริ่มต้นตามการตั้งค่า (เลิกทำทันทีที่ผู้ใช้กดอะไรก็ตาม)
+  if (S.viewAuto) { if (!S.view || S.view === S.autoPick) S.view = S.autoPick = U.defaultTab; else S.viewAuto = false; }
+  if (!vis.some(t => t.k === S.view)) S.view = U.defaultTab;
+  $("#nav").innerHTML = vis.map(t => `<button data-view="${t.k}" class="${S.view === t.k ? "on" : ""}">${I(VIEW_ICON[t.k])}${esc(t.label)}</button>`).join("");
+}
 function render() {
+  applyUI();
   $("#userBtn").textContent = initials(S.user);
-  $("#nav").innerHTML = VIEWS.map(([k, l, ic]) => `<button data-view="${k}" class="${S.view === k ? "on" : ""}">${I(ic)}${l}</button>`).join("");
+  renderNav();
   $("#main").classList.toggle("wide", S.view === "analyze" || S.view === "list");
   $("#main").classList.toggle("xwide", S.view === "analyze");
-  $("#main").classList.toggle("vset", S.view === "settings");
+  $("#main").classList.toggle("vset", S.view === "settings" || S.view === "ui");
   S.charts = {}; $("#main").classList.remove("split");
-  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, ai: viewAI, settings: viewSettings })[S.view || "log"]();
+  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
 }
 /* เล่นแอนิเมชันเข้าหน้าเฉพาะตอนเปลี่ยนหน้า/ขั้นตอน (ไม่เล่นซ้ำตอนซิงก์ข้อมูลหรือเปลี่ยนตัวกรอง) */
 let animKey = "";
 function markAnim(k) { $("#main").classList.toggle("anim", k !== animKey); animKey = k; }
-$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
+$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
 $("#userBtn").onclick = () => askName(false);
+document.addEventListener("pointerdown", () => { S.viewAuto = false; }, true);
 
 /* ---------- log form ---------- */
 function newDraft() {
@@ -1012,16 +1130,14 @@ function retortList() {
   const fromCfg = (S.config.retorts || []).length ? S.config.retorts : DEFAULT_RETORTS;
   return [...new Set([...fromCfg, ...Object.keys(seen)])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).slice(0, 40);
 }
-const STEPS = ["เวลา", "พื้นที่", "หม้อ", "ปัญหา", "สาเหตุ"];
 function stepHead(d) {
   const cat = catById(d.category); const st = S.step;
   const vals = [`${d.time} ${d.shift}`, d.plant, d.retort, cat ? cat.name : "", ""];
-  return `<div class="steps">${STEPS.map((l, i) => { const k = i + 1; const v = vals[i]; const cls = k === st ? "on" : k < st ? "done" : "";
+  return `<div class="steps">${U.steps.map((l, i) => { const k = i + 1; const v = vals[i]; const cls = k === st ? "on" : k < st ? "done" : "";
     return `<button class="st ${cls}" ${k < st ? `data-step="${k}"` : "disabled"}><span class="no">${k < st ? I("check") : k}</span><span class="tx"><small>${l}</small>${k < st && v ? `<b>${esc(v)}</b>` : ""}</span></button>`; }).join("")}</div>
-    <div class="stepbar" aria-hidden="true"><i style="width:${Math.round(st / STEPS.length * 100)}%"></i></div>`;
+    <div class="stepbar" aria-hidden="true"><i style="width:${Math.round(st / U.steps.length * 100)}%"></i></div>`;
 }
 const photoUrl = f => "/api/retort/photo/" + encodeURIComponent(f);
-const SHIFT_HINT = "DS 07:00–17:30 · NS 17:31–06:59";
 function catHead(d, changeStep) {
   const cat = catById(d.category); if (!cat) return ""; const G = grpOf(cat);
   return `<div class="catsel" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><div><small>${dmy(d.date)} ${esc(d.time)} กะ ${d.shift} · ${esc(d.plant)} · ${esc(d.retort)}</small><b>${esc(cat.name)}</b></div><button class="ghost sm" ${changeStep}>เปลี่ยน</button></div>`;
@@ -1030,6 +1146,7 @@ function viewLog() {
   if (!S.draft) { S.draft = newDraft(); S.step = 1; S.more = false; S.catPick = true; }
   if (S.justSaved) return viewSaved();
   const d = S.draft; d.photos = d.photos || [];
+  if (S.step === 4 && !S.catPick && catById(d.category) && !U.form.photo) S.step = 5;  // ปิดขั้นถ่ายรูปไว้ในแท็บ ปรับแต่ง
   const cats = S.config.categories.filter(c => c.active || c.id === d.category); const cat = catById(d.category);
   const editing = !!S.editingId;
   let h = editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไขรายการที่บันทึกไว้ <button class="ghost sm" id="cancelEdit">ยกเลิก</button></div></div>` : "";
@@ -1039,7 +1156,7 @@ function viewLog() {
   const badge = st => `<span class="zbadge ${st.today ? "ng" : "ok"}">${st.today ? `วันนี้พบปัญหา ${st.today} ครั้ง` : "วันนี้ยังไม่มีปัญหา ✓"}</span><span class="zsub2">7 วัน ${st.week} ครั้ง</span>`;
   const last = lsGet("rt_last", {}) || {};
   const wide = matchMedia("(min-width:1000px)").matches;
-  if (S.step === 1 && !wide && !editing && all.length) {
+  if (S.step === 1 && !wide && !editing && all.length && U.form.todaybar) {
     const nT = all.filter(x => x.date === t0).length, nW = all.filter(x => x.date >= w0 && x.date <= t0).length, nA = all.filter(x => !x.approvedBy).length;
     h += `<div class="todaybar"><div class="${nT ? "bad" : "ok"}"><b>${nT}</b><span>ปัญหาวันนี้</span></div><div><b>${nW}</b><span>7 วันล่าสุด</span></div><div class="${nA ? "warn" : "ok"}"><b>${nA}</b><span>รออนุมัติ</span></div></div>`;
   }
@@ -1051,7 +1168,7 @@ function viewLog() {
         <div class="grid" style="margin-top:14px">
           <label class="f"><span class="lab">วันที่</span><input type="date" data-k="date" value="${d.date}"></label>
           <label class="f"><span class="lab">เวลา</span><input type="time" data-k="time" value="${d.time}"></label></div>
-        <div class="row sp" style="margin-top:10px;flex-wrap:wrap"><small class="hint" style="margin:0">กะคำนวณจากเวลาอัตโนมัติ · ${SHIFT_HINT}</small><button class="ghost sm" id="nowBtn">${I("clock")}ใช้เวลาปัจจุบัน</button></div>
+        <div class="row sp" style="margin-top:10px;flex-wrap:wrap"><small class="hint" style="margin:0">กะคำนวณจากเวลาอัตโนมัติ · ${shiftHint()}</small><button class="ghost sm" id="nowBtn">${I("clock")}ใช้เวลาปัจจุบัน</button></div>
       </div>
       <button class="pri blk savebig" id="timeOk">ถัดไป${I("right")}</button>`;
   } else if (S.step === 2) {
@@ -1069,12 +1186,12 @@ function viewLog() {
     h += `<h2 class="q">${esc(d.retort)} · เกิดปัญหาอะไร? <span class="sub" style="font-weight:400">${cats.length} หัวข้อ</span></h2>
       ${pickBar("category", "ค้นหาปัญหา หรือเพิ่มหัวข้อใหม่")}
       <div class="biglist catlist">${cats.map((c, i) => { const G = grpOf(c); const nc = (c.causes || []).length;
-        return `<button class="big cat ${d.category === c.id ? "on" : ""}" data-cat="${c.id}" data-s="${esc((i + 1) + " " + c.name + " " + (c.causes || []).join(" ")).toLowerCase()}" data-n="${esc(c.name.toLowerCase())}" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><span class="nm"><span class="cn"><em>${i + 1}</em>${esc(c.name)}</span><small>${nc ? esc(c.causes.join(" · ")) : G.name}</small></span>${wk[c.id] ? `<span class="wk" title="หม้อนี้ 7 วันล่าสุด">${wk[c.id]}</span>` : ""}${I("right")}</button>`; }).join("")}</div>
+        return `<button class="big cat ${d.category === c.id ? "on" : ""}" data-cat="${c.id}" data-s="${esc((i + 1) + " " + c.name + " " + (c.causes || []).join(" ")).toLowerCase()}" data-n="${esc(c.name.toLowerCase())}" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><span class="nm"><span class="cn"><em>${i + 1}</em>${esc(c.name)}</span><small>${nc ? esc(c.causes.join(" · ")) : esc(G.name)}</small></span>${wk[c.id] ? `<span class="wk" title="หม้อนี้ 7 วันล่าสุด">${wk[c.id]}</span>` : ""}${I("right")}</button>`; }).join("")}</div>
       ${cats.length ? "" : `<p class="sub">ยังไม่มีหัวข้อ เพิ่มได้ที่หน้า ตั้งค่า</p>`}`;
   } else if (S.step === 4) {
     h += catHead(d, `id="catChange"`) + `<h2 class="q">ถ่ายรูปปัญหา <span class="sub" style="font-weight:400">${d.photos.length ? `${d.photos.length} รูป` : "รูปจะมีเวลาประทับอัตโนมัติ"}</span></h2>
       <div class="card">
-        <label class="camBtn" id="camLbl"><input type="file" accept="image/*" capture="environment" id="camIn" hidden>${I("camera")}<span><b>เปิดกล้องถ่ายรูป</b><small>ประทับ i-Tail Corporation: Retort Analysis · วันที่ เวลา กะ</small></span></label>
+        <label class="camBtn" id="camLbl"><input type="file" accept="image/*" capture="environment" id="camIn" hidden>${I("camera")}<span><b>เปิดกล้องถ่ายรูป</b><small>ประทับ ${esc(U.stamp)} · วันที่ เวลา กะ</small></span></label>
         <label class="ghost sm galBtn"><input type="file" accept="image/*" id="galIn" multiple hidden>${I("image")}เลือกจากคลังรูป</label>
         <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${photoUrl(f)}" alt="" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
         <div id="upState" class="sub"></div>
@@ -1088,19 +1205,19 @@ function viewLog() {
         <label class="f"><span class="lab">สาเหตุ <span class="req">*</span></span><textarea id="causeIn" rows="2" placeholder="กรอกสาเหตุของปัญหา">${esc(curCause)}</textarea></label>
         <div style="margin-top:10px">${pickBar("cause", "ค้นหาสาเหตุ หรือเพิ่มสาเหตุใหม่เข้ารายการ")}</div>
         <div class="sugg">${[...(cat.causes || []), UNKNOWN].map(c => `<button class="chip ${curCause === c ? "on" : ""}" data-sug="${esc(c)}" data-s="${esc(c.toLowerCase())}">${esc(c)}</button>`).join("")}</div>
-        <label class="f" style="margin-top:14px"><span class="lab">การแก้ไข</span><textarea data-k="action" rows="3" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(d.action)}</textarea></label>
-        <div style="margin-top:14px"><span class="lab">ผลต่อสินค้า</span><div class="seg"><button data-impact="none" class="${d.impact === "none" ? "on" : ""}">ไม่กระทบสินค้า</button><button data-impact="hold" class="${d.impact === "hold" ? "on warnc" : ""}">Hold สินค้า</button></div></div>
-        <label class="f" style="margin-top:14px"><span class="lab">โปรแกรมที่ใช้ (ถ้ามี)</span>
-          <div class="row"><select id="progSel"><option value="">ไม่ระบุ</option>${progs.map(p => `<option value="${esc(progKey(p))}" ${sel && progKey(sel) === progKey(p) ? "selected" : ""}>โปรแกรม ${esc(p.no)}${progs.filter(x => x.no === p.no).length > 1 ? ` (${esc(p.doc)})` : ""}${p.note ? " · " + esc(p.note.replace(/^โปรแกรม \S+ /, "")) : ""}</option>`).join("")}</select>${sel ? `<button class="soft sm" id="progSpec" style="flex:0 0 auto">ดูค่าควบคุม</button>` : ""}</div></label>
+        ${U.form.action ? `<label class="f" style="margin-top:14px"><span class="lab">การแก้ไข</span><textarea data-k="action" rows="3" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(d.action)}</textarea></label>` : ""}
+        ${U.form.impact ? `<div style="margin-top:14px"><span class="lab">ผลต่อสินค้า</span><div class="seg"><button data-impact="none" class="${d.impact === "none" ? "on" : ""}">ไม่กระทบสินค้า</button><button data-impact="hold" class="${d.impact === "hold" ? "on warnc" : ""}">Hold สินค้า</button></div></div>` : ""}
+        ${U.form.program ? `<label class="f" style="margin-top:14px"><span class="lab">โปรแกรมที่ใช้ (ถ้ามี)</span>
+          <div class="row"><select id="progSel"><option value="">ไม่ระบุ</option>${progs.map(p => `<option value="${esc(progKey(p))}" ${sel && progKey(sel) === progKey(p) ? "selected" : ""}>โปรแกรม ${esc(p.no)}${progs.filter(x => x.no === p.no).length > 1 ? ` (${esc(p.doc)})` : ""}${p.note ? " · " + esc(p.note.replace(/^โปรแกรม \S+ /, "")) : ""}</option>`).join("")}</select>${sel ? `<button class="soft sm" id="progSpec" style="flex:0 0 auto">ดูค่าควบคุม</button>` : ""}</div></label>` : ""}
       </div>
-      <button class="more" id="moreBtn">${I(S.more ? "up" : "down")}${S.more ? "ซ่อนรายละเอียด" : "เพิ่มรายละเอียด (ไม่บังคับ)"}<span class="sub">ระยะเวลา · สินค้า · Batch</span></button>
+      ${U.form.more ? `<button class="more" id="moreBtn">${I(S.more ? "up" : "down")}${S.more ? "ซ่อนรายละเอียด" : "เพิ่มรายละเอียด (ไม่บังคับ)"}<span class="sub">ระยะเวลา · สินค้า · Batch</span></button>
       <div class="card ${S.more ? "" : "hide"}" id="moreBox"><div class="grid">
         ${(cat.fields || []).map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
         <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}"></label>
         <label class="f"><span class="lab">สินค้า</span><input data-k="product" value="${esc(d.product)}"></label>
         <label class="f"><span class="lab">Batch</span><input data-k="batch" value="${esc(d.batch)}"></label>
         <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail">${esc(d.detail)}</textarea></label>
-      </div></div>
+      </div></div>` : ""}
       <div class="card signcard"><span class="lab">ลงนามผู้บันทึก <span class="req">*</span></span>
         <input id="signIn" data-k="by" value="${esc(d.by || S.user)}" placeholder="ชื่อผู้บันทึก" autocomplete="off">
         <div class="signline"><span>(${esc(d.by || S.user || "................")})</span><small>วันที่ ${dmy(d.date)} เวลา ${esc(d.time)} น. กะ ${d.shift}</small></div></div>
@@ -1118,11 +1235,11 @@ function viewLog() {
         <div class="cmpbox"><div><b>${today.length}</b><span>ปัญหาวันนี้</span></div><div><b>${week.length}</b><span>7 วันล่าสุด</span></div></div>
         <div class="mini7">${d7.map(([d, v]) => `<div class="${d === t ? "td" : ""}" title="${thLong(d)} · ${v} ครั้ง"><b>${v || ""}</b><span class="bw"><span class="${v ? "on" : ""}" style="height:${v ? Math.max(8, v / mx7 * 100) : 0}%"></span></span><small>${TH_DOW[new Date(d + "T00:00:00").getDay()]}</small></div>`).join("")}</div>
         ${topW ? `<div class="sub">เกิดบ่อยสุดใน 7 วัน: <b style="color:var(--ink)">${esc(catById(topW[0])?.name || "-")}</b> (${topW[1]} ครั้ง)</div>` : `<div class="sub">7 วันล่าสุดยังไม่มีปัญหา</div>`}</div>
-      <div class="card">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.length ? recent.map(itemRow).join("") : `<p class="sub">ยังไม่มีบันทึก</p>`}</div>`;
+      ${U.form.recent ? `<div class="card">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.length ? recent.map(itemRow).join("") : `<p class="sub">ยังไม่มีบันทึก</p>`}</div>` : ""}`;
     h = `<div class="logL">${h}</div><aside class="logR">${side}</aside>`;
   } else if (S.step <= 2 && !editing) {
     const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
-    if (recent.length) h += `<div class="card" style="margin-top:18px">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.map(itemRow).join("")}</div>`;
+    if (recent.length && U.form.recent) h += `<div class="card" style="margin-top:18px">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.map(itemRow).join("")}</div>`;
   }
   $("#main").classList.toggle("split", wide);
   markAnim("log" + S.step + (S.catPick ? "c" : "") + (editing ? "e" : ""));
@@ -1173,7 +1290,6 @@ function itemRow(x) {
     <span class="meta">${esc(c ? c.name : "หัวข้อที่ถูกลบ")} · ${esc([x.plant, x.retort || "-", x.program ? "P" + x.program : ""].filter(Boolean).join(" "))} · ${dmy(x.date)} ${esc(x.time)} ${x.shift}${x.duration ? ` · ${esc(x.duration)} นาที` : ""}${x.by ? ` · บันทึก ${esc(x.by)}` : ""}</span></span><span class="tags">${apprTag(x)}<span>${(x.photos || []).length ? `<span class="tag">${I("camera")} ${x.photos.length}</span> ` : ""}${x.impact === "hold" ? '<span class="tag hold">Hold</span>' : ""}${x.demo ? ' <span class="tag">Demo</span>' : ""}</span></span></button>`;
 }
 /* ---------- รูปถ่าย + เวลาประทับ ---------- */
-const STAMP_L1 = "i-Tail Corporation: Retort Analysis";
 function loadImg(file) {
   return new Promise((res, rej) => { const u = URL.createObjectURL(file); const im = new Image(); im.onload = () => { res(im); setTimeout(() => URL.revokeObjectURL(u), 1000); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error("เปิดรูปไม่ได้")); }; im.src = u; });
 }
@@ -1189,10 +1305,10 @@ async function stampPhoto(file) {
   try { await document.fonts.load(`700 ${fs}px Sarabun`); } catch {}
   g.font = `700 ${fs}px Sarabun, sans-serif`; g.textBaseline = "top";
   const padd = Math.round(fs * 0.6), lh = Math.round(fs * 1.35);
-  const tw = Math.max(g.measureText(STAMP_L1).width, g.measureText(l2).width);
+  const STAMP_L1 = U.stamp; const tw = Math.max(g.measureText(STAMP_L1).width, g.measureText(l2).width);
   const bx = Math.round(fs * 0.5), by = h - bx - (lh * 2 + padd * 2);
   g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(bx, by, tw + padd * 2, lh * 2 + padd * 2 - Math.round(fs * 0.2));
-  g.fillStyle = "#f59e0b"; g.fillRect(bx, by, Math.max(4, Math.round(fs * 0.18)), lh * 2 + padd * 2 - Math.round(fs * 0.2));
+  g.fillStyle = U.amber; g.fillRect(bx, by, Math.max(4, Math.round(fs * 0.18)), lh * 2 + padd * 2 - Math.round(fs * 0.2));
   g.fillStyle = "#fff"; g.shadowColor = "rgba(0,0,0,.6)"; g.shadowBlur = 2;
   g.fillText(STAMP_L1, bx + padd, by + padd);
   g.fillText(l2, bx + padd, by + padd + lh);
@@ -1201,7 +1317,7 @@ async function stampPhoto(file) {
 async function addPhotos(files) {
   const d = S.draft; const st = $("#upState");
   for (const f of files) {
-    if (d.photos.length >= 8) { toast("แนบรูปได้สูงสุด 8 รูป"); break; }
+    if (d.photos.length >= U.form.maxPhotos) { toast(`แนบรูปได้สูงสุด ${U.form.maxPhotos} รูป`); break; }
     try {
       if (st) st.innerHTML = `<span class="ai-dots"><i></i><i></i><i></i></span>กำลังประทับเวลาและอัปโหลดรูป…`;
       const blob = await stampPhoto(f); const fd = new FormData(); fd.append("file", blob, "photo.jpg");
@@ -1412,6 +1528,7 @@ function viewProgs() {
 
 /* ---------- ผู้ช่วย AI ---------- */
 const AI = { msgs: [], busy: false, status: null, range: lsGet("rt_ai_range", "30"), plant: lsGet("rt_ai_plant", "all") };
+const aiQuick = () => U.aiQuick && U.aiQuick.length ? U.aiQuick : AI_QUICK;
 const AI_QUICK = [
   "สรุปภาพรวมปัญหาในช่วงนี้ เทียบกับช่วงก่อนหน้า",
   "ปัญหาไหนน่าห่วงที่สุด และควรแก้อะไรก่อน (จัดลำดับความสำคัญ)",
@@ -1468,7 +1585,7 @@ function viewAI() {
     <div class="ai-opts"><div class="seg">${[["7", "7 วัน"], ["30", "30 วัน"], ["90", "90 วัน"]].map(([v, l]) => `<button data-airng="${v}" class="${AI.range === v ? "on" : ""}">${l}</button>`).join("")}</div>
       <div class="seg">${[["all", "ทุกพื้นที่"], ...plantsList().map(p => [p, p])].map(([v, l]) => `<button data-aiplant="${v}" class="${AI.plant === v ? "on" : ""}">${l}</button>`).join("")}</div>
       ${AI.msgs.length ? `<button class="ghost sm" id="aiClear">${I("trash")}เริ่มใหม่</button>` : ""}</div>
-    ${AI.msgs.length ? "" : `<div class="ai-quick">${AI_QUICK.map((q, i) => `<button class="chip" data-aiq="${i}">${esc(q)}</button>`).join("")}</div>`}</div>
+    ${AI.msgs.length ? "" : `<div class="ai-quick">${aiQuick().map((q, i) => `<button class="chip" data-aiq="${i}">${esc(q)}</button>`).join("")}</div>`}</div>
     <div class="ai-chat" id="aiChat">${AI.msgs.map(m => `<div class="ai-msg ${m.role}">${m.role === "ai" ? `<div class="ai-av">${I("spark")}</div>` : ""}<div class="ai-b">${m.role === "ai" ? mdLite(m.text) + (m.model ? `<div class="ai-meta">AI อาจผิดพลาดได้ ตรวจสอบกับข้อมูลจริงก่อนนำไปใช้</div>` : "") : esc(m.text)}</div></div>`).join("")}
       ${AI.busy ? `<div class="ai-msg ai"><div class="ai-av">${I("spark")}</div><div class="ai-b"><span class="ai-dots"><i></i><i></i><i></i></span> กำลังวิเคราะห์…</div></div>` : ""}</div>
     <form class="ai-input" id="aiForm"><textarea id="aiQ" rows="2" placeholder="ถามเกี่ยวกับปัญหา Retort เช่น ทำไม Main steam ตกบ่อยที่ RP12" ${AI.busy ? "disabled" : ""}></textarea><button class="pri" type="submit" ${AI.busy ? "disabled" : ""}>${I("send")}ถาม</button></form>`;
@@ -1477,7 +1594,7 @@ function viewAI() {
   m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.airng) { AI.range = b.dataset.airng; lsSet("rt_ai_range", AI.range); viewAI(); }
     else if (b.dataset.aiplant) { AI.plant = b.dataset.aiplant; lsSet("rt_ai_plant", AI.plant); viewAI(); }
-    else if (b.dataset.aiq != null) askAI(AI_QUICK[+b.dataset.aiq]);
+    else if (b.dataset.aiq != null) askAI(aiQuick()[+b.dataset.aiq]);
     else if (b.id === "aiClear") { AI.msgs = []; viewAI(); }
     else if (b.dataset.viewGo2) { S.view = b.dataset.viewGo2; lsSet("rt_view", S.view); render(); } };
   $("#aiForm").onsubmit = e => { e.preventDefault(); const q = $("#aiQ").value.trim(); if (q) askAI(q); };
@@ -1572,7 +1689,7 @@ const thShort = s => { const d = new Date(s + "T00:00:00"); return `${d.getDate(
 const thLong = s => { const d = new Date(s + "T00:00:00"); return `${d.getDate()} ${TH_MON[d.getMonth()]} ${d.getFullYear() + 543}`; };
 const dayList = (a, b) => { const out = []; for (let d = a; d <= b; d = addDays(d, 1)) out.push(d); return out; };
 function dashState() {
-  const D = S.d || (S.d = Object.assign({ n: 14, f1: "", t1: "", f2: "", t2: "", plant: "all", by: "cat", metric: "count" }, lsGet("rt_dash", {})));
+  const D = S.d || (S.d = Object.assign({ n: U.dash.days, f1: "", t1: "", f2: "", t2: "", plant: "all", by: "cat", metric: "count" }, lsGet("rt_dash", {})));
   return D;
 }
 const saveDash = () => lsSet("rt_dash", S.d);
@@ -1600,7 +1717,7 @@ function chgPill(a, b, big) {
   return d > 0 ? `<span class="cpill up">▲ +${t}</span>` : d < 0 ? `<span class="cpill dn">▼ -${t}</span>` : `<span class="cpill z">เท่าเดิม</span>`;
 }
 function viewAnalyze() {
-  const D = dashState(); const R = dashRanges();
+  const D = dashState(); const R = dashRanges(); const UD = U.dash;
   if (!Object.keys(S.items).length) {
     $("#main").innerHTML = `<div class="card empty"><div class="ic">${I("chart")}</div><h2>ยังไม่มีข้อมูลให้วิเคราะห์</h2><p class="sub">เริ่มบันทึกปัญหาที่หน้า บันทึก แล้วกลับมาดูที่นี่</p><button class="pri" data-go-log style="margin-top:12px">${I("plus")}บันทึกปัญหา</button></div>`;
     $("[data-go-log]").onclick = () => { S.view = "log"; render(); }; return;
@@ -1648,16 +1765,15 @@ function viewAnalyze() {
       ${cmpBars(rows.slice(0, 10), pr, pr2, [...L1, ...L2])}
     </div>
   </div>
-  <div class="dtitle"><div><h2>เจาะลึก <em class="b">Insight</em></h2><div class="sub">${esc(plantLabel)} · ช่วงที่ 1 (${pr})</div></div></div>
-  ${insightSection(R, L1)}
-  <div class="dgrid" style="margin-top:16px">
-    <div class="card span2">${sec("trend", "แนวโน้มตามเวลา", "เส้นทึบ = ช่วงที่ 1 · เส้นประ = ค่าเฉลี่ยของช่วงที่ 2 (ปรับตามจำนวนวัน) · ชี้/แตะกราฟเพื่อดูตัวเลข")}<div class="chart"><div class="svgc" id="cDash"></div></div><div class="legend" id="lDash"></div></div>
-    ${groupSection(L1)}
-    ${hourSection(L1)}
-  </div>
-  ${L1.length ? `<div class="dtitle"><div><h2>ตารางรายวัน</h2><div class="sub">แยกตามกลุ่ม · สีเข้ม = พบมาก · แตะแถวเพื่อดูกราฟแนวโน้ม</div></div></div>` : ""}
-  ${heatSection(R, L1, L2)}
-  ${moreSection(L1, tot1)}
+  ${UD.insight || UD.trend || UD.groups || UD.hours ? `<div class="dtitle"><div><h2>เจาะลึก <em class="b">Insight</em></h2><div class="sub">${esc(plantLabel)} · ช่วงที่ 1 (${pr})</div></div></div>` : ""}
+  ${UD.insight ? insightSection(R, L1) : ""}
+  ${UD.trend || UD.groups || UD.hours ? `<div class="dgrid" style="margin-top:${UD.insight ? 16 : 0}px">
+    ${UD.trend ? `<div class="card span2">${sec("trend", "แนวโน้มตามเวลา", "เส้นทึบ = ช่วงที่ 1 · เส้นประ = ค่าเฉลี่ยของช่วงที่ 2 (ปรับตามจำนวนวัน) · ชี้/แตะกราฟเพื่อดูตัวเลข")}<div class="chart"><div class="svgc" id="cDash"></div></div><div class="legend" id="lDash"></div></div>` : ""}
+    ${UD.groups ? groupSection(L1) : ""}
+    ${UD.hours ? hourSection(L1) : ""}
+  </div>` : ""}
+  ${UD.heat && L1.length ? `<div class="dtitle"><div><h2>ตารางรายวัน</h2><div class="sub">แยกตามกลุ่ม · สีเข้ม = พบมาก · แตะแถวเพื่อดูกราฟแนวโน้ม</div></div></div>${heatSection(R, L1, L2)}` : ""}
+  ${UD.more ? moreSection(L1, tot1) : ""}
   </div>`;
   $("#main").innerHTML = h; wireDash();
   drawDashTrend(R, L1, L2);
@@ -1740,7 +1856,7 @@ function hourSection(L1) {
   return `<div class="card">${head}
     <div class="hrs">${hr.map((v, i) => `<span class="${v ? (shiftOf(pad(i) + ":00") === "DS" ? "ds" : "ns") : "z"}" style="height:${v ? Math.max(4, v / mx * 100) : 0}%" title="${pad(i)}:00–${pad(i)}:59 น. · ${dfmt(dv(v))}">${v ? `<em>${dv(v)}</em>` : ""}</span>`).join("")}</div>
     <div class="hrs-x">${hr.map((_, i) => `<span>${i % 3 ? "" : pad(i)}</span>`).join("")}</div>
-    <div class="shl"><span><i class="ds"></i>กะ DS <b>${dv(ds)}</b> (${pc(ds)}%)</span><span><i class="ns"></i>กะ NS <b>${dv(ns)}</b> (${pc(ns)}%)</span><span class="sub" style="font-size:12px">${SHIFT_HINT}</span></div>
+    <div class="shl"><span><i class="ds"></i>กะ DS <b>${dv(ds)}</b> (${pc(ds)}%)</span><span><i class="ns"></i>กะ NS <b>${dv(ns)}</b> (${pc(ns)}%)</span><span class="sub" style="font-size:12px">${shiftHint()}</span></div>
     <div class="split2">${ds ? `<i class="ds" style="width:${pc(ds)}%"></i>` : ""}${ns ? `<i class="ns" style="flex:1"></i>` : ""}</div>
     <span class="lab" style="margin:14px 0 6px 2px">วันในสัปดาห์</span>
     <div class="dows">${[1, 2, 3, 4, 5, 6, 0].map(d => `<div class="${dow[d] ? "on" : ""}" style="--a:${(0.1 + 0.55 * dow[d] / mxd).toFixed(2)}" title="วัน${TH_DAYS[d]} · ${dfmt(dv(dow[d]))}">${TH_DOW[d]}<b>${dv(dow[d])}</b></div>`).join("")}</div>
@@ -1937,6 +2053,7 @@ function viewSettings() {
   S.config.categories.forEach((c, ci) => {
     h += `<div class="card"><div class="sec"><span class="ic" style="background:${grpOf(c).color}1f;color:${grpOf(c).color}">${I(grpOf(c).icon)}</span><div class="t"><input data-cname="${ci}" value="${esc(c.name)}" ${ro ? "disabled" : ""} style="font-weight:600"></div></div>
       <div class="row sp" style="margin-bottom:6px"><span class="lab" style="margin:0">ใช้งาน</span><div class="seg" style="width:180px"><button data-cact="${ci}" data-v="1" class="${c.active ? "on" : ""}" ${ro ? "disabled" : ""}>เปิด</button><button data-cact="${ci}" data-v="0" class="${!c.active ? "on" : ""}" ${ro ? "disabled" : ""}>ปิด</button></div></div>
+      <div class="row sp" style="margin-bottom:6px"><span class="lab" style="margin:0">กลุ่ม (สี/ไอคอน)</span><select data-cgrp="${ci}" style="width:auto;min-height:42px;font-size:15px;padding:6px 36px 6px 12px" ${ro ? "disabled" : ""}>${Object.keys(GROUPS).map(g => `<option value="${g}" ${(c.grp || "other") === g ? "selected" : ""}>${esc(GROUPS[g].name)}</option>`).join("")}</select></div>
       <span class="lab" style="margin-top:12px">สาเหตุ (${c.causes.length})</span>
       ${c.causes.map((x, i) => `<div class="set-row"><input class="grow" data-cause-ed="${ci}.${i}" value="${esc(x)}" ${ro ? "disabled" : ""}>${ro ? "" : `<button class="ghost sm" data-cmv="${ci}.${i}.-1" aria-label="เลื่อนขึ้น">${I("up")}</button><button class="ghost sm danger" data-cdel="${ci}.${i}" aria-label="ลบ">${I("x")}</button>`}</div>`).join("")}
       ${ro ? "" : `<div class="set-row"><input class="grow" id="newCause${ci}" placeholder="เพิ่มสาเหตุใหม่"><button class="soft sm" data-cadd="${ci}">${I("plus")}เพิ่ม</button></div>`}
@@ -1967,6 +2084,7 @@ function viewSettings() {
     if (ds.cname) { S.config.categories[+ds.cname].name = x.value; later(); }
     else if (ds.causeEd) { const [ci, i] = ds.causeEd.split(".").map(Number); S.config.categories[ci].causes[i] = x.value; later(); }
     else if (ds.fl) { const [ci, i, k] = ds.fl.split("."); S.config.categories[+ci].fields[+i][k] = x.value; later(); }
+    else if (ds.cgrp) { S.config.categories[+ds.cgrp].grp = x.value; saveConfig(); const y = window.scrollY; viewSettings(); window.scrollTo(0, y); }
     else if (ds.plret) { S.config.plantRetorts = { ...(S.config.plantRetorts || {}), [ds.plret]: x.value.split(",").map(v => v.trim().toUpperCase()).filter(Boolean) }; later(); }
     else if (x.id === "retCfg") { S.config.retorts = x.value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean); later(); }
   };
@@ -1983,6 +2101,109 @@ function viewSettings() {
     else if (ds.fdel) { const [ci, i] = ds.fdel.split(".").map(Number); C[ci].fields.splice(i, 1); redo(); }
     else if (b.id === "delDemo") { const ids = Object.values(S.items).filter(x => x.demo).map(x => x.id); confirmBox(`ลบข้อมูลตัวอย่าง ${ids.length} รายการ?`, async () => { for (const id of ids) await deleteItem(id); toast("ลบข้อมูลตัวอย่างแล้ว"); render(); }); }
     else if (b.id === "addCat") { const v = $("#newCat").value.trim(); if (!v) return; C.push({ id: uid("c"), name: v, active: true, causes: [], fields: [] }); redo(); toast("เพิ่มหัวข้อแล้ว เพิ่มสาเหตุต่อได้เลย"); }
+  };
+}
+
+/* ---------- แท็บ ปรับแต่ง: แก้หน้าตาทั้งหมด (ผู้ดูแล · บันทึกอัตโนมัติ · เห็นผลทันที) ---------- */
+const THEME_PRESETS = [["กรมท่า · ส้ม (ค่าเริ่มต้น)", "#1b2a41", "#f59e0b"], ["เขียวเข้ม · เหลือง", "#14532d", "#eab308"], ["น้ำเงิน · ฟ้า", "#1e3a8a", "#06b6d4"],
+  ["แดงเลือดหมู · ทอง", "#7f1d1d", "#d4a017"], ["ม่วง · ชมพู", "#3b0764", "#ec4899"], ["เทาเข้ม · เขียว", "#1f2937", "#10b981"]];
+const ICON_TH = { bolt: "ไฟฟ้า", gauge: "เกจ/ความดัน", drop: "หยดน้ำ", thermo: "อุณหภูมิ", user: "คน", tool: "เครื่องมือ", chart: "กราฟ", tag: "ป้าย", alert: "เตือน",
+  factory: "โรงงาน", settings: "เฟือง", clock: "นาฬิกา", camera: "กล้อง", grid: "ตาราง", target: "เป้า" };
+function uiSave() {
+  clearTimeout(S.uiT); const st = $("#uiSaved"); if (st) st.textContent = "· กำลังบันทึก…";
+  S.uiT = setTimeout(async () => { const ok = await saveConfig(); const e = $("#uiSaved"); if (e) e.textContent = ok ? `· บันทึกแล้ว ${nowHM()} น.` : "· บันทึกไม่สำเร็จ"; }, 600);
+}
+function uiExport() {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({ ui: U, plants: plantsList() }, null, 1)], { type: "application/json" }));
+  a.download = `retort-ui_${todayISO()}.json`; document.body.appendChild(a); a.click(); a.remove();
+}
+function viewUI() {
+  const ro = !S.canAdmin, dis = ro ? "disabled" : "";
+  const inp = (path, v, ph, n) => `<input data-up="${path}" value="${esc(v)}" placeholder="${esc(ph || "")}" maxlength="${n || 60}" autocomplete="off" ${dis}>`;
+  const sw = (path, on, label, sub) => `<label class="sw"><input type="checkbox" data-ub="${path}" ${on ? "checked" : ""} ${dis}><i></i><span>${label}${sub ? `<small>${sub}</small>` : ""}</span></label>`;
+  const col = (path, v) => `<div class="colrow"><input type="color" data-uc="${path}" value="${v}" ${dis}><input class="hex" data-uc="${path}" value="${v}" maxlength="7" spellcheck="false" ${dis}></div>`;
+  let h = ro ? `<div class="alert a-warn">${I("info")}<div style="flex:1">ดูได้อย่างเดียว · ผู้ดูแลกดปลดล็อก (รหัสเดียวกับหน้าแก้ไข Checklist) เพื่อแก้หน้าตา</div><button class="pri sm" id="unlock">ปลดล็อกแก้ไข</button></div>`
+    : `<div class="alert a-info">${I("palette")}<div style="flex:1">แก้แล้วเห็นผลทันทีและบันทึกอัตโนมัติ · ทุกเครื่องเห็นเหมือนกัน <b id="uiSaved"></b></div></div>`;
+  h += `<div class="card">${sec("pen", "ข้อความหัวเว็บ", "แสดงด้านบนทุกหน้า")}
+    <label class="f"><span class="lab">บรรทัดบน (ตัวเล็กสีเน้น)</span>${inp("brand", U.brand, UI_DEFAULT.brand)}</label>
+    <label class="f" style="margin-top:10px"><span class="lab">ชื่อหน้า</span>${inp("title", U.title, UI_DEFAULT.title)}</label>
+    <label class="f" style="margin-top:10px"><span class="lab">คำอธิบายใต้ชื่อ</span>${inp("subtitle", U.subtitle, UI_DEFAULT.subtitle, 80)}</label>
+    <label class="f" style="margin-top:10px"><span class="lab">ข้อความประทับบนรูปถ่าย</span>${inp("stamp", U.stamp, UI_DEFAULT.stamp)}<small class="hint">บรรทัดที่ 2 เป็นวันที่ เวลา กะ อัตโนมัติ · เว้นว่าง = ใช้ค่าเริ่มต้น</small></label></div>`;
+  h += `<div class="card">${sec("palette", "สีและขนาดตัวอักษร")}
+    <div class="grid"><div><span class="lab">สีหลัก</span>${col("navy", U.navy)}</div><div><span class="lab">สีเน้น</span>${col("amber", U.amber)}</div></div>
+    <span class="lab" style="margin-top:14px">ชุดสีสำเร็จรูป</span><div class="swatches">${THEME_PRESETS.map(([n, a, b]) => `<button class="swatch ${U.navy === a && U.amber === b ? "on" : ""}" data-preset="${a}${b}" style="--a:${a};--b:${b}" ${dis}><i></i>${n}</button>`).join("")}</div>
+    <span class="lab" style="margin-top:16px">ขนาดตัวอักษร / ปุ่ม</span><div class="seg segfit">${[90, 100, 110, 120, 130].map(v => `<button data-uscale="${v}" class="${U.scale === v ? "on" : ""}" ${dis}>${v}%</button>`).join("")}</div>
+    <small class="hint">ขยายทั้งหน้า เหมาะกับจอมือถือที่ตัวหนังสือเล็ก</small></div>`;
+  h += `<div class="card">${sec("list", "แถบเมนู", "เปลี่ยนชื่อ · เรียงลำดับ · เปิด/ซ่อน")}
+    ${U.tabs.map((t, i) => `<div class="tabrow"><span class="ti">${I(VIEW_ICON[t.k])}</span><input type="text" data-utl="${i}" value="${esc(t.label)}" maxlength="20" ${dis}>
+      <button class="ghost mv" data-utmv="${i}.-1" ${ro || !i ? "disabled" : ""} aria-label="เลื่อนขึ้น">${I("up")}</button><button class="ghost mv" data-utmv="${i}.1" ${ro || i === U.tabs.length - 1 ? "disabled" : ""} aria-label="เลื่อนลง">${I("down")}</button>
+      <label class="sw mini" title="${t.k === "ui" ? "ซ่อนไม่ได้" : "เปิด/ซ่อน"}"><input type="checkbox" data-uts="${i}" ${t.show ? "checked" : ""} ${ro || t.k === "ui" ? "disabled" : ""}><i></i></label></div>`).join("")}
+    <label class="f" style="margin-top:12px"><span class="lab">แท็บที่เปิดเป็นหน้าแรก</span><select data-udef ${dis}>${U.tabs.filter(t => t.show).map(t => `<option value="${t.k}" ${U.defaultTab === t.k ? "selected" : ""}>${esc(t.label)}</option>`).join("")}</select></label>
+    <small class="hint">แท็บ "${esc(U.tabs.find(t => t.k === "ui").label)}" ซ่อนไม่ได้ เพื่อให้กลับมาแก้ได้เสมอ · เครื่องที่เคยเลือกแท็บไว้จะเปิดแท็บเดิม</small></div>`;
+  h += `<div class="card">${sec("pen", "ฟอร์มบันทึก", "ช่องที่แสดงในหน้าบันทึก")}
+    <span class="lab">ชื่อขั้นตอน</span><div class="grow5">${U.steps.map((s, i) => `<input data-ustep="${i}" value="${esc(s)}" maxlength="16" aria-label="ขั้นที่ ${i + 1}" ${dis}>`).join("")}</div>
+    <div class="grid" style="margin-top:12px"><label class="f"><span class="lab">กะ DS เริ่ม</span><input type="time" data-utime="dsStart" value="${U.dsStart}" ${dis}></label><label class="f"><span class="lab">กะ DS สิ้นสุด</span><input type="time" data-utime="dsEnd" value="${U.dsEnd}" ${dis}></label></div>
+    <small class="hint">${shiftHint()} · มีผลกับรายการที่บันทึกใหม่ (รายการเก่าคงกะเดิม)</small>
+    <div style="margin-top:10px">${sw("form.photo", U.form.photo, "ขั้นถ่ายรูปปัญหา", "ปิด = เลือกปัญหาแล้วไปหน้าสาเหตุเลย")}${sw("form.action", U.form.action, "ช่อง การแก้ไข")}${sw("form.impact", U.form.impact, "ช่อง ผลต่อสินค้า (Hold)")}
+      ${sw("form.program", U.form.program, "ช่อง โปรแกรมที่ใช้")}${sw("form.more", U.form.more, "ปุ่ม เพิ่มรายละเอียด", "ค่าที่วัด · ระยะเวลา · สินค้า · Batch · รายละเอียด")}${sw("form.todaybar", U.form.todaybar, "สรุปวันนี้ (มือถือ)", "ปัญหาวันนี้ · 7 วัน · รออนุมัติ")}${sw("form.recent", U.form.recent, "รายการบันทึกล่าสุด")}</div>
+    <label class="f" style="margin-top:10px"><span class="lab">จำนวนรูปสูงสุดต่อรายการ</span><select data-umax ${dis}>${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<option ${U.form.maxPhotos === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    <small class="hint">ช่อง สาเหตุ และ ลงนามผู้บันทึก บังคับกรอกเสมอ</small></div>`;
+  h += `<div class="card">${sec("tag", "กลุ่มปัญหา", "ชื่อ · สี · ไอคอน ใช้ในหน้าบันทึกและหน้าวิเคราะห์")}
+    ${Object.keys(U.groups).map(g => { const G = U.groups[g]; return `<div class="grprow" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><input data-ugn="${g}" value="${esc(G.name)}" maxlength="40" ${dis}>
+      <div class="colrow"><input type="color" data-ugc="${g}" value="${G.color}" ${dis}><select data-ugi="${g}" ${dis}>${GROUP_ICONS.map(ic => `<option value="${ic}" ${G.icon === ic ? "selected" : ""}>${ICON_TH[ic]}</option>`).join("")}</select></div></div>`; }).join("")}
+    <small class="hint">เลือกว่าหัวข้อปัญหาไหนอยู่กลุ่มไหน ได้ที่แท็บ ตั้งค่า</small></div>`;
+  h += `<div class="card">${sec("chart", "หน้าวิเคราะห์", "เลือกส่วนที่แสดง")}
+    ${sw("dash.insight", U.dash.insight, "ข้อสังเกตอัตโนมัติ")}${sw("dash.trend", U.dash.trend, "กราฟแนวโน้มตามเวลา")}${sw("dash.groups", U.dash.groups, "สัดส่วนตามกลุ่มปัญหา")}${sw("dash.hours", U.dash.hours, "ช่วงเวลาที่เกิดปัญหา")}${sw("dash.heat", U.dash.heat, "ตารางรายวัน")}${sw("dash.more", U.dash.more, "สาเหตุที่พบบ่อย · พื้นที่ / โปรแกรม")}
+    <label class="f" style="margin-top:10px"><span class="lab">ช่วงวันที่เริ่มต้น</span><select data-udays ${dis}>${[7, 14, 30, 90].map(n => `<option value="${n}" ${U.dash.days === n ? "selected" : ""}>${n} วัน</option>`).join("")}</select></label>
+    <small class="hint">ส่วน Top 10 และการเทียบ 2 ช่วงแสดงเสมอ</small></div>`;
+  h += `<div class="card">${sec("factory", "พื้นที่ (Plant)", "คั่นด้วยเครื่องหมายจุลภาค เช่น PF1, PF2, PF3")}<input data-uplants value="${esc(plantsList().join(", "))}" autocapitalize="characters" ${dis}>
+    <small class="hint">รายชื่อหม้อของแต่ละพื้นที่ แก้ได้ที่แท็บ ตั้งค่า · เอาพื้นที่ออกจากรายการ ข้อมูลเก่ายังอยู่ครบ</small></div>`;
+  h += `<div class="card">${sec("spark", "ปุ่มคำถามด่วน AI", "บรรทัดละ 1 คำถาม (สูงสุด 12) · เว้นว่าง = ใช้ชุดเริ่มต้น")}<textarea data-uai rows="6" ${dis}>${esc(aiQuick().join("\n"))}</textarea></div>`;
+  h += `<div class="card">${sec("download", "สำรอง / คืนค่า")}
+    <div class="row" style="flex-wrap:wrap"><button class="soft" id="uiExport">${I("download")}ส่งออกไฟล์ตั้งค่า</button><button class="soft" id="uiImportBtn" ${dis}>${I("up")}นำเข้าไฟล์</button><input type="file" accept="application/json,.json" id="uiImport" hidden>
+      <button class="danger" id="uiReset" ${dis}>${I("x")}คืนค่าเริ่มต้นทั้งหมด</button></div>
+    <small class="hint">คืนค่าเฉพาะหน้าตา (แท็บนี้) ไม่กระทบข้อมูลที่บันทึก หัวข้อปัญหา หรือรายชื่อหม้อ</small></div>`;
+  $("#main").innerHTML = h; wireUI();
+}
+function wireUI() {
+  const m = $("#main");
+  $("#uiExport").onclick = uiExport;
+  if (!S.canAdmin) { $("#unlock").onclick = async () => { if (await unlockAdmin()) viewUI(); }; return; }
+  const redo = () => { const y = window.scrollY; viewUI(); window.scrollTo(0, y); };
+  const ed = (fn, re) => { const c = JSON.parse(JSON.stringify(U)); fn(c); S.config.ui = c; applyUI(); renderNav(); uiSave(); if (re) redo(); };
+  const setP = (c, path, v) => { const ks = path.split("."), last = ks.pop(); ks.reduce((o, k) => o[k], c)[last] = v; };
+  const isHex = v => /^#[0-9a-f]{6}$/i.test(v);
+  m.oninput = e => { const x = e.target, ds = x.dataset;  // ช่องข้อความ: ไม่วาดหน้าใหม่ เคอร์เซอร์จะได้ไม่หลุด
+    if (ds.up) ed(c => setP(c, ds.up, x.value));
+    else if (ds.utl != null) ed(c => { c.tabs[+ds.utl].label = x.value; });
+    else if (ds.ustep != null) ed(c => { c.steps[+ds.ustep] = x.value; });
+    else if (ds.ugn) ed(c => { c.groups[ds.ugn].name = x.value; });
+    else if (ds.uai != null) ed(c => { c.aiQuick = x.value.split("\n").map(q => q.trim()).filter(Boolean); });
+    else if (ds.uc && isHex(x.value)) { const v = x.value.toLowerCase(); ed(c => setP(c, ds.uc, v)); m.querySelectorAll(`[data-uc="${ds.uc}"]`).forEach(o => { if (o !== x) o.value = v; }); m.querySelectorAll(".swatch").forEach(s => s.classList.toggle("on", s.dataset.preset === U.navy + U.amber)); }
+    else if (ds.ugc) { ed(c => { c.groups[ds.ugc].color = x.value; }); x.closest(".grprow").style.setProperty("--gc", U.groups[ds.ugc].color); }
+  };
+  m.onchange = e => { const x = e.target, ds = x.dataset;
+    if (ds.ub) ed(c => setP(c, ds.ub, x.checked));
+    else if (ds.uts != null) ed(c => { c.tabs[+ds.uts].show = x.checked; }, true);
+    else if (ds.udef != null) ed(c => { c.defaultTab = x.value; });
+    else if (ds.umax != null) ed(c => { c.form.maxPhotos = +x.value; });
+    else if (ds.udays != null) ed(c => { c.dash.days = +x.value; });
+    else if (ds.ugi) ed(c => { c.groups[ds.ugi].icon = x.value; }, true);
+    else if (ds.utime) { const c2 = { ...U, [ds.utime]: x.value }; if (hmMin(c2.dsStart) >= hmMin(c2.dsEnd)) { toast("เวลาเริ่มกะ DS ต้องก่อนเวลาสิ้นสุด"); x.value = U[ds.utime]; return; } ed(c => { c[ds.utime] = x.value; }, true); }
+    else if (ds.uplants != null) {
+      const L = [...new Set(x.value.split(",").map(v => v.replace(/\s+/g, " ").trim().toUpperCase()).filter(v => /^[A-Z0-9][A-Z0-9 _./-]{0,19}$/.test(v)))].slice(0, 20);
+      if (!L.length) { toast("ต้องมีอย่างน้อย 1 พื้นที่"); x.value = plantsList().join(", "); return; }
+      S.config.plants = L; saveConfig(); redo(); toast("บันทึกรายชื่อพื้นที่แล้ว");
+    }
+    else if (x.id === "uiImport" && x.files[0]) { const fr = new FileReader(); fr.onload = () => { try { const o = JSON.parse(fr.result); S.config.ui = JSON.parse(JSON.stringify(uiCfg(o.ui || o)));
+        applyUI(); renderNav(); uiSave(); redo(); toast("นำเข้าการตั้งค่าแล้ว"); } catch { toast("ไฟล์ไม่ถูกต้อง"); } }; fr.readAsText(x.files[0]); x.value = ""; }
+  };
+  m.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (ds.preset) ed(c => { c.navy = ds.preset.slice(0, 7); c.amber = ds.preset.slice(7); }, true);
+    else if (ds.uscale) ed(c => { c.scale = +ds.uscale; }, true);
+    else if (ds.utmv) { const [i, d] = ds.utmv.split(".").map(Number); ed(c => { [c.tabs[i], c.tabs[i + d]] = [c.tabs[i + d], c.tabs[i]]; }, true); }
+    else if (b.id === "uiImportBtn") $("#uiImport").click();
+    else if (b.id === "uiReset") confirmBox("คืนค่าหน้าตาทั้งหมดเป็นค่าเริ่มต้น?", () => { S.config.ui = {}; applyUI(); renderNav(); uiSave(); redo(); toast("คืนค่าเริ่มต้นแล้ว"); });
   };
 }
 
