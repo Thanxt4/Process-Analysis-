@@ -735,6 +735,16 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 .formcard .lab .req,.signcard>.lab .req{font-size:18px;line-height:1}
 /* แบ่งช่อง การแก้ไข / ผลต่อสินค้า / โปรแกรม ด้วยเส้นประ */
 .formcard>label.f[style*="margin-top:14px"],.formcard>div[style*="margin-top:14px"]{margin-top:16px!important;padding-top:16px;border-top:1px dashed #e2e8f0}
+/* เข้าสู่ระบบ: บทบาท + ปุ่มออก */
+.rolepill{font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;white-space:nowrap}
+.rolepill.r-sup{background:var(--amber);color:var(--navy)}
+.rolepill.r-staff{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+.lgout{min-height:36px;padding:4px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font-size:13px;font-weight:600;gap:5px;flex:0 0 auto}
+.lgout svg.i{width:16px;height:16px}.lgout:hover{background:rgba(255,255,255,.18)}
+.lk-roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px;text-align:left}
+.lk-roles span{border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:12.5px;color:var(--mute);background:#f8fafc;line-height:1.35}
+.lk-roles b{display:block;font-size:13.5px;color:var(--navy)}
+@media(max-width:560px){.ttl .brand,.ttl .s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ttl .brand{font-size:10.5px}h1{font-size:17px}header.top .wrap{gap:7px;padding:8px 12px}.av{width:34px;height:34px}.sync{padding:5px}.sync #syncTxt{display:none}.lgout span{display:none}.lgout{padding:4px 8px}.rolepill{font-size:11px;padding:2px 8px}}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
@@ -798,17 +808,20 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
   <a class="back" href="/" aria-label="กลับหน้าหลัก" title="กลับหน้าหลัก"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></a>
   <div class="ttl"><small class="brand">LINE QC / RETORT ANALYSIS</small><h1 id="title">บันทึกปัญหา Retort</h1><div class="s" id="subtitle">หาสาเหตุ · วิเคราะห์แนวโน้ม</div></div>
   <span class="sync" id="sync"><span class="d"></span><span id="syncTxt">ในเครื่อง</span></span>
+  <span class="rolepill hide" id="rolePill"></span>
   <button class="av" id="userBtn" aria-label="ผู้ใช้"></button>
+  <button class="lgout hide" id="logoutBtn" title="ออกจากระบบ" aria-label="ออกจากระบบ"><svg class="i" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg><span>ออก</span></button>
 </div></header>
 <nav class="nav"><div class="in" id="nav"></div></nav>
 <main class="wrap" id="main"></main>
 <div id="modalRoot"></div>
 <div class="lock hide" id="lock"><form class="lockbox" id="lockForm">
   <div class="okic" style="background:var(--accbg);color:var(--acc)"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-  <small class="lk-brand">LINE QC</small><h2>Retort Analysis</h2><p class="sub" style="margin:4px 0 14px">ใส่รหัสผ่านเพื่อเข้าใช้งาน</p>
+  <small class="lk-brand">LINE QC</small><h2>Retort Analysis</h2><p class="sub" style="margin:4px 0 12px">เข้าสู่ระบบด้วยรหัสของคุณ · เข้าครั้งเดียว เครื่องนี้จะจำไว้</p>
+  <div class="lk-roles"><span><b>พนักงาน</b>บันทึก · รายการ</span><span><b>หัวหน้า (Supervisor)</b>ทุกเมนู · อนุมัติ</span></div>
   <input type="password" id="lockPin" inputmode="numeric" autocomplete="current-password" placeholder="รหัสผ่าน" style="text-align:center;font-size:22px;letter-spacing:6px">
   <p class="sub" id="lockErr" style="color:var(--bad);min-height:20px;margin:8px 0 0"></p>
-  <button class="pri blk savebig" type="submit" style="margin-top:6px">เข้าใช้งาน</button>
+  <button class="pri blk savebig" type="submit" style="margin-top:6px">เข้าสู่ระบบ</button>
   <a href="/" class="sub" style="display:block;margin-top:14px;color:var(--acc)">กลับหน้าหลัก</a>
 </form></div>
 
@@ -1087,7 +1100,7 @@ const S = {
   user: getName(),
   view: lsGet("rt_view", ""), viewAuto: !lsGet("rt_view", ""),
   items: {}, config: migrate(null)[0],
-  pin: "", canAdmin: false, loaded: false,
+  pin: "", canAdmin: lsGet("rt_role", "") === "sup", loaded: false, role: lsGet("rt_role", ""),
   draft: null, editingId: null,
   f: lsGet("rt_filter", { range: "30", from: "", to: "", cat: "all", retort: "all", metric: "count" }),
   charts: {}
@@ -1136,14 +1149,29 @@ async function syncAll(full) {
     if (full) { S.items = {}; ch = true; }
     r.items.forEach(x => { normItem(x); const loc = S.items[x.id]; if (!loc || (x.updatedAt || 0) > (loc.updatedAt || 0)) { S.items[x.id] = x; ch = true; } });
     const alive = new Set(r.ids); Object.keys(S.items).forEach(id => { if (!alive.has(id)) { delete S.items[id]; ch = true; } });
+    if (r.role && r.role !== S.role) { setRole(r.role); ch = true; }
     lastSync = r.now; S.loaded = true; setSync(true);
     if (ch) softRender();
-  } catch (e) { if (e.status === 401) { showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
+  } catch (e) { if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
+/* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
+const STAFF_TABS = ["log", "list"];
+const ROLE_NAME = { sup: "หัวหน้า", staff: "พนักงาน" };
+function setRole(role) {
+  S.role = role || ""; S.canAdmin = S.role === "sup"; lsSet("rt_role", S.role);
+  const pill = $("#rolePill"); pill.textContent = ROLE_NAME[S.role] || ""; pill.className = "rolepill " + (S.role ? "r-" + S.role : "hide");
+  $("#logoutBtn").classList.toggle("hide", !S.role);
+}
+$("#logoutBtn").onclick = () => confirmBox(`ออกจากระบบ (${ROLE_NAME[S.role] || ""})?`, async () => {
+  try { await jpost("/api/retort/logout", {}); } catch {}
+  setRole(""); S.pin = ""; S.items = {}; S.loaded = false; lastSync = 0; S.draft = null; S.editingId = null; S.justSaved = null;
+  closeModal(); render(); showLock(true);
+});
 function showLock(on) { $("#lock").classList.toggle("hide", !on); if (on) setTimeout(() => $("#lockPin").focus(), 50); }
 $("#lockForm").onsubmit = async e => {
   e.preventDefault(); const pin = $("#lockPin").value.trim(); if (!pin) return;
-  try { await jpost("/api/retort/login", { pin }); $("#lockPin").value = ""; $("#lockErr").textContent = ""; showLock(false); await syncAll(true); }
+  try { const r = await jpost("/api/retort/login", { pin }); $("#lockPin").value = ""; $("#lockErr").textContent = ""; setRole(r.role); S.viewAuto = true; S.view = "";
+    showLock(false); render(); toast(`เข้าสู่ระบบแล้ว · ${r.role_name || ""}`); await syncAll(true); }
   catch (err) { $("#lockErr").textContent = err.message || "รหัสไม่ถูกต้อง"; $("#lockPin").select(); }
 };
 async function unlockAdmin() {
@@ -1155,10 +1183,12 @@ function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAR
 
 /* ---------- shell ---------- */
 function renderNav() {
-  const vis = U.tabs.filter(t => t.show);
+  // พนักงาน: เห็นเฉพาะ บันทึก + รายการ เสมอ · หัวหน้า: ทุกแท็บตามที่ตั้งไว้ในแท็บ ปรับแต่ง
+  const vis = S.role === "sup" ? U.tabs.filter(t => t.show) : U.tabs.filter(t => STAFF_TABS.includes(t.k));
+  const dflt = vis.some(t => t.k === U.defaultTab) ? U.defaultTab : vis[0].k;
   // เครื่องที่ยังไม่เคยเลือกแท็บ: เปิดแท็บเริ่มต้นตามการตั้งค่า (เลิกทำทันทีที่ผู้ใช้กดอะไรก็ตาม)
-  if (S.viewAuto) { if (!S.view || S.view === S.autoPick) S.view = S.autoPick = U.defaultTab; else S.viewAuto = false; }
-  if (!vis.some(t => t.k === S.view)) S.view = U.defaultTab;
+  if (S.viewAuto) { if (!S.view || S.view === S.autoPick) S.view = S.autoPick = dflt; else S.viewAuto = false; }
+  if (!vis.some(t => t.k === S.view)) S.view = dflt;
   $("#nav").innerHTML = vis.map(t => `<button data-view="${t.k}" class="${S.view === t.k ? "on" : ""}">${I(VIEW_ICON[t.k])}${esc(t.label)}</button>`).join("");
 }
 function render() {
@@ -1222,16 +1252,17 @@ function mgPanel(kind, d) {
 function askDelete(kind, key, after) {
   const d = S.draft || {};
   const name = kind === "category" ? (catById(key)?.name || key) : key;
+  const sup = S.role === "sup";  // หัวหน้าที่เข้าระบบแล้ว ไม่ต้องใส่รหัสซ้ำ
   modal(`<div class="delic">${I("trash")}</div><h2 style="text-align:center">ลบ${MG_LABEL[kind]} "${esc(name)}"?</h2>
     <p class="sub" style="text-align:center;margin:4px 0 14px">${kind === "plant" ? "หม้อในรายการของพื้นที่นี้จะถูกเอาออกด้วย · " : ""}รายการที่บันทึกไว้แล้วยังอยู่ครบ และยังดูในหน้ารายการ/วิเคราะห์ได้</p>
-    <label class="f"><span class="lab">รหัสผ่านสำหรับลบ</span><input type="password" id="delPin" inputmode="numeric" autocomplete="off" placeholder="ใส่รหัสผ่าน" style="text-align:center;font-size:20px;letter-spacing:4px"></label>
+    ${sup ? "" : `<label class="f"><span class="lab">รหัสผ่านสำหรับลบ</span><input type="password" id="delPin" inputmode="numeric" autocomplete="off" placeholder="ใส่รหัสผ่าน" style="text-align:center;font-size:20px;letter-spacing:4px"></label>`}
     <p class="sub" id="delErr" style="color:var(--bad);min-height:20px;margin:6px 0 0"></p>
     <div class="row" style="margin-top:6px"><button class="blk" data-close>ยกเลิก</button><button class="blk delbtn" id="delOk">${I("trash")}ลบ</button></div>`, box => {
     const inp = box.querySelector("#delPin"), err = box.querySelector("#delErr"), ok = box.querySelector("#delOk");
-    setTimeout(() => inp.focus(), 60);
-    inp.onkeydown = e => { if (e.key === "Enter") ok.click(); };
+    setTimeout(() => (inp || ok).focus(), 60);
+    if (inp) inp.onkeydown = e => { if (e.key === "Enter") ok.click(); };
     ok.onclick = async () => {
-      const pin = inp.value.trim(); if (!pin) { err.textContent = "กรุณาใส่รหัสผ่าน"; inp.focus(); return; }
+      const pin = sup ? "" : inp.value.trim(); if (!sup && !pin) { err.textContent = "กรุณาใส่รหัสผ่าน"; inp.focus(); return; }
       ok.disabled = true;
       const body = { pin, kind, name: kind === "category" ? "" : key, id: kind === "category" ? key : "" };
       if (kind === "retort") { body.plant = d.plant; body.base = plantRetorts(d.plant); }
@@ -1246,7 +1277,7 @@ function askDelete(kind, key, after) {
         ok.disabled = false;
         if (e.status === 401) { closeModal(); showLock(true); return; }
         err.textContent = e.status === 403 ? "รหัสผ่านไม่ถูกต้อง" : e.status === 405 || e.status === 404 && /Not Found/.test(e.message) ? "เซิร์ฟเวอร์ยังเป็นเวอร์ชันเก่า: วาง main.py ใหม่แล้วรีสตาร์ท" : e.message;
-        inp.select();
+        if (inp) inp.select();
       }
     };
   });
@@ -1365,11 +1396,13 @@ function viewSaved() {
     <p class="sub" style="margin:6px 0 0">${esc(c ? c.name : "")} · ${esc(x.retort)}<br>${esc(causeText(x))}</p>
     <div class="meta2"><span>${dmy(x.date)} ${esc(x.time)} น.</span><span>กะ ${esc(x.shift)}</span>${x.plant ? `<span>${esc(x.plant)}</span>` : ""}${(x.photos || []).length ? `<span>รูป ${x.photos.length}</span>` : ""}${x.impact === "hold" ? `<span style="color:var(--warn)">Hold สินค้า</span>` : ""}</div></div>
     <button class="pri blk savebig" id="again">${I("plus")}บันทึกปัญหาอื่น</button>
-    <div class="row" style="margin-top:10px"><button class="blk" id="editSaved">${I("pen")}แก้ไขรายการนี้</button><button class="blk" id="seeAn">${I("chart")}ดูสรุป</button></div>
+    <div class="row" style="margin-top:10px"><button class="blk" id="editSaved">${I("pen")}แก้ไขรายการนี้</button>${S.role === "sup" ? `<button class="blk" id="seeAn">${I("chart")}ดูสรุป</button>` : `<button class="blk" id="seeList">${I("list")}ดูรายการ</button>`}</div>
     <p class="sub" style="text-align:center;margin:12px 0 0">แก้ไขรายการที่บันทึกไว้ก่อนหน้าได้ที่แท็บ <b>${esc((U.tabs.find(t => t.k === "list") || {}).label || "รายการ")}</b> → แตะรายการ → แก้ไข</p>`;
   $("#again").onclick = () => { S.justSaved = null; S.draft = null; render(); };
   $("#editSaved").onclick = () => { S.justSaved = null; S.draft = null; openEdit(x.id); };
-  $("#seeAn").onclick = () => { S.justSaved = null; S.draft = null; S.view = "analyze"; lsSet("rt_view", S.view); render(); };
+  const go2 = v => { S.justSaved = null; S.draft = null; S.view = v; S.viewAuto = false; lsSet("rt_view", S.view); render(); };
+  if ($("#seeAn")) $("#seeAn").onclick = () => go2("analyze");
+  if ($("#seeList")) $("#seeList").onclick = () => go2("list");
 }
 function causeText(x) { return x.cause === "__other" ? (x.causeOther || "อื่นๆ") : x.cause; }
 const fmtTs = ms => { if (!ms) return ""; const d = new Date(ms); return `${dmy(iso(d))} ${pad(d.getHours())}:${pad(d.getMinutes())} น.`; };
@@ -1674,18 +1707,18 @@ function showItem(id) {
     ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}${kv("สินค้า / Batch", [x.product, x.batch].filter(Boolean).join(" / "))}
     ${vals}${kv("ระยะเวลา", x.duration ? x.duration + " นาที" : "")}${kv("รายละเอียด", x.detail)}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? "Hold สินค้า" : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
   ? `<div class="apprbox ok">${I("check")}<div><b>อนุมัติแล้ว · ${esc(x.approvedBy)}</b><small>${esc(fmtTs(x.approvedAt))}</small></div></div>`
-  : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>ผู้อนุมัติกดปุ่ม อนุมัติ ด้านล่าง</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
-    ${x.approvedBy
+  : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>${S.role === "sup" ? "กดปุ่ม อนุมัติ ด้านล่าง" : "รอหัวหน้า (Supervisor) อนุมัติ"}</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+    ${S.role !== "sup" ? "" : x.approvedBy
       ? `<button class="blk" id="mUnappr" style="margin-top:16px">${I("x")}ยกเลิกอนุมัติ</button>`
       : `<button class="blk pri savebig" id="mAppr" style="margin-top:16px">${I("check")}อนุมัติ</button>`}
-    <div class="row" style="margin-top:10px"><button class="blk danger" id="mDel">${I("trash")}ลบ</button><button class="blk" id="mEdit">${I("pen")}แก้ไข</button></div>
+    <div class="row" style="margin-top:10px">${S.role === "sup" ? `<button class="blk danger" id="mDel">${I("trash")}ลบ</button>` : ""}<button class="blk ${S.role === "sup" ? "" : "pri"}" id="mEdit">${I("pen")}แก้ไข</button></div>
     <button class="ghost blk" data-close style="margin-top:6px">ปิด</button>`, box => {
     box.querySelector("#mEdit").onclick = () => { closeModal(); openEdit(id); };
     const ap = box.querySelector("#mAppr"); if (ap) ap.onclick = () => approveItem(id, false);
     const un = box.querySelector("#mUnappr"); if (un) un.onclick = () => approveItem(id, true);
     box.querySelectorAll("[data-mzoom]").forEach(im => im.onclick = () => window.open(photoUrl(im.dataset.mzoom), "_blank"));
     const sp = box.querySelector("#mSpec"); if (sp) sp.onclick = () => showSpec(x.programDoc + "#" + x.program);
-    box.querySelector("#mDel").onclick = () => confirmBox("ลบรายการนี้?", async () => { if (await deleteItem(id)) { toast("ลบแล้ว"); render(); } });
+    const dl = box.querySelector("#mDel"); if (dl) dl.onclick = () => confirmBox("ลบรายการนี้?", async () => { if (await deleteItem(id)) { toast("ลบแล้ว"); render(); } });
   });
 }
 
@@ -2327,7 +2360,7 @@ function viewUI() {
       <button class="ghost mv" data-utmv="${i}.-1" ${ro || !i ? "disabled" : ""} aria-label="เลื่อนขึ้น">${I("up")}</button><button class="ghost mv" data-utmv="${i}.1" ${ro || i === U.tabs.length - 1 ? "disabled" : ""} aria-label="เลื่อนลง">${I("down")}</button>
       <label class="sw mini" title="${t.k === "ui" ? "ซ่อนไม่ได้" : "เปิด/ซ่อน"}"><input type="checkbox" data-uts="${i}" ${t.show ? "checked" : ""} ${ro || t.k === "ui" ? "disabled" : ""}><i></i></label></div>`).join("")}
     <label class="f" style="margin-top:12px"><span class="lab">แท็บที่เปิดเป็นหน้าแรก</span><select data-udef ${dis}>${U.tabs.filter(t => t.show).map(t => `<option value="${t.k}" ${U.defaultTab === t.k ? "selected" : ""}>${esc(t.label)}</option>`).join("")}</select></label>
-    <small class="hint">แท็บ "${esc(U.tabs.find(t => t.k === "ui").label)}" ซ่อนไม่ได้ เพื่อให้กลับมาแก้ได้เสมอ · เครื่องที่เคยเลือกแท็บไว้จะเปิดแท็บเดิม</small></div>`;
+    <small class="hint">ตั้งค่านี้ใช้กับหัวหน้า (Supervisor) · พนักงานเห็นเฉพาะ ${esc(U.tabs.filter(t => STAFF_TABS.includes(t.k)).map(t => t.label).join(" และ "))} เสมอ · แท็บ "${esc(U.tabs.find(t => t.k === "ui").label)}" ซ่อนไม่ได้</small></div>`;
   h += `<div class="card">${sec("pen", "ฟอร์มบันทึก", "ช่องที่แสดงในหน้าบันทึก")}
     <span class="lab">ชื่อขั้นตอน</span><div class="grow5">${U.steps.map((s, i) => `<input data-ustep="${i}" value="${esc(s)}" maxlength="16" aria-label="ขั้นที่ ${i + 1}" ${dis}>`).join("")}</div>
     <div class="grid" style="margin-top:12px"><label class="f"><span class="lab">กะ DS เริ่ม</span><input type="time" data-utime="dsStart" value="${U.dsStart}" ${dis}></label><label class="f"><span class="lab">กะ DS สิ้นสุด</span><input type="time" data-utime="dsEnd" value="${U.dsEnd}" ${dis}></label></div>
@@ -2406,6 +2439,7 @@ function askName(force) {
   });
 }
 
+setRole(S.role);
 render();
 syncAll(true);
 setInterval(() => { if (!document.hidden) syncAll(false); }, 20000);

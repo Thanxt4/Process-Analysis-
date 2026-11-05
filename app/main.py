@@ -1363,18 +1363,54 @@ _RT_PHOTO_RE = re.compile(r"^[0-9]{8}_[0-9a-f]{16}\.jpg$")
 _RT_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _./-]{0,19}$")
 
 
+# บทบาท: หัวหน้า (Supervisor) เข้าด้วย EDIT_PIN → เห็นทุกแท็บ · พนักงานเข้าด้วย RETORT_PIN → บันทึก + รายการ
+RT_SUP_TOKEN = hashlib.sha256(("retort-sup:" + EDIT_PIN).encode()).hexdigest()[:32]
+RT_ROLE_NAME = {"sup": "หัวหน้า (Supervisor)", "staff": "พนักงาน"}
+
+
+def _rt_role(request: Request) -> str:
+    """sup / staff / '' (ยังไม่ได้เข้าระบบ) — จำไว้ใน cookie 400 วัน (เข้าครั้งเดียว)"""
+    t = request.cookies.get("rt_access") or ""
+    if EDIT_PIN and t == RT_SUP_TOKEN:
+        return "sup"
+    if t == RT_TOKEN or not RETORT_PIN:
+        return "staff"
+    return ""
+
+
 def _rt_auth(request: Request):
-    if RETORT_PIN and request.cookies.get("rt_access") != RT_TOKEN:
+    if not _rt_role(request):
         raise HTTPException(401, "RETORT_LOCKED")
+
+
+def _rt_sup(request: Request, pin=None):
+    """เฉพาะหัวหน้า: เข้าระบบด้วยรหัสหัวหน้าแล้ว หรือส่งรหัสแก้ไข (EDIT_PIN) มาด้วย"""
+    _rt_auth(request)
+    if _rt_role(request) != "sup":
+        if pin is None:
+            raise HTTPException(403, "เฉพาะหัวหน้า (Supervisor)")
+        _check_edit_pin(pin)
 
 
 @app.post("/api/retort/login")
 async def api_retort_login(request: Request):
     data = await request.json()
-    if str(data.get("pin") or "").strip() != RETORT_PIN:
+    pin = str(data.get("pin") or "").strip()
+    if pin and EDIT_PIN and pin == EDIT_PIN:
+        role, tok = "sup", RT_SUP_TOKEN
+    elif pin and pin == RETORT_PIN:
+        role, tok = "staff", RT_TOKEN
+    else:
         raise HTTPException(403, "รหัสไม่ถูกต้อง")
+    resp = JSONResponse({"ok": True, "role": role, "role_name": RT_ROLE_NAME[role]})
+    resp.set_cookie("rt_access", tok, max_age=60 * 60 * 24 * 400, httponly=True, samesite="lax")
+    return resp
+
+
+@app.post("/api/retort/logout")
+def api_retort_logout():
     resp = JSONResponse({"ok": True})
-    resp.set_cookie("rt_access", RT_TOKEN, max_age=60 * 60 * 24 * 400, httponly=True, samesite="lax")
+    resp.delete_cookie("rt_access", samesite="lax")
     return resp
 _RP_TEXT = {"time": 5, "shift": 4, "plant": 10, "program": 20, "programDoc": 20, "retort": 20, "product": 120, "batch": 60, "category": 40, "cause": 200,
             "causeOther": 200, "duration": 12, "detail": 3000, "action": 3000, "impact": 8, "by": 60, "updatedBy": 60}
@@ -1424,7 +1460,7 @@ def api_retort(request: Request, since: int = 0):
         rows = con.execute("SELECT data FROM retort_problems WHERE updated_at > ? ORDER BY date DESC", (since,)).fetchall()
         ids = [r["id"] for r in con.execute("SELECT id FROM retort_problems")]
     return {"config": cfg, "items": [json.loads(r["data"]) for r in rows], "ids": ids,
-            "now": int(now().timestamp() * 1000)}
+            "now": int(now().timestamp() * 1000), "role": _rt_role(request)}
 
 
 @app.post("/api/retort/problems")
@@ -1450,6 +1486,8 @@ async def api_retort_save(request: Request):
 @app.delete("/api/retort/problems/{rid}")
 def api_retort_delete(rid: str, request: Request, pin: str = ""):
     _rt_auth(request)
+    if _rt_role(request) != "sup":  # พนักงานลบรายการไม่ได้ (แก้ไขได้)
+        raise HTTPException(403, "ลบรายการได้เฉพาะหัวหน้า (Supervisor)")
     if ADMIN_PIN and pin != ADMIN_PIN:
         raise HTTPException(403, "PIN ไม่ถูกต้อง")
     with db() as con:
@@ -1459,9 +1497,11 @@ def api_retort_delete(rid: str, request: Request, pin: str = ""):
 
 @app.post("/api/retort/problems/{rid}/approve")
 async def api_retort_approve(rid: str, request: Request):
-    """อนุมัติ / ยกเลิกอนุมัติรายการปัญหา Retort: {pin, name, undo}"""
+    """อนุมัติ / ยกเลิกอนุมัติรายการปัญหา Retort: {pin, name, undo} — เฉพาะหัวหน้า"""
     _rt_auth(request)
     data = await request.json()
+    if _rt_role(request) != "sup":
+        raise HTTPException(403, "อนุมัติได้เฉพาะหัวหน้า (Supervisor)")
     if APPROVE_PIN and str(data.get("pin") or "").strip() != APPROVE_PIN:
         raise HTTPException(403, "รหัสผู้อนุมัติไม่ถูกต้อง")
     undo = bool(data.get("undo"))
@@ -1633,9 +1673,8 @@ def _write_rt_cfg(cfg: dict):
 async def api_retort_remove(request: Request):
     """ลบพื้นที่ / หม้อ / หัวข้อปัญหา ออกจากรายการ (ต้องใส่รหัสแก้ไข EDIT_PIN)
     ข้อมูลที่บันทึกไว้แล้วยังอยู่ครบ: หัวข้อปัญหาถูกซ่อน (deleted) เพื่อให้ประวัติเก่ายังแสดงชื่อได้"""
-    _rt_auth(request)
     data = await request.json()
-    _check_edit_pin(data.get("pin"))
+    _rt_sup(request, data.get("pin"))
     kind = str(data.get("kind") or "")
     name = " ".join(str(data.get("name") or "").split())
     cfg = _read_rt_cfg()
@@ -1680,9 +1719,8 @@ async def api_retort_remove(request: Request):
 
 @app.post("/api/retort/config")
 async def api_retort_config(request: Request):
-    _rt_auth(request)
     data = await request.json()
-    _check_edit_pin(data.get("pin"))
+    _rt_sup(request, data.get("pin"))
     cfg = data.get("config")
     if not isinstance(cfg, dict) or not isinstance(cfg.get("categories"), list):
         raise HTTPException(400, "ข้อมูลไม่ถูกต้อง")
@@ -1778,9 +1816,8 @@ def api_retort_ai_status(request: Request):
 
 @app.post("/api/retort/ai/key")
 async def api_retort_ai_key(request: Request):
-    _rt_auth(request)
     data = await request.json()
-    _check_edit_pin(data.get("pin"))
+    _rt_sup(request, data.get("pin"))
     key = str(data.get("key") or "").strip()
     if key:
         if len(key) < 20 or any(c.isspace() for c in key):
@@ -1793,8 +1830,8 @@ async def api_retort_ai_key(request: Request):
 
 @app.post("/api/retort/ai")
 async def api_retort_ai(request: Request):
-    """ถาม AI: ส่งข้อมูลปัญหา Retort ที่สรุปจากหน้าเว็บ (context) + ประวัติแชท (messages) ไปให้ Gemini"""
-    _rt_auth(request)
+    """ถาม AI: ส่งข้อมูลปัญหา Retort ที่สรุปจากหน้าเว็บ (context) + ประวัติแชท (messages) ไปให้ Gemini — เฉพาะหัวหน้า"""
+    _rt_sup(request)
     key = gemini_key()
     if not key:
         raise HTTPException(400, "ยังไม่ได้ตั้งค่า API Key ของ AI (ตั้งได้ที่หน้า ตั้งค่า)")
