@@ -318,7 +318,7 @@ button.dash{color:var(--navy)}
 }
 /* ===== Visual refresh (v77) ===== */
 :root{--bg:#eef2f7;--sh2:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.18)}
-body{background:radial-gradient(1200px 400px at 50% -120px,#dfe7f2 0%,rgba(223,231,242,0) 70%),var(--bg);background-attachment:fixed}
+body{background:radial-gradient(1200px 400px at 50% -120px,#dfe7f2 0%,rgba(223,231,242,0) 70%) no-repeat,var(--bg)}
 header.top{background:linear-gradient(135deg,#14213a 0%,#1b2a41 55%,#26405f 100%)}
 h1{letter-spacing:.01em}
 .card{border-radius:18px;box-shadow:var(--sh2);border:1px solid #e3e9f1}
@@ -617,7 +617,7 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 @keyframes rtSheet{from{opacity:.4;transform:translateY(28px)}to{opacity:1;transform:none}}
 @keyframes rtToast{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes rtPop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
-.modal{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:rtFade .18s ease both}
+.modal{animation:rtFade .18s ease both}
 .modal .box{animation:rtSheet .3s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 -10px 40px -10px rgba(15,23,42,.35)}
 .toast{animation:rtToast .25s ease both;box-shadow:0 14px 30px -12px rgba(15,23,42,.6);border-left:4px solid var(--amber);font-weight:500}
 .done-card .okic{animation:rtPop .55s cubic-bezier(.2,1.4,.4,1) both}
@@ -724,6 +724,10 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 .grprow .gic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--gc)}
 .grprow input:not([type=color]){min-height:46px;font-size:15px;padding:8px 10px}
 @media(max-width:560px){.grprow{grid-template-columns:42px minmax(0,1fr)}.grprow .colrow{grid-column:2}.grow5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* ===== ความเร็ว: แถบเมนูล่างไม่ใช้ blur (หนักตอนเลื่อนจอบนมือถือรุ่นเล็ก) · ย่อหน้าที่อยู่นอกจอไม่ต้องวาด ===== */
+@media(max-width:699px){.nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:#fff}}
+#listCard .item{content-visibility:auto;contain-intrinsic-size:auto 76px}
+.hgrp{content-visibility:auto;contain-intrinsic-size:auto 220px}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
@@ -1079,8 +1083,15 @@ const S = {
 };
 function setSync(ok) { const s = $("#sync"); s.classList.toggle("on", !!ok); $("#syncTxt").textContent = ok ? "ซิงก์แล้ว" : "ออฟไลน์"; }
 const catById = id => S.config.categories.find(c => c.id === id);
-function catRank() { const m = {}; Object.values(S.items).forEach(x => m[x.category] = (m[x.category] || 0) + 1); return S.config.categories.map(c => c.id).sort((a, b) => (m[b] || 0) - (m[a] || 0) || S.config.categories.findIndex(c => c.id === a) - S.config.categories.findIndex(c => c.id === b)); }
-const catColor = id => { const i = catRank().indexOf(id); return i >= 0 && i < 5 ? SERIES[i] : OTHER; };
+// อันดับหัวข้อ (ใช้ทำสี) คำนวณครั้งเดียวต่อการวาดหน้า — ล้างค่าใน render() · เดิมคำนวณใหม่ทุกแถวของรายการ ทำให้หน้ารายการช้า
+let RANK = null, RANK_COLOR = null;
+function catRank() {
+  if (RANK) return RANK;
+  const m = {}; Object.values(S.items).forEach(x => m[x.category] = (m[x.category] || 0) + 1);
+  const order = new Map(S.config.categories.map((c, i) => [c.id, i]));
+  return RANK = S.config.categories.map(c => c.id).sort((a, b) => (m[b] || 0) - (m[a] || 0) || order.get(a) - order.get(b));
+}
+const catColor = id => { if (!RANK_COLOR) { RANK_COLOR = new Map(); catRank().slice(0, 5).forEach((k, i) => RANK_COLOR.set(k, SERIES[i])); } return RANK_COLOR.get(id) || OTHER; };
 
 async function api(url, opt) {
   const r = await fetch(url, opt);
@@ -1140,6 +1151,7 @@ function renderNav() {
   $("#nav").innerHTML = vis.map(t => `<button data-view="${t.k}" class="${S.view === t.k ? "on" : ""}">${I(VIEW_ICON[t.k])}${esc(t.label)}</button>`).join("");
 }
 function render() {
+  RANK = RANK_COLOR = null;
   applyUI();
   $("#userBtn").textContent = initials(S.user);
   renderNav();
@@ -1176,6 +1188,7 @@ function stepHead(d) {
     <div class="stepbar" aria-hidden="true"><i style="width:${Math.round(st / U.steps.length * 100)}%"></i></div>`;
 }
 const photoUrl = f => "/api/retort/photo/" + encodeURIComponent(f);
+const thumbUrl = f => photoUrl(f) + "?w=1";  // รูปย่อ (เร็วกว่ารูปเต็มหลายเท่า) · กดดูรูปใหญ่ยังเป็นรูปเต็ม
 function catHead(d, changeStep) {
   const cat = catById(d.category); if (!cat) return ""; const G = grpOf(cat);
   return `<div class="catsel" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><div><small>${dmy(d.date)} ${esc(d.time)} กะ ${d.shift} · ${esc(d.plant)} · ${esc(d.retort)}</small><b>${esc(cat.name)}</b></div><button class="ghost sm" ${changeStep}>เปลี่ยน</button></div>`;
@@ -1278,7 +1291,7 @@ function viewLog() {
       <div class="card">
         <label class="camBtn" id="camLbl"><input type="file" accept="image/*" capture="environment" id="camIn" hidden>${I("camera")}<span><b>เปิดกล้องถ่ายรูป</b><small>ประทับ ${esc(U.stamp)} · วันที่ เวลา กะ</small></span></label>
         <label class="ghost sm galBtn"><input type="file" accept="image/*" id="galIn" multiple hidden>${I("image")}เลือกจากคลังรูป</label>
-        <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${photoUrl(f)}" alt="" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
+        <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
         <div id="upState" class="sub"></div>
         ${(() => { const pts = d.photos.map(f => (d.ptimes || {})[f]).filter(Boolean); if (!pts.length) return "";
           const t0 = Math.min(...pts), at = new Date(t0), hm = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
@@ -1289,7 +1302,7 @@ function viewLog() {
   } else {
     const progs = progsFor(d.retort); const sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
     const curCause = d.cause === "__other" ? d.causeOther : (d.cause || "");
-    h += catHead(d, `data-step="4"`) + `${d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${photoUrl(f)}" alt="" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+    h += catHead(d, `data-step="4"`) + `${d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
       <div class="card formcard">
         <label class="f"><span class="lab">สาเหตุ <span class="req">*</span></span><textarea id="causeIn" rows="2" placeholder="กรอกสาเหตุของปัญหา">${esc(curCause)}</textarea></label>
         <div style="margin-top:10px">${pickBar("cause", "ค้นหาสาเหตุ หรือเพิ่มสาเหตุใหม่เข้ารายการ")}</div>
@@ -1643,7 +1656,7 @@ function viewList() {
       + (L.length ? rows + (L.length > 300 ? `<p class="sub" style="text-align:center">แสดง 300 รายการแรก · เลือก Plant / หม้อ / วันที่ ให้แคบลง</p>` : "") : `<div class="empty"><div class="ic">${I(words.length ? "search" : "list")}</div><h3>${words.length ? "ไม่พบรายการที่ค้นหา" : "ไม่มีรายการตามตัวกรองนี้"}</h3><p class="sub">ลองเปลี่ยน Plant / หม้อ / วันที่ ด้านบน</p></div>`);
   };
   draw();
-  $("#listQ").oninput = e => { S.q = e.target.value; draw(); };
+  $("#listQ").oninput = e => { S.q = e.target.value; clearTimeout(S.qT); S.qT = setTimeout(draw, 150); };
 }
 function showItem(id) {
   const x = S.items[id]; if (!x) return; const c = catById(x.category);
@@ -1653,7 +1666,7 @@ function showItem(id) {
     ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}${kv("สินค้า / Batch", [x.product, x.batch].filter(Boolean).join(" / "))}
     ${vals}${kv("ระยะเวลา", x.duration ? x.duration + " นาที" : "")}${kv("รายละเอียด", x.detail)}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? "Hold สินค้า" : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
   ? `<div class="apprbox ok">${I("check")}<div><b>อนุมัติแล้ว · ${esc(x.approvedBy)}</b><small>${esc(fmtTs(x.approvedAt))}</small></div></div>`
-  : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>ผู้อนุมัติกดปุ่ม อนุมัติ ด้านล่าง</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${photoUrl(f)}" alt="" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+  : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>ผู้อนุมัติกดปุ่ม อนุมัติ ด้านล่าง</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
     ${x.approvedBy
       ? `<button class="blk" id="mUnappr" style="margin-top:16px">${I("x")}ยกเลิกอนุมัติ</button>`
       : `<button class="blk pri savebig" id="mAppr" style="margin-top:16px">${I("check")}อนุมัติ</button>`}

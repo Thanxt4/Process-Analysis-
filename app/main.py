@@ -669,7 +669,8 @@ async def no_stale_pages(request: Request, call_next):
     if path.startswith(("/uploads/", "/t/", "/fonts/")) and resp.status_code == 200:
         # ชื่อไฟล์รูปไม่ซ้ำและไม่ถูกเขียนทับ → ให้มือถือจำไว้ได้เลย ไม่ต้องโหลดซ้ำ
         resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-    elif path == "/" or path.endswith((".html", ".js", ".webmanifest")) or path.startswith("/api/"):
+    elif (path == "/" or path.endswith((".html", ".js", ".webmanifest")) or path.startswith("/api/")) \
+            and "immutable" not in resp.headers.get("Cache-Control", ""):  # รูป Retort ตั้งให้จำได้ถาวรเอง ไม่ต้องเขียนทับ
         resp.headers["Cache-Control"] = "no-cache"
     return resp
 
@@ -1498,12 +1499,33 @@ async def api_retort_photo(request: Request, file: UploadFile = File(...)):
     return {"ok": True, "file": fn}
 
 
+RT_THUMB_W = 480  # รูปย่อสำหรับตาราง/รายการ (รูปเต็ม 1600px ใช้ตอนกดดูรูปใหญ่เท่านั้น)
+
+
+def _rt_thumb(src: Path) -> Path:
+    tp = RT_PHOTO_DIR / "t" / src.name
+    if not tp.exists():
+        tp.parent.mkdir(exist_ok=True)
+        try:
+            with Image.open(src) as im:
+                im = ImageOps.exif_transpose(im).convert("RGB")
+                im.thumbnail((RT_THUMB_W, RT_THUMB_W))
+                tmp = tp.with_suffix(f".{secrets.token_hex(4)}.tmp")
+                im.save(tmp, "JPEG", quality=78, optimize=True)
+                tmp.replace(tp)
+        except Exception:  # รูปเสีย/อ่านไม่ได้ → ส่งรูปเต็มแทน
+            return src
+    return tp
+
+
 @app.get("/api/retort/photo/{fn}")
-def api_retort_photo_get(fn: str, request: Request):
+def api_retort_photo_get(fn: str, request: Request, w: int = 0):
     _rt_auth(request)
     if not _RT_PHOTO_RE.match(fn) or not (RT_PHOTO_DIR / fn).exists():
         raise HTTPException(404, "ไม่พบรูป")
-    return FileResponse(RT_PHOTO_DIR / fn, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=31536000, immutable"})
+    src = RT_PHOTO_DIR / fn
+    return FileResponse(_rt_thumb(src) if w else src, media_type="image/jpeg",
+                        headers={"Cache-Control": "private, max-age=31536000, immutable"})
 
 
 def _read_rt_cfg():
