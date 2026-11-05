@@ -763,7 +763,6 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
         <div class="t"><b id="groupName">GMP</b><span>เลือกพื้นที่ที่จะส่งผลการตรวจ</span></div>
         <div class="zcount" id="groupCount"></div>
       </div>
-      <div id="todaySum"></div>
       <div class="step-title" id="stepTitle">เลือกหัวข้อการตรวจ</div>
       <div class="zgrid" id="zoneGrid"></div>
       </div>
@@ -825,6 +824,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
         <span><i class="c3">–</i>ไม่มีกิจกรรม (ไม่นับใน %)</span><span><i class="miss"></i>ไม่ได้ส่ง</span>
       </div>
     </details>
+    <div id="todaySum"></div>
     <div class="toolbar">
       <div class="datepick">
         <button type="button" id="dPrev" aria-label="วันก่อนหน้า">‹</button>
@@ -1165,7 +1165,7 @@ async function copyText(t){
   let ok = false; try{ ok = document.execCommand("copy"); }catch{} ta.remove(); return ok;
 }
 $("#todaySum").addEventListener("click", async e => {
-  const it = e.target.closest(".pit"); if(it){ openSheet(it.dataset.a, formRound || CFG.current_round); return; }
+  const it = e.target.closest(".pit"); if(it){ openSheet(it.dataset.a, viewRound || CFG.current_round); return; }
   if(e.target.closest("#tsCopy")) toast(await copyText(TSUM_TEXT) ? "คัดลอกแล้ว วางในกลุ่ม LINE ได้เลย ✓" : "คัดลอกไม่ได้ในเบราว์เซอร์นี้", false);
   else if(e.target.closest("#tsShare")) navigator.share({text: TSUM_TEXT}).catch(() => {});
 });
@@ -1218,7 +1218,6 @@ function renderForm(){
     cards = G.zones.map(z => { if(!z.sub) return zoneCard(z); if(seen.has(z.sub)) return ""; seen.add(z.sub);
       return subCard(z.sub, G.zones.filter(x => x.sub === z.sub)); }).join(""); }
   $("#zoneGrid").innerHTML = cards;
-  renderTodaySum(G ? [G] : GROUPS, (formRound || CFG.current_round));
   renderSearch();
   $("#zonePick").hidden = !!curZone;
   $("#zoneItems").hidden = !curZone;
@@ -1332,6 +1331,8 @@ async function renderChecklist(){
   if($("#tab-check").classList.contains("on")) loadHeatmap();
   syncDatePick();
   const data = viewRound===CFG.current_round ? STATUS : await api("/api/status?round="+viewRound);
+  // สรุปรายการที่ยังไม่ส่ง ของวันที่เลือก (แยก Process Control / GMP)
+  renderTodaySum(DECK_LIST.filter(g => g.key !== "retort").map(g => ({...g, zones: data.zones.filter(z => deckOf(z) === g.key)})).filter(g => g.zones.length), viewRound);
   const keep = (it, z) => {
     if(ckQuery && !norm(`${it.no} ${it.name} ${it.last_inspector||""} ${zLabel(z)} ${z.owner} ${it.proc||""} ${it.cust||""}`).includes(ckQuery)) return false;
     if(filter === "issue") return it.issue;
