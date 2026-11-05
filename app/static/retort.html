@@ -728,6 +728,7 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 @media(max-width:699px){.nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:#fff}}
 #listCard .item{content-visibility:auto;contain-intrinsic-size:auto 76px}
 .hgrp{content-visibility:auto;contain-intrinsic-size:auto 220px}
+.detcard .sec{margin-bottom:10px}.detcard textarea{min-height:60px}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
@@ -1303,6 +1304,13 @@ function viewLog() {
     const progs = progsFor(d.retort); const sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
     const curCause = d.cause === "__other" ? d.causeOther : (d.cause || "");
     h += catHead(d, `data-step="4"`) + `${d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+      ${U.form.more ? `<div class="card detcard">${sec("list", "รายละเอียด", "ไม่บังคับ · ระยะเวลา · สินค้า · Batch")}<div class="grid">
+        ${(cat.fields || []).map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
+        <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}"></label>
+        <label class="f"><span class="lab">สินค้า</span><input data-k="product" value="${esc(d.product)}"></label>
+        <label class="f"><span class="lab">Batch</span><input data-k="batch" value="${esc(d.batch)}"></label>
+        <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail" rows="2">${esc(d.detail)}</textarea></label>
+      </div></div>` : ""}
       <div class="card formcard">
         <label class="f"><span class="lab">สาเหตุ <span class="req">*</span></span><textarea id="causeIn" rows="2" placeholder="กรอกสาเหตุของปัญหา">${esc(curCause)}</textarea></label>
         <div style="margin-top:10px">${pickBar("cause", "ค้นหาสาเหตุ หรือเพิ่มสาเหตุใหม่เข้ารายการ")}</div>
@@ -1312,14 +1320,6 @@ function viewLog() {
         ${U.form.program ? `<label class="f" style="margin-top:14px"><span class="lab">โปรแกรมที่ใช้ (ถ้ามี)</span>
           <div class="row"><select id="progSel"><option value="">ไม่ระบุ</option>${progs.map(p => `<option value="${esc(progKey(p))}" ${sel && progKey(sel) === progKey(p) ? "selected" : ""}>โปรแกรม ${esc(p.no)}${progs.filter(x => x.no === p.no).length > 1 ? ` (${esc(p.doc)})` : ""}${p.note ? " · " + esc(p.note.replace(/^โปรแกรม \S+ /, "")) : ""}</option>`).join("")}</select>${sel ? `<button class="soft sm" id="progSpec" style="flex:0 0 auto">ดูค่าควบคุม</button>` : ""}</div></label>` : ""}
       </div>
-      ${U.form.more ? `<button class="more" id="moreBtn">${I(S.more ? "up" : "down")}${S.more ? "ซ่อนรายละเอียด" : "เพิ่มรายละเอียด (ไม่บังคับ)"}<span class="sub">ระยะเวลา · สินค้า · Batch</span></button>
-      <div class="card ${S.more ? "" : "hide"}" id="moreBox"><div class="grid">
-        ${(cat.fields || []).map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
-        <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}"></label>
-        <label class="f"><span class="lab">สินค้า</span><input data-k="product" value="${esc(d.product)}"></label>
-        <label class="f"><span class="lab">Batch</span><input data-k="batch" value="${esc(d.batch)}"></label>
-        <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail">${esc(d.detail)}</textarea></label>
-      </div></div>` : ""}
       <div class="card signcard"><span class="lab">ลงนามผู้บันทึก <span class="req">*</span></span>
         <input id="signIn" data-k="by" value="${esc(d.by || S.user)}" placeholder="ชื่อผู้บันทึก" autocomplete="off">
         <div class="signline"><span>(${esc(d.by || S.user || "................")})</span><small>วันที่ ${dmy(d.date)} เวลา ${esc(d.time)} น. กะ ${d.shift}</small></div></div>
@@ -1531,7 +1531,6 @@ function wireLog() {
     else if (ds.sug) { const ci = $("#causeIn"); ci.value = ds.sug; m.querySelectorAll("[data-sug]").forEach(x => x.classList.toggle("on", x === b)); $("#formErr").innerHTML = ""; }
     else if (b.id === "progSpec") { if (d.programDoc) showSpec(d.programDoc + "#" + d.program); }
     else if (ds.impact) { d.impact = ds.impact; m.querySelectorAll("[data-impact]").forEach(x => { x.classList.toggle("on", x === b); x.classList.toggle("warnc", x === b && ds.impact === "hold"); }); }
-    else if (b.id === "moreBtn") { S.more = !S.more; $("#moreBox").classList.toggle("hide", !S.more); b.firstElementChild.outerHTML = I(S.more ? "up" : "down"); b.childNodes[1].textContent = S.more ? "ซ่อนรายละเอียด" : "เพิ่มรายละเอียด (ไม่บังคับ)"; }
     else if (b.id === "saveBtn") submitLog();
     else if (b.id === "cancelEdit") { S.editingId = null; S.draft = null; S.view = "list"; render(); }
     else if (ds.edit) showItem(ds.edit);
@@ -2325,7 +2324,7 @@ function viewUI() {
     <div class="grid" style="margin-top:12px"><label class="f"><span class="lab">กะ DS เริ่ม</span><input type="time" data-utime="dsStart" value="${U.dsStart}" ${dis}></label><label class="f"><span class="lab">กะ DS สิ้นสุด</span><input type="time" data-utime="dsEnd" value="${U.dsEnd}" ${dis}></label></div>
     <small class="hint">${shiftHint()} · มีผลกับรายการที่บันทึกใหม่ (รายการเก่าคงกะเดิม)</small>
     <div style="margin-top:10px">${sw("form.photo", U.form.photo, "ขั้นถ่ายรูปปัญหา", "ปิด = เลือกปัญหาแล้วไปหน้าสาเหตุเลย")}${sw("form.action", U.form.action, "ช่อง การแก้ไข")}${sw("form.impact", U.form.impact, "ช่อง ผลต่อสินค้า (Hold)")}
-      ${sw("form.program", U.form.program, "ช่อง โปรแกรมที่ใช้")}${sw("form.more", U.form.more, "ปุ่ม เพิ่มรายละเอียด", "ค่าที่วัด · ระยะเวลา · สินค้า · Batch · รายละเอียด")}${sw("form.todaybar", U.form.todaybar, "สรุปวันนี้ (มือถือ)", "ปัญหาวันนี้ · 7 วัน · รออนุมัติ")}${sw("form.recent", U.form.recent, "รายการบันทึกล่าสุด")}</div>
+      ${sw("form.program", U.form.program, "ช่อง โปรแกรมที่ใช้")}${sw("form.more", U.form.more, "ส่วน รายละเอียด (เหนือสาเหตุ)", "ค่าที่วัด · ระยะเวลา · สินค้า · Batch · รายละเอียดเพิ่มเติม")}${sw("form.todaybar", U.form.todaybar, "สรุปวันนี้ (มือถือ)", "ปัญหาวันนี้ · 7 วัน · รออนุมัติ")}${sw("form.recent", U.form.recent, "รายการบันทึกล่าสุด")}</div>
     <label class="f" style="margin-top:10px"><span class="lab">จำนวนรูปสูงสุดต่อรายการ</span><select data-umax ${dis}>${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<option ${U.form.maxPhotos === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
     <small class="hint">ช่อง สาเหตุ และ ลงนามผู้บันทึก บังคับกรอกเสมอ</small></div>`;
   h += `<div class="card">${sec("tag", "กลุ่มปัญหา", "ชื่อ · สี · ไอคอน ใช้ในหน้าบันทึกและหน้าวิเคราะห์")}
