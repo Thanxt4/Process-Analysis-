@@ -1822,5 +1822,21 @@ def health():
     return {"ok": True, "time": now().isoformat()}
 
 
+_FONT_RE = re.compile(r"^[A-Za-z0-9._-]+\.(woff2?|ttf)$")
+_FONT_TYPES = {".woff2": "font/woff2", ".woff": "font/woff", ".ttf": "font/ttf"}
+
+
+@app.get("/fonts/{fn}")
+def web_font(fn: str):
+    """ฟอนต์หน้าเว็บ: หาใน app/static/fonts ก่อน ถ้าไม่มีใช้ app/fonts (ที่เก็บเดิม)
+    กันกรณีอัปเดตแค่ไฟล์หน้าเว็บแต่ยังไม่ได้ย้ายโฟลเดอร์ฟอนต์ → ไม่ขึ้น 404 ทุกครั้งที่เปิดหน้า"""
+    if not _FONT_RE.match(fn):
+        raise HTTPException(404, "ไม่พบไฟล์")
+    for d in (BASE_DIR / "static" / "fonts", BASE_DIR / "fonts"):
+        if (d / fn).is_file():
+            return FileResponse(d / fn, media_type=_FONT_TYPES[Path(fn).suffix.lower()])
+    raise HTTPException(404, "ไม่พบไฟล์")
+
+
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.mount("/", StaticFiles(directory=BASE_DIR / "static", html=True), name="static")
