@@ -72,6 +72,8 @@ for d in (UPLOAD_DIR, SLIDE_DIR):
 
 
 CUSTOMERS = ("Weruva", "Smucker")  # ลูกค้าที่เลือกให้แต่ละ Checklist ได้
+NO_ACT = "ไม่มีกิจกรรม"  # ผลการตรวจแบบที่ 3: ไปตรวจแล้วแต่จุดนั้นไม่มีกิจกรรม → ไม่นับในกราฟ/การวิเคราะห์
+STATUSES = ("ปกติ", "พบปัญหา", NO_ACT)
 
 
 def load_areas():
@@ -539,6 +541,7 @@ def status_for(rd: date, deck: Optional[str] = None):
             items.append({
                 **it,
                 "checked": bool(ss),
+                "noact": bool(ss) and all(x["status"] == NO_ACT for x in ss),  # ส่งแล้วแต่ไม่มีกิจกรรมทุกครั้ง
                 "count": len(ss),
                 "issue": has_issue,
                 "last_inspector": last["inspector"] if last else None,
@@ -832,14 +835,14 @@ async def api_create(request: Request):
     cause = _clean(str(form.get("cause") or ""))[:2000]
     if area_id not in ITEM_MAP or ITEM_MAP[area_id].get("hidden"):
         raise HTTPException(400, "ไม่พบพื้นที่นี้")
+    if status not in STATUSES:
+        status = "ปกติ"
     qcfg = ITEM_MAP[area_id].get("qty")
-    qty = parse_qty(form.get("qty"), qcfg)
-    if qcfg and qty is None:
+    qty = None if status == NO_ACT else parse_qty(form.get("qty"), qcfg)  # ไม่มีกิจกรรม = ไม่ต้องนับจำนวน
+    if qcfg and qty is None and status != NO_ACT:
         raise HTTPException(400, f"กรุณากรอกจำนวน{qcfg.get('label', '')}")
     if not inspector:
         raise HTTPException(400, "กรุณาใส่ชื่อผู้ตรวจ")
-    if status not in ("ปกติ", "พบปัญหา"):
-        status = "ปกติ"
     if status != "พบปัญหา":
         action = cause = ""
 
@@ -901,7 +904,7 @@ async def api_update(sid: str, request: Request):
 
     form = await request.form()
     status = str(form.get("status") or row["status"])
-    if status not in ("ปกติ", "พบปัญหา"):
+    if status not in STATUSES:
         status = row["status"]
     topic = _clean(str(form.get("topic") if form.get("topic") is not None else (row["topic"] or "")))[:120]
     inspector = str(form.get("inspector") or row["inspector"]).strip()[:60] or row["inspector"]
@@ -923,6 +926,8 @@ async def api_update(sid: str, request: Request):
         qty_s = json.dumps(qty, ensure_ascii=False) if qty else None
     else:
         qty_s = row["qty"]
+    if status == NO_ACT:
+        qty_s = None
 
     pages, saved = [], []
     stamp = uuid.uuid4().hex[:4]
@@ -980,7 +985,7 @@ def api_delete(sid: str, pin: str = ""):
 @app.get("/api/heatmap")
 def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None, end: Optional[str] = None):
     """ข้อมูล Dashboard heat map: สถานะรายการ × วัน ย้อนหลัง N รอบ หรือช่วงที่เลือก (?start=&end=)
-    code: 0 = ยังไม่ตรวจ, 1 = ตรวจแล้วปกติ, 2 = พบปัญหา"""
+    code: 0 = ยังไม่ตรวจ, 1 = ตรวจแล้วปกติ, 2 = พบปัญหา, 3 = ไม่มีกิจกรรม (ไม่นับใน % และจำนวนครั้ง)"""
     cur = round_of(now())
     if start and end:
         a, b = parse_round(start), min(parse_round(end), cur)
@@ -993,11 +998,12 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
         rounds = [(cur - timedelta(days=i)).isoformat() for i in range(days - 1, -1, -1)]
     with db() as con:
         rows = con.execute(
-            "SELECT round_date, area_id, COUNT(*) n, MAX(status='พบปัญหา') ng, SUM(status='พบปัญหา') ngn FROM submissions "
-            "WHERE round_date BETWEEN ? AND ? GROUP BY round_date, area_id", (rounds[0], rounds[-1])).fetchall()
+            "SELECT round_date, area_id, SUM(status<>?) n, SUM(status=?) na, MAX(status='พบปัญหา') ng, SUM(status='พบปัญหา') ngn "
+            "FROM submissions WHERE round_date BETWEEN ? AND ? GROUP BY round_date, area_id", (NO_ACT, NO_ACT, rounds[0], rounds[-1])).fetchall()
         qrows = con.execute("SELECT round_date, area_id, qty FROM submissions WHERE qty IS NOT NULL AND round_date BETWEEN ? AND ? "
                             "ORDER BY created_at", (rounds[0], rounds[-1])).fetchall()
-    cell = {(r["round_date"], r["area_id"]): (2 if r["ng"] else 1, r["n"], r["ngn"] or 0) for r in rows}
+    # code 3 = ส่งแล้วแต่ไม่มีกิจกรรมทั้งวัน · จำนวนครั้ง (n) ไม่รวมรายการที่ไม่มีกิจกรรม
+    cell = {(r["round_date"], r["area_id"]): (2 if r["ng"] else 1 if r["n"] else 3, r["n"] or 0, r["ngn"] or 0) for r in rows}
     qcell = {}  # จำนวนที่นับ (ใช้ค่าล่าสุดของวันนั้น)
     for r in qrows:
         try:
@@ -1015,8 +1021,8 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
                 codes.append(c)
                 counts.append(n)
                 ngs.append(ngn)  # จำนวนครั้งที่พบปัญหาในวันนั้น
-                # % ย้อนหลังคิดจากรายการที่มีอยู่จริงในวันนั้น
-                if not it.get("extra") and item_active(it, rd, bool(c)):
+                # % ย้อนหลังคิดจากรายการที่มีอยู่จริงในวันนั้น (วันที่ไม่มีกิจกรรมไม่นับ)
+                if c != 3 and not it.get("extra") and item_active(it, rd, bool(c)):
                     totals[di] += 1
                     done[di] += bool(c)
             if visible and not it.get("hidden"):

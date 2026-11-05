@@ -31,6 +31,10 @@ AMBER = RGBColor(0xF5, 0x9E, 0x0B)
 GREEN = RGBColor(0x16, 0xA3, 0x4A)
 RED = RGBColor(0xDC, 0x26, 0x26)
 GREY = RGBColor(0x94, 0xA3, 0xB8)
+YELLOW = RGBColor(0xEA, 0xB3, 0x08)
+YELLOW_INK = RGBColor(0x85, 0x4D, 0x0E)
+YELLOW_SOFT = RGBColor(0xFE, 0xF9, 0xC3)
+NO_ACT = "ไม่มีกิจกรรม"
 LIGHT = RGBColor(0xF1, 0xF5, 0xF9)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 TEXT = RGBColor(0x1E, 0x29, 0x3B)
@@ -601,10 +605,10 @@ def _image_grid(slide, paths, x, y, w, h, gap=Inches(0.12)):
 
 
 def _info_strip(slide, sub, n_img):
-    issue = sub["status"] == "พบปัญหา"
+    issue, noact = sub["status"] == "พบปัญหา", sub["status"] == NO_ACT
     y = Inches(1.3)
-    _text(slide, LEFT, y, Inches(1.6), Inches(0.45), sub["status"], 14, True, WHITE, PP_ALIGN.CENTER,
-          MSO_ANCHOR.MIDDLE, fill=RED if issue else GREEN, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+    _text(slide, LEFT, y, Inches(1.6), Inches(0.45), sub["status"], 14, True, YELLOW_INK if noact else WHITE, PP_ALIGN.CENTER,
+          MSO_ANCHOR.MIDDLE, fill=RED if issue else YELLOW if noact else GREEN, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
     dt = datetime.fromisoformat(sub["created_at"])
     _text(slide, LEFT + Inches(1.8), y, Inches(8.5), Inches(0.45), [(
         ("ผู้ตรวจ  ", 11, False, MUTED), (sub["inspector"], 15, True, TEXT),
@@ -725,6 +729,10 @@ def _normal_topic_slide(prs, blank, group, round_label, foot, upload_dir, show_d
         f"  ·  {d0['owners'].get(x0['zone'], '')}  ·  ส่ง {len(group)} ครั้ง" + (
         f" ใน {len(days)} วัน" if len(days) > 1 else "")
     summ = _short_summary(title, [x for _, x in group])
+    n_na = sum(1 for _, x in group if x["status"] == NO_ACT)
+    all_na = n_na == len(group)
+    if n_na and not all_na:
+        summ += f"  ·  {NO_ACT} {n_na} ครั้ง"
     cards = []
     for d, x in group:
         pages = [p for p in (x.get("pages") or [{"note": x.get("note"), "images": x.get("images", [])}])
@@ -738,11 +746,11 @@ def _normal_topic_slide(prs, blank, group, round_label, foot, upload_dir, show_d
     for ci, chunk in enumerate(chunks):
         s = prs.slides.add_slide(blank)
         _header(s, title, subtitle, round_label, f"หน้า {ci + 1}/{len(chunks)}" if len(chunks) > 1 else "")
-        # แถบสรุปผลแบบย่อ
-        _box(s, Inches(0.4), Inches(1.25), Inches(12.53), Inches(0.5), fill=RGBColor(0xDC, 0xFC, 0xE7))
-        _box(s, Inches(0.4), Inches(1.25), Inches(0.08), Inches(0.5), fill=GREEN)
-        _text(s, Inches(0.6), Inches(1.25), Inches(12.2), Inches(0.5), "✓ " + summ, 15, True, GREEN,
-              anchor=MSO_ANCHOR.MIDDLE)
+        # แถบสรุปผลแบบย่อ (ไม่มีกิจกรรมทุกครั้ง = แถบเหลือง)
+        _box(s, Inches(0.4), Inches(1.25), Inches(12.53), Inches(0.5), fill=YELLOW_SOFT if all_na else RGBColor(0xDC, 0xFC, 0xE7))
+        _box(s, Inches(0.4), Inches(1.25), Inches(0.08), Inches(0.5), fill=YELLOW if all_na else GREEN)
+        _text(s, Inches(0.6), Inches(1.25), Inches(12.2), Inches(0.5), "– " + NO_ACT if all_na else "✓ " + summ, 15, True,
+              YELLOW_INK if all_na else GREEN, anchor=MSO_ANCHOR.MIDDLE)
         n = len(chunk)
         cols = min(n, 2) if n <= 4 else 3
         rows = math.ceil(n / cols)
@@ -756,7 +764,8 @@ def _normal_topic_slide(prs, blank, group, round_label, foot, upload_dir, show_d
             dt = datetime.fromisoformat(x["created_at"])
             rd = date.fromisoformat(x["round_date"])
             strip = f"{rd.day} {TH_MONTH[rd.month - 1]} {rd.year + 543}  {dt.strftime('%H:%M')} น.  ·  {x['inspector']}" + \
-                    (f"  ·  สไลด์ {pi + 1}/{npages}" if npages > 1 else "") + ("  (ส่งย้อนหลัง)" if x.get("late") else "")
+                    (f"  ·  สไลด์ {pi + 1}/{npages}" if npages > 1 else "") + ("  (ส่งย้อนหลัง)" if x.get("late") else "") + \
+                    (f"  ·  {NO_ACT}" if x["status"] == NO_ACT and not all_na else "")
             while _text_w_pt(strip, 11) > (cw - 0.2) * 72 and len(strip) > 10:
                 strip = strip[:-2].rstrip("… ") + "…"
             _text(s, Inches(cx), Inches(cy), Inches(cw), Inches(0.34), strip, 11, True, WHITE,

@@ -216,6 +216,12 @@ textarea{min-height:96px;resize:vertical}
 .status button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:11px;font-weight:700;color:var(--muted)}
 .status button.on.ok{background:var(--green-soft);border-color:var(--green);color:#166534}
 .status button.on.ng{background:var(--red-soft);border-color:var(--red);color:#991b1b}
+/* ผลการตรวจแบบที่ 3: ไม่มีกิจกรรม (สีเหลือง · ไม่นับในกราฟ) */
+.status.nastat{margin-top:14px}
+.status button.na{border-color:#fde68a;background:#fffbeb;color:#a16207}
+.status button.on.na{background:#fef9c3;border-color:#eab308;color:#854d0e;box-shadow:0 0 0 3px rgba(234,179,8,.18)}
+.nahint{display:block;font-size:12px;color:var(--muted);margin:5px 2px 0}
+.pill.na{background:#fef9c3;color:#854d0e}
 .pick{display:flex;gap:8px}
 .pick label{flex:1}
 .pick input{display:none}
@@ -585,6 +591,7 @@ details.dash[open]>:last-child{margin-bottom:14px}
 .hot td.tot{min-width:58px;border-radius:6px;font-weight:800;font-size:12px;padding:0 6px}
 .hot td.cell.ok{background:#bbf7d0;color:#166534}
 .hot td.cell.na{background:#f1f5f9;cursor:pointer}
+.hot td.cell.c3{background:#fef08a;color:#854d0e;cursor:pointer}
 .hot-more{font:inherit;font-size:13.5px;font-weight:700;margin-top:8px;border:0;background:none;color:var(--navy);cursor:pointer;padding:4px 0;text-decoration:underline}
 .hot-grp>.hot-none.ok-top{margin-bottom:8px;padding:5px 12px;font-size:12.5px}
 .hot-none.empty{color:var(--muted);background:#f8fafc}
@@ -602,7 +609,7 @@ table.hm{border-collapse:separate;border-spacing:2px;font-size:12.5px;min-width:
 .hm td.z{height:34px;border-radius:5px;font-weight:700;font-size:12px;cursor:default}
 .hm td.cell{width:26px;height:26px;border-radius:5px;font-size:12px;font-weight:800;cursor:pointer;color:#fff}
 .hm td.cell:hover,.hm td.z:hover{outline:2px solid var(--navy);outline-offset:-1px}
-.hm .c0{background:#e2e8f0}.hm .c1{background:#16a34a}.hm .c2,.hm td.cell.c2{background:#fca5a5;color:#991b1b}
+.hm .c0{background:#e2e8f0}.hm .c1{background:#16a34a}.hm .c2,.hm td.cell.c2{background:#fca5a5;color:#991b1b}.hm td.cell.c3{background:#fde047;color:#854d0e}
 .hm .miss{background:#fecaca}
 .hm .none{background:#fff;cursor:default}
 .hm3 td.cell{width:auto;min-width:90px}
@@ -625,7 +632,7 @@ details.hmz .hm-wrap{border:0;border-radius:0}
 .hm-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:12px;color:var(--muted)}
 .hm-legend span{display:inline-flex;align-items:center;gap:5px}
 .hm-legend i{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:4px;font-style:normal;font-size:10px;font-weight:800;color:#fff}
-.hm-legend i.c0{background:#e2e8f0}.hm-legend i.c1{background:#16a34a}.hm-legend i.c2{background:#fca5a5;color:#991b1b}
+.hm-legend i.c0{background:#e2e8f0}.hm-legend i.c1{background:#16a34a}.hm-legend i.c2{background:#fca5a5;color:#991b1b}.hm-legend i.c3{background:#fde047;color:#854d0e}
 .hm-legend i.miss{background:#fecaca}
 .editing{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--amber-soft);color:#78350f;border:1px solid #fcd34d;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin-bottom:6px}
 .editing button{border:0;background:#fff;border-radius:8px;padding:6px 10px;font-weight:700;color:var(--red);font-size:13px}
@@ -789,7 +796,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
       <div id="hmItems"></div>
       <div class="hm-legend">
         <span><i class="c1">✓</i>ตรวจแล้ว</span><span><i class="c2">!</i>พบปัญหา</span>
-        <span><i class="miss"></i>ไม่ได้ส่ง</span>
+        <span><i class="c3">–</i>ไม่มีกิจกรรม (ไม่นับใน %)</span><span><i class="miss"></i>ไม่ได้ส่ง</span>
       </div>
     </details>
     <div class="toolbar">
@@ -906,6 +913,8 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
         <label class="f" for="action">การแก้ไข</label>
         <textarea id="action" rows="2" placeholder="แก้ไขอย่างไร / แจ้งใคร / ผลหลังแก้ไข"></textarea>
       </div>
+      <div class="status nastat" id="naSeg"><button type="button" class="na" data-s="ไม่มีกิจกรรม">– ไม่มีกิจกรรม</button></div>
+      <small class="nahint">เลือกเมื่อไปตรวจแล้วแต่จุดนั้นไม่มีกิจกรรม · ไม่นำไปคิดในกราฟและการวิเคราะห์</small>
       <label class="f" for="remark">หมายเหตุ <span class="note">(ไม่บังคับ)</span></label>
       <textarea id="remark" rows="2" style="min-height:56px" placeholder="ข้อมูลเพิ่มเติม (ถ้ามี)"></textarea>
       <button class="btn submit" id="submitBtn" type="submit">บันทึกผลการตรวจ</button>
@@ -1084,7 +1093,7 @@ function renderSearch(){
   }));
   $("#searchResults").innerHTML = rows.length ? rows.slice(0, 60).map(({z, it}) => {
     const cls = it.issue ? "ng" : it.checked ? "ok" : "";
-    const pill = it.extra ? `<span class="pill opt">เพิ่มเติม</span>` : it.issue ? `<span class="pill ng">พบปัญหา</span>` : it.checked ? `<span class="pill ok">ตรวจแล้ว</span>` : `<span class="pill">ยังไม่ตรวจ</span>`;
+    const pill = it.extra ? `<span class="pill opt">เพิ่มเติม</span>` : it.issue ? `<span class="pill ng">พบปัญหา</span>` : it.noact ? `<span class="pill na">${NO_ACT}</span>` : it.checked ? `<span class="pill ok">ตรวจแล้ว</span>` : `<span class="pill">ยังไม่ตรวจ</span>`;
     return `<button class="item" data-a="${it.id}"><span class="mark ${cls}">${it.issue?"!":it.checked?"✓":""}</span>
       <span class="t"><span class="zl">${hl(zLabel(z), fQuery)}</span><b>${it.extra?"":`<span class="no">${it.no}</span>`}${hl(it.name, fQuery)}${procTag(it)}</b></span>${pill}</button>`;
   }).join("") : `<div class="empty">ไม่พบหัวข้อที่ตรงกับ "${esc($("#formSearch").value)}"</div>`;
@@ -1159,7 +1168,7 @@ function renderForm(){
       <span class="t"><b>${esc(it.name)}</b><span>ส่งเรื่องอื่นที่พบในพื้นที่นี้ · ไม่นับรวมใน checklist</span></span>
       <span class="pill ${it.count?"ok":"opt"}">${it.count?`ส่งแล้ว ${it.count}`:"ไม่บังคับ"}</span></button>`;
     const cls = it.issue ? "ng" : it.checked ? "ok" : "";
-    const pill = it.issue ? `<span class="pill ng">พบปัญหา</span>` : it.checked ? `<span class="pill ok">ตรวจแล้ว${it.count>1?" ×"+it.count:""}</span>` : `<span class="pill">ยังไม่ตรวจ</span>`;
+    const pill = it.issue ? `<span class="pill ng">พบปัญหา</span>` : it.noact ? `<span class="pill na">${NO_ACT}</span>` : it.checked ? `<span class="pill ok">ตรวจแล้ว${it.count>1?" ×"+it.count:""}</span>` : `<span class="pill">ยังไม่ตรวจ</span>`;
     const sub = it.checked ? `${esc(it.last_inspector)} · ${hm(it.last_time)} น.${it.images?` · รูป ${it.images}`:""}` : "แตะเพื่อกรอกผลการตรวจ";
     return `<button class="item" data-a="${it.id}"><span class="mark ${cls}">${it.issue?"!":it.checked?"✓":""}</span>
       <span class="t"><b><span class="no">${it.no}</span>${esc(it.name)}${procTag(it)}</b><span>${sub}</span></span>${pill}</button>`;
@@ -1318,7 +1327,7 @@ async function renderPrev(){
   prevSubs = Object.fromEntries(subs.map(x => [x.id, x]));
   const editable = canEdit(sheetItem.round);
   $("#prevWrap").innerHTML = subs.length ? `<h4>ผลการตรวจในรอบ${sheetItem.round===CFG.current_round?"นี้":" "+thDate(sheetItem.round)} (${subs.length})</h4>` + subs.map(s => `
-    <div class="sub ${s.id===editingId?"being-edited":""}"><div class="h"><span class="pill ${s.status==="พบปัญหา"?"ng":"ok"}">${esc(s.status)}</span><b>${s.topic?esc(s.topic)+" · ":""}${esc(s.inspector)}</b>
+    <div class="sub ${s.id===editingId?"being-edited":""}"><div class="h"><span class="pill ${s.status==="พบปัญหา"?"ng":s.status===NO_ACT?"na":"ok"}">${esc(s.status)}</span><b>${s.topic?esc(s.topic)+" · ":""}${esc(s.inspector)}</b>
       <span class="note">${thDate(s.created_at)} ${hm(s.created_at)} น.${s.late?`<span class="tag-late">ส่งย้อนหลัง</span>`:""}${s.edited_at?`<span class="tag-ed" title="แก้ไขล่าสุด ${hm(s.edited_at)} น.">แก้ไขแล้ว</span>`:""}</span><button class="zoom" data-id="${s.id}" title="ขยายเต็มหน้าจอ" aria-label="ขยายเต็มหน้าจอ"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>ขยาย</button>${editable?`<button class="edit" data-id="${s.id}">แก้ไข</button><button class="del" data-id="${s.id}">ลบ</button>`:""}</div>
       ${s.pages.map((p,i)=>`${s.pages.length>1?`<div class="pl">สไลด์ ${i+1}</div>`:""}
         ${p.note?`<p>${esc(p.note)}</p>`:""}
@@ -1407,7 +1416,7 @@ function resetForm(){
 /* ช่องนับจำนวน (เช่น วัตถุดิบ Delay แยกตามห้อง) */
 function renderQty(val){
   const q = sheetItem && sheetItem.qty, w = $("#qtyWrap");
-  w.hidden = !q; if(!q){ w.innerHTML = ""; return; }
+  w.hidden = !q || sheetStatus === NO_ACT; if(!q){ w.innerHTML = ""; return; }
   const unit = q.unit || "คัน", rooms = q.rooms || [], v = (val && val.rooms) || {};
   const tot = val && val.total != null ? val.total : "";
   w.innerHTML = `<div class="qh"><b>${esc(q.label || "จำนวน")}</b><span>${rooms.length ? `กรอกจำนวน${esc(unit)}ของแต่ละห้อง (ไม่มีใส่ 0)` : `กรอกจำนวน${esc(unit)}ทั้งหมด`}</span></div>` +
@@ -1433,9 +1442,12 @@ function readQty(){  // คืน {rooms, total} / null = ไม่ต้อง�
 const qtyLine = s => { if(!s.qty || s.qty.total == null) return ""; const u = (s.qty_cfg && s.qty_cfg.unit) || "คัน";
   const parts = Object.entries(s.qty.rooms || {}).map(([k, v]) => `${esc(k)} <b>${v}</b>`);
   return `<p class="qty-l"><b>${esc((s.qty_cfg && s.qty_cfg.label) || "จำนวน")}:</b> ${parts.length ? parts.join(" · ") + " · " : ""}รวม <b>${s.qty.total}</b> ${esc(u)}</p>`; };
-function setStatus(s){ sheetStatus=s; [...$("#statusSeg").children].forEach(b=>b.classList.toggle("on", b.dataset.s===s));
-  $("#actionWrap").hidden = s !== "พบปัญหา"; }
+const NO_ACT = "ไม่มีกิจกรรม";  // ไม่มีกิจกรรม: ไม่ต้องนับจำนวน และไม่นับในกราฟ/การวิเคราะห์
+function setStatus(s){ sheetStatus=s; document.querySelectorAll("#statusSeg button, #naSeg button").forEach(b=>b.classList.toggle("on", b.dataset.s===s));
+  $("#actionWrap").hidden = s !== "พบปัญหา";
+  $("#qtyWrap").hidden = s === NO_ACT || !(sheetItem && sheetItem.qty); }
 $("#statusSeg").addEventListener("click", e => { const b=e.target.closest("button"); if(b) setStatus(b.dataset.s); });
+$("#naSeg").addEventListener("click", e => { const b=e.target.closest("button"); if(b) setStatus(sheetStatus === NO_ACT ? "ปกติ" : NO_ACT); });
 
 /* ประทับวันที่-เวลาลงบนรูป (มุมขวาล่าง) */
 function stampText(ts){
@@ -1561,7 +1573,7 @@ $("#entryForm").addEventListener("submit", async e => {
   fd.append("remark", $("#remark").value);
   fd.append("action", sheetStatus === "พบปัญหา" ? $("#action").value : "");
   fd.append("cause", sheetStatus === "พบปัญหา" ? $("#cause").value : "");
-  const qv = readQty();
+  const qv = sheetStatus === NO_ACT ? null : readQty();
   if(qv === false){ toast(`กรุณากรอกจำนวน${(sheetItem.qty.rooms || []).length ? "ให้ครบทุกห้อง (ไม่มีใส่ 0)" : ""}`, true); $("#qtyWrap").scrollIntoView({behavior:"smooth", block:"center"}); return; }
   if(qv) fd.append("qty", JSON.stringify(qv));
   if(sheetItem.free){
@@ -2163,8 +2175,8 @@ function renderHot(){
     const all = hotAll.has(sb.id), shown = all ? lst : lst.slice(0, 10);
     const body = shown.map(({z: rz, it, codes, cnt, ng, p, cp, rg}, i) => {
       const tds = codes.map((c, j) => { const r = R[off + j];
-        const cls = c === 2 ? "c2" : c === 1 ? "ok" : "na", st = c === 2 ? "พบปัญหา" : c === 1 ? "ตรวจแล้ว ปกติ" : "ไม่ได้ตรวจ";
-        return `<td class="cell ${cls}" data-a="${it.id}" data-r="${r}" title="${thDate(r)} · ${st}">${c===2?"!":c===1?"✓":""}</td>`; }).join("");
+        const cls = c === 2 ? "c2" : c === 1 ? "ok" : c === 3 ? "c3" : "na", st = c === 2 ? "พบปัญหา" : c === 1 ? "ตรวจแล้ว ปกติ" : c === 3 ? NO_ACT : "ไม่ได้ตรวจ";
+        return `<td class="cell ${cls}" data-a="${it.id}" data-r="${r}" title="${thDate(r)} · ${st}">${c===2?"!":c===1?"✓":c===3?"–":""}</td>`; }).join("");
       const [bg, fg] = !cnt ? ["#f1f5f9", "#94a3b8"] : !ng ? ["#dcfce7", "#166534"] : hotColor(p);
       return `<tr><th class="rh" data-tr="${it.id}" title="คลิกเพื่อดูกราฟแนวโน้ม · ${esc(it.name)}">${byProc || isSubGrp(rz) ? `<span class="zl">${esc(rz.name)}</span>` : ""}<div class="rn"><span class="rk${sel.has(it.id) ? " c" : ""}"${sel.has(it.id) ? ` style="background:${SERIES[sel.get(it.id)]}"` : ""}>${i+1}</span>${esc(it.name)}${byProc ? "" : procTag(it)}</div></th>${tds}
         <td class="num">${cnt}</td><td class="num ng">${ng}</td><td class="tot" style="background:${bg};color:${fg}">${cnt ? Math.round(p*100) + "%" : "–"}</td>
@@ -2291,12 +2303,12 @@ async function loadHeatmap(){
     const gn = (k===0 || deckOf(ZI[k-1]) !== deckOf(z)) ? deckName(deckOf(z)) : "";
     const gh = gn ? `<div class="grp-h">${gn}</div>` : "";
     const today = z.done[z.done.length-1];
-    const rows = z.items.filter(it => !it.extra || it.counts.slice(-K).some(n=>n)).map(it => {
+    const rows = z.items.filter(it => !it.extra || it.codes.slice(-K).some(c=>c)).map(it => {
       const tds = it.codes.slice(-K).map((c,j) => {
         const i = R.length - K + j, cur = R[i] === HM.current;
-        const cls = c===2 ? "c2" : c===1 ? "c1" : it.extra ? "none" : "miss";   // ไม่ส่ง = แดงอ่อน (หัวข้อเพิ่มเติมไม่บังคับ = ว่าง)
-        const st = c===2 ? "พบปัญหา" : c===1 ? "ตรวจแล้ว" : (cur ? "ยังไม่ส่ง (รอบนี้ยังไม่ปิด)" : "ไม่ได้ส่ง");
-        return `<td class="cell ${cls}" data-a="${it.id}" data-r="${R[i]}" title="${esc(it.no)} ${esc(it.name)}\n${thDate(R[i])} · ${st}${it.counts[i]>1?` · ส่ง ${it.counts[i]} ครั้ง`:""}">${c===2?"!":c===1?"✓":""}</td>`;
+        const cls = c===2 ? "c2" : c===1 ? "c1" : c===3 ? "c3" : it.extra ? "none" : "miss";   // ไม่ส่ง = แดงอ่อน (หัวข้อเพิ่มเติมไม่บังคับ = ว่าง)
+        const st = c===2 ? "พบปัญหา" : c===1 ? "ตรวจแล้ว" : c===3 ? NO_ACT + " (ไม่นับใน %)" : (cur ? "ยังไม่ส่ง (รอบนี้ยังไม่ปิด)" : "ไม่ได้ส่ง");
+        return `<td class="cell ${cls}" data-a="${it.id}" data-r="${R[i]}" title="${esc(it.no)} ${esc(it.name)}\n${thDate(R[i])} · ${st}${it.counts[i]>1?` · ส่ง ${it.counts[i]} ครั้ง`:""}">${c===2?"!":c===1?"✓":c===3?"–":""}</td>`;
       }).join("");
       return `<tr><th class="rh ${it.extra?"extra":""}" title="${esc(it.name)}"><div class="rn">${it.extra?"＋ เพิ่มเติม":`${esc(it.no)} ${esc(it.name)}`}</div></th>${tds}</tr>`;
     }).join("");
