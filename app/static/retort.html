@@ -729,6 +729,12 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 #listCard .item{content-visibility:auto;contain-intrinsic-size:auto 76px}
 .hgrp{content-visibility:auto;contain-intrinsic-size:auto 220px}
 .detcard .sec{margin-bottom:10px}.detcard textarea{min-height:60px}
+/* หัวข้อช่องกรอกในหน้าบันทึก: ตัวใหญ่ หนา มีแถบสีนำหน้า ให้เห็นชัด */
+.timecard .lab,.detcard .lab,.formcard .lab,.signcard>.lab{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:var(--navy);margin:0 0 8px 0;letter-spacing:.005em}
+.timecard .lab::before,.detcard .lab::before,.formcard .lab::before,.signcard>.lab::before{content:"";flex:0 0 auto;width:4px;height:18px;border-radius:2px;background:var(--amber)}
+.formcard .lab .req,.signcard>.lab .req{font-size:18px;line-height:1}
+/* แบ่งช่อง การแก้ไข / ผลต่อสินค้า / โปรแกรม ด้วยเส้นประ */
+.formcard>label.f[style*="margin-top:14px"],.formcard>div[style*="margin-top:14px"]{margin-top:16px!important;padding-top:16px;border-top:1px dashed #e2e8f0}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
