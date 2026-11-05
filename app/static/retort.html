@@ -801,6 +801,27 @@ button.big.cat.on .ck{background:var(--gc);border-color:var(--gc)}
 .hm2 label{position:relative;display:block}
 .hm2 input{padding-right:52px;text-align:right;font-variant-numeric:tabular-nums}
 .hm2 span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:600;color:var(--mute);pointer-events:none}
+/* มุมมองตาราง (แบบ Excel) */
+.vseg{flex:0 0 auto;padding:3px}.vseg button{min-height:34px;padding:3px 10px;font-size:13.5px;gap:5px;flex:0 0 auto}.vseg button svg.i{width:15px;height:15px}
+#listCard .sec{flex-wrap:wrap}#listCard .sec>.seg,#listCard .sec>button{margin-left:auto}
+#listCard .sec>button{margin-left:6px}
+.xls-wrap{overflow:auto;max-height:72vh;border:1px solid #cfd8e3;border-radius:12px;margin-top:4px;background:#fff;-webkit-overflow-scrolling:touch}
+table.xls{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:13.5px;line-height:1.4}
+.xls th{position:sticky;top:0;z-index:2;background:#1b2a41;color:#fff;font-weight:600;text-align:left;padding:9px 10px;white-space:nowrap;border-right:1px solid rgba(255,255,255,.14)}
+.xls th.srt{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.45);text-underline-offset:4px}.xls th.on{background:#2c4a72}.xls th i{font-style:normal;color:#fcd34d;font-size:11px}
+.xls td{padding:7px 10px;border-bottom:1px solid #e2e8f0;border-right:1px solid #eef2f6;white-space:nowrap;vertical-align:top;background:#fff;color:var(--ink)}
+.xls tbody tr:nth-child(even) td{background:#f8fafc}
+.xls tbody tr[data-xid]{cursor:pointer}.xls tbody tr[data-xid]:hover td{background:#fff7e6}
+.xls tr.hold td:not(.rn){box-shadow:inset 0 0 0 9999px rgba(245,158,11,.06)}
+.xls td.wrap{white-space:normal;min-width:180px;max-width:300px}.xls td.wrap.s{min-width:150px;max-width:220px;font-weight:600}
+.xls td.num{text-align:right;font-variant-numeric:tabular-nums}
+.xls .rn{position:sticky;left:0;z-index:1;text-align:right;color:var(--mute);font-size:12px;min-width:38px;background:#f1f5f9!important;border-right:1px solid #cfd8e3}
+.xls th.rn{z-index:3;background:#14213a!important;color:#cbd5e1}
+.xls tr.xg td{background:#eef2f7!important;font-size:13px;padding:6px 10px;color:var(--navy);position:static}
+.xls tr.xg td.rn{position:sticky}.xls tr.xg span{color:var(--mute);font-weight:500;margin-left:6px}
+.xls .tag{font-size:12px;white-space:nowrap}.xls .tag svg.i{width:12px;height:12px}.xls td svg.i{width:14px;height:14px;vertical-align:-2px}.xls .mut{color:var(--mute);font-size:12.5px}
+.xls-hint{display:flex;align-items:center;gap:6px;margin:8px 2px 0;font-size:12.5px}.xls-hint svg.i{width:14px;height:14px}
+@media(max-width:560px){.vseg button span{display:none}.vseg button{padding:3px 8px}}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
@@ -1851,12 +1872,18 @@ function viewList() {
   $("#main").innerHTML = h;
   const save = () => { lsSet("rt_filter", f); const y = window.scrollY; viewList(); window.scrollTo(0, y); };
   const m = $("#main");
-  m.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+  m.onclick = e => {
+    // ตาราง: แตะหัวคอลัมน์ = เรียง · แตะแถว = เปิดรายละเอียด
+    const th = e.target.closest("th[data-xs]"); if (th) { const k = th.dataset.xs; f.sort = k === "date" ? (f.sort === "new" ? "old" : "new") : k; save(); return; }
+    const b = e.target.closest("button");
+    if (!b) { const tr = e.target.closest("tr[data-xid]"); if (tr) showItem(tr.dataset.xid); return; }
+    const ds = b.dataset;
     if (b.id === "fOpen" || b.closest("#fSum")) openListFilter();
     else if (ds.appr) { f.appr = ds.appr; save(); }
     else if (b.id === "fReset") { Object.assign(f, LIST_DEF, { appr: "all" }); save(); }
     else if (b.id === "listQx") { S.q = ""; save(); }
     else if (b.id === "csvBtn") exportCsv(L, from, to);
+    else if (ds.lay) { f.layout = ds.lay; lsSet("rt_filter", f); draw(); }
     else if (ds.edit) showItem(ds.edit); };
   m.onchange = null;
   let L = all;
@@ -1866,12 +1893,37 @@ function viewList() {
     const where = [f.plant === "all" ? "ทุก Plant" : f.plant, f.retort === "all" ? "" : f.retort, f.range === "day" || from === to ? thDate(from) : f.range === "all" ? "ทั้งหมด" : `${dmy(from)} – ${dmy(to)}`].filter(Boolean).join(" · ");
     const cnt = {}; L.forEach(x => { const g = GROUP_OF[f.sort](x); cnt[g] = (cnt[g] || 0) + 1; });
     let last = null;
-    const rows = L.slice(0, 300).map(x => { const g = GROUP_OF[f.sort](x); const head = g !== last ? `<div class="lgrp"><b>${esc(f.sort === "new" || f.sort === "old" ? thDate(g) : g)}</b><span>${cnt[g]} รายการ</span></div>` : ""; last = g; return head + itemRow(x); }).join("");
-    $("#listCard").innerHTML = sec("list", `รายการปัญหา (${L.length}${words.length ? ` จาก ${all.length}` : ""})`, `${esc(where)} · ${esc(rLabel.replace("…", ""))}${words.length ? ` · ค้นหา "${esc(S.q.trim())}"` : ""}`, `<button class="soft sm" id="csvBtn">${I("download")}CSV</button>`)
+    const lay = listLayout();
+    const rows = lay === "table" ? xlsTable(L.slice(0, 300), cnt) : L.slice(0, 300).map(x => { const g = GROUP_OF[f.sort](x); const head = g !== last ? `<div class="lgrp"><b>${esc(f.sort === "new" || f.sort === "old" ? thDate(g) : g)}</b><span>${cnt[g]} รายการ</span></div>` : ""; last = g; return head + itemRow(x); }).join("");
+    $("#listCard").innerHTML = sec("list", `รายการปัญหา (${L.length}${words.length ? ` จาก ${all.length}` : ""})`, `${esc(where)} · ${esc(rLabel.replace("…", ""))}${words.length ? ` · ค้นหา "${esc(S.q.trim())}"` : ""}`,
+      `<div class="seg vseg">${[["card", "list", "การ์ด"], ["table", "grid", "ตาราง"]].map(([v, ic, l]) => `<button data-lay="${v}" class="${lay === v ? "on" : ""}" title="แสดงแบบ${l}">${I(ic)}<span>${l}</span></button>`).join("")}</div><button class="soft sm" id="csvBtn">${I("download")}CSV</button>`)
       + (L.length ? rows + (L.length > 300 ? `<p class="sub" style="text-align:center">แสดง 300 รายการแรก · เลือก Plant / หม้อ / วันที่ ให้แคบลง</p>` : "") : `<div class="empty"><div class="ic">${I(words.length ? "search" : "list")}</div><h3>${words.length ? "ไม่พบรายการที่ค้นหา" : "ไม่มีรายการตามตัวกรองนี้"}</h3><p class="sub">ลองเปลี่ยน Plant / หม้อ / วันที่ ด้านบน</p></div>`);
   };
   draw();
   $("#listQ").oninput = e => { S.q = e.target.value; clearTimeout(S.qT); S.qT = setTimeout(draw, 150); };
+}
+/* ---------- มุมมองตาราง (แบบ Excel) · จอคอมเริ่มเป็นตาราง มือถือเริ่มเป็นการ์ด · จำที่เลือกไว้ ---------- */
+const listLayout = () => S.f.layout === "table" || S.f.layout === "card" ? S.f.layout : (matchMedia("(min-width:1000px)").matches ? "table" : "card");
+function xlsTable(L, cnt) {
+  const f = S.f, dfs = detailFields().filter(x => !x.hide);
+  const tx = v => esc(v ?? ""), pill = (c, t) => `<span class="tag ${c}">${t}</span>`;
+  const cols = [
+    ["วันที่", x => tx(dmy(x.date)), "", "date"], ["เวลา", x => tx(x.time)], ["กะ", x => tx(x.shift)],
+    ["Plant", x => tx(x.plant), "", "plant"], ["หม้อ", x => tx(x.retort), "", "plant"], ["ปัญหา", x => tx(catName(x)), "wrap s", "cat"],
+    ["สาเหตุ", x => tx(causeText(x)), "wrap"], ["การแก้ไข", x => tx(x.action), "wrap"],
+    ...dfs.map(df => [df.label, x => { const v = detailVal(x, df); return v === "" || v == null ? "" : tx(df.key === "duration" ? fmtDur(v) : v); }, df.type === "textarea" ? "wrap" : df.type === "number" ? "num" : ""]),
+    ["โปรแกรม", x => x.program ? tx("P" + x.program) : ""], ["ผลต่อสินค้า", x => x.impact === "hold" ? pill("hold", "Hold") : `<span class="mut">ไม่กระทบ</span>`],
+    ["รูป", x => (x.photos || []).length ? `${I("camera")} ${x.photos.length}` : "", "num"], ["ผู้บันทึก", x => tx(x.by)],
+    ["สถานะ", x => x.approvedBy ? pill("ok", `${I("check")} ${tx(x.approvedBy)}`) : pill("wait", "รออนุมัติ")]
+  ];
+  const sortOn = k => k && (k === "date" ? f.sort === "new" || f.sort === "old" : f.sort === k);
+  const arrow = k => k === "date" ? (f.sort === "old" ? "▲" : "▼") : "▼";
+  const head = `<tr><th class="rn">#</th>${cols.map(([l, , cls, k]) => `<th class="${cls || ""} ${k ? "srt" : ""} ${sortOn(k) ? "on" : ""}" ${k ? `data-xs="${k}" title="แตะเพื่อเรียง"` : ""}>${esc(l)}${sortOn(k) ? ` <i>${arrow(k)}</i>` : ""}</th>`).join("")}</tr>`;
+  let last = null; const grouped = f.sort === "plant" || f.sort === "cat";
+  const body = L.map((x, i) => { const g = GROUP_OF[f.sort](x);
+    const gr = grouped && g !== last ? `<tr class="xg"><td class="rn"></td><td colspan="${cols.length}"><b>${esc(g)}</b> <span>${cnt[g]} รายการ</span></td></tr>` : ""; last = g;
+    return gr + `<tr data-xid="${esc(x.id)}" class="${x.impact === "hold" ? "hold" : ""}"><td class="rn">${i + 1}</td>${cols.map(([, fn, cls]) => { const v = fn(x); return `<td class="${cls || ""}" ${/wrap/.test(cls || "") ? `title="${String(v).replace(/<[^>]*>/g, "")}"` : ""}>${v}</td>`; }).join("")}</tr>`; }).join("");
+  return `<div class="xls-wrap"><table class="xls"><thead>${head}</thead><tbody>${body}</tbody></table></div><p class="sub xls-hint">${I("info")} แตะแถวเพื่อดู/แก้ไข · แตะหัวคอลัมน์ วันที่ / Plant / หม้อ / ปัญหา เพื่อเรียง · ปุ่ม CSV เปิดใน Excel ได้</p>`;
 }
 /* แผงตัวกรอง/เรียงข้อมูล (เปิดจากปุ่มฟันเฟือง) — เลือกแล้วกด แสดงผล */
 function openListFilter() {
