@@ -677,6 +677,31 @@ details.hmz .hm-wrap{border:0;border-radius:0}
 .roundpick{display:flex;align-items:center;gap:10px;margin:0 2px 10px}
 .roundpick label{font-weight:700;font-size:14px;color:var(--navy);white-space:nowrap}
 .roundpick select{flex:1;max-width:320px;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;font-weight:600}
+/* สรุปวันนี้: รายการที่ยังไม่ส่ง (Process Control / GMP) */
+.tsum{background:#fff;border:1.5px solid var(--line);border-radius:16px;margin:0 0 14px;overflow:hidden}
+.tsum>summary{list-style:none;cursor:pointer;padding:14px 16px 10px;display:block}
+.tsum>summary::-webkit-details-marker{display:none}
+.ts-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.ts-h b{font-size:15.5px;color:var(--navy);flex:1;min-width:150px}
+.ts-h small{color:var(--muted);font-size:12.5px}
+.ts-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;align-items:center;padding:7px 0}
+.ts-row .nm{font-weight:700;font-size:14.5px}.ts-row .nm small{font-weight:500;color:var(--muted);margin-left:6px}
+.ts-row .ct{font-size:12.5px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--red-soft);color:#991b1b;white-space:nowrap}
+.ts-row .ct.ok{background:var(--green-soft);color:#166534}
+.ts-row .tb{grid-column:1/-1;height:8px;border-radius:99px;background:#eef2f7;overflow:hidden}
+.ts-row .tb i{display:block;height:100%;border-radius:99px;background:var(--green)}
+.ts-more{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;padding-top:8px;border-top:1px dashed var(--line);font-size:13.5px;font-weight:700;color:var(--navy)}
+.ts-more svg{transition:transform .2s}.tsum[open] .ts-more svg{transform:rotate(180deg)}
+.ts-body{border-top:1px solid var(--line);padding:4px 16px 14px}
+.ts-g{font-size:12.5px;font-weight:800;color:var(--muted);margin:14px 0 2px;letter-spacing:.02em;text-transform:uppercase}
+.pz{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:10px 0 6px;font-size:14px}
+.pz b{color:var(--text);min-width:0}.pz span{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.pits{display:flex;flex-wrap:wrap;gap:6px}
+.pit{display:inline-flex;align-items:baseline;gap:6px;border:1px solid #fecaca;background:#fff5f5;color:#7f1d1d;border-radius:10px;padding:7px 10px;font-size:13.5px;text-align:left;line-height:1.35;max-width:100%}
+.pit em{font-style:normal;font-weight:800;font-size:12px;color:#b91c1c;flex:none}
+.pit:active{background:#fee2e2}
+.ts-done{color:#166534;font-weight:700;font-size:14px;margin:10px 0 0}
+.ts-act{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.ts-act .btn{flex:1;min-width:140px;padding:10px 12px;font-size:14px}
 .latebar{background:var(--amber-soft);border:1px solid #fcd34d;color:#78350f;border-radius:12px;padding:9px 12px;font-size:14px;font-weight:600;margin-bottom:12px}
 .zbar-top .late-tag,.tag-late{font-size:11px;font-weight:700;color:#92400e;background:var(--amber-soft);border-radius:99px;padding:1px 7px;margin-left:6px}
 .datepick{display:flex;align-items:center;gap:4px}
@@ -738,6 +763,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
         <div class="t"><b id="groupName">GMP</b><span>เลือกพื้นที่ที่จะส่งผลการตรวจ</span></div>
         <div class="zcount" id="groupCount"></div>
       </div>
+      <div id="todaySum"></div>
       <div class="step-title" id="stepTitle">เลือกหัวข้อการตรวจ</div>
       <div class="zgrid" id="zoneGrid"></div>
       </div>
@@ -1105,6 +1131,44 @@ $("#formRoundSel").addEventListener("change", async e => {
   FSTATUS = formRound !== CFG.current_round ? await api("/api/status?round="+formRound) : null;
   renderForm();
 });
+/* ---------- สรุปวันนี้: ส่งแล้วกี่รายการ และรายการไหนยังไม่ส่ง (แยก Process Control / GMP) ---------- */
+let TSUM_TEXT = "";
+function renderTodaySum(groups, rd){
+  const box = $("#todaySum"); if(!groups.length){ box.innerHTML = ""; return; }
+  const isToday = rd === CFG.current_round, label = isToday ? "วันนี้" : `รอบ ${thDate(rd)}`;
+  const rows = groups.map(g => {
+    const zs = g.zones.map(z => ({z, pend: z.items.filter(it => !it.extra && !it.checked)})).filter(x => x.pend.length);
+    const d = g.zones.reduce((a, z) => a + z.done, 0), t = g.zones.reduce((a, z) => a + z.total, 0);
+    return {g, zs, d, t, n: t - d};
+  });
+  const nAll = rows.reduce((a, r) => a + r.n, 0), now = new Date(), p2 = n => String(n).padStart(2, "0");
+  const open = store.get("pc_sumopen", "0") === "1";
+  box.innerHTML = `<details class="tsum" id="tsDet" ${open ? "open" : ""}><summary>
+      <div class="ts-h"><b>สรุป${label} · ${nAll ? `ยังไม่ส่ง ${nAll} รายการ` : "ส่งครบแล้ว ✓"}</b><small>${isToday ? `ตัดรอบ ${esc(CFG.cutoff)} น.` : esc(thDate(rd))}</small></div>
+      ${rows.map(r => `<div class="ts-row"><span class="nm">${esc(r.g.name)}<small>ส่งแล้ว ${r.d}/${r.t}</small></span><span class="ct ${r.n ? "" : "ok"}">${r.n ? `ยังไม่ส่ง ${r.n}` : "ครบ ✓"}</span>
+        <span class="tb"><i style="width:${r.t ? r.d / r.t * 100 : 0}%"></i></span></div>`).join("")}
+      ${nAll ? `<div class="ts-more"><span>${open ? "ซ่อนรายการ" : "ดูรายการที่ยังไม่ส่ง"}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m6 9 6 6 6-6"/></svg></div>` : ""}
+    </summary>
+    ${nAll ? `<div class="ts-body">${rows.filter(r => r.n).map(r => `${rows.length > 1 ? `<div class="ts-g">${esc(r.g.name)} · ยังไม่ส่ง ${r.n}</div>` : ""}
+      ${r.zs.map(({z, pend}) => `<div class="pz"><b>${esc(z.name)}</b><span>${esc(z.owner || "")}${z.owner ? " · " : ""}เหลือ ${pend.length}/${z.total}</span></div>
+        <div class="pits">${pend.map(it => `<button class="pit" data-a="${esc(it.id)}" title="แตะเพื่อกรอกผลการตรวจ"><em>${esc(it.no)}</em>${esc(it.name)}</button>`).join("")}</div>`).join("")}`).join("")}
+      <div class="ts-act"><button class="btn ghost" id="tsCopy">คัดลอกข้อความส่งทีม</button>${navigator.share ? `<button class="btn ghost" id="tsShare">แชร์ (LINE)</button>` : ""}</div></div>` : ""}
+  </details>`;
+  TSUM_TEXT = [`สรุปการตรวจ ${label}${isToday ? ` (ณ ${p2(now.getHours())}:${p2(now.getMinutes())} น. · ตัดรอบ ${CFG.cutoff} น.)` : ""}`, "",
+    ...rows.flatMap(r => [`${r.g.name} ส่งแล้ว ${r.d}/${r.t}${r.n ? ` · ยังไม่ส่ง ${r.n} รายการ` : " · ครบแล้ว"}`,
+      ...r.zs.flatMap(({z, pend}) => [`▸ ${z.name}${z.owner ? ` (${z.owner})` : ""}`, ...pend.map(it => `   - ${it.no} ${it.name}`)]), ""])].join("\n").trim();
+  $("#tsDet").ontoggle = e => { store.set("pc_sumopen", e.target.open ? "1" : "0"); const m = box.querySelector(".ts-more span"); if(m) m.textContent = e.target.open ? "ซ่อนรายการ" : "ดูรายการที่ยังไม่ส่ง"; };
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }catch{}
+  const ta = document.createElement("textarea"); ta.value = t; ta.style.cssText = "position:fixed;opacity:0;top:0"; document.body.appendChild(ta); ta.select();
+  let ok = false; try{ ok = document.execCommand("copy"); }catch{} ta.remove(); return ok;
+}
+$("#todaySum").addEventListener("click", async e => {
+  const it = e.target.closest(".pit"); if(it){ openSheet(it.dataset.a, formRound || CFG.current_round); return; }
+  if(e.target.closest("#tsCopy")) toast(await copyText(TSUM_TEXT) ? "คัดลอกแล้ว วางในกลุ่ม LINE ได้เลย ✓" : "คัดลอกไม่ได้ในเบราว์เซอร์นี้", false);
+  else if(e.target.closest("#tsShare")) navigator.share({text: TSUM_TEXT}).catch(() => {});
+});
 function renderForm(){
   renderRoundPicker();
   const last = store.get("pc_zone","");
@@ -1154,6 +1218,7 @@ function renderForm(){
     cards = G.zones.map(z => { if(!z.sub) return zoneCard(z); if(seen.has(z.sub)) return ""; seen.add(z.sub);
       return subCard(z.sub, G.zones.filter(x => x.sub === z.sub)); }).join(""); }
   $("#zoneGrid").innerHTML = cards;
+  renderTodaySum(G ? [G] : GROUPS, (formRound || CFG.current_round));
   renderSearch();
   $("#zonePick").hidden = !!curZone;
   $("#zoneItems").hidden = !curZone;
