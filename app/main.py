@@ -242,6 +242,71 @@ def _migrate_delay_qty():
     AREAS, ITEM_MAP = load_areas()
 
 
+# ลูกค้าของแต่ละหัวข้อ (รายการจากหน้างาน 6 พ.ย. 2569) · หัวข้ออื่นใน Process Control / GMP = ไม่มีลูกค้า
+# (deck, ชื่อพื้นที่, เลขที่, ชื่อหัวข้อขึ้นต้นด้วย, ลูกค้า)  both = Weruva, Smucker
+CUST_SEED = [
+    ("pc", "PF2", 5, "สุ่มตรวจสอบการปั่นผสมสารละลาย", "Weruva"),
+    ("pc", "PF1 - จุดเตรียม", 37, "ลานเขียว จุด Tomra", "both"),
+    ("pc", "PF1 - จุดเตรียม", 66, "จุดล้างถาด", "both"),
+    ("pc", "PF1 - บรรจุ", 40, "สุ่มตรวจสอบการปั่นผสมสารละลาย", "both"),
+    ("pc", "PF1 - บรรจุ", 47, "การชั่งน้ำหนัก/เคาะ/กวาดของบรรจุ", "both"),
+    ("pc", "PF1 - บรรจุ", 48, "การคลุกผสม", "both"),
+    ("pc", "PF1 - บรรจุ", 55, "ห้องเคมี PF1", "both"),
+    ("pc", "PF1 - บรรจุ", 73, "รายงาน Delay Time", "both"),
+    ("pc", "ห้องเย็น PF1", 74, "สุ่มดูเปลือกฟักทอง", "Weruva"),
+    ("pc", "ห้องเย็น PF1", 82, "จุดเตรียมผัก", "Weruva"),
+    ("pc", "ห้องเย็น PF1", 84, "ตรวจสอบวัตถุดิบห้อง CSR3", "Weruva"),
+    ("gmp", "PF1", 2, "พื้นที่เตรียมการผลิต - ตรวจสอบความสะอาด", "both"),
+    ("gmp", "PF1", 3, "พื้นที่เตรียมการผลิต - พนักงานที่ปฏิบัติงาน", "both"),
+    ("gmp", "PF1", 6, "ไลน์บรรจุ - พนักงานที่ปฏิบัติงาน", "both"),
+    ("gmp", "PF1", 8, "ไลน์บรรจุ - ตรวจสอบความสะอาด", "both"),
+    ("gmp", "PF1", 9, "ไลน์บรรจุ - เศษตกพื้น", "Weruva"),
+    ("gmp", "PF1", 12, "ห้องเคมี - ตรวจสอบความสะอาด", "both"),
+    ("gmp", "PF1", 14, "ห้องเคมี - การตัดกระสอบ", "both"),
+    ("gmp", "PF2", 2, "พื้นที่เตรียมการผลิต - ตรวจสอบความสะอาด", "Smucker"),
+    ("gmp", "PF2", 8, "ไลน์บรรจุ - ตรวจสอบความสะอาด", "Weruva"),
+    ("gmp", "PF2", 9, "ไลน์บรรจุ - เศษตกพื้น", "Weruva"),
+]
+
+
+def _migrate_cust_list():
+    """ครั้งเดียว: ตั้งลูกค้าของหัวข้อ Process Control / GMP ตาม CUST_SEED · หัวข้ออื่น = ไม่มีลูกค้า
+    จับคู่ด้วย ชื่อพื้นที่ + เลขที่ และตรวจชื่อหัวข้อ (ถ้าเลขที่ไม่ตรงชื่อ หาจากชื่อในพื้นที่เดียวกัน) · หลังจากนี้แก้ได้ที่หน้าแก้ไขหัวข้อ"""
+    global AREAS, ITEM_MAP
+    if AREAS.get("cust_seed_v1"):
+        return
+    norm = lambda t: " ".join(str(t or "").split())
+    live = [z for z in AREAS["zones"] if not z.get("hidden") and (z.get("deck") or zone_deck(z)) in ("pc", "gmp")]
+    want, missing = {}, []
+    for deck, zname, no, prefix, cust in CUST_SEED:
+        zs = [z for z in live if (z.get("deck") or zone_deck(z)) == deck and norm(z.get("name")) == zname]
+        items = [it for z in zs for it in z["items"] if not it.get("extra") and not it.get("hidden")]
+        one = lambda c: c[0] if len(c) == 1 else None
+        hit = next((it for it in items if str(it.get("no")) == str(no) and norm(it.get("name")).startswith(prefix)), None) \
+            or one([it for it in items if norm(it.get("name")).startswith(prefix)]) \
+            or one([it for it in items if str(it.get("no")) == str(no)])
+        if hit:
+            want[id(hit)] = cust
+        else:
+            missing.append(f"{deck.upper()} {zname} #{no}")
+    n = 0
+    for z in live:
+        for it in z["items"]:
+            if it.get("extra"):
+                continue
+            c = want.get(id(it))
+            if c:
+                it["cust"] = c
+                n += 1
+            else:
+                it.pop("cust", None)
+    AREAS["cust_seed_v1"] = True
+    print(f"[areas] ตั้งลูกค้าตามรายการ {n}/{len(CUST_SEED)} หัวข้อ · ที่เหลือ = ไม่มีลูกค้า"
+          + (f" · หาไม่พบ: {', '.join(missing)}" if missing else ""), flush=True)
+    _save_areas(AREAS, "cust_seed")
+    AREAS, ITEM_MAP = load_areas()
+
+
 def clean_qty_cfg(q):
     """ตั้งค่าช่องนับจำนวนของหัวข้อ: {unit, label, rooms[]}"""
     if not isinstance(q, dict):
@@ -656,6 +721,7 @@ def _start():
         _migrate_gmp_areas()
         _migrate_wh_points()
         _migrate_delay_qty()
+        _migrate_cust_list()
     except Exception as e:  # noqa
         print("[areas] backfill error:", e, flush=True)
     threading.Thread(target=scheduler_loop, daemon=True).start()
@@ -985,7 +1051,7 @@ def api_delete(sid: str, pin: str = ""):
 
 
 @app.get("/api/heatmap")
-def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None, end: Optional[str] = None):
+def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None, end: Optional[str] = None, cust: str = ""):
     """ข้อมูล Dashboard heat map: สถานะรายการ × วัน ย้อนหลัง N รอบ หรือช่วงที่เลือก (?start=&end=)
     code: 0 = ยังไม่ตรวจ, 1 = ตรวจแล้วปกติ, 2 = พบปัญหา, 3 = ไม่มีกิจกรรม (ไม่นับใน % และจำนวนครั้ง)"""
     cur = round_of(now())
@@ -1012,11 +1078,16 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
             qcell[(r["round_date"], r["area_id"])] = json.loads(r["qty"])
         except ValueError:
             pass
+    # เลือกลูกค้า: นับเฉพาะหัวข้อของลูกค้านั้น (รวมหัวข้อที่เป็นของทั้งสองลูกค้า) · none = เฉพาะหัวข้อที่ไม่มีลูกค้า
+    cust_ok = (lambda it: True) if cust not in CUSTOMERS + ("none",) else \
+        (lambda it: not it.get("cust")) if cust == "none" else (lambda it: it.get("cust") in (cust, BOTH_CUST))
     zones = []
     for z in AREAS["zones"]:
         visible = not z.get("hidden")
         items, done, totals = [], [0] * len(rounds), [0] * len(rounds)
         for it in z["items"]:
+            if not it.get("extra") and not cust_ok(it):
+                continue
             codes, counts, ngs = [], [], []
             for di, rd in enumerate(rounds):
                 c, n, ngn = cell.get((rd, it["id"]), (0, 0, 0))
@@ -1037,11 +1108,13 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
                 items.append(row)
         if not visible:  # พื้นที่ที่ลบ/แยกไปแล้ว (เช่น WH เดิม, GMP เดิม) ไม่ต้องแสดงใน Dashboard
             continue
-        total = sum(1 for it in z["items"] if not it.get("extra") and not it.get("hidden"))
+        total = sum(1 for it in z["items"] if not it.get("extra") and not it.get("hidden") and cust_ok(it))
+        if cust and not total:  # ไม่มีหัวข้อของลูกค้านี้ในพื้นที่นี้
+            continue
         zones.append({"id": z["id"], "name": z["name"], "owner": z["owner"], "deck": zone_deck(z),
                       "total": total, "totals": totals,
                       "done": done, "items": items})
-    return {"rounds": rounds, "current": cur.isoformat(), "zones": zones}
+    return {"rounds": rounds, "current": cur.isoformat(), "zones": zones, "cust": cust if cust in CUSTOMERS + ("none",) else ""}
 
 
 @app.get("/api/inspectors")
