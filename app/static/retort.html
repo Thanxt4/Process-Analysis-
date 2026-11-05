@@ -724,6 +724,44 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 .grprow .gic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--gc)}
 .grprow input:not([type=color]){min-height:46px;font-size:15px;padding:8px 10px}
 @media(max-width:560px){.grprow{grid-template-columns:42px minmax(0,1fr)}.grprow .colrow{grid-column:2}.grow5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
+.addbar{border-style:solid;border-color:#d5deea;background:#fff}
+.addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
+.addbar .pickIn:focus{border-color:var(--navy)}
+.qrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 0 12px}
+.qrow h2.q{margin:0}
+.mgbtn{flex:0 0 auto;border:1.5px solid var(--line)!important;background:#fff!important;min-height:38px}
+.mgbtn.on{background:var(--navy)!important;color:#fff!important;border-color:var(--navy)!important}
+.mgcard{padding:14px}
+.mg-add{display:flex;gap:8px;margin-bottom:10px}.mg-add input{min-height:46px;font-size:16px}.mg-add button{flex:0 0 auto;min-height:46px}
+.mgrow{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid #f1f5f9}
+.mgrow:last-of-type{border-bottom:0}
+.mgrow .gic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:var(--navy);flex:0 0 auto}
+.mgrow>div{flex:1;min-width:0}.mgrow b{display:block;font-size:16px;line-height:1.3}.mgrow small{font-size:12.5px;color:var(--mute)}
+.mgrow .mgdel{flex:0 0 auto;border-color:#fecaca;background:#fff5f5;min-height:38px}
+.mgrow .mgdel:disabled{opacity:.4}
+.mgcard .hint{display:flex;gap:6px;align-items:center;margin-top:10px}.mgcard .hint svg.i{width:15px;height:15px}
+.delic{width:60px;height:60px;border-radius:50%;margin:4px auto 10px;display:flex;align-items:center;justify-content:center;background:var(--badbg);color:var(--bad)}
+.delic svg.i{width:28px;height:28px}
+.delbtn{background:var(--bad)!important;border-color:var(--bad)!important;color:#fff!important;font-weight:600}
+.ptime{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;font-size:14px;color:#92400e}
+.ptime>div{flex:1;min-width:180px}.ptime>svg.i{color:#d97706}
+.lfilt{padding:12px 14px}
+.lf-row{display:flex;align-items:center;gap:10px;padding:2px 0 8px;border-bottom:1px solid #f1f5f9;margin-bottom:8px;min-width:0}
+.lf-l{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--ink2);width:70px}
+.lf-l svg.i{width:16px;height:16px;color:var(--mute)}
+.lf-row .retscroll{flex:1;min-width:0;padding-bottom:2px}
+.lf-row .chip{min-height:38px;padding:5px 13px;font-size:14.5px}
+.lf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.lf-grid .lab{display:flex;align-items:center;gap:5px}.lf-grid .lab svg.i{width:15px;height:15px;color:var(--mute)}
+.lf-grid select,.lf-grid input{min-height:44px;font-size:15px;padding:8px 36px 8px 12px;background-color:#fff}
+.lf-grid input[type=date]{padding-right:10px}
+.lf-bot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.lf-bot .seg{flex:1;max-width:460px}
+.lgrp{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:14px 0 2px;padding:6px 10px;border-radius:10px;background:#f1f5f9;font-size:14px}
+.lgrp:first-of-type{margin-top:4px}.lgrp b{color:var(--navy)}.lgrp span{font-size:12.5px;color:var(--mute)}
+.lf-bot .seg button{white-space:nowrap;min-width:0}
+@media(max-width:560px){.lf-l{width:auto}.lf-row{flex-direction:column;align-items:stretch;gap:6px}.lf-grid{grid-template-columns:1fr 1fr}.lf-bot .seg{flex:1 1 100%;max-width:none}.lf-bot .seg button{font-size:13.5px;padding:4px 6px}.lf-bot #fReset{margin-left:auto}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1142,6 +1180,53 @@ function catHead(d, changeStep) {
   const cat = catById(d.category); if (!cat) return ""; const G = grpOf(cat);
   return `<div class="catsel" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><div><small>${dmy(d.date)} ${esc(d.time)} กะ ${d.shift} · ${esc(d.plant)} · ${esc(d.retort)}</small><b>${esc(cat.name)}</b></div><button class="ghost sm" ${changeStep}>เปลี่ยน</button></div>`;
 }
+/* ---------- เพิ่ม/ลบ พื้นที่ · หม้อ · หัวข้อปัญหา (ลบต้องใส่รหัสผ่านผู้ดูแล) ---------- */
+const MG_LABEL = { plant: "พื้นที่ (Plant)", retort: "หม้อ", category: "หัวข้อปัญหา" };
+const qHead = (title, kind) => `<div class="qrow"><h2 class="q">${title}</h2><button class="ghost sm mgbtn ${S.mg === kind ? "on" : ""}" data-mg="${S.mg === kind ? "" : kind}">${I(S.mg === kind ? "check" : "pen")}${S.mg === kind ? "เสร็จ" : "เพิ่ม/ลบ"}</button></div>`;
+function mgPanel(kind, d) {
+  const all = Object.values(S.items);
+  const rows = kind === "plant" ? plantsList().map(pl => ({ key: pl, name: pl, sub: `${plantRetorts(pl).length} หม้อ · บันทึกแล้ว ${all.filter(x => x.plant === pl).length} รายการ`, icon: "factory" }))
+    : kind === "retort" ? plantRetorts(d.plant).map(r => ({ key: r, name: r, sub: `บันทึกแล้ว ${all.filter(x => x.retort === r).length} รายการ`, icon: "grid" }))
+    : S.config.categories.filter(c => c.active && !c.deleted).map(c => ({ key: c.id, name: c.name, sub: `${esc(grpOf(c).name)} · บันทึกแล้ว ${all.filter(x => x.category === c.id).length} รายการ`, icon: grpOf(c).icon, color: grpOf(c).color }));
+  const ph = { plant: "ชื่อพื้นที่ใหม่ เช่น PF3", retort: `ชื่อหม้อใหม่ เช่น ${d.plant === "PF2" ? "RC22" : "RP22"}`, category: "ชื่อหัวข้อปัญหาใหม่" }[kind];
+  return `<div class="card mgcard">
+    <div class="mg-add"><input id="mgIn" placeholder="${esc(ph)}" maxlength="${kind === "category" ? 120 : 20}" autocomplete="off"${kind === "category" ? "" : ' autocapitalize="characters"'}><button class="pri" id="mgAdd" data-kind="${kind}">${I("plus")}เพิ่ม</button></div>
+    ${rows.map(r => `<div class="mgrow"><span class="gic" ${r.color ? `style="--gc:${r.color};color:${r.color};background:color-mix(in srgb,${r.color} 13%,#fff)"` : ""}>${I(r.icon)}</span><div><b>${esc(r.name)}</b><small>${r.sub}</small></div>
+      <button class="danger sm mgdel" data-del="${kind}" data-key="${esc(r.key)}" ${rows.length <= 1 && kind !== "category" ? 'disabled title="ต้องมีอย่างน้อย 1 รายการ"' : ""}>${I("trash")}ลบ</button></div>`).join("") || `<p class="sub">ยังไม่มีรายการ</p>`}
+    <small class="hint">${I("info")} เพิ่มได้ทันที · การลบต้องใส่รหัสผ่านผู้ดูแล · ข้อมูลที่บันทึกไว้แล้วยังอยู่ครบ</small></div>`;
+}
+function askDelete(kind, key, after) {
+  const d = S.draft || {};
+  const name = kind === "category" ? (catById(key)?.name || key) : key;
+  modal(`<div class="delic">${I("trash")}</div><h2 style="text-align:center">ลบ${MG_LABEL[kind]} "${esc(name)}"?</h2>
+    <p class="sub" style="text-align:center;margin:4px 0 14px">${kind === "plant" ? "หม้อในรายการของพื้นที่นี้จะถูกเอาออกด้วย · " : ""}รายการที่บันทึกไว้แล้วยังอยู่ครบ และยังดูในหน้ารายการ/วิเคราะห์ได้</p>
+    <label class="f"><span class="lab">รหัสผ่านสำหรับลบ</span><input type="password" id="delPin" inputmode="numeric" autocomplete="off" placeholder="ใส่รหัสผ่าน" style="text-align:center;font-size:20px;letter-spacing:4px"></label>
+    <p class="sub" id="delErr" style="color:var(--bad);min-height:20px;margin:6px 0 0"></p>
+    <div class="row" style="margin-top:6px"><button class="blk" data-close>ยกเลิก</button><button class="blk delbtn" id="delOk">${I("trash")}ลบ</button></div>`, box => {
+    const inp = box.querySelector("#delPin"), err = box.querySelector("#delErr"), ok = box.querySelector("#delOk");
+    setTimeout(() => inp.focus(), 60);
+    inp.onkeydown = e => { if (e.key === "Enter") ok.click(); };
+    ok.onclick = async () => {
+      const pin = inp.value.trim(); if (!pin) { err.textContent = "กรุณาใส่รหัสผ่าน"; inp.focus(); return; }
+      ok.disabled = true;
+      const body = { pin, kind, name: kind === "category" ? "" : key, id: kind === "category" ? key : "" };
+      if (kind === "retort") { body.plant = d.plant; body.base = plantRetorts(d.plant); }
+      if (kind === "category") body.base = S.config.categories;
+      try {
+        const r = await jpost("/api/retort/remove", body); S.config = migrate(r.config)[0];
+        if (kind === "plant" && d.plant === key) { d.plant = ""; d.retort = ""; }
+        if (kind === "retort" && d.retort === key) d.retort = "";
+        if (kind === "category" && d.category === key) { d.category = ""; d.cause = ""; }
+        closeModal(); toast(`ลบ${MG_LABEL[kind]} "${name}" แล้ว`); after && after();
+      } catch (e) {
+        ok.disabled = false;
+        if (e.status === 401) { closeModal(); showLock(true); return; }
+        err.textContent = e.status === 403 ? "รหัสผ่านไม่ถูกต้อง" : e.status === 405 || e.status === 404 && /Not Found/.test(e.message) ? "เซิร์ฟเวอร์ยังเป็นเวอร์ชันเก่า: วาง main.py ใหม่แล้วรีสตาร์ท" : e.message;
+        inp.select();
+      }
+    };
+  });
+}
 function viewLog() {
   if (!S.draft) { S.draft = newDraft(); S.step = 1; S.more = false; S.catPick = true; }
   if (S.justSaved) return viewSaved();
@@ -1172,22 +1257,22 @@ function viewLog() {
       </div>
       <button class="pri blk savebig" id="timeOk">ถัดไป${I("right")}</button>`;
   } else if (S.step === 2) {
-    h += `<h2 class="q">เลือกพื้นที่</h2>${pickBar("plant", "ค้นหา หรือเพิ่มพื้นที่ใหม่ เช่น PF3")}<div class="zcards two">${plantsList().map(pl => { const rs = plantRetorts(pl);
+    h += qHead(`เลือกพื้นที่`, "plant") + (S.mg === "plant" ? mgPanel("plant", d) : `${pickBar("plant", "ค้นหาพื้นที่ · พิมพ์ชื่อใหม่แล้วกด เพิ่ม เช่น PF3")}<div class="zcards two">${plantsList().map(pl => { const rs = plantRetorts(pl);
       return `<button class="zc big2 ${d.plant === pl ? "on" : ""}" data-plant="${esc(pl)}" data-s="${esc(pl.toLowerCase())}"><b>${esc(pl)}<span class="gtag">${rs.length} หม้อ</span></b>
-        <span class="zrow">${badge(stat(x => x.plant === pl))}${last.plant === pl ? `<span class="zsub2">· ล่าสุด</span>` : ""}</span>${I("right")}</button>`; }).join("")}</div>`;
+        <span class="zrow">${badge(stat(x => x.plant === pl))}${last.plant === pl ? `<span class="zsub2">· ล่าสุด</span>` : ""}</span>${I("right")}</button>`; }).join("")}</div>`);
   } else if (S.step === 3) {
     const rl = plantRetorts(d.plant);
-    h += `<h2 class="q">${esc(d.plant)} · เลือกหม้อ <span class="sub" style="font-weight:400">${rl.length} หม้อ</span></h2>
-      ${pickBar("retort", `ค้นหาหม้อ หรือพิมพ์หม้อใหม่ เช่น ${d.plant === "PF2" ? "RC22" : "RP22"}`)}
+    h += qHead(`${esc(d.plant)} · เลือกหม้อ <span class="sub" style="font-weight:400">${rl.length} หม้อ</span>`, "retort") + (S.mg === "retort" ? mgPanel("retort", d) : `
+      ${pickBar("retort", `ค้นหาหม้อ · พิมพ์หม้อใหม่แล้วกด เพิ่ม เช่น ${d.plant === "PF2" ? "RC22" : "RP22"}`)}
       <div class="zcards">${rl.map(r => { const n = progsFor(r).length;
-      return `<button class="zc ${d.retort === r ? "on" : ""}" data-retort="${esc(r)}" data-s="${esc(r.toLowerCase())}"><b>${esc(r)}</b><span class="zs">${n ? `${n} โปรแกรม` : "ยังไม่มีตารางโปรแกรม"}</span><span class="zrow">${badge(stat(x => x.retort === r))}</span>${I("right")}</button>`; }).join("")}</div>`;
+      return `<button class="zc ${d.retort === r ? "on" : ""}" data-retort="${esc(r)}" data-s="${esc(r.toLowerCase())}"><b>${esc(r)}</b><span class="zs">${n ? `${n} โปรแกรม` : "ยังไม่มีตารางโปรแกรม"}</span><span class="zrow">${badge(stat(x => x.retort === r))}</span>${I("right")}</button>`; }).join("")}</div>`);
   } else if (S.step === 4 && (S.catPick || !cat)) {
     const wk = {}; all.filter(x => x.date >= w0 && x.date <= t0 && x.retort === d.retort).forEach(x => wk[x.category] = (wk[x.category] || 0) + 1);
-    h += `<h2 class="q">${esc(d.retort)} · เกิดปัญหาอะไร? <span class="sub" style="font-weight:400">${cats.length} หัวข้อ</span></h2>
-      ${pickBar("category", "ค้นหาปัญหา หรือเพิ่มหัวข้อใหม่")}
+    h += qHead(`${esc(d.retort)} · เกิดปัญหาอะไร? <span class="sub" style="font-weight:400">${cats.length} หัวข้อ</span>`, "category") + (S.mg === "category" ? mgPanel("category", d) : `
+      ${pickBar("category", "ค้นหาปัญหา เช่น cooling, กราฟ, สตีม, ไฟฟ้า")}
       <div class="biglist catlist">${cats.map((c, i) => { const G = grpOf(c); const nc = (c.causes || []).length;
-        return `<button class="big cat ${d.category === c.id ? "on" : ""}" data-cat="${c.id}" data-s="${esc((i + 1) + " " + c.name + " " + (c.causes || []).join(" ")).toLowerCase()}" data-n="${esc(c.name.toLowerCase())}" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><span class="nm"><span class="cn"><em>${i + 1}</em>${esc(c.name)}</span><small>${nc ? esc(c.causes.join(" · ")) : esc(G.name)}</small></span>${wk[c.id] ? `<span class="wk" title="หม้อนี้ 7 วันล่าสุด">${wk[c.id]}</span>` : ""}${I("right")}</button>`; }).join("")}</div>
-      ${cats.length ? "" : `<p class="sub">ยังไม่มีหัวข้อ เพิ่มได้ที่หน้า ตั้งค่า</p>`}`;
+        return `<button class="big cat ${d.category === c.id ? "on" : ""}" data-cat="${c.id}" data-s="${esc((i + 1) + " " + c.name + " " + (c.causes || []).join(" ") + " " + G.name).toLowerCase()}" data-n="${esc(c.name.toLowerCase())}" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><span class="nm"><span class="cn"><em>${i + 1}</em>${esc(c.name)}</span><small>${nc ? esc(c.causes.join(" · ")) : esc(G.name)}</small></span>${wk[c.id] ? `<span class="wk" title="หม้อนี้ 7 วันล่าสุด">${wk[c.id]}</span>` : ""}${I("right")}</button>`; }).join("")}</div>
+      ${cats.length ? "" : `<p class="sub">ยังไม่มีหัวข้อ เพิ่มได้ที่ช่องค้นหาด้านบน</p>`}`);
   } else if (S.step === 4) {
     h += catHead(d, `id="catChange"`) + `<h2 class="q">ถ่ายรูปปัญหา <span class="sub" style="font-weight:400">${d.photos.length ? `${d.photos.length} รูป` : "รูปจะมีเวลาประทับอัตโนมัติ"}</span></h2>
       <div class="card">
@@ -1195,6 +1280,10 @@ function viewLog() {
         <label class="ghost sm galBtn"><input type="file" accept="image/*" id="galIn" multiple hidden>${I("image")}เลือกจากคลังรูป</label>
         <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${photoUrl(f)}" alt="" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
         <div id="upState" class="sub"></div>
+        ${(() => { const pts = d.photos.map(f => (d.ptimes || {})[f]).filter(Boolean); if (!pts.length) return "";
+          const t0 = Math.min(...pts), at = new Date(t0), hm = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
+          if (Math.abs(at - new Date(`${d.date}T${d.time}:00`)) <= 10 * 60e3) return "";
+          return `<div class="ptime">${I("clock")}<div>รูปถ่ายเมื่อ <b>${dmy(iso(at))} ${hm} น.</b> (กะ ${shiftOf(hm)}) · เวลาที่บันทึกไว้ ${dmy(d.date)} ${esc(d.time)} น.</div><button class="soft sm" id="usePt" data-t="${t0}">ใช้เวลาจากรูป</button></div>`; })()}
       </div>
       <button class="pri blk savebig" id="photoOk">${d.photos.length ? "ถัดไป" : "ถัดไป (ไม่ถ่ายรูป)"}${I("right")}</button>`;
   } else {
@@ -1253,8 +1342,10 @@ function viewSaved() {
     <p class="sub" style="margin:6px 0 0">${esc(c ? c.name : "")} · ${esc(x.retort)}<br>${esc(causeText(x))}</p>
     <div class="meta2"><span>${dmy(x.date)} ${esc(x.time)} น.</span><span>กะ ${esc(x.shift)}</span>${x.plant ? `<span>${esc(x.plant)}</span>` : ""}${(x.photos || []).length ? `<span>รูป ${x.photos.length}</span>` : ""}${x.impact === "hold" ? `<span style="color:var(--warn)">Hold สินค้า</span>` : ""}</div></div>
     <button class="pri blk savebig" id="again">${I("plus")}บันทึกปัญหาอื่น</button>
-    <button class="blk" id="seeAn" style="margin-top:10px">${I("chart")}ดูสรุป</button>`;
+    <div class="row" style="margin-top:10px"><button class="blk" id="editSaved">${I("pen")}แก้ไขรายการนี้</button><button class="blk" id="seeAn">${I("chart")}ดูสรุป</button></div>
+    <p class="sub" style="text-align:center;margin:12px 0 0">แก้ไขรายการที่บันทึกไว้ก่อนหน้าได้ที่แท็บ <b>${esc((U.tabs.find(t => t.k === "list") || {}).label || "รายการ")}</b> → แตะรายการ → แก้ไข</p>`;
   $("#again").onclick = () => { S.justSaved = null; S.draft = null; render(); };
+  $("#editSaved").onclick = () => { S.justSaved = null; S.draft = null; openEdit(x.id); };
   $("#seeAn").onclick = () => { S.justSaved = null; S.draft = null; S.view = "analyze"; lsSet("rt_view", S.view); render(); };
 }
 function causeText(x) { return x.cause === "__other" ? (x.causeOther || "อื่นๆ") : x.cause; }
@@ -1293,13 +1384,42 @@ function itemRow(x) {
 function loadImg(file) {
   return new Promise((res, rej) => { const u = URL.createObjectURL(file); const im = new Image(); im.onload = () => { res(im); setTimeout(() => URL.revokeObjectURL(u), 1000); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error("เปิดรูปไม่ได้")); }; im.src = u; });
 }
-async function stampPhoto(file) {
+/* เวลาถ่ายจริงของรูป: อ่าน EXIF DateTimeOriginal ของ JPEG (กล้องมือถือใส่ไว้ทุกรูป)
+   ไม่มี EXIF → รูปจากคลังใช้เวลาไฟล์ (lastModified) · ถ่ายจากกล้องตอนนี้ใช้เวลาปัจจุบัน */
+function exifDate(v) {
+  if (v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return null;
+  let o = 2;
+  while (o + 10 < v.byteLength) {
+    const mk = v.getUint16(o), len = v.getUint16(o + 2);
+    if ((mk & 0xFF00) !== 0xFF00 || mk === 0xFFDA) break;
+    if (mk === 0xFFE1 && v.getUint32(o + 4) === 0x45786966) {  // "Exif"
+      const t = o + 10, le = v.getUint16(t) === 0x4949;
+      const u16 = q => v.getUint16(t + q, le), u32 = q => v.getUint32(t + q, le);
+      const ifd = off => { const out = {}, n = u16(off); for (let i = 0; i < n && i < 400; i++) { const e = off + 2 + i * 12; out[u16(e)] = e; } return out; };
+      const str = e => { const n = u32(e + 4), q = n > 4 ? u32(e + 8) : e + 8; let r = ""; for (let i = 0; i < n - 1 && i < 40; i++) r += String.fromCharCode(v.getUint8(t + q + i)); return r; };
+      const i0 = ifd(u32(4)); let dt = "";
+      if (i0[0x8769]) { const ex = ifd(u32(i0[0x8769] + 8)); if (ex[0x9003]) dt = str(ex[0x9003]); else if (ex[0x9004]) dt = str(ex[0x9004]); }
+      if (!dt && i0[0x0132]) dt = str(i0[0x0132]);
+      const m = /^(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/.exec(dt);
+      return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null;
+    }
+    o += 2 + len;
+  }
+  return null;
+}
+async function photoTime(file, fromCamera) {
+  const okT = d => d && !isNaN(d) && d.getFullYear() >= 2015 && d.getTime() <= Date.now() + 5 * 60e3;
+  try { const t = exifDate(new DataView(await file.slice(0, 256 * 1024).arrayBuffer())); if (okT(t)) return { at: t, src: "exif" }; } catch {}
+  if (!fromCamera && file.lastModified && okT(new Date(file.lastModified))) return { at: new Date(file.lastModified), src: "file" };
+  return { at: new Date(), src: "now" };
+}
+async function stampPhoto(file, when) {
   const im = await loadImg(file);
   const max = 1600, k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
   const w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k);
   const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const g = cv.getContext("2d");
   g.drawImage(im, 0, 0, w, h);
-  const n = new Date(); const hm = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  const n = when || new Date(); const hm = `${pad(n.getHours())}:${pad(n.getMinutes())}`;  // เวลาถ่ายจริง
   const l2 = `${dmy(iso(n))}  ${hm} น.  กะ ${shiftOf(hm)}`;
   const fs = Math.max(16, Math.round(Math.min(w, h) * 0.042));
   try { await document.fonts.load(`700 ${fs}px Sarabun`); } catch {}
@@ -1314,17 +1434,19 @@ async function stampPhoto(file) {
   g.fillText(l2, bx + padd, by + padd + lh);
   return await new Promise(r => cv.toBlob(r, "image/jpeg", 0.86));
 }
-async function addPhotos(files) {
-  const d = S.draft; const st = $("#upState");
+async function addPhotos(files, fromCamera) {
+  const d = S.draft; const st = $("#upState"); d.ptimes = d.ptimes || {};
   for (const f of files) {
     if (d.photos.length >= U.form.maxPhotos) { toast(`แนบรูปได้สูงสุด ${U.form.maxPhotos} รูป`); break; }
     try {
       if (st) st.innerHTML = `<span class="ai-dots"><i></i><i></i><i></i></span>กำลังประทับเวลาและอัปโหลดรูป…`;
-      const blob = await stampPhoto(f); const fd = new FormData(); fd.append("file", blob, "photo.jpg");
+      const pt = await photoTime(f, fromCamera);
+      const blob = await stampPhoto(f, pt.at); const fd = new FormData(); fd.append("file", blob, "photo.jpg");
       const r = await fetch("/api/retort/photo", { method: "POST", body: fd });
       if (r.status === 401) { showLock(true); break; }
       if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m; } catch {} throw new Error(m); }
-      d.photos.push((await r.json()).file);
+      const fn = (await r.json()).file; d.photos.push(fn); d.ptimes[fn] = pt.at.getTime();
+      if (pt.src !== "now") toast(`ประทับเวลาถ่ายจริง ${dmy(iso(pt.at))} ${pad(pt.at.getHours())}:${pad(pt.at.getMinutes())} น.`);
     } catch (e) { toast("อัปโหลดรูปไม่สำเร็จ: " + e.message); }
   }
   if (S.view === "log" && S.step === 4) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
@@ -1353,6 +1475,7 @@ async function addOption(kind, name) {
   let label = { plant: "พื้นที่", retort: "หม้อ", category: "หัวข้อปัญหา", cause: "สาเหตุ" }[kind];
   try { const r = await jpost("/api/retort/add", body); S.config = migrate(r.config)[0]; toast(`เพิ่ม${label} "${name}" แล้ว`); }
   catch (e) { if (e.status === 401) { showLock(true); return; } toast(`เพิ่ม${label}ไม่สำเร็จ: ` + e.message); return; }
+  if (S.mg) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); const i = $("#mgIn"); if (i) i.focus(); return; }  // โหมดเพิ่ม/ลบ: อยู่หน้าเดิม
   const go = n => { S.step = n; viewLog(); window.scrollTo(0, 0); };
   if (kind === "plant") { d.plant = name; d.retort = ""; d.program = ""; d.programDoc = ""; lsSet("rt_last", { ...lsGet("rt_last", {}), plant: name }); go(3); }
   else if (kind === "retort") { if (d.retort !== name) { d.retort = name; d.program = ""; d.programDoc = ""; } go(4); }
@@ -1361,21 +1484,26 @@ async function addOption(kind, name) {
 }
 function wireLog() {
   const d = S.draft; const m = $("#main");
-  const go = n => { S.step = n; if (n === 4 && !d.category) S.catPick = true; viewLog(); window.scrollTo(0, 0); };
+  const go = n => { S.step = n; S.mg = ""; if (n === 4 && !d.category) S.catPick = true; viewLog(); window.scrollTo(0, 0); };
+  const stay = () => { const y = window.scrollY; viewLog(); window.scrollTo(0, y); };
   const setTime = () => { d.shift = shiftOf(d.time); const sb = $("#shiftBig"); if (sb) { sb.className = "shiftbig " + d.shift; sb.querySelector("b").textContent = d.shift; } const tt = $("#tcTime"); if (tt) tt.textContent = d.time + " น."; const td = $(".tc-date"); if (td) td.textContent = thDate(d.date); };
   m.oninput = e => { const t = e.target; if (t.dataset.k) d[t.dataset.k] = t.value; if (t.dataset.v) d.values[t.dataset.v] = t.value;
     if (t.dataset.k === "time" || t.dataset.k === "date") setTime();
     if (t.id === "signIn") { const s = m.querySelector(".signline span"); if (s) s.textContent = `(${t.value || "................"})`; }
     if (t.classList.contains("pickIn")) pickFilter(t);
     if (t.id === "causeIn") m.querySelectorAll("[data-sug]").forEach(b => b.classList.toggle("on", b.dataset.sug === t.value.trim())); };
-  m.onkeydown = e => { if (e.key === "Enter" && e.target.classList.contains("pickIn")) { e.preventDefault(); const { exact, vis } = pickFilter(e.target); const t = exact || (vis.length === 1 ? vis[0] : null);
+  m.onkeydown = e => { if (e.key === "Enter" && e.target.id === "mgIn") { e.preventDefault(); $("#mgAdd").click(); return; }
+    if (e.key === "Enter" && e.target.classList.contains("pickIn")) { e.preventDefault(); const { exact, vis } = pickFilter(e.target); const t = exact || (vis.length === 1 ? vis[0] : null);
     if (t) t.click(); else if (e.target.value.trim()) addOption(e.target.closest(".addbar").dataset.kind, e.target.value); } };
   m.onchange = e => { const t = e.target;
-    if (t.id === "camIn" || t.id === "galIn") { const fs = [...t.files]; t.value = ""; if (fs.length) addPhotos(fs); }
+    if (t.id === "camIn" || t.id === "galIn") { const fs = [...t.files]; t.value = ""; if (fs.length) addPhotos(fs, t.id === "camIn"); }
     else if (t.id === "progSel") { const p = progByKey(t.value); d.program = p ? p.no : ""; d.programDoc = p ? p.doc : ""; const y = window.scrollY; viewLog(); window.scrollTo(0, y); } };
   m.onclick = e => {
     const im = e.target.closest("[data-zoom]"); if (im) { zoomPhoto(im.dataset.zoom); return; }
     const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (ds.mg != null) { S.mg = ds.mg; stay(); return; }
+    if (b.id === "mgAdd") { const v = $("#mgIn").value; if (v.trim()) addOption(ds.kind, v); else $("#mgIn").focus(); return; }
+    if (ds.del) { askDelete(ds.del, ds.key, stay); return; }
     if (ds.cat) { if (d.category !== ds.cat) { d.category = ds.cat; d.cause = ""; d.causeOther = ""; d.values = {}; } S.catPick = false; go(4); }
     else if (b.id === "catChange") { S.catPick = true; go(4); }
     else if (ds.step) { if (+ds.step === 4) S.catPick = true; go(+ds.step); }
@@ -1386,6 +1514,7 @@ function wireLog() {
     else if (b.classList.contains("pickAdd")) { const bar = b.closest(".addbar"); addOption(bar.dataset.kind, bar.querySelector(".pickIn").value); }
     else if (ds.delph != null) { d.photos.splice(+ds.delph, 1); const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
     else if (b.id === "photoOk") go(5);
+    else if (b.id === "usePt") { const at = new Date(+ds.t); d.date = iso(at); d.time = `${pad(at.getHours())}:${pad(at.getMinutes())}`; d.shift = shiftOf(d.time); toast(`ใช้เวลา ${dmy(d.date)} ${d.time} น. กะ ${d.shift}`); stay(); }
     else if (ds.sug) { const ci = $("#causeIn"); ci.value = ds.sug; m.querySelectorAll("[data-sug]").forEach(x => x.classList.toggle("on", x === b)); $("#formErr").innerHTML = ""; }
     else if (b.id === "progSpec") { if (d.programDoc) showSpec(d.programDoc + "#" + d.program); }
     else if (ds.impact) { d.impact = ds.impact; m.querySelectorAll("[data-impact]").forEach(x => { x.classList.toggle("on", x === b); x.classList.toggle("warnc", x === b && ds.impact === "hold"); }); }
@@ -1421,10 +1550,15 @@ function openEdit(id) {
 }
 
 /* ---------- filtered data ---------- */
+const RANGE_OPTS = [["today", "วันนี้"], ["yesterday", "เมื่อวาน"], ["7", "7 วันล่าสุด"], ["30", "30 วันล่าสุด"], ["90", "90 วันล่าสุด"], ["year", "ปีนี้"], ["all", "ทั้งหมด"], ["day", "เลือกวันที่…"], ["custom", "กำหนดช่วงวันที่…"]];
 function rangeOf() {
   const f = S.f, t = todayISO();
-  if (f.range === "custom" && f.from && f.to) return [f.from, f.to];
+  if (f.range === "custom" && f.from && f.to) return f.from <= f.to ? [f.from, f.to] : [f.to, f.from];
+  if (f.range === "day" && f.day) return [f.day, f.day];
+  if (f.range === "today") return [t, t];
+  if (f.range === "yesterday") { const y = addDays(t, -1); return [y, y]; }
   if (f.range === "year") return [t.slice(0, 4) + "-01-01", t];
+  if (f.range === "all") return ["2000-01-01", "2999-12-31"];
   const n = parseInt(f.range, 10) || 30; return [addDays(t, -(n - 1)), t];
 }
 function filtered(from, to, ignoreCat) {
@@ -1433,53 +1567,83 @@ function filtered(from, to, ignoreCat) {
 const metricOf = x => S.f.metric === "minutes" ? (num(x.duration) || 0) : 1;
 const fmtN = v => S.f.metric === "minutes" ? `${Math.round(v)} นาที` : `${v} ครั้ง`;
 
-/* ---------- list view ---------- */
-function filterBar(withMetric) {
-  const f = S.f; const retorts = [...new Set(Object.values(S.items).map(x => x.retort).filter(Boolean))].sort();
-  return `<div class="filters">
-    <select id="fRange"><option value="7">7 วันล่าสุด</option><option value="30">30 วันล่าสุด</option><option value="90">90 วันล่าสุด</option><option value="year">ปีนี้</option><option value="custom">กำหนดเอง</option></select>
-    ${f.range === "custom" ? `<input type="date" id="fFrom" value="${f.from}" style="width:auto;min-height:42px;font-size:15px;padding:8px 10px;background:#fff"><input type="date" id="fTo" value="${f.to}" style="width:auto;min-height:42px;font-size:15px;padding:8px 10px;background:#fff">` : ""}
-    <select id="fCat"><option value="all">ทุกหัวข้อ</option>${S.config.categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select>
-    <select id="fPlant"><option value="all">ทุกพื้นที่</option>${plantsList().map(p => `<option>${p}</option>`).join("")}</select>
-    <select id="fRet"><option value="all">ทุกหม้อ</option>${retorts.map(r => `<option>${esc(r)}</option>`).join("")}</select>
-    ${withMetric ? `<div class="seg"><button data-metric="count" class="${f.metric === "count" ? "on" : ""}">นับครั้ง</button><button data-metric="minutes" class="${f.metric === "minutes" ? "on" : ""}">รวมนาที</button></div>` : ""}
-  </div>`;
-}
-function wireFilters() {
-  const f = S.f; const save = () => { lsSet("rt_filter", f); render(); };
-  $("#fRange").value = f.range; $("#fCat").value = f.cat; $("#fRet").value = [...$("#fRet").options].some(o => o.value === f.retort) ? f.retort : "all";
-  $("#fRange").onchange = e => { f.range = e.target.value; if (f.range === "custom" && !f.from) { const [a, b] = [addDays(todayISO(), -29), todayISO()]; f.from = a; f.to = b; } save(); };
-  $("#fCat").onchange = e => { f.cat = e.target.value; save(); };
-  $("#fRet").onchange = e => { f.retort = e.target.value; save(); };
-  $("#fPlant").value = f.plant || "all"; $("#fPlant").onchange = e => { f.plant = e.target.value; save(); };
-  if ($("#fFrom")) { $("#fFrom").onchange = e => { f.from = e.target.value; save(); }; $("#fTo").onchange = e => { f.to = e.target.value; save(); }; }
-  document.querySelectorAll("[data-metric]").forEach(b => b.onclick = () => { f.metric = b.dataset.metric; save(); });
-}
+/* ---------- list view: กรองตาม Plant · หม้อ · วันที่ · หัวข้อ แล้วเรียง/จัดกลุ่ม ---------- */
+const catName = x => catById(x.category)?.name || "หัวข้อที่ถูกลบ";
+const SORTS = [["new", "วันที่ ใหม่ → เก่า"], ["old", "วันที่ เก่า → ใหม่"], ["plant", "Plant / หม้อ"], ["cat", "หัวข้อปัญหา"]];
+const byNew = (a, b) => (b.date + b.time).localeCompare(a.date + a.time);
+const SORT_FN = {
+  new: byNew, old: (a, b) => byNew(b, a),
+  plant: (a, b) => (a.plant || "~").localeCompare(b.plant || "~") || (a.retort || "~").localeCompare(b.retort || "~", undefined, { numeric: true }) || byNew(a, b),
+  cat: (a, b) => catName(a).localeCompare(catName(b), "th") || byNew(a, b)
+};
+const GROUP_OF = { new: x => x.date, old: x => x.date, plant: x => `${x.plant || "ไม่ระบุพื้นที่"} · ${x.retort || "ไม่ระบุหม้อ"}`, cat: catName };
 const itemText = x => { const c = catById(x.category); return [x.plant, x.retort, x.program && "p" + x.program, c && c.name, causeText(x), x.action, x.detail, x.product, x.batch, x.by, x.shift, dmy(x.date), x.time].filter(Boolean).join(" ").toLowerCase(); };
 function viewList() {
+  const f = S.f; f.plant = f.plant || "all"; f.retort = f.retort || "all"; f.cat = f.cat || "all"; f.sort = SORT_FN[f.sort] ? f.sort : "new";
+  if (!RANGE_OPTS.some(o => o[0] === f.range)) f.range = "30";
+  const all0 = Object.values(S.items);
+  const plants = [...new Set([...plantsList(), ...all0.map(x => x.plant).filter(Boolean)])];
+  if (f.plant !== "all" && !plants.includes(f.plant)) f.plant = "all";
+  const numSort = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+  const rets = [...new Set([...(f.plant === "all" ? plantsList().flatMap(plantRetorts) : plantRetorts(f.plant)),
+    ...all0.filter(x => f.plant === "all" || x.plant === f.plant).map(x => x.retort).filter(Boolean)])].sort(numSort);
+  if (f.retort !== "all" && !rets.includes(f.retort)) f.retort = "all";
   const [from, to] = rangeOf();
-  const inRange = filtered(from, to).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-  const ap = S.f.appr || "all";
+  const inRange = filtered(from, to).sort(SORT_FN[f.sort]);
+  const ap = f.appr || "all";
   const all = inRange.filter(x => ap === "all" || (ap === "done") === !!x.approvedBy);
   const nWait = inRange.filter(x => !x.approvedBy).length;
   S.q = S.q || "";
-  let h = `<div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>` + filterBar(false);
-  h += `<div class="seg mb" style="max-width:460px">${[["all", "ทั้งหมด"], ["wait", `รออนุมัติ (${nWait})`], ["done", "อนุมัติแล้ว"]].map(([v, l]) => `<button data-appr="${v}" class="${ap === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
-  h += `<div class="card" id="listCard"></div>`;
-  $("#main").innerHTML = h; wireFilters();
-  document.querySelectorAll("[data-appr]").forEach(b => b.onclick = () => { S.f.appr = b.dataset.appr; lsSet("rt_filter", S.f); viewList(); });
+  const chip = (attr, v, label, on) => `<button class="chip ${on ? "on" : ""}" ${attr}="${esc(v)}">${esc(label)}</button>`;
+  const rLabel = (RANGE_OPTS.find(o => o[0] === f.range) || [])[1] || "";
+  const dirty = f.plant !== "all" || f.retort !== "all" || f.cat !== "all" || f.range !== "30" || f.sort !== "new" || ap !== "all";
+  let h = `<div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>
+  <div class="card lfilt">
+    <div class="lf-row"><span class="lf-l">${I("factory")}Plant</span><div class="retscroll">${chip("data-fpl", "all", "ทุก Plant", f.plant === "all")}${plants.map(p => chip("data-fpl", p, p, f.plant === p)).join("")}</div></div>
+    <div class="lf-row"><span class="lf-l">${I("grid")}หม้อ</span><div class="retscroll">${chip("data-fret", "all", "ทุกหม้อ", f.retort === "all")}${rets.map(r => chip("data-fret", r, r, f.retort === r)).join("")}</div></div>
+    <div class="lf-grid">
+      <label class="f"><span class="lab">${I("calendar")}วันที่</span><select id="fRange">${RANGE_OPTS.map(([v, l]) => `<option value="${v}" ${f.range === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+      ${f.range === "day" ? `<label class="f"><span class="lab">เลือกวันที่</span><input type="date" id="fDay" value="${f.day || todayISO()}" max="${todayISO()}"></label>` : ""}
+      ${f.range === "custom" ? `<label class="f"><span class="lab">ตั้งแต่</span><input type="date" id="fFrom" value="${f.from}"></label><label class="f"><span class="lab">ถึง</span><input type="date" id="fTo" value="${f.to}"></label>` : ""}
+      <label class="f"><span class="lab">${I("tag")}หัวข้อปัญหา</span><select id="fCat"><option value="all">ทุกหัวข้อ</option>${S.config.categories.filter(c => !c.deleted || all0.some(x => x.category === c.id)).map(c => `<option value="${c.id}" ${f.cat === c.id ? "selected" : ""}>${esc(c.name)}${c.deleted ? " (ลบแล้ว)" : ""}</option>`).join("")}</select></label>
+      <label class="f"><span class="lab">${I("list")}เรียงตาม</span><select id="fSort">${SORTS.map(([v, l]) => `<option value="${v}" ${f.sort === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+    </div>
+  </div>
+  <div class="lf-bot"><div class="seg">${[["all", "ทั้งหมด"], ["wait", `รออนุมัติ (${nWait})`], ["done", "อนุมัติแล้ว"]].map(([v, l]) => `<button data-appr="${v}" class="${ap === v ? "on" : ""}">${l}</button>`).join("")}</div>
+    ${dirty ? `<button class="ghost sm" id="fReset">${I("x")}ล้างตัวกรอง</button>` : ""}</div>
+  <div class="card" id="listCard"></div>`;
+  $("#main").innerHTML = h;
+  const save = () => { lsSet("rt_filter", f); const y = window.scrollY; viewList(); window.scrollTo(0, y); };
+  const m = $("#main");
+  m.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (ds.fpl) { f.plant = ds.fpl; f.retort = "all"; save(); }
+    else if (ds.fret) { f.retort = ds.fret; save(); }
+    else if (ds.appr) { f.appr = ds.appr; save(); }
+    else if (b.id === "fReset") { Object.assign(f, { plant: "all", retort: "all", cat: "all", range: "30", sort: "new", appr: "all" }); save(); }
+    else if (b.id === "listQx") { S.q = ""; save(); }
+    else if (b.id === "csvBtn") exportCsv(L, from, to);
+    else if (ds.edit) showItem(ds.edit); };
+  m.onchange = e => { const t = e.target;
+    if (t.id === "fRange") { f.range = t.value; if (f.range === "custom" && !f.from) { f.from = addDays(todayISO(), -29); f.to = todayISO(); } if (f.range === "day" && !f.day) f.day = todayISO(); save(); }
+    else if (t.id === "fDay") { if (t.value) { f.day = t.value; save(); } }
+    else if (t.id === "fFrom" || t.id === "fTo") { if (t.value) { f[t.id === "fFrom" ? "from" : "to"] = t.value; save(); } }
+    else if (t.id === "fCat") { f.cat = t.value; save(); }
+    else if (t.id === "fSort") { f.sort = t.value; save(); } };
+  // เลื่อนชิปที่เลือกให้อยู่ในจอ
+  m.querySelectorAll(".lfilt .retscroll .chip.on").forEach(c => c.scrollIntoView({ block: "nearest", inline: "center" }));
   let L = all;
   const draw = () => {
     const words = S.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
     L = words.length ? all.filter(x => { const t = itemText(x); return words.every(w => t.includes(w)); }) : all;
-    $("#listCard").innerHTML = sec("list", `รายการปัญหา (${L.length}${words.length ? ` จาก ${all.length}` : ""})`, `${dmy(from)} – ${dmy(to)}${words.length ? ` · ค้นหา "${esc(S.q.trim())}"` : ""}`, `<button class="soft sm" id="csvBtn">${I("download")}CSV</button>`)
-      + (L.length ? L.slice(0, 300).map(itemRow).join("") + (L.length > 300 ? `<p class="sub" style="text-align:center">แสดง 300 รายการแรก · พิมพ์ค้นหาหรือเลือกช่วงวันที่ให้แคบลง</p>` : "") : `<div class="empty"><div class="ic">${I(words.length ? "search" : "list")}</div><h3>${words.length ? "ไม่พบรายการที่ค้นหา" : "ไม่มีรายการในช่วงนี้"}</h3>${words.length ? `<p class="sub">ลองเปลี่ยนคำค้น หรือขยายช่วงวันที่ด้านบน</p>` : ""}</div>`);
-    $("#csvBtn").onclick = () => exportCsv(L, from, to);
+    const where = [f.plant === "all" ? "ทุก Plant" : f.plant, f.retort === "all" ? "" : f.retort, f.range === "day" || from === to ? thDate(from) : f.range === "all" ? "ทั้งหมด" : `${dmy(from)} – ${dmy(to)}`].filter(Boolean).join(" · ");
+    const cnt = {}; L.forEach(x => { const g = GROUP_OF[f.sort](x); cnt[g] = (cnt[g] || 0) + 1; });
+    let last = null;
+    const rows = L.slice(0, 300).map(x => { const g = GROUP_OF[f.sort](x); const head = g !== last ? `<div class="lgrp"><b>${esc(f.sort === "new" || f.sort === "old" ? thDate(g) : g)}</b><span>${cnt[g]} รายการ</span></div>` : ""; last = g; return head + itemRow(x); }).join("");
+    $("#listCard").innerHTML = sec("list", `รายการปัญหา (${L.length}${words.length ? ` จาก ${all.length}` : ""})`, `${esc(where)} · ${esc(rLabel.replace("…", ""))}${words.length ? ` · ค้นหา "${esc(S.q.trim())}"` : ""}`, `<button class="soft sm" id="csvBtn">${I("download")}CSV</button>`)
+      + (L.length ? rows + (L.length > 300 ? `<p class="sub" style="text-align:center">แสดง 300 รายการแรก · เลือก Plant / หม้อ / วันที่ ให้แคบลง</p>` : "") : `<div class="empty"><div class="ic">${I(words.length ? "search" : "list")}</div><h3>${words.length ? "ไม่พบรายการที่ค้นหา" : "ไม่มีรายการตามตัวกรองนี้"}</h3><p class="sub">ลองเปลี่ยน Plant / หม้อ / วันที่ ด้านบน</p></div>`);
   };
   draw();
   $("#listQ").oninput = e => { S.q = e.target.value; draw(); };
-  if ($("#listQx")) $("#listQx").onclick = () => { S.q = ""; viewList(); };
-  $("#main").onclick = e => { const b = e.target.closest("[data-edit]"); if (b) showItem(b.dataset.edit); };
 }
 function showItem(id) {
   const x = S.items[id]; if (!x) return; const c = catById(x.category);
@@ -2051,6 +2215,7 @@ function viewSettings() {
   let h = ro ? `<div class="alert a-warn">${I("info")}<div style="flex:1">ดูได้อย่างเดียว · ผู้ดูแลกดปลดล็อกเพื่อแก้หัวข้อ/สาเหตุ/รายชื่อ Retort</div><button class="pri sm" id="unlock">ปลดล็อกแก้ไข</button></div>` : "";
   h += `<div class="alert a-info">${I("info")}<div>เพิ่มหัวข้อปัญหาและสาเหตุได้ที่นี่ หัวข้อที่ปิดไว้จะไม่ขึ้นในหน้าบันทึก แต่ข้อมูลเก่ายังอยู่ในการวิเคราะห์</div></div>`;
   S.config.categories.forEach((c, ci) => {
+    if (c.deleted) return;  // หัวข้อที่ลบแล้ว (เก็บไว้ให้ประวัติเก่าแสดงชื่อได้)
     h += `<div class="card"><div class="sec"><span class="ic" style="background:${grpOf(c).color}1f;color:${grpOf(c).color}">${I(grpOf(c).icon)}</span><div class="t"><input data-cname="${ci}" value="${esc(c.name)}" ${ro ? "disabled" : ""} style="font-weight:600"></div></div>
       <div class="row sp" style="margin-bottom:6px"><span class="lab" style="margin:0">ใช้งาน</span><div class="seg" style="width:180px"><button data-cact="${ci}" data-v="1" class="${c.active ? "on" : ""}" ${ro ? "disabled" : ""}>เปิด</button><button data-cact="${ci}" data-v="0" class="${!c.active ? "on" : ""}" ${ro ? "disabled" : ""}>ปิด</button></div></div>
       <div class="row sp" style="margin-bottom:6px"><span class="lab" style="margin:0">กลุ่ม (สี/ไอคอน)</span><select data-cgrp="${ci}" style="width:auto;min-height:42px;font-size:15px;padding:6px 36px 6px 12px" ${ro ? "disabled" : ""}>${Object.keys(GROUPS).map(g => `<option value="${g}" ${(c.grp || "other") === g ? "selected" : ""}>${esc(GROUPS[g].name)}</option>`).join("")}</select></div>
@@ -2061,6 +2226,7 @@ function viewSettings() {
       <span class="lab" style="margin-top:16px">ช่องค่าที่วัด</span>
       ${(c.fields || []).map((fl, i) => `<div class="set-row"><input class="grow" data-fl="${ci}.${i}.label" value="${esc(fl.label)}" ${ro ? "disabled" : ""}><input style="width:80px" data-fl="${ci}.${i}.unit" value="${esc(fl.unit || "")}" placeholder="หน่วย" ${ro ? "disabled" : ""}>${ro ? "" : `<button class="ghost sm danger" data-fdel="${ci}.${i}" aria-label="ลบ">${I("x")}</button>`}</div>`).join("")}
       ${ro ? "" : `<button class="dash blk sm" data-fadd="${ci}" style="margin-top:8px">${I("plus")}เพิ่มช่องค่าที่วัด</button>`}
+      <button class="ghost sm danger" data-catdel="${esc(c.id)}" style="margin-top:12px">${I("trash")}ลบหัวข้อนี้ (ต้องใส่รหัสผ่าน)</button>
     </div>`;
   });
   if (!ro) h += `<div class="card">${sec("plus", "เพิ่มหัวข้อปัญหาใหม่")}<div class="row"><input id="newCat" placeholder="เช่น Cooling ผิดปกติ, Flow rate ต่ำ"><button class="pri" id="addCat" style="flex:0 0 auto">${I("plus")}เพิ่ม</button></div></div>`;
@@ -2073,6 +2239,7 @@ function viewSettings() {
     ${plantsList().map(pl => `<label class="f" style="margin-top:8px"><span class="lab">${pl}</span><input data-plret="${pl}" value="${esc(plantRetorts(pl).join(", "))}" ${ro ? "disabled" : ""}></label>`).join("")}</div>`;
   $("#main").innerHTML = h;
   if (!AI.status) aiStatus().then(() => { if (S.view === "settings") { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); } });
+  $("#main").querySelectorAll("[data-catdel]").forEach(b => b.onclick = () => askDelete("category", b.dataset.catdel, () => { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); }));
   if (ro) { $("#unlock").onclick = async () => { if (await unlockAdmin()) viewSettings(); }; return; }
   $("#gemSave").onclick = async () => {
     try { const r = await jpost("/api/retort/ai/key", { pin: S.pin, key: $("#gemKey").value.trim() }); AI.status = null; await aiStatus(); toast(r.configured ? "บันทึก API Key แล้ว" : "ลบ API Key แล้ว"); viewSettings(); }

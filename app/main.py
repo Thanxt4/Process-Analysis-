@@ -1574,6 +1574,7 @@ async def api_retort_add(request: Request):
             hit = next((c for c in cats if str(c.get("name", "")).strip().lower() == name.lower()), None)
             if hit:
                 hit["active"] = True
+                hit.pop("deleted", None)  # เพิ่มชื่อเดิมที่เคยลบ = กู้คืน
             else:
                 cats.append({"id": "c" + secrets.token_hex(5), "grp": "other", "name": name, "active": True, "causes": [], "fields": []})
         else:
@@ -1590,6 +1591,67 @@ async def api_retort_add(request: Request):
     tmp = RETORT_CFG_PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(RETORT_CFG_PATH)
+    return {"ok": True, "config": cfg}
+
+
+def _write_rt_cfg(cfg: dict):
+    cfg["updatedAt"] = int(now().timestamp() * 1000)
+    if RETORT_CFG_PATH.exists():  # สำรองไฟล์เดิมก่อนเขียนทับ
+        bdir = DATA_DIR / "areas_backup"
+        bdir.mkdir(exist_ok=True)
+        (bdir / f"retort_config_{now().strftime('%Y%m%d_%H%M%S')}.json").write_text(
+            RETORT_CFG_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    tmp = RETORT_CFG_PATH.with_suffix(".tmp")
+    tmp.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(RETORT_CFG_PATH)
+
+
+@app.post("/api/retort/remove")
+async def api_retort_remove(request: Request):
+    """ลบพื้นที่ / หม้อ / หัวข้อปัญหา ออกจากรายการ (ต้องใส่รหัสแก้ไข EDIT_PIN)
+    ข้อมูลที่บันทึกไว้แล้วยังอยู่ครบ: หัวข้อปัญหาถูกซ่อน (deleted) เพื่อให้ประวัติเก่ายังแสดงชื่อได้"""
+    _rt_auth(request)
+    data = await request.json()
+    _check_edit_pin(data.get("pin"))
+    kind = str(data.get("kind") or "")
+    name = " ".join(str(data.get("name") or "").split())
+    cfg = _read_rt_cfg()
+    plants = cfg.get("plants") if isinstance(cfg.get("plants"), list) and cfg.get("plants") else ["PF1", "PF2"]
+    pr = cfg.get("plantRetorts") if isinstance(cfg.get("plantRetorts"), dict) else {}
+    if kind == "plant":
+        if name not in plants:
+            raise HTTPException(404, "ไม่พบพื้นที่นี้")
+        if len(plants) <= 1:
+            raise HTTPException(400, "ต้องมีอย่างน้อย 1 พื้นที่")
+        cfg["plants"] = [x for x in plants if x != name]
+        pr.pop(name, None)
+        cfg["plantRetorts"] = pr
+    elif kind == "retort":
+        plant = str(data.get("plant") or "").strip()
+        if plant not in plants:
+            raise HTTPException(400, "พื้นที่ไม่ถูกต้อง")
+        cur = pr.get(plant) if isinstance(pr.get(plant), list) else \
+            [str(x).strip().upper() for x in (data.get("base") or []) if _RT_NAME_RE.match(str(x).strip())][:80]
+        if name not in cur:
+            raise HTTPException(404, "ไม่พบหม้อนี้")
+        if len(cur) <= 1:
+            raise HTTPException(400, "ต้องมีอย่างน้อย 1 หม้อในพื้นที่นี้")
+        pr[plant] = [x for x in cur if x != name]
+        cfg["plantRetorts"] = pr
+    elif kind == "category":
+        cats = cfg.get("categories")
+        if (cfg.get("version") or 1) < 3 or not isinstance(cats, list) or not cats:
+            cats = _clean_cats(data.get("base"))
+            cfg["version"] = 3
+        cat = next((c for c in cats if c.get("id") == str(data.get("id") or "")), None)
+        if not cat:
+            raise HTTPException(404, "ไม่พบหัวข้อปัญหา")
+        cat["active"] = False
+        cat["deleted"] = True
+        cfg["categories"] = cats
+    else:
+        raise HTTPException(400, "ประเภทไม่ถูกต้อง")
+    _write_rt_cfg(cfg)
     return {"ok": True, "config": cfg}
 
 
