@@ -1412,7 +1412,7 @@ def api_retort_logout():
     resp = JSONResponse({"ok": True})
     resp.delete_cookie("rt_access", samesite="lax")
     return resp
-_RP_TEXT = {"time": 5, "shift": 4, "plant": 10, "program": 20, "programDoc": 20, "retort": 20, "product": 120, "batch": 60, "category": 40, "cause": 200,
+_RP_TEXT = {"time": 5, "shift": 4, "plant": 10, "program": 20, "programDoc": 20, "retort": 20, "product": 120, "batch": 60, "code": 60, "category": 40, "cause": 200,
             "causeOther": 200, "duration": 12, "detail": 3000, "action": 3000, "impact": 8, "by": 60, "updatedBy": 60}
 
 
@@ -1433,7 +1433,8 @@ def _clean_rp(d: dict) -> dict:
     if not out["category"]:
         raise HTTPException(400, "กรุณาเลือกหัวข้อปัญหา")
     vals = d.get("values") if isinstance(d.get("values"), dict) else {}
-    out["values"] = {str(k)[:40]: str(v)[:20] for k, v in list(vals.items())[:20]}
+    # ค่าที่วัดของหัวข้อปัญหา + ช่องรายละเอียดที่ผู้ดูแลเพิ่มเอง (key ขึ้นต้น x_)
+    out["values"] = {str(k)[:40]: str(v)[:200] for k, v in list(vals.items())[:40]}
     ph = d.get("photos") if isinstance(d.get("photos"), list) else []
     out["photos"] = [str(f) for f in ph if isinstance(f, str) and _RT_PHOTO_RE.match(f)][:8]
     out["impact"] = "hold" if out["impact"] == "hold" else "none"

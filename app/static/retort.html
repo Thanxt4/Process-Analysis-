@@ -787,6 +787,15 @@ button.big.cat.on .ck{background:var(--gc);border-color:var(--gc)}
 .phb.dis{opacity:.45;cursor:default;pointer-events:none}
 .phhint{display:block;font-size:12px;color:var(--mute);margin:8px 2px 0;text-align:center}
 @media(max-width:380px){.phb{flex-direction:column;gap:4px;text-align:center}.phb span{align-items:center}}
+/* แก้ไขหัวข้อการ์ดรายละเอียด */
+.detcard .sec .ghost.sm{flex:0 0 auto;border:1px solid var(--line);background:#fff}
+.dfrow{border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:8px;background:#fff}
+.dfrow.off{background:#f8fafc;opacity:.65}
+.dfr1,.dfr2{display:flex;gap:6px;align-items:center}.dfr2{margin-top:6px}
+.dfr1 input{flex:1;min-width:0;min-height:44px;font-size:16px;font-weight:600}
+.dfr2 select{flex:0 0 auto;width:auto;min-height:40px;font-size:14px;padding:6px 32px 6px 10px}.dfr2 input{flex:1;min-width:0;min-height:40px;font-size:14px}
+.dfrow .mv{width:38px;min-height:40px;padding:0;flex:0 0 auto}.dfrow .mv:disabled{opacity:.3}
+@media(max-width:560px){.dfr2{flex-wrap:wrap}.dfr2 select{width:100%}}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
@@ -1178,7 +1187,7 @@ async function deleteItem(id) {
   }
 }
 async function saveConfig() {
-  if (!S.canAdmin) return false;
+  if (!S.canAdmin && !S.pin) return false;
   try { const r = await jpost("/api/retort/config", { pin: S.pin, config: S.config }); S.config = migrate(r.config)[0]; setSync(true); return true; }
   catch (e) { toast("บันทึกการตั้งค่าไม่สำเร็จ: " + e.message); if (e.status === 403) { S.canAdmin = false; S.pin = ""; } return false; }
 }
@@ -1392,12 +1401,9 @@ function viewLog() {
     const cs = d.cats.map(catById).filter(Boolean), many = cs.length > 1;
     const fields = []; cs.forEach(c => (c.fields || []).forEach(fl => { if (!fields.some(x => x.key === fl.key)) fields.push(fl); }));
     h += catHead(d, `data-step="4"`) + `${editing ? `<div class="card">${sec("camera", "รูปถ่าย", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · เพิ่มรูปได้")}${photoPicker(d)}</div>` : d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
-      ${U.form.more ? `<div class="card detcard">${sec("list", "รายละเอียด", many ? "ใช้ร่วมกันทุกปัญหา · ระยะเวลา · สินค้า · Batch" : "ระยะเวลา · สินค้า · Batch")}<div class="grid">
+      ${U.form.more ? `<div class="card detcard">${sec("list", "รายละเอียด", (many ? "ใช้ร่วมกันทุกปัญหา · " : "") + detailFields().filter(x => !x.hide).slice(0, 4).map(x => esc(x.label)).join(" · "), `<button class="ghost sm" id="detEdit">${I("pen")}แก้ไขหัวข้อ</button>`)}<div class="grid">
         ${fields.map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
-        <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}"></label>
-        <label class="f"><span class="lab">สินค้า</span><input data-k="product" value="${esc(d.product)}"></label>
-        <label class="f"><span class="lab">Batch</span><input data-k="batch" value="${esc(d.batch)}"></label>
-        <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail" rows="2">${esc(d.detail)}</textarea></label>
+        ${detailFields().filter(x => !x.hide).map(x => detailInput(x, d)).join("")}
       </div></div>` : ""}
       ${cs.map((c, ci) => { const G = grpOf(c), pc = d.pc[c.id] || { cause: "", action: "" };
         return `<div class="card formcard pcard ${many ? "many" : ""}" data-cid="${c.id}" style="--gc:${G.color}">
@@ -1561,6 +1567,87 @@ async function addPhotos(files, fromCamera) {
   }
   if (S.view === "log" && (S.step === 4 || S.step === 5)) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
 }
+/* ---------- ช่องในการ์ด "รายละเอียด" (ตั้งค่าได้ · เก็บใน config.details) ----------
+   builtin = เก็บในช่องเดิมของรายการ (code / duration / product / batch / detail) · ช่องที่เพิ่มเอง เก็บใน values (key ขึ้นต้น x_) */
+const DEFAULT_DETAILS = [
+  { key: "code", label: "Code", type: "text", ph: "เช่น D018", builtin: true },
+  { key: "duration", label: "นานกี่นาที", type: "number", builtin: true },
+  { key: "product", label: "สินค้า", type: "select", options: ["ถ้วย", "ถุง", "กระป๋อง"], builtin: true },
+  { key: "batch", label: "Batch รอบหม้อ", type: "text", builtin: true },
+  { key: "detail", label: "รายละเอียดเพิ่มเติม", type: "textarea", builtin: true }
+];
+const DF_TYPES = [["text", "ข้อความ"], ["number", "ตัวเลข"], ["select", "ตัวเลือก (dropdown)"], ["textarea", "ข้อความยาว"]];
+const DF_LOCKED = { duration: "number", detail: "textarea" };  // ช่องที่ใช้ในการวิเคราะห์/แสดงผล เปลี่ยนชนิดไม่ได้
+function detailFields() {
+  const raw = Array.isArray(S.config.details) && S.config.details.length ? S.config.details : DEFAULT_DETAILS;
+  const seen = new Set(), out = [];
+  raw.forEach(x => { if (!x || typeof x.key !== "string" || seen.has(x.key)) return; const bi = DEFAULT_DETAILS.find(d => d.key === x.key);
+    if (!bi && !/^x_[a-z0-9]{1,20}$/.test(x.key)) return; seen.add(x.key);
+    const type = (bi && DF_LOCKED[x.key]) || (DF_TYPES.some(t => t[0] === x.type) ? x.type : "text");
+    out.push({ key: x.key, builtin: !!bi, label: String(x.label || (bi && bi.label) || "หัวข้อ").slice(0, 40), type, ph: String(x.ph || "").slice(0, 40),
+      options: type === "select" ? (Array.isArray(x.options) ? x.options : []).map(o => String(o).trim().slice(0, 40)).filter(Boolean).slice(0, 30) : [], hide: !!x.hide }); });
+  DEFAULT_DETAILS.forEach(d => { if (!seen.has(d.key)) out.push({ ...d, options: d.options || [], hide: true }); });  // ช่องเดิมที่หายไป = ซ่อนไว้
+  return out;
+}
+const detailVal = (x, df) => df.builtin ? (x[df.key] ?? "") : (x.values || {})[df.key] ?? "";
+function detailInput(df, d) {
+  const v = String(detailVal(d, df) || ""), attr = df.builtin ? `data-k="${df.key}"` : `data-v="${df.key}"`, lab = `<span class="lab">${esc(df.label)}</span>`;
+  if (df.type === "textarea") return `<label class="f full">${lab}<textarea ${attr} rows="2" placeholder="${esc(df.ph)}">${esc(v)}</textarea></label>`;
+  if (df.type === "select") { const opts = v && !df.options.includes(v) ? [...df.options, v] : df.options;  // ค่าเดิมที่ไม่อยู่ในตัวเลือก ยังเลือกค้างไว้
+    return `<label class="f">${lab}<select ${attr}><option value="">— เลือก —</option>${opts.map(o => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>`; }
+  return `<label class="f">${lab}<input ${attr} ${df.type === "number" ? 'inputmode="decimal"' : ""} value="${esc(v)}" placeholder="${esc(df.ph)}"${df.key === "code" ? ' autocapitalize="characters"' : ""}></label>`;
+}
+/* ใส่รหัสแก้ไข (พนักงาน) ก่อนทำงานของหัวหน้า · หัวหน้าที่เข้าระบบแล้วผ่านได้เลย */
+function needEditPin(title, then) {
+  if (S.role === "sup" || S.pin) return then();
+  modal(`<h2>${esc(title)}</h2><p class="sub" style="margin:4px 0 12px">ใส่รหัสผ่านหัวหน้า (Supervisor) เพื่อแก้ไข</p>
+    <input type="password" id="epIn" inputmode="numeric" autocomplete="off" placeholder="รหัสผ่าน" style="text-align:center;font-size:20px;letter-spacing:4px">
+    <p class="sub" id="epErr" style="color:var(--bad);min-height:20px;margin:6px 0 0"></p>
+    <div class="row" style="margin-top:6px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="epOk">ตกลง</button></div>`, box => {
+    const i = box.querySelector("#epIn"), ok = box.querySelector("#epOk"); setTimeout(() => i.focus(), 60); i.onkeydown = e => { if (e.key === "Enter") ok.click(); };
+    ok.onclick = async () => { const pin = i.value.trim(); if (!pin) return;
+      try { await jpost("/api/admin/check", { pin }); S.pin = pin; closeModal(); then(); }
+      catch { box.querySelector("#epErr").textContent = "รหัสผ่านไม่ถูกต้อง"; i.select(); } };
+  });
+}
+function openDetailEditor(after) {
+  const L = detailFields().map(x => ({ ...x, options: [...x.options] }));
+  const draw = box => {
+    box.innerHTML = `<div class="tm-h"><div><small>การ์ดรายละเอียด</small><h2>แก้ไขหัวข้อ</h2></div><button class="tm-x" data-close aria-label="ปิด">${I("x")}</button></div>
+      <p class="sub" style="margin:-4px 0 10px">เปลี่ยนชื่อ · ชนิดช่อง · ตัวเลือกของ dropdown · เรียงลำดับ · ซ่อน/ลบ · ข้อมูลที่บันทึกไว้แล้วไม่หาย</p>
+      ${L.map((x, i) => `<div class="dfrow ${x.hide ? "off" : ""}">
+        <div class="dfr1"><input data-dl="${i}" value="${esc(x.label)}" maxlength="40" placeholder="ชื่อหัวข้อ">
+          <button class="ghost mv" data-dmv="${i}.-1" ${i ? "" : "disabled"} aria-label="เลื่อนขึ้น">${I("up")}</button><button class="ghost mv" data-dmv="${i}.1" ${i < L.length - 1 ? "" : "disabled"} aria-label="เลื่อนลง">${I("down")}</button>
+          ${x.builtin ? `<button class="ghost sm" data-dh="${i}">${x.hide ? "แสดง" : "ซ่อน"}</button>` : `<button class="ghost sm danger" data-ddel="${i}" aria-label="ลบ">${I("trash")}</button>`}</div>
+        <div class="dfr2"><select data-dt="${i}" ${DF_LOCKED[x.key] ? "disabled" : ""}>${DF_TYPES.map(([v, l]) => `<option value="${v}" ${x.type === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+          ${x.type === "select" ? `<input data-do="${i}" value="${esc(x.options.join(", "))}" placeholder="ตัวเลือก คั่นด้วย , เช่น ถ้วย, ถุง, กระป๋อง">` : `<input data-dp="${i}" value="${esc(x.ph)}" maxlength="40" placeholder="ข้อความตัวอย่างในช่อง (ไม่บังคับ)">`}</div>
+      </div>`).join("")}
+      <button class="dash blk" id="dfAdd" style="margin-top:10px">${I("plus")}เพิ่มหัวข้อ</button>
+      <p class="sub" id="dfErr" style="color:var(--bad);min-height:18px;margin:8px 0 0"></p>
+      <div class="row" style="margin-top:4px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="dfSave">${I("check")}บันทึกหัวข้อ</button></div>`;
+    box.querySelectorAll("[data-close]").forEach(x => x.onclick = closeModal);
+  };
+  modal("", box => {
+    box.parentElement.classList.add("center"); draw(box);
+    box.oninput = e => { const t = e.target, ds = t.dataset;
+      if (ds.dl != null) L[+ds.dl].label = t.value; else if (ds.dp != null) L[+ds.dp].ph = t.value;
+      else if (ds.do != null) L[+ds.do].options = t.value.split(/[,\n]/).map(o => o.trim()).filter(Boolean); };
+    box.onchange = e => { const t = e.target; if (t.dataset.dt != null) { const x = L[+t.dataset.dt]; x.type = t.value; if (x.type === "select" && !x.options.length) x.options = []; draw(box); } };
+    box.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+      if (ds.dmv) { const [i, k] = ds.dmv.split(".").map(Number); [L[i], L[i + k]] = [L[i + k], L[i]]; draw(box); }
+      else if (ds.dh != null) { L[+ds.dh].hide = !L[+ds.dh].hide; draw(box); }
+      else if (ds.ddel != null) { L.splice(+ds.ddel, 1); draw(box); }
+      else if (b.id === "dfAdd") { L.push({ key: "x_" + Date.now().toString(36), label: "", type: "text", ph: "", options: [], hide: false }); draw(box); const ins = box.querySelectorAll("[data-dl]"); ins[ins.length - 1].focus(); }
+      else if (b.id === "dfSave") {
+        const err = box.querySelector("#dfErr");
+        if (L.some(x => !x.label.trim())) { err.textContent = "ใส่ชื่อหัวข้อให้ครบทุกช่อง"; return; }
+        if (L.some(x => x.type === "select" && !x.options.length && !x.hide)) { err.textContent = "ช่องแบบตัวเลือก ต้องมีตัวเลือกอย่างน้อย 1 ข้อ"; return; }
+        S.config.details = L.map(x => ({ key: x.key, label: x.label.trim(), type: x.type, ph: x.ph, options: x.type === "select" ? x.options : [], hide: !!x.hide }));
+        b.disabled = true; const ok = await saveConfig(); b.disabled = false;
+        if (ok) { closeModal(); toast("บันทึกหัวข้อแล้ว"); after && after(); } else err.textContent = "บันทึกไม่สำเร็จ";
+      } };
+  }, "fsheet");
+}
 function photoPicker(d) {
   const full = d.photos.length >= U.form.maxPhotos;
   return `<div class="phbtns">
@@ -1644,6 +1731,7 @@ function wireLog() {
     else if (b.classList.contains("pickAdd")) { const bar = b.closest(".addbar"); addOption(bar.dataset.kind, bar.querySelector(".pickIn").value, bar.dataset.cat); }
     else if (ds.delph != null) { d.photos.splice(+ds.delph, 1); const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
     else if (b.id === "photoOk") go(5);
+    else if (b.id === "detEdit") needEditPin("แก้ไขหัวข้อรายละเอียด", () => openDetailEditor(stay));
     else if (b.id === "usePt") { const at = new Date(+ds.t); d.date = iso(at); d.time = `${pad(at.getHours())}:${pad(at.getMinutes())}`; d.shift = shiftOf(d.time); toast(`ใช้เวลา ${dmy(d.date)} ${d.time} น. กะ ${d.shift}`); stay(); }
     else if (ds.sug) { const card = b.closest(".pcard"), ci = card.querySelector(".causeIn"); ci.value = ds.sug; ci.classList.remove("err"); d.pc[card.dataset.cid].cause = ds.sug;
       card.querySelectorAll("[data-sug]").forEach(x => x.classList.toggle("on", x === b)); $("#formErr").innerHTML = ""; }
@@ -1672,7 +1760,7 @@ async function submitLog() {
     const match = [...(c.causes || []), UNKNOWN].find(x => x.toLowerCase() === txt.toLowerCase());
     const keys = new Set((c.fields || []).map(f => f.key));
     return { ...base, id: i === 0 ? d.id : (d.ids[i] = d.ids[i] || uid("p")), category: c.id, cause: match || "__other", causeOther: match ? "" : txt,
-      action: String(pc.action || ""), values: wasEdit ? base.values : Object.fromEntries(Object.entries(base.values || {}).filter(([k, v]) => keys.has(k) && String(v).trim() !== "")),
+      action: String(pc.action || ""), values: wasEdit ? base.values : Object.fromEntries(Object.entries(base.values || {}).filter(([k, v]) => (keys.has(k) || k.startsWith("x_")) && String(v).trim() !== "")),
       createdAt: (base.createdAt || Date.now()) + i }; });
   const btn = $("#saveBtn"); if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก…"; }
   for (const r of recs) {
@@ -1718,7 +1806,7 @@ const SORT_FN = {
   cat: (a, b) => catName(a).localeCompare(catName(b), "th") || byNew(a, b)
 };
 const GROUP_OF = { new: x => x.date, old: x => x.date, plant: x => `${x.plant || "ไม่ระบุพื้นที่"} / ${x.retort || "ไม่ระบุหม้อ"} / ${catName(x)}`, cat: catName };
-const itemText = x => { const c = catById(x.category); return [x.plant, x.retort, x.program && "p" + x.program, c && c.name, causeText(x), x.action, x.detail, x.product, x.batch, x.by, x.shift, dmy(x.date), x.time].filter(Boolean).join(" ").toLowerCase(); };
+const itemText = x => { const c = catById(x.category); return [x.plant, x.retort, x.program && "p" + x.program, c && c.name, causeText(x), x.action, x.detail, x.product, x.batch, x.code, ...Object.values(x.values || {}), x.by, x.shift, dmy(x.date), x.time].filter(Boolean).join(" ").toLowerCase(); };
 /* ตัวกรองรายการ: ค่าตั้งต้น · ชื่อที่แสดง · หม้อของ Plant ที่เลือก */
 const LIST_DEF = { plant: "all", retort: "all", cat: "all", range: "30", sort: "plant" };
 const listPlants = () => [...new Set([...plantsList(), ...Object.values(S.items).map(x => x.plant).filter(Boolean)])];
@@ -1813,8 +1901,8 @@ function showItem(id) {
   const kv = (k, v) => v ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">${k}</span><span class="v" style="font-weight:500;white-space:pre-wrap">${esc(v)}</span></div>` : "";
   const vals = (c?.fields || []).map(fl => x.values?.[fl.key] ? kv(fl.label, `${x.values[fl.key]} ${fl.unit || ""}`) : "").join("");
   modal(`<h2>${esc(causeText(x))}</h2><p class="sub" style="margin:2px 0 12px">${esc(c ? c.name : "")}</p>
-    ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}${kv("สินค้า / Batch", [x.product, x.batch].filter(Boolean).join(" / "))}
-    ${vals}${kv("ระยะเวลา", x.duration ? x.duration + " นาที" : "")}${kv("รายละเอียด", x.detail)}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? "Hold สินค้า" : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
+    ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}
+    ${vals}${detailFields().map(df => kv(df.label, detailVal(x, df) ? detailVal(x, df) + (df.key === "duration" ? " นาที" : "") : "")).join("")}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? "Hold สินค้า" : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
   ? `<div class="apprbox ok">${I("check")}<div><b>อนุมัติแล้ว · ${esc(x.approvedBy)}</b><small>${esc(fmtTs(x.approvedAt))}</small></div></div>`
   : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>${S.role === "sup" ? "กดปุ่ม อนุมัติ ด้านล่าง" : "รอหัวหน้า (Supervisor) อนุมัติ"}</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
     ${S.role !== "sup" ? "" : x.approvedBy
@@ -2364,9 +2452,10 @@ function svgChart(el, B, series, fmt, area) {
 /* ---------- CSV ---------- */
 async function exportCsv(L, from, to) {
   const fieldsAll = []; S.config.categories.forEach(c => (c.fields || []).forEach(f => { if (!fieldsAll.some(x => x.key === f.key)) fieldsAll.push(f); }));
-  const head = ["วันที่", "เวลา", "กะ", "พื้นที่", "หม้อ", "โปรแกรม", "เอกสารโปรแกรม", "สินค้า", "Batch", "หัวข้อ", "สาเหตุ", ...fieldsAll.map(f => `${f.label}${f.unit ? ` (${f.unit})` : ""}`), "ระยะเวลา (นาที)", "รายละเอียด", "การแก้ไข", "ผลต่อสินค้า", "บันทึกโดย", "ผู้อนุมัติ", "เวลาอนุมัติ"];
+  const customDF = detailFields().filter(df => !df.builtin);
+  const head = ["วันที่", "เวลา", "กะ", "พื้นที่", "หม้อ", "โปรแกรม", "เอกสารโปรแกรม", "Code", "สินค้า", "Batch รอบหม้อ", "หัวข้อ", "สาเหตุ", ...fieldsAll.map(f => `${f.label}${f.unit ? ` (${f.unit})` : ""}`), "ระยะเวลา (นาที)", "รายละเอียด", ...customDF.map(df => df.label), "การแก้ไข", "ผลต่อสินค้า", "บันทึกโดย", "ผู้อนุมัติ", "เวลาอนุมัติ"];
   const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const rows = L.map(x => [x.date, x.time, x.shift, x.plant, x.retort, x.program, x.programDoc, x.product, x.batch, catById(x.category)?.name || "", causeText(x), ...fieldsAll.map(f => x.values?.[f.key] ?? ""), x.duration, x.detail, x.action, x.impact === "hold" ? "Hold" : "ไม่กระทบ", x.by, x.approvedBy || "", fmtTs(x.approvedAt)]);
+  const rows = L.map(x => [x.date, x.time, x.shift, x.plant, x.retort, x.program, x.programDoc, x.code, x.product, x.batch, catById(x.category)?.name || "", causeText(x), ...fieldsAll.map(f => x.values?.[f.key] ?? ""), x.duration, x.detail, ...customDF.map(df => x.values?.[df.key] ?? ""), x.action, x.impact === "hold" ? "Hold" : "ไม่กระทบ", x.by, x.approvedBy || "", fmtTs(x.approvedAt)]);
   const csv = "﻿" + [head, ...rows].map(r => r.map(q).join(",")).join("\r\n");
   const name = `retort-problems_${from}_${to}.csv`;
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
