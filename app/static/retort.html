@@ -796,6 +796,11 @@ button.big.cat.on .ck{background:var(--gc);border-color:var(--gc)}
 .dfr2 select{flex:0 0 auto;width:auto;min-height:40px;font-size:14px;padding:6px 32px 6px 10px}.dfr2 input{flex:1;min-width:0;min-height:40px;font-size:14px}
 .dfrow .mv{width:38px;min-height:40px;padding:0;flex:0 0 auto}.dfrow .mv:disabled{opacity:.3}
 @media(max-width:560px){.dfr2{flex-wrap:wrap}.dfr2 select{width:100%}}
+/* ระยะเวลา: ชั่วโมง + นาที */
+.hm2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hm2 label{position:relative;display:block}
+.hm2 input{padding-right:52px;text-align:right;font-variant-numeric:tabular-nums}
+.hm2 span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:600;color:var(--mute);pointer-events:none}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
@@ -1494,7 +1499,7 @@ function approveItem(id, undo) {
 function itemRow(x) {
   const c = catById(x.category);
   return `<button class="item" data-edit="${x.id}"><span class="bar" style="background:${catColor(x.category)}"></span><span class="b"><b>${esc(causeText(x) || "ไม่ระบุสาเหตุ")}</b>
-    <span class="meta">${esc(c ? c.name : "หัวข้อที่ถูกลบ")} · ${esc([x.plant, x.retort || "-", x.program ? "P" + x.program : ""].filter(Boolean).join(" "))} · ${dmy(x.date)} ${esc(x.time)} ${x.shift}${x.duration ? ` · ${esc(x.duration)} นาที` : ""}${x.by ? ` · บันทึก ${esc(x.by)}` : ""}</span></span><span class="tags">${apprTag(x)}<span>${(x.photos || []).length ? `<span class="tag">${I("camera")} ${x.photos.length}</span> ` : ""}${x.impact === "hold" ? '<span class="tag hold">Hold</span>' : ""}${x.demo ? ' <span class="tag">Demo</span>' : ""}</span></span></button>`;
+    <span class="meta">${esc(c ? c.name : "หัวข้อที่ถูกลบ")} · ${esc([x.plant, x.retort || "-", x.program ? "P" + x.program : ""].filter(Boolean).join(" "))} · ${dmy(x.date)} ${esc(x.time)} ${x.shift}${x.duration ? ` · ${esc(fmtDur(x.duration))}` : ""}${x.by ? ` · บันทึก ${esc(x.by)}` : ""}</span></span><span class="tags">${apprTag(x)}<span>${(x.photos || []).length ? `<span class="tag">${I("camera")} ${x.photos.length}</span> ` : ""}${x.impact === "hold" ? '<span class="tag hold">Hold</span>' : ""}${x.demo ? ' <span class="tag">Demo</span>' : ""}</span></span></button>`;
 }
 /* ---------- รูปถ่าย + เวลาประทับ ---------- */
 function loadImg(file) {
@@ -1571,7 +1576,7 @@ async function addPhotos(files, fromCamera) {
    builtin = เก็บในช่องเดิมของรายการ (code / duration / product / batch / detail) · ช่องที่เพิ่มเอง เก็บใน values (key ขึ้นต้น x_) */
 const DEFAULT_DETAILS = [
   { key: "code", label: "Code", type: "text", ph: "เช่น D018", builtin: true },
-  { key: "duration", label: "นานกี่นาที", type: "number", builtin: true },
+  { key: "duration", label: "ระยะเวลาที่เกิดปัญหา", type: "number", builtin: true },  // กรอกเป็น ชั่วโมง + นาที · เก็บเป็นนาทีรวม
   { key: "product", label: "สินค้า", type: "select", options: ["ถ้วย", "ถุง", "กระป๋อง"], builtin: true },
   { key: "batch", label: "Batch รอบหม้อ", type: "text", builtin: true },
   { key: "detail", label: "รายละเอียดเพิ่มเติม", type: "textarea", builtin: true }
@@ -1589,9 +1594,14 @@ function detailFields() {
   DEFAULT_DETAILS.forEach(d => { if (!seen.has(d.key)) out.push({ ...d, options: d.options || [], hide: true }); });  // ช่องเดิมที่หายไป = ซ่อนไว้
   return out;
 }
+/* นาทีรวม → "1 ชม. 30 นาที" (ค่าที่ไม่ใช่ตัวเลข แสดงตามเดิม) */
+const fmtDur = v => { const n = num(v); if (n == null) return String(v || ""); const h = Math.floor(n / 60), m = Math.round((n - h * 60) * 100) / 100;
+  return h ? `${h} ชม.${m ? ` ${m} นาที` : ""}` : `${m} นาที`; };
 const detailVal = (x, df) => df.builtin ? (x[df.key] ?? "") : (x.values || {})[df.key] ?? "";
 function detailInput(df, d) {
   const v = String(detailVal(d, df) || ""), attr = df.builtin ? `data-k="${df.key}"` : `data-v="${df.key}"`, lab = `<span class="lab">${esc(df.label)}</span>`;
+  if (df.key === "duration") { const n = num(v), h = n == null ? "" : Math.floor(n / 60), m = n == null ? (v || "") : Math.round((n - Math.floor(n / 60) * 60) * 100) / 100;
+    return `<div class="f full">${lab}<div class="hm2"><label><input data-dur="h" inputmode="numeric" value="${h || ""}" placeholder="0" aria-label="ชั่วโมง"><span>ชม.</span></label><label><input data-dur="m" inputmode="decimal" value="${m === 0 && !h ? "" : m === 0 ? "0" : esc(m)}" placeholder="0" aria-label="นาที"><span>นาที</span></label></div></div>`; }
   if (df.type === "textarea") return `<label class="f full">${lab}<textarea ${attr} rows="2" placeholder="${esc(df.ph)}">${esc(v)}</textarea></label>`;
   if (df.type === "select") { const opts = v && !df.options.includes(v) ? [...df.options, v] : df.options;  // ค่าเดิมที่ไม่อยู่ในตัวเลือก ยังเลือกค้างไว้
     return `<label class="f">${lab}<select ${attr}><option value="">— เลือก —</option>${opts.map(o => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>`; }
@@ -1704,7 +1714,9 @@ function wireLog() {
     if (t.id === "signIn") { const s = m.querySelector(".signline span"); if (s) s.textContent = `(${t.value || "................"})`; }
     if (t.classList.contains("pickIn")) pickFilter(t);
     if (t.classList.contains("causeIn")) { d.pc[t.dataset.cid].cause = t.value; t.closest(".pcard").querySelectorAll("[data-sug]").forEach(b => b.classList.toggle("on", b.dataset.sug === t.value.trim())); t.classList.remove("err"); }
-    if (t.classList.contains("actIn")) d.pc[t.dataset.cid].action = t.value; };
+    if (t.classList.contains("actIn")) d.pc[t.dataset.cid].action = t.value;
+    if (t.dataset.dur) { const w = t.closest(".hm2"), h = num(w.querySelector('[data-dur="h"]').value) || 0, mm = num(w.querySelector('[data-dur="m"]').value) || 0;
+      d.duration = h || mm ? String(Math.round((h * 60 + mm) * 100) / 100) : ""; } };
   m.onkeydown = e => { if (e.key === "Enter" && e.target.id === "mgIn") { e.preventDefault(); $("#mgAdd").click(); return; }
     if (e.key === "Enter" && e.target.classList.contains("pickIn")) { e.preventDefault(); const { exact, vis } = pickFilter(e.target); const t = exact || (vis.length === 1 ? vis[0] : null);
     if (t) t.click(); else if (e.target.value.trim()) { const bar = e.target.closest(".addbar"); addOption(bar.dataset.kind, e.target.value, bar.dataset.cat); } } };
@@ -1902,7 +1914,7 @@ function showItem(id) {
   const vals = (c?.fields || []).map(fl => x.values?.[fl.key] ? kv(fl.label, `${x.values[fl.key]} ${fl.unit || ""}`) : "").join("");
   modal(`<h2>${esc(causeText(x))}</h2><p class="sub" style="margin:2px 0 12px">${esc(c ? c.name : "")}</p>
     ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}
-    ${vals}${detailFields().map(df => kv(df.label, detailVal(x, df) ? detailVal(x, df) + (df.key === "duration" ? " นาที" : "") : "")).join("")}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? "Hold สินค้า" : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
+    ${vals}${detailFields().map(df => kv(df.label, detailVal(x, df) ? (df.key === "duration" ? fmtDur(detailVal(x, df)) : detailVal(x, df)) : "")).join("")}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? "Hold สินค้า" : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
   ? `<div class="apprbox ok">${I("check")}<div><b>อนุมัติแล้ว · ${esc(x.approvedBy)}</b><small>${esc(fmtTs(x.approvedAt))}</small></div></div>`
   : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>${S.role === "sup" ? "กดปุ่ม อนุมัติ ด้านล่าง" : "รอหัวหน้า (Supervisor) อนุมัติ"}</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
     ${S.role !== "sup" ? "" : x.approvedBy
