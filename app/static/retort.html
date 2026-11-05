@@ -1624,17 +1624,17 @@ const fmtN = v => S.f.metric === "minutes" ? `${Math.round(v)} นาที` : `
 
 /* ---------- list view: กรองตาม Plant · หม้อ · วันที่ · หัวข้อ แล้วเรียง/จัดกลุ่ม ---------- */
 const catName = x => catById(x.category)?.name || "หัวข้อที่ถูกลบ";
-const SORTS = [["new", "วันที่ ใหม่ → เก่า"], ["old", "วันที่ เก่า → ใหม่"], ["plant", "Plant / หม้อ"], ["cat", "หัวข้อปัญหา"]];
+const SORTS = [["plant", "Plant / หม้อ / ปัญหา"], ["new", "วันที่ ใหม่ → เก่า"], ["old", "วันที่ เก่า → ใหม่"], ["cat", "หัวข้อปัญหา"]];
 const byNew = (a, b) => (b.date + b.time).localeCompare(a.date + a.time);
 const SORT_FN = {
   new: byNew, old: (a, b) => byNew(b, a),
-  plant: (a, b) => (a.plant || "~").localeCompare(b.plant || "~") || byRetort(a.retort || "~", b.retort || "~") || byNew(a, b),
+  plant: (a, b) => (a.plant || "~").localeCompare(b.plant || "~") || byRetort(a.retort || "~", b.retort || "~") || catName(a).localeCompare(catName(b), "th") || byNew(a, b),
   cat: (a, b) => catName(a).localeCompare(catName(b), "th") || byNew(a, b)
 };
-const GROUP_OF = { new: x => x.date, old: x => x.date, plant: x => `${x.plant || "ไม่ระบุพื้นที่"} · ${x.retort || "ไม่ระบุหม้อ"}`, cat: catName };
+const GROUP_OF = { new: x => x.date, old: x => x.date, plant: x => `${x.plant || "ไม่ระบุพื้นที่"} / ${x.retort || "ไม่ระบุหม้อ"} / ${catName(x)}`, cat: catName };
 const itemText = x => { const c = catById(x.category); return [x.plant, x.retort, x.program && "p" + x.program, c && c.name, causeText(x), x.action, x.detail, x.product, x.batch, x.by, x.shift, dmy(x.date), x.time].filter(Boolean).join(" ").toLowerCase(); };
 function viewList() {
-  const f = S.f; f.plant = f.plant || "all"; f.retort = f.retort || "all"; f.cat = f.cat || "all"; f.sort = SORT_FN[f.sort] ? f.sort : "new";
+  const f = S.f; f.plant = f.plant || "all"; f.retort = f.retort || "all"; f.cat = f.cat || "all"; if (!f.sortV2) { f.sort = "plant"; f.sortV2 = 1; } f.sort = SORT_FN[f.sort] ? f.sort : "plant";
   if (!RANGE_OPTS.some(o => o[0] === f.range)) f.range = "30";
   const all0 = Object.values(S.items);
   const plants = [...new Set([...plantsList(), ...all0.map(x => x.plant).filter(Boolean)])];
@@ -1650,7 +1650,7 @@ function viewList() {
   S.q = S.q || "";
   const chip = (attr, v, label, on) => `<button class="chip ${on ? "on" : ""}" ${attr}="${esc(v)}">${esc(label)}</button>`;
   const rLabel = (RANGE_OPTS.find(o => o[0] === f.range) || [])[1] || "";
-  const dirty = f.plant !== "all" || f.retort !== "all" || f.cat !== "all" || f.range !== "30" || f.sort !== "new" || ap !== "all";
+  const dirty = f.plant !== "all" || f.retort !== "all" || f.cat !== "all" || f.range !== "30" || f.sort !== "plant" || ap !== "all";
   let h = `<div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>
   <div class="card lfilt">
     <div class="lf-row"><span class="lf-l">${I("factory")}Plant</span><div class="retscroll">${chip("data-fpl", "all", "ทุก Plant", f.plant === "all")}${plants.map(p => chip("data-fpl", p, p, f.plant === p)).join("")}</div></div>
@@ -1673,7 +1673,7 @@ function viewList() {
     if (ds.fpl) { f.plant = ds.fpl; f.retort = "all"; save(); }
     else if (ds.fret) { f.retort = ds.fret; save(); }
     else if (ds.appr) { f.appr = ds.appr; save(); }
-    else if (b.id === "fReset") { Object.assign(f, { plant: "all", retort: "all", cat: "all", range: "30", sort: "new", appr: "all" }); save(); }
+    else if (b.id === "fReset") { Object.assign(f, { plant: "all", retort: "all", cat: "all", range: "30", sort: "plant", appr: "all" }); save(); }
     else if (b.id === "listQx") { S.q = ""; save(); }
     else if (b.id === "csvBtn") exportCsv(L, from, to);
     else if (ds.edit) showItem(ds.edit); };
