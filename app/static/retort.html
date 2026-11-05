@@ -1040,7 +1040,11 @@ const progsFor = rt => TP_PROGS.filter(p => p.retorts.includes(rt)).sort((a, b) 
 const progKey = p => p.doc + "#" + p.no;
 const progByKey = k => TP_PROGS.find(p => progKey(p) === k);
 const DEFAULT_PLANT_RETORTS = { PF1: PF1_RETORTS };  // ตามเอกสาร TP002-F1 / TP002-T
-function plantRetorts(pl) {
+/* เรียงหม้อตามเลข (RC01, RC02, … RP09, RC10 …) — ไม่สนตัวอักษรนำหน้า */
+const retNum = r => { const m = /\d+/.exec(r || ""); return m ? +m[0] : Infinity; };
+const byRetort = (a, b) => retNum(a) - retNum(b) || String(a).localeCompare(String(b), undefined, { numeric: true });
+function plantRetorts(pl) { return plantRetorts0(pl).slice().sort(byRetort); }
+function plantRetorts0(pl) {
   const cfg = (S.config.plantRetorts || {})[pl];
   if (cfg && cfg.length) return cfg;
   const base = (S.config.retorts || []).length ? S.config.retorts : DEFAULT_RETORTS;
@@ -1179,7 +1183,7 @@ function newDraft() {
 function retortList() {
   const seen = {}; Object.values(S.items).sort((a, b) => b.createdAt - a.createdAt).forEach(x => { if (x.retort) seen[x.retort] = (seen[x.retort] || 0) + 1; });
   const fromCfg = (S.config.retorts || []).length ? S.config.retorts : DEFAULT_RETORTS;
-  return [...new Set([...fromCfg, ...Object.keys(seen)])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).slice(0, 40);
+  return [...new Set([...fromCfg, ...Object.keys(seen)])].sort(byRetort).slice(0, 40);
 }
 function stepHead(d) {
   const cat = catById(d.category); const st = S.step;
@@ -1585,7 +1589,7 @@ const SORTS = [["new", "วันที่ ใหม่ → เก่า"], ["ol
 const byNew = (a, b) => (b.date + b.time).localeCompare(a.date + a.time);
 const SORT_FN = {
   new: byNew, old: (a, b) => byNew(b, a),
-  plant: (a, b) => (a.plant || "~").localeCompare(b.plant || "~") || (a.retort || "~").localeCompare(b.retort || "~", undefined, { numeric: true }) || byNew(a, b),
+  plant: (a, b) => (a.plant || "~").localeCompare(b.plant || "~") || byRetort(a.retort || "~", b.retort || "~") || byNew(a, b),
   cat: (a, b) => catName(a).localeCompare(catName(b), "th") || byNew(a, b)
 };
 const GROUP_OF = { new: x => x.date, old: x => x.date, plant: x => `${x.plant || "ไม่ระบุพื้นที่"} · ${x.retort || "ไม่ระบุหม้อ"}`, cat: catName };
@@ -1596,9 +1600,8 @@ function viewList() {
   const all0 = Object.values(S.items);
   const plants = [...new Set([...plantsList(), ...all0.map(x => x.plant).filter(Boolean)])];
   if (f.plant !== "all" && !plants.includes(f.plant)) f.plant = "all";
-  const numSort = (a, b) => a.localeCompare(b, undefined, { numeric: true });
   const rets = [...new Set([...(f.plant === "all" ? plantsList().flatMap(plantRetorts) : plantRetorts(f.plant)),
-    ...all0.filter(x => f.plant === "all" || x.plant === f.plant).map(x => x.retort).filter(Boolean)])].sort(numSort);
+    ...all0.filter(x => f.plant === "all" || x.plant === f.plant).map(x => x.retort).filter(Boolean)])].sort(byRetort);
   if (f.retort !== "all" && !rets.includes(f.retort)) f.retort = "all";
   const [from, to] = rangeOf();
   const inRange = filtered(from, to).sort(SORT_FN[f.sort]);
@@ -1683,7 +1686,7 @@ function showItem(id) {
 /* ---------- โปรแกรมฆ่าเชื้อ: ดูค่าควบคุมของแต่ละโปรแกรม ---------- */
 function viewProgs() {
   const f = S.pf || (S.pf = { rt: lsGet("rt_pf_rt", ""), q: "", open: "" });
-  const rets = [...new Set(TP_PROGS.flatMap(p => p.retorts))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const rets = [...new Set(TP_PROGS.flatMap(p => p.retorts))].sort(byRetort);
   if (f.rt && !rets.includes(f.rt)) f.rt = "";
   const L = TP_PROGS.filter(p => (!f.rt || p.retorts.includes(f.rt)) && (!f.q || p.no === f.q.trim()))
     .sort((a, b) => (+a.no - +b.no) || a.doc.localeCompare(b.doc));
@@ -1823,7 +1826,7 @@ function viewSimple() {
   const n = ["7", "30", "90"].includes(S.f.range) ? parseInt(S.f.range, 10) : 30;
   const to = todayISO(), from = addDays(to, -(n - 1)), pTo = addDays(from, -1), pFrom = addDays(pTo, -(n - 1));
   const inR = (x, a, b) => x.date >= a && x.date <= b; const all = Object.values(S.items);
-  const rets = [...new Set([...(S.config.retorts || []), ...all.map(x => x.retort).filter(Boolean)])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const rets = [...new Set([...(S.config.retorts || []), ...all.map(x => x.retort).filter(Boolean)])].sort(byRetort);
   const sel = S.f.retort !== "all" && rets.includes(S.f.retort) ? S.f.retort : "all";
   const okR = x => sel === "all" || x.retort === sel;
   const Lall = all.filter(x => inR(x, from, to));
