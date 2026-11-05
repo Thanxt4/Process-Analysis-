@@ -822,6 +822,8 @@ table.xls{border-collapse:separate;border-spacing:0;width:max-content;min-width:
 .xls .tag{font-size:12px;white-space:nowrap}.xls .tag svg.i{width:12px;height:12px}.xls td svg.i{width:14px;height:14px;vertical-align:-2px}.xls .mut{color:var(--mute);font-size:12.5px}
 .xls-hint{display:flex;align-items:center;gap:6px;margin:8px 2px 0;font-size:12.5px}.xls-hint svg.i{width:14px;height:14px}
 @media(max-width:560px){.vseg button span{display:none}.vseg button{padding:3px 8px}}
+.xls tr.xh2 td{background:#e2e8f0!important;color:var(--navy);font-weight:700;font-size:12.5px;padding:5px 10px;white-space:nowrap;border-bottom:1px solid #cbd5e1}
+.xls tr.xh2 td.rn{background:#e2e8f0!important}
 /* ===== เพิ่ม/ลบรายการ · ค้นหา · รายการ ===== */
 .addbar{border-style:solid;border-color:#d5deea;background:#fff}
 .addbar .pickIn{background:#fff;border-color:transparent;padding-left:6px}
@@ -1920,8 +1922,11 @@ function xlsTable(L, cnt) {
   const arrow = k => k === "date" ? (f.sort === "old" ? "▲" : "▼") : "▼";
   const head = `<tr><th class="rn">#</th>${cols.map(([l, , cls, k]) => `<th class="${cls || ""} ${k ? "srt" : ""} ${sortOn(k) ? "on" : ""}" ${k ? `data-xs="${k}" title="แตะเพื่อเรียง"` : ""}>${esc(l)}${sortOn(k) ? ` <i>${arrow(k)}</i>` : ""}</th>`).join("")}</tr>`;
   let last = null; const grouped = f.sort === "plant" || f.sort === "cat";
+  // ชื่อคอลัมน์ซ้ำใต้หัวกลุ่ม (เรียงตามวันที่: ซ้ำทุก 20 แถว) ให้เห็นชัดว่าแต่ละช่องคืออะไร
+  const subHead = `<tr class="xh2" aria-hidden="true"><td class="rn"></td>${cols.map(([l, , cls]) => `<td class="${(cls || "").replace(/\bwrap\b|\bs\b/g, "")}">${esc(l)}</td>`).join("")}</tr>`;
   const body = L.map((x, i) => { const g = GROUP_OF[f.sort](x);
-    const gr = grouped && g !== last ? `<tr class="xg"><td class="rn"></td><td colspan="${cols.length}"><b>${esc(g)}</b> <span>${cnt[g]} รายการ</span></td></tr>` : ""; last = g;
+    const gr = grouped && g !== last ? `<tr class="xg"><td class="rn"></td><td colspan="${cols.length}"><b>${esc(g)}</b> <span>${cnt[g]} รายการ</span></td></tr>${subHead}`
+      : !grouped && i && i % 20 === 0 ? subHead : ""; last = g;
     return gr + `<tr data-xid="${esc(x.id)}" class="${x.impact === "hold" ? "hold" : ""}"><td class="rn">${i + 1}</td>${cols.map(([, fn, cls]) => { const v = fn(x); return `<td class="${cls || ""}" ${/wrap/.test(cls || "") ? `title="${String(v).replace(/<[^>]*>/g, "")}"` : ""}>${v}</td>`; }).join("")}</tr>`; }).join("");
   return `<div class="xls-wrap"><table class="xls"><thead>${head}</thead><tbody>${body}</tbody></table></div><p class="sub xls-hint">${I("info")} แตะแถวเพื่อดู/แก้ไข · แตะหัวคอลัมน์ วันที่ / Plant / หม้อ / ปัญหา เพื่อเรียง · ปุ่ม CSV เปิดใน Excel ได้</p>`;
 }
