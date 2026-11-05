@@ -307,6 +307,60 @@ def _migrate_cust_list():
     AREAS, ITEM_MAP = load_areas()
 
 
+# หัวข้อ Checklist ใหม่ (★ ทดลองใช้ · ยังไม่นับใน % ของ Dashboard = pilot) — เพิ่มครั้งเดียวตอนเปิดเซิร์ฟเวอร์
+# (deck, ชื่อพื้นที่, เลขที่, ชื่อหัวข้อ, ลูกค้า)
+NEW_ITEMS_V1 = [
+    ("pc", "PF2", 97, "ตรวจสภาพอุปกรณ์สัมผัสอาหาร จุด Block cutter / Steam tunnel (พลั่ว ถาด ปะเก็น) และนับเครื่องมือหลังซ่อม", "Smucker"),
+    ("pc", "PF2", 98, "ทวนสอบบันทึก: ค่าที่บันทึกตรงกับเครื่อง (steamer), หน่วยตาชั่ง, อุณหภูมิ gravy / chunk ครบทุกจุด", "both"),
+    ("pc", "PF1 - จุดเตรียม", 96, "สภาพอุปกรณ์ไลน์ red meat: guide Metal detector, safety holder เครื่อง flaker, ปะเก็นฝา mixer", "Weruva"),
+    ("pc", "PF1 - บรรจุ", 95, "ตรวจรอยเชื่อม/สภาพอุปกรณ์สัมผัสอาหาร (กรวยบรรจุ ตะแกรงเครื่องผสม gravy) ก่อน-หลังผลิต และนับเครื่องมือหลังซ่อม", "Smucker"),
+    ("gmp", "PF1", 16, "พื้นที่เตรียมการผลิต - วัสดุลอก/หลุดเหนือโซนผลิตภัณฑ์ (สติกเกอร์ tag เทป ซิลิโคน สนิม สีลอก)", "both"),
+    ("gmp", "PF1", 17, "ไลน์บรรจุ - วัสดุลอก/หลุดเหนือโซนผลิตภัณฑ์ (สติกเกอร์ tag เทป ซิลิโคน สนิม สีลอก)", "both"),
+    ("gmp", "PF1", 18, "ห้องเคมี - วัสดุลอก/หลุด และสภาพถุง/ภาชนะเคมี (ไม่ขาด ไม่รั่ว)", "both"),
+    ("gmp", "PF1", 19, "น้ำ condensate / น้ำหยดเหนือผลิตภัณฑ์ (ฝ้า ท่อแอร์ fan coil) และรถเข็น RM มีหลังคาคลุม", "both"),
+    ("gmp", "PF1", 20, "ผนัง / ฝ้า / ประตู ไม่มีคราบดำหรือรา ไม่ชำรุด", "both"),
+    ("gmp", "PF1", 21, "แมลง/สัตว์พาหะในจุดเสี่ยง และที่ดักแมลงมีบันทึกการตรวจ", "both"),
+    ("gmp", "PF2", 15, "พื้นที่เตรียมการผลิต - วัสดุลอก/หลุดเหนือโซนผลิตภัณฑ์ (สติกเกอร์ tag เทป ซิลิโคน สนิม สีลอก)", "Smucker"),
+    ("gmp", "PF2", 16, "ไลน์บรรจุ - วัสดุลอก/หลุดเหนือโซนผลิตภัณฑ์ (สติกเกอร์ tag เทป ซิลิโคน สนิม สีลอก)", "Weruva"),
+    ("gmp", "PF2", 17, "น้ำ condensate / น้ำหยดเหนือผลิตภัณฑ์ (ฝ้า ท่อ hopper)", "Smucker"),
+    ("gmp", "PF2", 18, "ผนัง / ฝ้า / ประตู ไม่มีคราบดำหรือรา ไม่ชำรุด", "Smucker"),
+]
+
+
+def _migrate_new_items_v1():
+    """ครั้งเดียว: เพิ่มหัวข้อ Checklist ใหม่ตาม NEW_ITEMS_V1 (ไม่เพิ่มซ้ำถ้ามีหัวข้อชื่อเดียวกันในพื้นที่นั้นแล้ว)
+    หัวข้อใหม่ติดป้าย pilot = แสดงใน Dashboard แต่ยังไม่นับใน % (เปิดให้นับได้ที่หน้าแก้ไขหัวข้อ)"""
+    global AREAS, ITEM_MAP
+    if AREAS.get("new_items_v1"):
+        return
+    norm = lambda t: " ".join(str(t or "").split())
+    used = {z["id"] for z in AREAS["zones"]} | {it["id"] for z in AREAS["zones"] for it in z["items"]}
+    rd = round_of(now()).isoformat()
+    added, missing = 0, []
+    for deck, zname, no, name, cust in NEW_ITEMS_V1:
+        z = next((z for z in AREAS["zones"] if not z.get("hidden") and (z.get("deck") or zone_deck(z)) == deck and norm(z.get("name")) == zname), None)
+        if not z:
+            missing.append(f"{deck.upper()} {zname}")
+            continue
+        if any(not it.get("hidden") and norm(it.get("name")) == norm(name) for it in z["items"]):
+            continue  # มีแล้ว
+        iid = "A" + uuid.uuid4().hex[:6]
+        while iid in used:
+            iid = "A" + uuid.uuid4().hex[:6]
+        used.add(iid)
+        it = {"id": iid, "no": no, "name": name, "added": rd, "pilot": True}
+        if cust in CUSTOMERS or cust == BOTH_CUST:
+            it["cust"] = cust
+        pos = next((i for i, x in enumerate(z["items"]) if x.get("extra")), len(z["items"]))  # ก่อน "หัวข้อเพิ่มเติม"
+        z["items"].insert(pos, it)
+        added += 1
+    AREAS["new_items_v1"] = True
+    print(f"[areas] เพิ่มหัวข้อใหม่ {added}/{len(NEW_ITEMS_V1)} หัวข้อ (★ ยังไม่นับใน % ของ Dashboard)"
+          + (f" · ไม่พบพื้นที่: {', '.join(missing)}" if missing else ""), flush=True)
+    _save_areas(AREAS, "new_items_v1")
+    AREAS, ITEM_MAP = load_areas()
+
+
 def clean_qty_cfg(q):
     """ตั้งค่าช่องนับจำนวนของหัวข้อ: {unit, label, rooms[]}"""
     if not isinstance(q, dict):
@@ -722,6 +776,7 @@ def _start():
         _migrate_wh_points()
         _migrate_delay_qty()
         _migrate_cust_list()
+        _migrate_new_items_v1()
     except Exception as e:  # noqa
         print("[areas] backfill error:", e, flush=True)
     threading.Thread(target=scheduler_loop, daemon=True).start()
@@ -1095,11 +1150,11 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
                 counts.append(n)
                 ngs.append(ngn)  # จำนวนครั้งที่พบปัญหาในวันนั้น
                 # % ย้อนหลังคิดจากรายการที่มีอยู่จริงในวันนั้น (วันที่ไม่มีกิจกรรมไม่นับ)
-                if c != 3 and not it.get("extra") and item_active(it, rd, bool(c)):
+                if c != 3 and not it.get("extra") and not it.get("pilot") and item_active(it, rd, bool(c)):
                     totals[di] += 1
                     done[di] += bool(c)
             if visible and not it.get("hidden"):
-                row = {"id": it["id"], "no": it["no"], "name": it["name"], "extra": bool(it.get("extra")),
+                row = {"id": it["id"], "no": it["no"], "name": it["name"], "extra": bool(it.get("extra")), "pilot": bool(it.get("pilot")),
                        "proc": it.get("proc", ""), "cust": it.get("cust", ""),
                        "codes": codes, "counts": counts, "ngs": ngs}
                 if it.get("qty"):
@@ -1108,8 +1163,8 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
                 items.append(row)
         if not visible:  # พื้นที่ที่ลบ/แยกไปแล้ว (เช่น WH เดิม, GMP เดิม) ไม่ต้องแสดงใน Dashboard
             continue
-        total = sum(1 for it in z["items"] if not it.get("extra") and not it.get("hidden") and cust_ok(it))
-        if cust and not total:  # ไม่มีหัวข้อของลูกค้านี้ในพื้นที่นี้
+        total = sum(1 for it in z["items"] if not it.get("extra") and not it.get("hidden") and not it.get("pilot") and cust_ok(it))
+        if cust and not any(not r["extra"] for r in items):  # ไม่มีหัวข้อของลูกค้านี้ในพื้นที่นี้ (หัวข้อ ★ ยังแสดง)
             continue
         zones.append({"id": z["id"], "name": z["name"], "owner": z["owner"], "deck": zone_deck(z),
                       "total": total, "totals": totals,
@@ -1293,6 +1348,11 @@ async def api_admin_save(request: Request):
                 base["cust"] = cust  # Checklist ของลูกค้า · both = ทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)
             else:
                 base.pop("cust", None)
+            if "pilot" in it:  # ★ หัวข้อทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน %
+                if it.get("pilot") and not base.get("extra"):
+                    base["pilot"] = True
+                else:
+                    base.pop("pilot", None)
             if "qty" in it:  # ช่องนับจำนวน (เช่น วัตถุดิบ Delay แยกห้อง)
                 q = clean_qty_cfg(it.get("qty"))
                 if q and not base.get("extra"):

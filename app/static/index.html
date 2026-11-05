@@ -148,6 +148,8 @@ a.zbtn{text-decoration:none;color:inherit}
 .zbtn.grp.rt .badge.ok{background:#dcfce7;color:#166534}
 .zbtn.grp .gtag{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--navy);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:2px}
 .hm tr.grp th,.hm tr.grp td{background:#eef2ff;color:var(--navy);text-align:left;font-weight:700;padding:6px 8px}
+.ptag.pilot{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:800}
+.er .acts .pilt{color:#cbd5e1;font-weight:800}.er .acts .pilt.on{background:#fef3c7;border-color:#fcd34d;color:#b45309}
 .ed-grp{font-weight:700;color:var(--navy);margin:16px 0 8px;font-size:15px;border-bottom:2px solid var(--line);padding-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .ed-bulk{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);flex-wrap:wrap}
 .ed-bulk button{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700}
@@ -838,7 +840,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
       <div id="hmItems"></div>
       <div class="hm-legend">
         <span><i class="c1">✓</i>ตรวจแล้ว</span><span><i class="c2">!</i>พบปัญหา</span>
-        <span><i class="c3">–</i>ไม่มีกิจกรรม (ไม่นับใน %)</span><span><i class="miss"></i>ไม่ได้ส่ง</span>
+        <span><i class="c3">–</i>ไม่มีกิจกรรม (ไม่นับใน %)</span><span><i class="miss"></i>ไม่ได้ส่ง</span><span><b class="ptag pilot">★ ใหม่</b>หัวข้อใหม่ (แสดง แต่ยังไม่นับใน %)</span>
       </div>
     </details>
     <div id="todaySum"></div>
@@ -1043,11 +1045,13 @@ const custKey = it => !it || it.extra ? "none" : it.cust === BOTH ? "both" : CUS
 const custText = it => { const k = custKey(it); return k === "none" ? "" : k === "both" ? BOTH_CUST : k; };
 const custTag = it => { const k = custKey(it); if(k === "none") return "";
   return `<span class="ctag c-${k.toLowerCase()}" title="Checklist ของลูกค้า ${esc(custText(it))}">${esc(custText(it))}</span>`; };
+// ★ หัวข้อทดลอง (pilot): แสดงในฟอร์ม/Dashboard แต่ยังไม่นับใน % ของ Dashboard
+const pilotTag = it => it && it.pilot ? `<span class="ptag pilot" title="หัวข้อใหม่ · ยังไม่นับใน % ของ Dashboard">★ ใหม่</span>` : "";
 function procTag(it){
   if(!it) return "";
-  if(!it.proc) return custTag(it);
+  if(!it.proc) return pilotTag(it) + custTag(it);
   const i = ((CFG && CFG.process_tags) || []).indexOf(it.proc);
-  return `<span class="ptag pt${i < 0 ? 9 : i}">${esc(it.proc)}</span>` + custTag(it);
+  return pilotTag(it) + `<span class="ptag pt${i < 0 ? 9 : i}">${esc(it.proc)}</span>` + custTag(it);
 }
 /* หัวข้อใหญ่ (ชุดสไลด์): Process Control / GMP / Retort Analysis */
 const DECK_LIST = [{key: "pc", name: "Process Control"}, {key: "gmp", name: "GMP"}, {key: "retort", name: "Retort Analysis"}];
@@ -1884,7 +1888,7 @@ function hotBars(all_rows){
   const isN = hotMetric === "n";
   const val = (g, c) => isN ? g : pctOf(g, c);
   const unit = isN ? "" : "%";
-  const sum = (a, k) => a.reduce((x, r) => x + (r[k] || 0), 0);
+  const sum = (a, k) => a.reduce((x, r) => x + (r.it && r.it.pilot ? 0 : (r[k] || 0)), 0);  // หัวข้อ ★ ไม่นับในยอดรวม/%
   const tc = sum(rows, "cnt"), tg = sum(rows, "ng"), pc = sum(rows, "pc"), pg = sum(rows, "pg");
   const byV = (a, b) => (val(b.ng, b.cnt) - val(a.ng, a.cnt)) || (b.ng - a.ng) || (val(b.pg, b.pc) - val(a.pg, a.pc));
   const list = rows.filter(r => r.ng || r.pg).sort(byV);
@@ -1920,7 +1924,7 @@ function hotBars(all_rows){
     const a = val(r.ng, r.cnt), b = val(r.pg, r.pc);
     const bar = (cls, v, has, tip) => `<div class="hb-b ${cls}" title="${tip}"><i style="width:${v ? `max(4px,${pos(v)})` : "0"}"></i><b style="left:${v ? `max(4px,${pos(v)})` : "0px"}">${has ? v + (isN ? " ครั้ง" : "%") : "ไม่ได้ตรวจ"}</b></div>`;
     return `<div class="hb-row" data-tr="${r.it.id}">
-      <div class="hb-name" title="คลิกเพื่อดูกราฟแนวโน้ม · ${esc(r.z.name)} · ${esc(r.it.name)}"><span class="hb-rk${i < 3 ? " top" : ""}">${i + 1}</span><div>${esc(r.it.name)}${zsub(r)}</div></div>
+      <div class="hb-name" title="คลิกเพื่อดูกราฟแนวโน้ม · ${esc(r.z.name)} · ${esc(r.it.name)}"><span class="hb-rk${i < 3 ? " top" : ""}">${i + 1}</span><div>${esc(r.it.name)}${pilotTag(r.it)}${zsub(r)}</div></div>
       <div class="hb-bars">
         ${bar("cur", a, r.cnt, `ช่วงนี้ ${curLbl}: พบปัญหา ${r.ng}/${r.cnt} ครั้ง (${pctOf(r.ng, r.cnt)}%)`)}
         ${hasPrev ? bar("prv", b, r.pc, `ช่วงก่อน ${prvLbl}: พบปัญหา ${r.pg}/${r.pc} ครั้ง (${pctOf(r.pg, r.pc)}%)`) : ""}
@@ -2246,7 +2250,7 @@ function renderHot(){
   const chart = hotBars(all_rows);
   const blocks = groups.map((g, gi) => {
     const z = {id: g.id, name: g.name}, rows = g.rows;
-    const zc = sum(rows.map(r => r.cnt)), zn = sum(rows.map(r => r.ng));
+    const zc = sum(rows.filter(r => !r.it.pilot).map(r => r.cnt)), zn = sum(rows.filter(r => !r.it.pilot).map(r => r.ng));
     const hot = rows.filter(r => r.ng).sort((a, b) => (b.p - a.p) || (b.ng - a.ng));  // เรียงตาม % พบปัญหา (เท่ากันดูจำนวนครั้ง)
     const zp = zc ? Math.round(zn / zc * 100) : 0;
     const ac = HOT_AC[byProc ? (((CFG.process_tags || []).indexOf(g.name) + 1 || 8) - 1) % 8 : gi % 7];
@@ -2255,7 +2259,7 @@ function renderHot(){
       `<span>${hot.length ? `${hot.length} หัวข้อที่พบปัญหา` : "ไม่มีหัวข้อที่พบปัญหา"}</span></div></div>`;
     const open = `<div class="hot-grp" style="--ac:${ac}">`;
     return open + zh + g.subs.map((sb, k) => {
-    const sc = sum(sb.rows.map(r => r.cnt)), sn = sum(sb.rows.map(r => r.ng));
+    const sc = sum(sb.rows.filter(r => !r.it.pilot).map(r => r.cnt)), sn = sum(sb.rows.filter(r => !r.it.pilot).map(r => r.ng));
     const shot = sb.rows.filter(r => r.ng).sort((a, b) => (b.p - a.p) || (b.ng - a.ng));
     // แสดงทุกหัวข้อที่มีการแจ้ง: พบปัญหาก่อน (เรียงตาม %) → ตรวจแล้วปกติ → ยังไม่ได้ตรวจ
     const lst = shot.concat(sb.rows.filter(r => !r.ng && r.cnt).sort((a, b) => b.cnt - a.cnt), sb.rows.filter(r => !r.cnt));
@@ -2268,7 +2272,7 @@ function renderHot(){
         const cls = c === 2 ? "c2" : c === 1 ? "ok" : c === 3 ? "c3" : "na", st = c === 2 ? "พบปัญหา" : c === 1 ? "ตรวจแล้ว ปกติ" : c === 3 ? NO_ACT : "ไม่ได้ตรวจ";
         return `<td class="cell ${cls}" data-a="${it.id}" data-r="${r}" title="${thDate(r)} · ${st}">${c===2?"!":c===1?"✓":c===3?"–":""}</td>`; }).join("");
       const [bg, fg] = !cnt ? ["#f1f5f9", "#94a3b8"] : !ng ? ["#dcfce7", "#166534"] : hotColor(p);
-      return `<tr><th class="rh" data-tr="${it.id}" title="คลิกเพื่อดูกราฟแนวโน้ม · ${esc(it.name)}">${byProc || isSubGrp(rz) ? `<span class="zl">${esc(rz.name)}</span>` : ""}<div class="rn"><span class="rk${sel.has(it.id) ? " c" : ""}"${sel.has(it.id) ? ` style="background:${SERIES[sel.get(it.id)]}"` : ""}>${i+1}</span>${esc(it.name)}${byProc ? "" : procTag(it)}</div></th>${tds}
+      return `<tr><th class="rh" data-tr="${it.id}" title="คลิกเพื่อดูกราฟแนวโน้ม · ${esc(it.name)}">${byProc || isSubGrp(rz) ? `<span class="zl">${esc(rz.name)}</span>` : ""}<div class="rn"><span class="rk${sel.has(it.id) ? " c" : ""}"${sel.has(it.id) ? ` style="background:${SERIES[sel.get(it.id)]}"` : ""}>${i+1}</span>${esc(it.name)}${byProc ? pilotTag(it) : procTag(it)}</div></th>${tds}
         <td class="num">${cnt}</td><td class="num ng">${ng}</td><td class="tot" style="background:${bg};color:${fg}">${cnt ? Math.round(p*100) + "%" : "–"}</td>
         <td class="trd" title="${rg ? `จาก ${rg.days} วันที่มีการตรวจ` : "มีการตรวจน้อยกว่า 4 วัน"}">${rg ? arrow(rg.week) : "–"}</td></tr>`;
     }).join("");
@@ -2378,9 +2382,10 @@ async function loadHeatmap(){
   const grpName = (z, k) => !multiDeck ? "" : (k===0 || deckOf(HM.zones[k-1]) !== deckOf(z)) ? deckName(deckOf(z)) : "";
   const grpRow = (z, k) => { const n = grpName(z, k); return n ? `<tr class="grp"><th class="rh">${n}</th><td colspan="${R.length}"></td></tr>` : ""; };
   HM.zones.sort((a, b) => (deckIdx(a) - deckIdx(b)) || (plantRank(a) - plantRank(b)));
-  $("#hmZones").innerHTML = head + "<tbody>" + HM.zones.map((z, k) => `${grpRow(z, k)}<tr><th class="rh">${esc(z.name)}<small>${z.total} รายการ</small></th>${
+  const nPilot = z => z.items.filter(it => it.pilot).length;   // หัวข้อ ★ ใหม่ (แสดง แต่ไม่นับใน %)
+  $("#hmZones").innerHTML = head + "<tbody>" + HM.zones.map((z, k) => `${grpRow(z, k)}<tr><th class="rh">${esc(z.name)}<small>${z.total} รายการ${nPilot(z) ? ` · ★ใหม่ ${nPilot(z)}` : ""}</small></th>${
     z.done.map((d,i) => { const tot = z.totals ? z.totals[i] : z.total;
-      if(!tot) return `<td class="z" style="background:#f8fafc;color:#94a3b8" title="${esc(z.name)} · ${thDate(R[i])}\nยังไม่มีพื้นที่/รายการนี้ในวันนั้น">–</td>`;
+      if(!tot) return `<td class="z" style="background:#f8fafc;color:#94a3b8" title="${esc(z.name)} · ${thDate(R[i])}\n${nPilot(z) ? `มีแต่หัวข้อ ★ ใหม่ ${nPilot(z)} รายการ (ยังไม่นับใน %)` : "ยังไม่มีพื้นที่/รายการนี้ในวันนั้น"}">–</td>`;
       const p = d/tot; const [bg,fg] = pctColor(p);
       return `<td class="z" style="background:${bg};color:${fg}" title="${esc(z.name)} · ${thDate(R[i])}\nตรวจแล้ว ${d}/${tot} (${Math.round(p*100)}%)">${Math.round(p*100)}</td>`; }).join("")}</tr>`).join("") + "</tbody>";
   // 2) รายการ (แยกตามพื้นที่ พับ/ขยายได้) — แสดงเฉพาะวันนี้
@@ -2403,9 +2408,9 @@ async function loadHeatmap(){
         const st = c===2 ? "พบปัญหา" : c===1 ? "ตรวจแล้ว" : c===3 ? NO_ACT + " (ไม่นับใน %)" : (cur ? "ยังไม่ส่ง (รอบนี้ยังไม่ปิด)" : "ไม่ได้ส่ง");
         return `<td class="cell ${cls}" data-a="${it.id}" data-r="${R[i]}" title="${esc(it.no)} ${esc(it.name)}\n${thDate(R[i])} · ${st}${it.counts[i]>1?` · ส่ง ${it.counts[i]} ครั้ง`:""}">${c===2?"!":c===1?"✓":c===3?"–":""}</td>`;
       }).join("");
-      return `<tr><th class="rh ${it.extra?"extra":""}" title="${esc(it.name)}"><div class="rn">${it.extra?"＋ เพิ่มเติม":`${esc(it.no)} ${esc(it.name)}`}</div></th>${tds}</tr>`;
+      return `<tr><th class="rh ${it.extra?"extra":""}" title="${esc(it.name)}"><div class="rn">${it.extra?"＋ เพิ่มเติม":`${esc(it.no)} ${esc(it.name)}${pilotTag(it)}`}</div></th>${tds}</tr>`;
     }).join("");
-    return gh + `<details class="hmz" data-z="${z.id}" ${openSet.has(z.id)?"open":""}><summary><b>${esc(z.name)}</b><span>${dayLbl} ${today}/${z.total}</span></summary>
+    return gh + `<details class="hmz" data-z="${z.id}" ${openSet.has(z.id)?"open":""}><summary><b>${esc(z.name)}</b><span>${dayLbl} ${today}/${z.total}${nPilot(z) ? ` · ★ใหม่ ${nPilot(z)}` : ""}</span></summary>
       <div class="hm-wrap"><table class="hm hm3">${head3}<tbody>${rows}</tbody></table></div></details>`;
   }).join("");
   // เลื่อนตารางไปวันล่าสุด (ขวาสุด) ให้เห็นก่อน
@@ -2471,7 +2476,7 @@ function renderEditor(){
         <input type="text" class="e-name" value="${esc(it.name)}" placeholder="ชื่อรายการตรวจ">
         ${it.extra ? `<span></span>` : `<select class="e-proc" title="อยู่ในกระบวนการไหน"><option value="">— กระบวนการ —</option>${(CFG.process_tags||[]).map(t=>`<option ${t===it.proc?"selected":""}>${esc(t)}</option>`).join("")}</select>`}
         ${it.extra ? `<span></span>` : `<select class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน"><option value="">ไม่มีลูกค้า</option><option value="${BOTH}" ${custKey(it)==="both"?"selected":""}>${BOTH_CUST}</option>${CUSTS.map(c => `<option value="${c}" ${c===it.cust?"selected":""}>${c}</option>`).join("")}</select>`}
-        <div class="acts">${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
+        <div class="acts">${movable?`<button type="button" class="pilt ${it.pilot?"on":""}" title="★ หัวข้อใหม่/ทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน % (กดอีกครั้งเพื่อเริ่มนับ)">★</button>`:""}${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
         <button type="button" class="down" ${ii>=z.items.filter(x=>!x.extra).length-1?"disabled":""} title="เลื่อนลง">▼</button>
         <button type="button" class="del" title="ลบรายการ"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:`<span class="note">หัวข้อเพิ่มเติม</span>`}</div>
         ${it.qty ? `<div class="e-qty"><span>ห้อง (คั่นด้วย ,)</span><input type="text" class="e-rooms" value="${esc((it.qty.rooms || []).join(", "))}" placeholder="เช่น ห้อง 1, ห้อง 2, ห้อง 3 (เว้นว่าง = กรอกยอดรวมอย่างเดียว)"><span>หน่วย</span><input type="text" class="e-unit" value="${esc(it.qty.unit || "คัน")}" style="flex:0 0 56px"></div>` : ""}</div>`;
@@ -2528,6 +2533,8 @@ $("#editZones").addEventListener("click", e => {
   }
   const er = b.closest(".er"); if(!er) return; const ii = +er.dataset.i;
   if(b.classList.contains("del")){ if(!z.items[ii].name || confirm(`ลบรายการ "${z.items[ii].name}"?`)){ z.items.splice(ii,1); renderEditor(); } }
+  if(b.classList.contains("pilt")){ const it = z.items[ii]; it.pilot = !it.pilot; b.classList.toggle("on", it.pilot);
+    toast(it.pilot ? "★ หัวข้อนี้ยังไม่นับใน % ของ Dashboard" : "หัวข้อนี้นับใน % ของ Dashboard แล้ว"); return; }
   if(b.classList.contains("qtyt")){ const it = z.items[ii];
     if(it.qty){ if(confirm(`ยกเลิกช่องกรอกจำนวนของ "${it.name}"?`)) it.qty = null; }
     else it.qty = {unit: "คัน", label: "จำนวน", rooms: []};
