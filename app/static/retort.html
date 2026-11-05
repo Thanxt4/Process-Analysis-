@@ -1304,7 +1304,7 @@ function viewLog() {
     const progs = progsFor(d.retort); const sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
     const curCause = d.cause === "__other" ? d.causeOther : (d.cause || "");
     h += catHead(d, `data-step="4"`) + `${d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
-      ${U.form.more ? `<div class="card detcard">${sec("list", "รายละเอียด", "ไม่บังคับ · ระยะเวลา · สินค้า · Batch")}<div class="grid">
+      ${U.form.more ? `<div class="card detcard">${sec("list", "รายละเอียด", "ระยะเวลา · สินค้า · Batch")}<div class="grid">
         ${(cat.fields || []).map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
         <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}"></label>
         <label class="f"><span class="lab">สินค้า</span><input data-k="product" value="${esc(d.product)}"></label>
