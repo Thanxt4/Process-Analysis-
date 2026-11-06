@@ -44,6 +44,8 @@ h1{font-size:18px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;te
 .svgc .gl{stroke:#eef2f6}
 .svgc .tip{position:absolute;pointer-events:none;background:#0f2a47;color:#fff;font-size:13px;border-radius:10px;padding:8px 10px;white-space:nowrap;z-index:5;display:none;box-shadow:0 6px 18px rgba(15,23,42,.25);line-height:1.5}
 .svgc .tip i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.updbar{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;border:0;border-radius:999px;padding:10px 18px;background:#0f1a2e;color:#fff;font:inherit;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap;max-width:calc(100vw - 32px)}
+.updbar b{color:#fbbf24}
 .lock{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
 #lockPin::placeholder{letter-spacing:normal;font-size:16px}
 .lockbox{background:#fff;border-radius:22px;padding:26px 22px;width:100%;max-width:360px;text-align:center;box-shadow:var(--sh);border:1px solid var(--line)}
@@ -1220,18 +1222,51 @@ async function saveConfig() {
   catch (e) { toast("บันทึกการตั้งค่าไม่สำเร็จ: " + e.message); if (e.status === 403) { S.canAdmin = false; S.pin = ""; } return false; }
 }
 let lastSync = 0;
+/* ---------- จำข้อมูลไว้ในเครื่อง (IndexedDB): เข้าหน้าแล้วแสดงทันที แล้วค่อยซิงก์เฉพาะส่วนที่เปลี่ยนจากเซิร์ฟเวอร์ ---------- */
+const IDB = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open("retort", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = (mode, fn) => open().then(db => new Promise((res, rej) => {
+    const t = db.transaction("kv", mode), q = fn(t.objectStore("kv"));
+    t.oncomplete = () => res(q && q.result); t.onerror = t.onabort = () => rej(t.error);
+  }));
+  return { get: k => tx("readonly", st => st.get(k)).catch(() => null), set: (k, v) => tx("readwrite", st => st.put(v, k)).catch(() => {}) };
+})();
+const CACHE_V = 1;
+let cacheSig = "", cacheT = 0;
+const dataSig = () => { let n = 0, m = 0; for (const k in S.items) { n++; m = Math.max(m, S.items[k].updatedAt || 0); } return `${n}:${m}:${S.config.updatedAt || 0}`; };
+async function loadCache() {  // คืนค่า true ถ้ามีข้อมูลที่จำไว้
+  if (Object.keys(S.items).length) return true;
+  const c = await IDB.get("data");
+  if (!c || c.v !== CACHE_V || !c.items || Object.keys(S.items).length) return false;
+  S.items = c.items; if (c.config) S.config = migrate(c.config)[0];
+  lastSync = c.lastSync || 0; S.loaded = true; cacheSig = dataSig(); return true;
+}
+function persistSoon() {  // บันทึกลงเครื่องหลังข้อมูลเปลี่ยน (รวบหลายครั้งเป็นครั้งเดียว)
+  if (!S.loaded || !S.role) return;
+  clearTimeout(cacheT);
+  cacheT = setTimeout(() => { if (!S.role) return; const sig = dataSig(); if (sig === cacheSig) return; cacheSig = sig; IDB.set("data", { v: CACHE_V, items: S.items, config: S.config, lastSync }); }, 800);
+}
+let authEpoch = 0;  // เปลี่ยนทุกครั้งที่เข้า/ออกจากระบบ → ผลซิงก์ที่ค้างอยู่จากก่อนหน้าจะถูกทิ้ง
 async function syncAll(full) {
+  const ep = authEpoch;
   try {
     const r = await api("/api/retort?since=" + (full ? 0 : lastSync));
+    if (ep !== authEpoch) return;
     let ch = false;
     if (r.config) { const [c] = migrate(r.config); if ((c.updatedAt || 0) !== (S.config.updatedAt || 0)) { S.config = c; ch = true; } }
     if (full) { S.items = {}; ch = true; }
     r.items.forEach(x => { normItem(x); const loc = S.items[x.id]; if (!loc || (x.updatedAt || 0) > (loc.updatedAt || 0)) { S.items[x.id] = x; ch = true; } });
     const alive = new Set(r.ids); Object.keys(S.items).forEach(id => { if (!alive.has(id)) { delete S.items[id]; ch = true; } });
+    if (!full && r.ids.some(id => !S.items[id])) return syncAll(true);  // ข้อมูลในเครื่องไม่ครบ → โหลดใหม่ทั้งหมด
     if (r.role && r.role !== S.role) { setRole(r.role); ch = true; }
+    if (r.role && !$("#lock").classList.contains("hide")) { showLock(false); ch = true; }
     lastSync = r.now; S.loaded = true; setSync(true);
-    if (ch) softRender();
-  } catch (e) { if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
+    if (ch) { softRender(); persistSoon(); }
+  } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
 const STAFF_TABS = ["log", "list"];
@@ -1241,17 +1276,20 @@ function setRole(role) {
   const pill = $("#rolePill"); pill.textContent = ROLE_NAME[S.role] || ""; pill.className = "rolepill " + (S.role ? "r-" + S.role : "hide");
   $("#logoutBtn").classList.toggle("hide", !S.role);
 }
-$("#logoutBtn").onclick = () => confirmBox(`ออกจากระบบ (${ROLE_NAME[S.role] || ""})?`, async () => {
-  try { await jpost("/api/retort/logout", {}); } catch {}
-  setRole(""); S.pin = ""; S.items = {}; S.loaded = false; lastSync = 0; S.draft = null; S.editingId = null; S.justSaved = null;
-  closeModal(); render(); showLock(true);
+$("#logoutBtn").onclick = () => confirmBox(`ออกจากระบบ (${ROLE_NAME[S.role] || ""})?`, () => {
+  authEpoch++; jpost("/api/retort/logout", {}).catch(() => {});  // ไม่ต้องรอเซิร์ฟเวอร์ ออกทันที
+  clearTimeout(cacheT); setRole(""); S.pin = ""; S.items = {}; S.loaded = false; lastSync = 0; S.draft = null; S.editingId = null; S.justSaved = null;
+  closeModal(); showLock(true); render();
 });
 function showLock(on) { $("#lock").classList.toggle("hide", !on); if (on) setTimeout(() => $("#lockPin").focus(), 50); }
 $("#lockForm").onsubmit = async e => {
   e.preventDefault(); const pin = $("#lockPin").value.trim(); if (!pin) return;
-  try { const r = await jpost("/api/retort/login", { pin }); $("#lockPin").value = ""; $("#lockErr").textContent = ""; setRole(r.role); S.viewAuto = true; S.view = "";
-    showLock(false); render(); toast(`เข้าสู่ระบบแล้ว · ${r.role_name || ""}`); await syncAll(true); }
+  const btn = $("#lockForm [type=submit]"); if (btn.disabled) return; btn.disabled = true; btn.textContent = "กำลังเข้าสู่ระบบ…"; $("#lockErr").textContent = "";
+  try { const r = await jpost("/api/retort/login", { pin }); authEpoch++; $("#lockPin").value = ""; setRole(r.role); S.viewAuto = true; S.view = "";
+    await loadCache();  // ข้อมูลที่จำไว้ในเครื่อง → แสดงได้ทันที
+    showLock(false); render(); toast(`เข้าสู่ระบบแล้ว · ${r.role_name || ""}`); syncAll(!lastSync); }
   catch (err) { $("#lockErr").textContent = err.message || "รหัสไม่ถูกต้อง"; $("#lockPin").select(); }
+  finally { btn.disabled = false; btn.textContent = "เข้าสู่ระบบ"; }
 };
 async function unlockAdmin() {
   const pin = prompt("ใส่รหัสแก้ไขหัวข้อ (รหัสเดียวกับหน้าแก้ไข Checklist)"); if (!pin) return false;
@@ -1282,6 +1320,7 @@ function render() {
   ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
+  persistSoon();
 }
 /* เล่นแอนิเมชันเข้าหน้าเฉพาะตอนเปลี่ยนหน้า/ขั้นตอน (ไม่เล่นซ้ำตอนซิงก์ข้อมูลหรือเปลี่ยนตัวกรอง) */
 let animKey = "";
@@ -2707,8 +2746,18 @@ function askName(force) {
 }
 
 setRole(S.role);
+if (!S.role) showLock(true);  // ยังไม่ได้เข้าสู่ระบบ: แสดงหน้าใส่รหัสเลย ไม่ต้องรอเซิร์ฟเวอร์
 render();
-syncAll(true);
+(async () => { if (S.role && await loadCache()) softRender(); syncAll(!lastSync); })();
+/* แอปบนมือถือ: เปิดหน้าจากที่จำไว้ในเครื่องทันที · มีเวอร์ชันใหม่จะบอกให้แตะโหลดใหม่ */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+  navigator.serviceWorker.addEventListener("message", e => {
+    if (!e.data || e.data.type !== "page-updated" || $("#updBar")) return;
+    const b = document.createElement("button"); b.id = "updBar"; b.className = "updbar"; b.type = "button";
+    b.innerHTML = "มีเวอร์ชันใหม่ · <b>แตะเพื่อโหลดใหม่</b>"; b.onclick = () => location.reload(); document.body.appendChild(b);
+  });
+}
 setInterval(() => { if (!document.hidden) syncAll(false); }, 20000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) syncAll(false); });
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (S.view === "analyze" || S.view === "log") softRender(); }, 250); });
