@@ -1,5 +1,5 @@
 // Service worker: ทำให้ติดตั้งเป็นแอปบนมือถือได้ และเปิดหน้าแอปได้เร็วขึ้น
-const CACHE = "pc-shell-v109";
+const CACHE = "pc-shell-v110";
 const SHELL = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {

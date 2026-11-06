@@ -840,7 +840,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
       <div id="hmItems"></div>
       <div class="hm-legend">
         <span><i class="c1">✓</i>ตรวจแล้ว</span><span><i class="c2">!</i>พบปัญหา</span>
-        <span><i class="c3">–</i>ไม่มีกิจกรรม (ไม่นับใน %)</span><span><i class="miss"></i>ไม่ได้ส่ง</span><span><b class="ptag pilot">★ ใหม่</b>หัวข้อใหม่ (แสดง แต่ยังไม่นับใน %)</span>
+        <span><i class="c3">–</i>ไม่มีกิจกรรม (ไม่นับใน %)</span><span><i class="miss"></i>ไม่ได้ส่ง</span><span><b class="ptag pilot">★</b>หัวข้อใหม่ (แสดง แต่ยังไม่นับใน %)</span>
       </div>
     </details>
     <div id="todaySum"></div>
@@ -1046,7 +1046,7 @@ const custText = it => { const k = custKey(it); return k === "none" ? "" : k ===
 const custTag = it => { const k = custKey(it); if(k === "none") return "";
   return `<span class="ctag c-${k.toLowerCase()}" title="Checklist ของลูกค้า ${esc(custText(it))}">${esc(custText(it))}</span>`; };
 // ★ หัวข้อทดลอง (pilot): แสดงในฟอร์ม/Dashboard แต่ยังไม่นับใน % ของ Dashboard
-const pilotTag = it => it && it.pilot ? `<span class="ptag pilot" title="หัวข้อใหม่ · ยังไม่นับใน % ของ Dashboard">★ ใหม่</span>` : "";
+const pilotTag = it => it && it.pilot ? `<span class="ptag pilot" title="หัวข้อใหม่ · ยังไม่นับใน % ของ Dashboard">★</span>` : "";
 function procTag(it){
   if(!it) return "";
   if(!it.proc) return pilotTag(it) + custTag(it);
@@ -2383,9 +2383,9 @@ async function loadHeatmap(){
   const grpRow = (z, k) => { const n = grpName(z, k); return n ? `<tr class="grp"><th class="rh">${n}</th><td colspan="${R.length}"></td></tr>` : ""; };
   HM.zones.sort((a, b) => (deckIdx(a) - deckIdx(b)) || (plantRank(a) - plantRank(b)));
   const nPilot = z => z.items.filter(it => it.pilot).length;   // หัวข้อ ★ ใหม่ (แสดง แต่ไม่นับใน %)
-  $("#hmZones").innerHTML = head + "<tbody>" + HM.zones.map((z, k) => `${grpRow(z, k)}<tr><th class="rh">${esc(z.name)}<small>${z.total} รายการ${nPilot(z) ? ` · ★ใหม่ ${nPilot(z)}` : ""}</small></th>${
+  $("#hmZones").innerHTML = head + "<tbody>" + HM.zones.map((z, k) => `${grpRow(z, k)}<tr><th class="rh">${esc(z.name)}<small>${z.total} รายการ${nPilot(z) ? ` · ★ ${nPilot(z)}` : ""}</small></th>${
     z.done.map((d,i) => { const tot = z.totals ? z.totals[i] : z.total;
-      if(!tot) return `<td class="z" style="background:#f8fafc;color:#94a3b8" title="${esc(z.name)} · ${thDate(R[i])}\n${nPilot(z) ? `มีแต่หัวข้อ ★ ใหม่ ${nPilot(z)} รายการ (ยังไม่นับใน %)` : "ยังไม่มีพื้นที่/รายการนี้ในวันนั้น"}">–</td>`;
+      if(!tot) return `<td class="z" style="background:#f8fafc;color:#94a3b8" title="${esc(z.name)} · ${thDate(R[i])}\n${nPilot(z) ? `มีแต่หัวข้อใหม่ ★ ${nPilot(z)} รายการ (ยังไม่นับใน %)` : "ยังไม่มีพื้นที่/รายการนี้ในวันนั้น"}">–</td>`;
       const p = d/tot; const [bg,fg] = pctColor(p);
       return `<td class="z" style="background:${bg};color:${fg}" title="${esc(z.name)} · ${thDate(R[i])}\nตรวจแล้ว ${d}/${tot} (${Math.round(p*100)}%)">${Math.round(p*100)}</td>`; }).join("")}</tr>`).join("") + "</tbody>";
   // 2) รายการ (แยกตามพื้นที่ พับ/ขยายได้) — แสดงเฉพาะวันนี้
@@ -2410,7 +2410,7 @@ async function loadHeatmap(){
       }).join("");
       return `<tr><th class="rh ${it.extra?"extra":""}" title="${esc(it.name)}"><div class="rn">${it.extra?"＋ เพิ่มเติม":`${esc(it.no)} ${esc(it.name)}${pilotTag(it)}`}</div></th>${tds}</tr>`;
     }).join("");
-    return gh + `<details class="hmz" data-z="${z.id}" ${openSet.has(z.id)?"open":""}><summary><b>${esc(z.name)}</b><span>${dayLbl} ${today}/${z.total}${nPilot(z) ? ` · ★ใหม่ ${nPilot(z)}` : ""}</span></summary>
+    return gh + `<details class="hmz" data-z="${z.id}" ${openSet.has(z.id)?"open":""}><summary><b>${esc(z.name)}</b><span>${dayLbl} ${today}/${z.total}${nPilot(z) ? ` · ★ ${nPilot(z)}` : ""}</span></summary>
       <div class="hm-wrap"><table class="hm hm3">${head3}<tbody>${rows}</tbody></table></div></details>`;
   }).join("");
   // เลื่อนตารางไปวันล่าสุด (ขวาสุด) ให้เห็นก่อน
