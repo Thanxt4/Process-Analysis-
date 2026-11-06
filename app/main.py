@@ -73,6 +73,7 @@ for d in (UPLOAD_DIR, SLIDE_DIR):
 
 CUSTOMERS = ("Weruva", "Smucker")  # ลูกค้าที่เลือกให้แต่ละ Checklist ได้
 BOTH_CUST = "both"  # Checklist ที่ใช้กับทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)
+CUST_FILTERS = CUSTOMERS + ("any", "none")  # ตัวเลือกลูกค้าใน Dashboard: any = ลูกค้าทั้งหมด · none = ไม่มีลูกค้า
 NO_ACT = "ไม่มีกิจกรรม"  # ผลการตรวจแบบที่ 3: ไปตรวจแล้วแต่จุดนั้นไม่มีกิจกรรม → ไม่นับในกราฟ/การวิเคราะห์
 STATUSES = ("ปกติ", "พบปัญหา", NO_ACT)
 
@@ -1133,9 +1134,12 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
             qcell[(r["round_date"], r["area_id"])] = json.loads(r["qty"])
         except ValueError:
             pass
-    # เลือกลูกค้า: นับเฉพาะหัวข้อของลูกค้านั้น (รวมหัวข้อที่เป็นของทั้งสองลูกค้า) · none = เฉพาะหัวข้อที่ไม่มีลูกค้า
-    cust_ok = (lambda it: True) if cust not in CUSTOMERS + ("none",) else \
-        (lambda it: not it.get("cust")) if cust == "none" else (lambda it: it.get("cust") in (cust, BOTH_CUST))
+    # เลือกลูกค้า: นับเฉพาะหัวข้อของลูกค้านั้น (รวมหัวข้อที่เป็นของทั้งสองลูกค้า)
+    # any = ลูกค้าทั้งหมด (ไม่รวมหัวข้อที่ไม่มีลูกค้า) · none = เฉพาะหัวข้อที่ไม่มีลูกค้า
+    has_cust = lambda it: it.get("cust") in CUSTOMERS + (BOTH_CUST,)
+    cust_ok = (lambda it: True) if cust not in CUST_FILTERS else \
+        has_cust if cust == "any" else (lambda it: not has_cust(it)) if cust == "none" else \
+        (lambda it: it.get("cust") in (cust, BOTH_CUST))
     zones = []
     for z in AREAS["zones"]:
         visible = not z.get("hidden")
@@ -1169,7 +1173,7 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
         zones.append({"id": z["id"], "name": z["name"], "owner": z["owner"], "deck": zone_deck(z),
                       "total": total, "totals": totals,
                       "done": done, "items": items})
-    return {"rounds": rounds, "current": cur.isoformat(), "zones": zones, "cust": cust if cust in CUSTOMERS + ("none",) else ""}
+    return {"rounds": rounds, "current": cur.isoformat(), "zones": zones, "cust": cust if cust in CUST_FILTERS else ""}
 
 
 @app.get("/api/inspectors")

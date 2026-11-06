@@ -802,7 +802,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
       </summary>
       <div class="dash-cust">
         <label for="hmCust" class="dash-lbl cu">Customer</label>
-        <select id="hmCust" aria-label="เลือกลูกค้า"><option value="">ทุกลูกค้า (ทั้งหมด)</option><option value="Weruva">Weruva</option><option value="Smucker">Smucker</option><option value="none">ไม่มีลูกค้า</option></select>
+        <select id="hmCust" aria-label="เลือกลูกค้า"><option value="">ทุกหัวข้อ (รวมไม่มีลูกค้า)</option><option value="any">ลูกค้าทั้งหมด (Weruva, Smucker)</option><option value="Weruva">Weruva</option><option value="Smucker">Smucker</option><option value="none">ไม่มีลูกค้า</option></select>
         <span class="dash-cust-note" id="hmCustNote"></span>
       </div>
       <div class="dash-h">
@@ -2349,7 +2349,7 @@ async function loadHeatmap(){
   // ดึงย้อนไปอีกเท่าตัว เพื่อใช้เป็น "ช่วงก่อนหน้า" ในกราฟแท่งเปรียบเทียบ (API ดึงได้สูงสุด 200 วัน)
   const from = shiftDay(end, -(Math.min(2 * span, 200) - 1));
   $("#hmCust").value = hmCust;
-  $("#hmCustNote").textContent = hmCust === "none" ? "แสดงเฉพาะหัวข้อที่ไม่มีลูกค้า" : hmCust ? `แสดงเฉพาะหัวข้อของ ${hmCust} (รวมหัวข้อที่เป็นของทั้ง Weruva, Smucker)` : "";
+  $("#hmCustNote").textContent = hmCust === "none" ? "แสดงเฉพาะหัวข้อที่ไม่มีลูกค้า" : hmCust === "any" ? "แสดงเฉพาะหัวข้อที่มีลูกค้า (Weruva, Smucker) · ไม่รวมหัวข้อที่ไม่มีลูกค้า" : hmCust ? `แสดงเฉพาะหัวข้อของ ${hmCust} (รวมหัวข้อที่เป็นของทั้ง Weruva, Smucker)` : "";
   $("#dashBox").classList.toggle("cust-on", !!hmCust);
   try{ HM = await api(`/api/heatmap?start=${from}&end=${end}${custQ()}`); }catch(err){ toast(err.message, true); return; }
   for(const k in hotSel) delete hotSel[k];  // เปลี่ยนช่วงวัน → กลับไปเริ่มที่ 5 อันดับแรกของช่วงใหม่
