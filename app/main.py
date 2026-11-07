@@ -780,6 +780,10 @@ def _start():
         _migrate_new_items_v1()
     except Exception as e:  # noqa
         print("[areas] backfill error:", e, flush=True)
+    try:
+        _migrate_pf1_retorts()
+    except Exception as e:  # noqa
+        print("[retort] PF1 retorts migrate error:", e, flush=True)
     threading.Thread(target=scheduler_loop, daemon=True).start()
     print(f"[slides] รูปแบบสไลด์เวอร์ชัน {SLIDES_VERSION}", flush=True)
 
@@ -1793,6 +1797,27 @@ async def api_retort_add(request: Request):
     tmp.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(RETORT_CFG_PATH)
     return {"ok": True, "config": cfg}
+
+
+# หม้อ PF1 ชุดใหม่: RP01–RP23, RA01–RA04, RS01–RS02 + RS04–RS09, RT01–RT07 + RT09–RT10
+PF1_RETORTS = ([f"RP{i:02d}" for i in range(1, 24)] + [f"RA{i:02d}" for i in range(1, 5)]
+               + [f"RS{i:02d}" for i in range(1, 10) if i != 3] + [f"RT{i:02d}" for i in range(1, 11) if i != 8])
+
+
+def _migrate_pf1_retorts():
+    """ครั้งเดียว: ค่าตั้ง Retort ที่บันทึกหม้อ PF1 ไว้แล้ว → ใช้หม้อชุดใหม่ (รวมหม้อที่เคยเพิ่มเองไว้ด้วย)
+    ถ้ายังไม่เคยบันทึกรายการหม้อ PF1 หน้าเว็บจะใช้ชุดใหม่เป็นค่าเริ่มต้นอยู่แล้ว"""
+    cfg = _read_rt_cfg()
+    if not cfg or cfg.get("pf1Retorts2"):
+        return
+    pr = cfg.get("plantRetorts") if isinstance(cfg.get("plantRetorts"), dict) else {}
+    old = pr.get("PF1") if isinstance(pr.get("PF1"), list) else []
+    if old:
+        pr["PF1"] = list(dict.fromkeys(PF1_RETORTS + [str(x) for x in old]))
+        cfg["plantRetorts"] = pr
+    cfg["pf1Retorts2"] = True
+    _write_rt_cfg(cfg)
+    print(f"[retort] หม้อ PF1 ชุดใหม่ (RP/RA/RS/RT) · {len(pr.get('PF1') or PF1_RETORTS)} หม้อ", flush=True)
 
 
 def _write_rt_cfg(cfg: dict):
