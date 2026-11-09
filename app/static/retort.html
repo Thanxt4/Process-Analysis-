@@ -304,6 +304,13 @@ body.tpdrag #main::after{content:"วางไฟล์ PDF ที่นี่ �
 .tpmiss{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--bad)}
 .tpmiss label{display:inline-flex;gap:6px;align-items:center;color:var(--ink)}
 .tpmiss input,.tpok input{-webkit-appearance:checkbox;appearance:auto;width:20px;height:20px;min-height:0;padding:0;margin:0;flex:none;accent-color:var(--navy)}
+.tpfile{display:flex;gap:10px;align-items:flex-start;background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:10px 12px;margin:4px 0 12px}
+.tpfile .i{width:22px;height:22px;flex:none;margin-top:2px}
+.tpfile b{display:block;word-break:break-all}
+.tpfile span{font-size:14px;color:var(--ink2)}
+.tpfile em{font-style:normal;color:var(--bad);font-weight:700}
+.tpnear{font-size:13.5px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:6px 10px;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tpnear .sm{min-height:30px;padding:3px 10px}
 .tpp{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
 .tpp.isnew{border-color:#93c5fd}
 .tph{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
@@ -2188,11 +2195,19 @@ function tpDiff() {  // เทียบกับค่าปัจจุบั�
     const diff = c.steps.length !== p.steps.length || p.steps.some((s, i) => [0, 1, 2, 3, 4].some(k => String(s[k] ?? "") !== String((c.steps[i] || [])[k] ?? (k === 4 ? "" : "")))); diff ? res.chg++ : res.same++; });
   return res;
 }
+function tpNear(p) {  // โปรแกรมในแอปที่ค่าใกล้เคียงที่สุด (นับช่องที่ต่าง)
+  let best = null;
+  TP_PROGS.forEach(c => { if (Math.abs(c.steps.length - p.steps.length) > 1) return;
+    let diff = Math.abs(c.steps.length - p.steps.length) * 4;
+    p.steps.forEach((s, i) => { const b = c.steps[i] || []; [0, 1, 2, 3].forEach(k => { if (String(s[k] ?? "").toUpperCase() !== String(b[k] ?? "").toUpperCase()) diff++; }); });
+    if (!best || diff < best.diff) best = { c, diff }; });
+  return best && best.diff <= Math.max(4, p.steps.length) ? best : null;
+}
 function tpModal() {
   const d = TPD.d, cur = new Map(tpCur(d.doc).map(p => [String(p.no), p])), r = tpDiff(), oldRev = (docOf(d.doc) || {}).rev;
   const cell = (pi, si, k, v, base) => { const ch = base !== undefined && String(v ?? "") !== String(base ?? ""); return `<td><input class="tpc ${ch ? "chg" : ""}" data-p="${pi}" data-s="${si}" data-k="${k}" value="${esc(v ?? "")}" ${base !== undefined ? `data-b="${esc(base ?? "")}"` : ""} ${ch ? `title="เดิม: ${esc(base ?? "-")}"` : ""} inputmode="decimal"></td>`; };
   modal(`<h2>${d.parsed ? "ตรวจค่าที่อ่านจาก PDF" : "แก้ไขค่าโปรแกรม"}</h2>
-    ${d.src ? `<p class="sub" style="margin:2px 0 8px">ไฟล์: ${esc(d.src)}</p>` : ""}
+    ${d.src ? `<div class="tpfile">${I("doc")}<div><b>${esc(d.src)}</b><span>${d.doc ? `อ่านได้เป็นเอกสาร <b>${esc(d.doc)}</b>${d.rev ? ` Rev.${esc(d.rev)}` : ""}${d.title ? ` · ${esc(d.title)}` : ""}` : `<em>อ่านรหัสเอกสารจากไฟล์ไม่เจอ — พิมพ์รหัสในช่อง เอกสาร ด้านล่าง</em>`}</span></div></div>` : ""}
     <div class="tpmeta"><label class="f"><span class="lab">เอกสาร</span><input id="tpDoc" value="${esc(d.doc)}" placeholder="TP002-N"></label>
       <label class="f"><span class="lab">Rev.</span><input id="tpRev" value="${esc(d.rev)}" inputmode="numeric"></label>
       <label class="f"><span class="lab">วันที่ประกาศใช้</span><input id="tpEff" value="${esc(d.eff)}" placeholder="18/06/69"></label>
@@ -2204,6 +2219,7 @@ function tpModal() {
     <div class="tplist">${d.progs.map((p, pi) => { const c = cur.get(p.no);
       return `<div class="tpp ${!c ? "isnew" : ""}"><div class="tph"><label>โปรแกรม <input class="tpno" data-pno="${pi}" value="${esc(p.no)}"></label>${!c ? `<span class="tag">ใหม่</span>` : ""}
         <input class="tpnote" data-pnote="${pi}" value="${esc(p.note)}" placeholder="หมายเหตุ เช่น เฉพาะ RP01-RP04"><input class="tpret" data-pret="${pi}" value="${esc(p.retorts)}" placeholder="หม้อ (ว่าง = ทุกหม้อของเอกสาร)" title="ใช้กับหม้อไหน (ว่าง = ทุกหม้อของเอกสาร)"><button class="ghost sm" data-pdel="${pi}">ลบ</button></div>
+        ${!c ? (() => { const n = tpNear(p); return n ? `<div class="tpnear">${n.diff ? "ค่าใกล้เคียง" : "ค่าตรงกับ"} <b>${esc(n.c.doc)} โปรแกรม ${esc(n.c.no)}</b>${n.c.note ? ` (${esc(n.c.note)})` : ""}${n.diff ? ` · ต่าง ${n.diff} ช่อง` : ""}${!/^\d+$/.test(p.no) ? ` <button class="ghost sm" data-pusen="${pi}" data-n="${esc(n.c.no)}">ใช้เลข ${esc(n.c.no)}</button>` : ""}</div>` : (!/^\d+$/.test(p.no) ? `<div class="tpnear">อ่านเลขโปรแกรมไม่เจอ — พิมพ์เลขโปรแกรมตามเอกสารในช่อง ${esc(p.no)}</div>` : ""); })() : ""}
         <div class="tscroll"><table class="tbl tpt"><thead><tr><th>#</th><th>ช่วง</th><th>อุณหภูมิ °C</th><th>เวลา (นาที)</th><th>ความดัน Bar</th><th>Holding</th><th></th></tr></thead><tbody>
         ${p.steps.map((s, si) => { const b = c ? c.steps[si] : null;
           return `<tr><td class="n">${si + 1}</td><td><select class="tpc ${b && b[0] !== s[0] ? "chg" : ""}" data-p="${pi}" data-s="${si}" data-k="0">${Object.entries(PHASE).map(([k, l]) => `<option value="${k}" ${s[0] === k ? "selected" : ""}>${l}</option>`).join("")}</select></td>
@@ -2230,7 +2246,8 @@ function tpModal() {
       else if (t.dataset.keep != null) d.keep[t.dataset.keep] = t.checked;
       else if (t.dataset.k === "0" || t.dataset.pno != null || t.id === "tpDoc") { d.ok = false; redraw(); } });
     box.addEventListener("click", async e => { const b = e.target.closest("button"); if (!b) return;
-      if (b.dataset.pdel != null) { d.progs.splice(+b.dataset.pdel, 1); d.ok = false; redraw(); }
+      if (b.dataset.pusen != null) { d.progs[+b.dataset.pusen].no = b.dataset.n; d.ok = false; redraw(); }
+      else if (b.dataset.pdel != null) { d.progs.splice(+b.dataset.pdel, 1); d.ok = false; redraw(); }
       else if (b.dataset.sdel) { const [pi, si] = b.dataset.sdel.split(".").map(Number); d.progs[pi].steps.splice(si, 1); d.ok = false; redraw(); }
       else if (b.dataset.sadd != null) { const st = d.progs[+b.dataset.sadd].steps, l = st[st.length - 1]; st.push([l ? l[0] : "come", "", "", "", ""]); d.ok = false; redraw(); }
       else if (b.id === "tpAddP") { d.progs.push({ no: "", note: "", retorts: "", steps: [["come", "", "", "", ""]] }); d.ok = false; redraw(); }
