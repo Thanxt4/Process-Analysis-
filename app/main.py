@@ -518,6 +518,13 @@ with db() as con:
             seq INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_img_sub ON images(submission_id);
+        CREATE TABLE IF NOT EXISTS followups(
+            id TEXT PRIMARY KEY,
+            data TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
         """
     )
     # เพิ่มคอลัมน์สำหรับหลายสไลด์ต่อ 1 การตรวจ (รองรับฐานข้อมูลเดิม)
@@ -1439,7 +1446,7 @@ async def api_admin_disk(request: Request):
 
     def calc():
         du = shutil.disk_usage(DATA_DIR)
-        days = sorted(d.name for d in UPLOAD_DIR.iterdir() if d.is_dir())
+        days = sorted(d.name for d in UPLOAD_DIR.iterdir() if d.is_dir() and re.match(r"^\d{4}-\d{2}-\d{2}$", d.name))
         return {
             "disk_total_gb": _gb(du.total), "disk_free_gb": _gb(du.free),
             "disk_used_pct": round(100 * (du.total - du.free) / du.total, 1),
@@ -2016,6 +2023,176 @@ async def api_retort_ai(request: Request):
         reason = (cands[0].get("finishReason") if cands else "") or (r["data"].get("promptFeedback") or {}).get("blockReason", "")
         raise HTTPException(502, f"AI ไม่ได้ตอบกลับ ({reason or 'ไม่ทราบสาเหตุ'})")
     return {"text": text.strip(), "model": "AI"}  # ไม่ส่งชื่อรุ่นไปที่หน้าเว็บ
+
+
+# ---------------------------------------------------------------- เรื่องที่ต้องติดตาม (Follow-up)
+# เพิ่ม/แก้ไข/ปิดเรื่องได้จากหน้าเว็บ · ลบต้องใส่รหัสแก้ไข (EDIT_PIN) · รูปเก็บที่ uploads/followups/
+FU_STATUS = {"open": "รอดำเนินการ", "doing": "กำลังดำเนินการ", "done": "เสร็จแล้ว"}
+FU_PHOTO_RE = re.compile(r"^followups/\d{4}-\d{2}/[A-Za-z0-9_-]+\.jpg$")
+FU_MAX_PHOTOS = 12
+FU_ISSUE_DAYS = 14
+
+
+def _fu_ms() -> int:
+    return int(now().timestamp() * 1000)
+
+
+def _fu_txt(v, n: int) -> str:
+    return _clean(str(v or ""))[:n]
+
+
+def _fu_sub_info(con, sid: str):
+    """ผลตรวจที่เป็นต้นเรื่อง: วันที่ ผู้ตรวจ หัวข้อ สิ่งที่พบ และรูปย่อ"""
+    r = con.execute("SELECT * FROM submissions WHERE id=?", (sid,)).fetchone()
+    if not r:
+        return None
+    r = dict(r)
+    it = ITEM_MAP.get(r["area_id"], {})
+    imgs = [x["filename"] for x in con.execute(
+        "SELECT filename FROM images WHERE submission_id=? ORDER BY page, seq LIMIT 8", (sid,))]
+    return {"sid": sid, "round": r["round_date"], "area_id": r["area_id"], "no": it.get("no", ""),
+            "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""), "zone_id": it.get("zone_id", ""),
+            "inspector": r["inspector"], "at": r["created_at"], "note": r.get("note") or "",
+            "cause": r.get("cause") or "", "action": r.get("action") or "",
+            "media": [media_info(f) for f in imgs]}
+
+
+@app.get("/api/followups")
+def api_followups():
+    """รายการเรื่องที่ต้องติดตาม + ปัญหาที่พบล่าสุดที่ยังไม่ได้เปิดเรื่องติดตาม"""
+    with db() as con:
+        items = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups ORDER BY created_at DESC")]
+        linked = {(x.get("src") or {}).get("sid") for x in items} - {None, ""}
+        for x in items:
+            sid = (x.get("src") or {}).get("sid")
+            x["src_info"] = _fu_sub_info(con, sid) if sid else None
+        since = (round_of(now()) - timedelta(days=FU_ISSUE_DAYS)).isoformat()
+        rows = [dict(r) for r in con.execute(
+            "SELECT * FROM submissions WHERE status='พบปัญหา' AND round_date>=? ORDER BY created_at DESC LIMIT 300", (since,))]
+        thumbs = {}
+        for r in rows:
+            f = con.execute("SELECT filename FROM images WHERE submission_id=? ORDER BY page, seq LIMIT 1", (r["id"],)).fetchone()
+            thumbs[r["id"]] = media_info(f["filename"]) if f else None
+    zdeck = {z["id"]: zone_deck(z) for z in AREAS["zones"]}
+    issues = []
+    for r in rows:
+        if r["id"] in linked:
+            continue
+        it = ITEM_MAP.get(r["area_id"], {})
+        issues.append({"sid": r["id"], "round": r["round_date"], "area_id": r["area_id"], "no": it.get("no", ""),
+                       "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""), "zone_id": it.get("zone_id", ""),
+                       "deck": zdeck.get(it.get("zone_id"), "pc"), "inspector": r["inspector"], "at": r["created_at"],
+                       "note": r.get("note") or "", "cause": r.get("cause") or "", "action": r.get("action") or "",
+                       "thumb": thumbs.get(r["id"])})
+    return {"items": items, "issues": issues[:120], "issue_days": FU_ISSUE_DAYS, "status": FU_STATUS}
+
+
+@app.post("/api/followups")
+async def api_followup_save(request: Request):
+    """เพิ่มเรื่องใหม่ (ไม่มี id) หรือแก้ไขเรื่องเดิม · เปลี่ยนสถานะจะบันทึกลงประวัติให้อัตโนมัติ"""
+    data = await request.json()
+    by = _fu_txt(data.get("by"), 60)
+    if not by:
+        raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
+    title = _fu_txt(data.get("title"), 200)
+    if not title:
+        raise HTTPException(400, "กรอกเรื่องที่ต้องติดตาม")
+    status = data.get("status") if data.get("status") in FU_STATUS else "open"
+    due = str(data.get("due") or "")[:10]
+    if due:
+        try:
+            date.fromisoformat(due)
+        except ValueError:
+            raise HTTPException(400, "วันที่กำหนดเสร็จไม่ถูกต้อง")
+    zone_id = str(data.get("zone_id") or "")
+    zone = next((z for z in AREAS["zones"] if z["id"] == zone_id), None)
+    photos = []
+    for f in data.get("photos") or []:
+        f = str(f)
+        if FU_PHOTO_RE.match(f) and (UPLOAD_DIR / f).exists() and f not in photos:
+            photos.append(f)
+    ts = _fu_ms()
+    fid = str(data.get("id") or "")
+    with db() as con:
+        old = con.execute("SELECT data FROM followups WHERE id=?", (fid,)).fetchone() if fid else None
+        old = json.loads(old["data"]) if old else None
+        if fid and not old:
+            raise HTTPException(404, "ไม่พบเรื่องนี้ (อาจถูกลบไปแล้ว)")
+        x = old or {"id": "f" + uuid.uuid4().hex[:10], "created_by": by, "created_at": ts, "notes": []}
+        src = data.get("src") if not old else old.get("src")
+        if src and isinstance(src, dict) and src.get("sid"):
+            ok = con.execute("SELECT 1 FROM submissions WHERE id=?", (str(src["sid"]),)).fetchone()
+            src = {"sid": str(src["sid"])} if ok else None
+        else:
+            src = None
+        x.update({"title": title, "detail": _fu_txt(data.get("detail"), 3000),
+                  "zone_id": zone["id"] if zone else "", "zone": zone["name"] if zone else _fu_txt(data.get("zone"), 80),
+                  "owner": _fu_txt(data.get("owner"), 80), "due": due, "urgent": bool(data.get("urgent")),
+                  "photos": photos[:FU_MAX_PHOTOS], "src": src, "updated_at": ts, "updated_by": by})
+        prev = (old or {}).get("status")
+        if prev != status:
+            x["status"] = status
+            if old:
+                x["notes"].append({"at": ts, "by": by, "kind": "status", "text": f"เปลี่ยนสถานะเป็น {FU_STATUS[status]}"})
+            if status == "done":
+                x["done_at"], x["done_by"] = ts, by
+            else:
+                x.pop("done_at", None), x.pop("done_by", None)
+        removed = [f for f in (old or {}).get("photos", []) if f not in x["photos"]]
+        con.execute("INSERT INTO followups(id, data, status, created_at, updated_at) VALUES(?,?,?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET data=excluded.data, status=excluded.status, updated_at=excluded.updated_at",
+                    (x["id"], json.dumps(x, ensure_ascii=False), x["status"], x["created_at"], ts))
+    for f in removed:
+        _remove_media(f)
+    return {"ok": True, "item": x}
+
+
+@app.post("/api/followups/{fid}/note")
+async def api_followup_note(fid: str, request: Request):
+    """บันทึกความคืบหน้า"""
+    data = await request.json()
+    by, text = _fu_txt(data.get("by"), 60), _fu_txt(data.get("text"), 1000)
+    if not by:
+        raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
+    if not text:
+        raise HTTPException(400, "พิมพ์ความคืบหน้าก่อน")
+    with db() as con:
+        r = con.execute("SELECT data FROM followups WHERE id=?", (fid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบเรื่องนี้")
+        x = json.loads(r["data"])
+        ts = _fu_ms()
+        x.setdefault("notes", []).append({"at": ts, "by": by, "text": text})
+        x["notes"] = x["notes"][-200:]
+        x["updated_at"], x["updated_by"] = ts, by
+        con.execute("UPDATE followups SET data=?, updated_at=? WHERE id=?", (json.dumps(x, ensure_ascii=False), ts, fid))
+    return {"ok": True, "item": x}
+
+
+@app.post("/api/followups/photo")
+async def api_followup_photo(file: UploadFile = File(...)):
+    raw = await file.read()
+    if len(raw) > 25 * 1024 * 1024:
+        raise HTTPException(400, "ไฟล์รูปใหญ่เกินไป")
+    month = now().strftime("%Y-%m")
+    (UPLOAD_DIR / "followups" / month).mkdir(parents=True, exist_ok=True)
+    rel = f"followups/{month}/{uuid.uuid4().hex[:12]}.jpg"
+    if not await run_in_threadpool(_store_image, raw, rel):
+        raise HTTPException(400, "ไฟล์นี้ไม่ใช่รูปภาพที่รองรับ")
+    return {"ok": True, "file": rel, **media_info(rel)}
+
+
+@app.delete("/api/followups/{fid}")
+def api_followup_delete(fid: str, pin: str = ""):
+    _check_edit_pin(pin)
+    with db() as con:
+        r = con.execute("SELECT data FROM followups WHERE id=?", (fid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบเรื่องนี้")
+        con.execute("DELETE FROM followups WHERE id=?", (fid,))
+    for f in json.loads(r["data"]).get("photos") or []:
+        _remove_media(f)
+    return {"ok": True}
 
 
 @app.get("/healthz")
