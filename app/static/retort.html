@@ -324,6 +324,9 @@ body.tpdrag #main::after{content:"วางไฟล์ PDF ที่นี่ �
 .isorow .b{flex:1;min-width:0;display:flex;flex-direction:column}
 .isorow .b b{font-size:16px}
 .isorow.sm{padding:6px 0}
+.isolink.done{border-color:var(--ok,#16a34a);color:var(--ok,#16a34a)}
+.isosteps{margin:6px 0 12px;padding-left:20px;font-size:14.5px;line-height:1.55}
+.isosteps li{margin-bottom:4px}
 .isowarn{font-size:12.5px;font-weight:700;color:#b45309}
 .rgtabs{display:flex;gap:8px;margin:0 0 12px;overflow-x:auto;scrollbar-width:none}
 .rgtabs button{flex:1 0 auto;min-width:66px;min-height:46px;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font-weight:700;font-size:17px;color:var(--navy);display:flex;align-items:center;justify-content:center;gap:6px}
@@ -2165,12 +2168,12 @@ function tpCard() {
       ${BASE_DOCS.some(d => d.doc === o.doc) ? `<button class="ghost sm" data-tprev="${esc(o.doc)}">ใช้ค่าเดิมในแอป</button>` : `<button class="ghost sm" data-tprev="${esc(o.doc)}">ลบ</button>`}</div>`).join("")}</div>` : ""}</div>`;
 }
 const tpCur = doc => TP_PROGS.filter(p => p.doc === doc);
-function tpOpen(parsed, src) {
+function tpOpen(parsed, src, dry) {
   const doc = parsed.doc || "", cur = docOf(doc) || {};
   TPD.d = { doc, rev: parsed.rev || "", eff: parsed.eff || cur.eff || "", title: cur.title || "", plant: cur.plant || "PF1", retorts: (cur.retorts || []).join(", "), src: src || "",
     progs: (parsed.progs || []).map(p => ({ no: String(p.no || ""), note: p.note || "", retorts: "", steps: (p.steps || []).map(s => [s[0], s[1], s[2], s[3], s[4] ?? ""]) })),
     keep: {}, ok: false, parsed: !!src };
-  tpModal();
+  if (!dry) tpModal();
 }
 function tpDiff() {  // เทียบกับค่าปัจจุบันของเอกสารเดียวกัน
   const d = TPD.d, cur = new Map(tpCur(d.doc).map(p => [String(p.no), p]));
@@ -2225,7 +2228,7 @@ function tpModal() {
       else if (b.dataset.sadd != null) { const st = d.progs[+b.dataset.sadd].steps, l = st[st.length - 1]; st.push([l ? l[0] : "come", "", "", "", ""]); d.ok = false; redraw(); }
       else if (b.id === "tpAddP") { d.progs.push({ no: "", note: "", retorts: "", steps: [["come", "", "", "", ""]] }); d.ok = false; redraw(); }
       else if (b.id === "tpSkip") { closeModal(); tpNext(); }
-      else if (b.dataset.close != null) TPD.queue = [];
+      else if (b.dataset.close != null) { TPD.queue = []; TPD.stat = null; }
       else if (b.id === "tpSave") { grab(); await tpSave(); } });
   }, "wide");
 }
@@ -2246,20 +2249,26 @@ async function tpSave() {
   const prevIso = S.config.isoDocs;
   S.config.progDocs = { ...progOv(), [d.doc]: { doc: d.doc, rev: d.rev, eff: d.eff, title: d.title, plant: d.plant, retorts: rets, progs, by: S.user, at: Date.now(), src: d.src } };
   if (isoOf(d.doc)) S.config.isoDocs = isoDocs().map(x => x.doc === d.doc ? { ...x, rev: d.rev || x.rev, eff: d.eff || x.eff } : x);
-  if (await saveConfig()) { closeModal(); progCfgRef = null; toast(`บันทึกค่าโปรแกรม ${d.doc} Rev.${d.rev} แล้ว`); render(); tpNext(); }
+  if (await saveConfig()) { closeModal(); progCfgRef = null; if (TPD.stat) TPD.stat.saved++; toast(`บันทึกค่าโปรแกรม ${d.doc} Rev.${d.rev} แล้ว`); render(); tpNext(); }
   else { S.config.progDocs = prev; S.config.isoDocs = prevIso; }
 }
 function tpQueue(files) {
   const pdfs = [...files].filter(f => /\.pdf$/i.test(f.name) || f.type === "application/pdf");
   if (!pdfs.length) { toast("วางได้เฉพาะไฟล์ PDF"); return; }
-  needEditPin("อัปเดตค่าโปรแกรมจาก PDF", () => { TPD.queue = pdfs.slice(1); tpUpload(pdfs[0]); });
+  needEditPin("อัปเดตค่าโปรแกรมจาก PDF", () => { TPD.queue = pdfs.slice(1); TPD.stat = { n: pdfs.length, saved: 0, same: 0 }; tpUpload(pdfs[0]); });
 }
-function tpNext() { const f = (TPD.queue || []).shift(); if (f) setTimeout(() => tpUpload(f), 150); }
+function tpNext() {
+  const f = (TPD.queue || []).shift(); if (f) { setTimeout(() => tpUpload(f), 150); return; }
+  const st = TPD.stat; if (st && st.n > 1) toast(`อัปเดตครบ ${st.n} ไฟล์ · บันทึก ${st.saved} · ไม่เปลี่ยน ${st.same} · อ่านไม่ได้/ข้าม ${st.n - st.saved - st.same}`); TPD.stat = null;
+}
 async function tpUpload(file) {
   const fd = new FormData(); fd.append("file", file); if (S.pin) fd.append("pin", S.pin);
   toast("กำลังอ่านค่าจาก PDF…");
   try { const r = await fetch("/api/retort/tp/parse", { method: "POST", body: fd }); const j = await r.json().catch(() => ({}));
     if (!r.ok) { toast(`${file.name}: ${j.detail || "อ่าน PDF ไม่สำเร็จ"}`); tpNext(); return; }
+    const cur = docOf(j.doc), dd = cur && (j.progs || []).length ? (() => { tpOpen(j, file.name, true); return tpDiff(); })() : null;
+    if (dd && String(cur.rev) === String(j.rev || "") && !dd.chg && !dd.add) {  // โปรแกรมที่ไม่อยู่ใน PDF แต่เคยเลือก "เก็บไว้" ไม่นับ
+      if (TPD.stat) TPD.stat.same++; toast(`${j.doc} Rev.${j.rev} ค่าตรงกับในแอปแล้ว — ข้าม`); tpNext(); return; }
     tpOpen(j, file.name); }
   catch (e) { toast("อ่าน PDF ไม่สำเร็จ: " + e.message); }
 }
@@ -2275,12 +2284,30 @@ function tpManualPick() {
 function isoCard() {
   const L = isoDocs().slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true }));
   const app = new Map(TP_DOCS.map(d => [d.doc, d]));
-  return `<div class="card">${sec("doc", `เอกสาร ISO Master (${L.length})`, "เปิดไฟล์ PDF จากระบบ ISO โดยตรง · ต้องล็อกอินบัญชีบริษัทในเครื่อง", `<button class="ghost sm" id="isoEdit">${I("pen")}วางลิงก์ / แก้ไข</button>`)}
+  return `<div class="card">${sec("doc", `เอกสาร ISO Master (${L.length})`, "เปิดไฟล์ PDF จากระบบ ISO โดยตรง · ต้องล็อกอินบัญชีบริษัทในเครื่อง", `<span class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${L.length ? `<button class="sm pri" id="isoAll">${I("download")}โหลด PDF ทั้งหมดแล้วอัปเดต</button>` : ""}<button class="ghost sm" id="isoEdit">${I("pen")}วางลิงก์ / แก้ไข</button></span>`)}
     ${L.length ? `<div class="isolist">${L.map(x => { const a = app.get(x.doc), diff = a && x.rev && a.rev !== x.rev;
       return `<div class="isorow"><div class="b"><b>${esc(x.doc)}</b><span class="sub">${x.rev ? `Rev.${esc(x.rev)}` : ""}${x.eff ? ` · ประกาศใช้ ${esc(x.eff)}` : ""}${a ? ` · ${esc(a.title)}` : ""}</span>
         ${diff ? `<span class="isowarn">ค่าในแอปเป็น Rev.${esc(a.rev)} — ตรวจสอบกับเอกสารล่าสุด</span>` : ""}</div>
         <a class="isolink" href="${esc(x.url)}" target="_blank" rel="noopener">${I("doc")}เปิด PDF</a></div>`; }).join("")}</div>`
       : `<p class="sub" style="margin:4px 0 0">ยังไม่มีลิงก์ · กด <b>วางลิงก์ / แก้ไข</b> แล้ววางลิงก์ไฟล์จาก ISO Master (วางทีละหลายลิงก์ได้)</p>`}</div>`;
+}
+// ดาวน์โหลดทุกไฟล์ผ่านเบราว์เซอร์ที่ล็อกอินบริษัทไว้ (แอปดึงเองไม่ได้) → ลากทั้งหมดกลับมาวาง
+const isoDl = u => u + (u.includes("?") ? "&" : "?") + "download=1";
+function openIsoAll() {
+  const L = isoDocs().slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true }));
+  modal(`<h2>โหลด PDF ทั้งหมดแล้วอัปเดต</h2>
+    <ol class="isosteps"><li>กด <b>ดาวน์โหลดทั้งหมด</b> เบราว์เซอร์จะดาวน์โหลด ${L.length} ไฟล์ด้วยบัญชีบริษัทที่ล็อกอินไว้ (ถ้าเบราว์เซอร์ถามว่า "อนุญาตให้ดาวน์โหลดหลายไฟล์/ป๊อปอัป" ให้กด อนุญาต)</li>
+      <li>เปิดโฟลเดอร์ Downloads เลือกไฟล์ทั้งหมด แล้ว<b>ลากมาวางที่หน้านี้</b> (หรือกดปุ่ม อัปโหลด PDF แล้วเลือกหลายไฟล์)</li>
+      <li>ระบบอ่านทีละไฟล์ · เอกสารที่ค่าไม่เปลี่ยนจะข้ามให้เอง · ที่เปลี่ยนจะให้ตรวจแล้วกดยืนยัน</li></ol>
+    <button class="blk pri" id="isoGo">${I("download")}ดาวน์โหลดทั้งหมด (${L.length} ไฟล์)</button>
+    <div class="isolist" style="margin-top:10px">${L.map(x => `<div class="isorow sm"><div class="b"><b>${esc(x.doc)}</b><span class="sub">${x.rev ? "Rev." + esc(x.rev) : ""}</span></div><a class="isolink" href="${esc(isoDl(x.url))}" target="_blank" rel="noopener" data-iso="${esc(x.doc)}">${I("download")}ดาวน์โหลด</a></div>`).join("")}</div>
+    <div class="row" style="margin-top:12px"><button class="blk" data-close>ปิด</button></div>`, box => {
+    box.querySelector("#isoGo").onclick = () => {
+      L.forEach((x, i) => setTimeout(() => { const a = document.createElement("a"); a.href = isoDl(x.url); a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+        const r = box.querySelector(`[data-iso="${CSS.escape(x.doc)}"]`); if (r) r.classList.add("done"); }, i * 700));
+      toast(`กำลังเปิดดาวน์โหลด ${L.length} ไฟล์… เสร็จแล้วลากไฟล์มาวางที่หน้านี้`);
+    };
+  });
 }
 function openIsoEditor(done) {
   const cur = isoDocs();
@@ -2324,6 +2351,7 @@ function viewProgs() {
     else if (b.dataset.tprev) needEditPin("ใช้ค่าเดิมในแอป", () => confirmBox(`เลิกใช้ค่าที่อัปเดตของ ${b.dataset.tprev}?`, async () => {
       const prev = S.config.progDocs, ov = { ...progOv() }; delete ov[b.dataset.tprev]; S.config.progDocs = ov;
       if (await saveConfig()) { progCfgRef = null; toast("กลับไปใช้ค่าเดิมแล้ว"); render(); } else S.config.progDocs = prev; }));
+    else if (b.id === "isoAll") needEditPin("อัปเดตจาก PDF ทั้งหมด", openIsoAll);
     else if (b.id === "isoEdit") needEditPin("แก้ไขลิงก์เอกสาร ISO Master", () => openIsoEditor(() => { const y = window.scrollY; viewProgs(); window.scrollTo(0, y); }));
     else if (b.dataset.prt != null) { f.rt = b.dataset.prt; lsSet("rt_pf_rt", f.rt); f.open = ""; viewProgs(); }
     else if (b.dataset.popen) { f.open = f.open === b.dataset.popen ? "" : b.dataset.popen; const y = window.scrollY; viewProgs(); window.scrollTo(0, y); } };
