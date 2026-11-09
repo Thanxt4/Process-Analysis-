@@ -292,7 +292,10 @@ button.dash{color:var(--navy)}
 @media(max-width:699px){.nav .in{gap:2px}.nav button{min-width:0;padding:6px 2px;font-size:11.5px}.nav button svg.i{width:20px;height:20px}}
 .zcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .zcards.two{grid-template-columns:1fr 1fr}
-.tpup{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.tpup{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;min-height:48px;border-radius:12px;padding:10px 14px;font-weight:600;color:#fff;background:linear-gradient(135deg,#1b2a41,#2c4a72);border:1.5px solid #1b2a41;box-shadow:0 8px 18px -10px rgba(27,42,65,.75)}
+.tpup .i{stroke:#fff}
+.tpdrop{border:2px dashed #94a3b8;border-radius:12px;padding:12px;margin-top:10px;text-align:center;color:var(--mute);font-size:14px}
+body.tpdrag #main::after{content:"วางไฟล์ PDF ที่นี่ เพื่ออัปเดตค่าโปรแกรม";position:fixed;inset:12px;z-index:70;display:flex;align-items:center;justify-content:center;border:3px dashed var(--navy);border-radius:20px;background:rgba(241,245,255,.92);font-size:22px;font-weight:700;color:var(--navy);pointer-events:none}
 .tpmeta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .tpmeta .wide{grid-column:1/-1}
 @media(max-width:560px){.tpmeta{grid-template-columns:1fr 1fr}}
@@ -2138,7 +2141,13 @@ function isoParse(text, html) {
     const pu = isoParseUrl(url) || (() => { const m = /([A-Z]{2,6}\d{2,4}-[A-Z0-9]+)/i.exec(line || ""); return m ? { doc: m[1].toUpperCase(), rev: "" } : null; })();
     if (!pu) return;
     const eff = (/(\d{1,2}\/\d{1,2}\/\d{2,4})/.exec(line || "") || [])[1] || "";
-    out.set(pu.doc, { doc: pu.doc, rev: pu.rev, eff, url: url.trim() });
+    let rev = pu.rev;
+    if (!rev && line) {  // รหัสเอกสาร | Rev. | วันที่ | URL  หรือ  "Rev. 34"
+      const t = line.replace(url, " ");
+      const m = new RegExp(pu.doc.replace(/[-]/g, "\\-") + "\\s*[|\\t,;: ]\\s*(?:Rev\\.?\\s*)?(\\d{1,3})(?!\\s*[/.]\\d)", "i").exec(t) || /\bRev(?:ision)?\.?\s*(\d{1,3})\b/i.exec(t);
+      if (m) rev = m[1];
+    }
+    out.set(pu.doc, { doc: pu.doc, rev, eff, url: url.trim() });
   });
   return [...out.values()];
 }
@@ -2148,8 +2157,9 @@ const TPD = { d: null };
 function tpCard() {
   const ups = Object.values(progOv()).filter(o => o && o.doc).sort((a, b) => a.doc.localeCompare(b.doc));
   return `<div class="card">${sec("thermo", "อัปเดตค่าโปรแกรมจากเอกสาร", "อัปโหลด PDF ของ Rev. ใหม่ ระบบอ่านค่าให้ แล้วตรวจก่อนยืนยัน (เฉพาะหัวหน้า)")}
-    <div class="row" style="gap:8px;flex-wrap:wrap"><label class="blk pri tpup" style="flex:1"><input type="file" accept="application/pdf,.pdf" id="tpFile" hidden>${I("download")}อัปโหลด PDF อ่านค่าอัตโนมัติ</label>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><label class="blk pri tpup" style="flex:1"><input type="file" accept="application/pdf,.pdf" id="tpFile" multiple hidden>${I("download")}อัปโหลด PDF อ่านค่าอัตโนมัติ</label>
       <button class="blk" id="tpManual" style="flex:1">${I("pen")}แก้ไขค่าเอง</button></div>
+    <div class="tpdrop">หรือ <b>ลากไฟล์ PDF มาวาง</b> ที่หน้านี้ (หลายไฟล์พร้อมกันได้)</div>
     <p class="sub" style="margin:8px 0 0">อ่านได้เฉพาะ PDF ที่เป็นตัวอักษร (ไฟล์สแกนเป็นรูปอ่านไม่ได้) · ค่าที่อ่านได้ต้องตรวจเทียบเอกสารทุกครั้งก่อนยืนยัน</p>
     ${ups.length ? `<div class="isolist" style="margin-top:8px">${ups.map(o => `<div class="isorow"><div class="b"><b>${esc(o.doc)} Rev.${esc(o.rev || "-")}</b><span class="sub">${(o.progs || []).length} โปรแกรม · อัปเดตโดย ${esc(o.by || "-")}${o.at ? " · " + new Date(o.at).toLocaleDateString("th-TH") : ""}${o.src ? " · จาก " + esc(o.src) : ""}</span></div>
       ${BASE_DOCS.some(d => d.doc === o.doc) ? `<button class="ghost sm" data-tprev="${esc(o.doc)}">ใช้ค่าเดิมในแอป</button>` : `<button class="ghost sm" data-tprev="${esc(o.doc)}">ลบ</button>`}</div>`).join("")}</div>` : ""}</div>`;
@@ -2194,7 +2204,8 @@ function tpModal() {
         </tbody></table></div><button class="ghost sm" data-sadd="${pi}">+ เพิ่มขั้นตอน</button></div>`; }).join("")}</div>
     <button class="blk" id="tpAddP" style="margin-top:8px">+ เพิ่มโปรแกรม</button>
     <label class="tpok"><input type="checkbox" id="tpOk" ${d.ok ? "checked" : ""}> ตรวจค่าทุกช่องเทียบกับเอกสาร PDF แล้ว (ช่องสีเหลือง = ต่างจากค่าเดิม)</label>
-    <div class="row" style="margin-top:12px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="tpSave" ${d.ok ? "" : "disabled"}>ยืนยันและบันทึก</button></div>`, box => {
+    ${(TPD.queue || []).length ? `<p class="sub" style="margin:10px 0 0">เหลืออีก ${TPD.queue.length} ไฟล์: ${TPD.queue.map(f => esc(f.name)).join(", ")}</p>` : ""}
+    <div class="row" style="margin-top:12px"><button class="blk" data-close>${(TPD.queue || []).length ? "หยุด" : "ยกเลิก"}</button>${(TPD.queue || []).length ? `<button class="blk" id="tpSkip">ข้ามไฟล์นี้</button>` : ""}<button class="blk pri" id="tpSave" ${d.ok ? "" : "disabled"}>ยืนยันและบันทึก</button></div>`, box => {
     const grab = () => { d.doc = box.querySelector("#tpDoc").value.trim().toUpperCase(); d.rev = box.querySelector("#tpRev").value.trim(); d.eff = box.querySelector("#tpEff").value.trim();
       d.plant = box.querySelector("#tpPlant").value; d.retorts = box.querySelector("#tpRet").value; };
     const redraw = () => { grab(); const y = box.scrollTop; tpModal(); const nb = $("#modalRoot .box"); if (nb) nb.scrollTop = y; };
@@ -2213,6 +2224,8 @@ function tpModal() {
       else if (b.dataset.sdel) { const [pi, si] = b.dataset.sdel.split(".").map(Number); d.progs[pi].steps.splice(si, 1); d.ok = false; redraw(); }
       else if (b.dataset.sadd != null) { const st = d.progs[+b.dataset.sadd].steps, l = st[st.length - 1]; st.push([l ? l[0] : "come", "", "", "", ""]); d.ok = false; redraw(); }
       else if (b.id === "tpAddP") { d.progs.push({ no: "", note: "", retorts: "", steps: [["come", "", "", "", ""]] }); d.ok = false; redraw(); }
+      else if (b.id === "tpSkip") { closeModal(); tpNext(); }
+      else if (b.dataset.close != null) TPD.queue = [];
       else if (b.id === "tpSave") { grab(); await tpSave(); } });
   }, "wide");
 }
@@ -2230,15 +2243,23 @@ async function tpSave() {
     .map(p => ({ no: String(p.no), note: p.note, retorts: p.retorts, steps: p.steps }));
   const progs = [...d.progs.map(p => { const hold = p.steps.some(s => s[4] !== ""); return { no: p.no, note: p.note.trim(), retorts: [], steps: p.steps.map(s => hold ? s.slice(0, 5) : s.slice(0, 4)) }; }), ...keepOld];
   const prev = S.config.progDocs;
+  const prevIso = S.config.isoDocs;
   S.config.progDocs = { ...progOv(), [d.doc]: { doc: d.doc, rev: d.rev, eff: d.eff, title: d.title, plant: d.plant, retorts: rets, progs, by: S.user, at: Date.now(), src: d.src } };
-  if (await saveConfig()) { closeModal(); progCfgRef = null; toast(`บันทึกค่าโปรแกรม ${d.doc} Rev.${d.rev} แล้ว`); render(); }
-  else S.config.progDocs = prev;
+  if (isoOf(d.doc)) S.config.isoDocs = isoDocs().map(x => x.doc === d.doc ? { ...x, rev: d.rev || x.rev, eff: d.eff || x.eff } : x);
+  if (await saveConfig()) { closeModal(); progCfgRef = null; toast(`บันทึกค่าโปรแกรม ${d.doc} Rev.${d.rev} แล้ว`); render(); tpNext(); }
+  else { S.config.progDocs = prev; S.config.isoDocs = prevIso; }
 }
+function tpQueue(files) {
+  const pdfs = [...files].filter(f => /\.pdf$/i.test(f.name) || f.type === "application/pdf");
+  if (!pdfs.length) { toast("วางได้เฉพาะไฟล์ PDF"); return; }
+  needEditPin("อัปเดตค่าโปรแกรมจาก PDF", () => { TPD.queue = pdfs.slice(1); tpUpload(pdfs[0]); });
+}
+function tpNext() { const f = (TPD.queue || []).shift(); if (f) setTimeout(() => tpUpload(f), 150); }
 async function tpUpload(file) {
   const fd = new FormData(); fd.append("file", file); if (S.pin) fd.append("pin", S.pin);
   toast("กำลังอ่านค่าจาก PDF…");
   try { const r = await fetch("/api/retort/tp/parse", { method: "POST", body: fd }); const j = await r.json().catch(() => ({}));
-    if (!r.ok) { toast(j.detail || "อ่าน PDF ไม่สำเร็จ"); return; }
+    if (!r.ok) { toast(`${file.name}: ${j.detail || "อ่าน PDF ไม่สำเร็จ"}`); tpNext(); return; }
     tpOpen(j, file.name); }
   catch (e) { toast("อ่าน PDF ไม่สำเร็จ: " + e.message); }
 }
@@ -2306,7 +2327,7 @@ function viewProgs() {
     else if (b.id === "isoEdit") needEditPin("แก้ไขลิงก์เอกสาร ISO Master", () => openIsoEditor(() => { const y = window.scrollY; viewProgs(); window.scrollTo(0, y); }));
     else if (b.dataset.prt != null) { f.rt = b.dataset.prt; lsSet("rt_pf_rt", f.rt); f.open = ""; viewProgs(); }
     else if (b.dataset.popen) { f.open = f.open === b.dataset.popen ? "" : b.dataset.popen; const y = window.scrollY; viewProgs(); window.scrollTo(0, y); } };
-  m.onchange = e => { if (e.target.id === "tpFile") { const f = e.target.files[0]; e.target.value = ""; if (f) needEditPin("อัปโหลด PDF ค่าโปรแกรม", () => tpUpload(f)); } };
+  m.onchange = e => { if (e.target.id === "tpFile") { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) tpQueue(fs); } };
   m.oninput = e => { if (e.target.id === "pq") { f.q = e.target.value; clearTimeout(S.pqT); S.pqT = setTimeout(() => { viewProgs(); const q = $("#pq"); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 300); } };
 }
 
@@ -3010,6 +3031,12 @@ setRole(S.role);
 if (!S.role) showLock(true);  // ยังไม่ได้เข้าสู่ระบบ: แสดงหน้าใส่รหัสเลย ไม่ต้องรอเซิร์ฟเวอร์
 render();
 (async () => { if (S.role && await loadCache()) softRender(); syncAll(!lastSync); })();
+/* ลากไฟล์ PDF มาวางในแถบ โปรแกรม → อัปเดตค่าโปรแกรม */
+{ let dc = 0; const isFile = e => [...(e.dataTransfer?.types || [])].includes("Files"), on = v => document.body.classList.toggle("tpdrag", v);
+  addEventListener("dragenter", e => { if (S.view !== "progs" || !isFile(e)) return; e.preventDefault(); dc++; on(true); });
+  addEventListener("dragover", e => { if (S.view !== "progs" || !isFile(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+  addEventListener("dragleave", e => { if (S.view !== "progs") return; dc = Math.max(0, dc - 1); if (!dc) on(false); });
+  addEventListener("drop", e => { if (S.view !== "progs" || !isFile(e)) return; e.preventDefault(); dc = 0; on(false); tpQueue(e.dataTransfer.files); }); }
 /* แอปบนมือถือ: เปิดหน้าจากที่จำไว้ในเครื่องทันที · มีเวอร์ชันใหม่จะบอกให้แตะโหลดใหม่ */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
