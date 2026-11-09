@@ -1892,8 +1892,20 @@ async def api_retort_remove(request: Request):
 # อ่านได้เฉพาะ PDF ที่เป็นตัวอักษร (ไม่ใช่ภาพสแกน) · ต้องติดตั้ง pdfplumber (อยู่ใน requirements.txt)
 _TP_DOC_RE = re.compile(r"\b(TP\d{3}-[A-Z0-9]{1,4})\b")
 _TP_PROG_RE = re.compile(r"(?:program|prog\.?|p/?g\.?|โปรแกรม)\s*(?:no\.?|number|ที่)?\s*[:#.]?\s*(\d{1,3})\b", re.I)
-_TP_REV_RE = re.compile(r"\bRev(?:ision)?\.?\s*(?:No\.?)?\s*[:.]?\s*(\d{1,3})\b", re.I)
-_TP_EFF_RE = re.compile(r"(?:effective|eff\.|มีผล|บังคับใช้|ประกาศใช้)[^0-9]{0,30}(\d{1,2}\s*[/.-]\s*\d{1,2}\s*[/.-]\s*\d{2,4})", re.I)
+_TP_REV_RE = re.compile(r"(?:\bRev(?:ision)?\.?\s*(?:No\.?)?|แก้ไขครั้งที่)\s*[:.]?\s*(\d{1,3})\b", re.I)
+_TP_EFF_RE = re.compile(r"(?:effective|eff\.|มีผล|บังคับใช้|ประกาศใช้|เริ่มใช้)[^0-9]{0,30}(\d{1,2}\s*[/.-]\s*\d{1,2}\s*[/.-]\s*\d{2,4})", re.I)
+_TP_RET_RE = re.compile(r"\b(R[A-Z])\s?(\d{2})(?:\s*[-–]\s*(?:R[A-Z])?\s?(\d{2}))?")
+
+
+def _tp_retorts(text: str) -> list:
+    """RP05- RP08 → RP05..RP08 · RP05, RP07 → RP05, RP07"""
+    out = []
+    for p, a, b in _TP_RET_RE.findall(text or ""):
+        for n in range(int(a), (int(b) if b and int(b) >= int(a) and int(b) - int(a) < 40 else int(a)) + 1):
+            r = f"{p}{n:02d}"
+            if r not in out:
+                out.append(r)
+    return out
 
 
 def _tp_phase(t: str) -> str:
@@ -1973,12 +1985,52 @@ def _tp_table_steps(table):
     return steps
 
 
+def _tp_table_multi(table):
+    """ตารางที่มีหลายโปรแกรมเรียงข้างกัน คืน [(เลขโปรแกรม, หมายเหตุ, ขั้นตอน)] หรือ None ถ้าไม่ใช่รูปแบบนี้"""
+    rows = [[str(c).strip() if c is not None else None for c in r] for r in table]
+    lab = next((i for i, r in enumerate(rows[:4]) if any(c and re.search(r"หมายเลขโปรแกรม|program\s*no|^program$|^โปรแกรม$", c, re.I) for c in r)), None)
+    if lab is None:
+        return None
+    starts = []  # (คอลัมน์เริ่ม, เลขโปรแกรม, หมายเหตุ)
+    for ci, c in enumerate(rows[lab]):
+        if not c or re.search(r"หมายเลขโปรแกรม|program|โปรแกรม", c, re.I):
+            continue
+        m = re.match(r"\s*(\d{1,3})\b(.*)", c, re.S)
+        if m:
+            note = re.sub(r"^[\s(]*\**|[)\s]*$", "", m.group(2).replace("\n", " ")).strip()
+            starts.append((ci, str(int(m.group(1))), note))
+    if not starts:
+        return None
+    width = max(len(r) for r in rows)
+    bounds = [(st[0], (starts[k + 1][0] if k + 1 < len(starts) else width)) for k, st in enumerate(starts)]
+    out = [(no, note, []) for _, no, note in starts]
+    phase = ""
+    for r in rows[lab + 1:]:
+        r = r + [None] * (width - len(r))
+        left = [c for c in r[:starts[0][0]] if c]
+        ph = next((_tp_phase(c) for c in left if _tp_phase(c)), "")
+        phase = ph or phase
+        for k, (a, b) in enumerate(bounds):
+            nums = [n for n in (_tp_num(c) for c in r[a:b] if c is not None) if n is not None]
+            if len(nums) < 3:
+                continue
+            t, tm, pr = nums[:3]
+            try:
+                if not (20 <= float(t) <= 150 and 0 <= float(pr) <= 6):
+                    continue
+            except ValueError:
+                continue
+            st = [phase or "come", t, tm, pr] + ([nums[3]] if len(nums) > 3 else [])
+            out[k][2].append(st)
+    return [x for x in out if x[2]]
+
+
 def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
     try:
         import pdfplumber
     except ImportError:
         raise HTTPException(501, "เซิร์ฟเวอร์ยังไม่มีตัวอ่าน PDF · รันคำสั่ง pip install pdfplumber (หรือ start_windows.bat ใหม่) แล้วรีสตาร์ท")
-    progs, order, text_all, n_tables = {}, [], "", 0
+    progs, order, text_all, n_tables, cells = {}, [], "", 0, []
     last_no = None
     try:
         pdf = pdfplumber.open(io.BytesIO(raw))
@@ -1990,6 +2042,16 @@ def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
             for tb in page.find_tables():
                 n_tables += 1
                 table = tb.extract()
+                if page.page_number <= 2:  # ช่องหัวเอกสาร (เรื่อง / แก้ไขครั้งที่ / วันที่เริ่มใช้) อ่านจากช่องตารางได้ตรงกว่าข้อความทั้งหน้า
+                    cells += [re.sub(r"\s+", " ", str(c)).strip() for r in table for c in r if c]
+                multi = _tp_table_multi(table)
+                if multi:
+                    for no, note, steps in multi:
+                        if no not in progs:
+                            progs[no] = {"no": no, "note": note, "steps": [], "retorts": _tp_retorts(note) if re.search(r"เฉพาะ|only", note, re.I) else []}
+                            order.append(no)
+                        progs[no]["steps"] += steps
+                    continue
                 steps = _tp_table_steps(table)
                 if not steps:
                     continue
@@ -2011,10 +2073,15 @@ def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
     if len(text_all.strip()) < 40:
         raise HTTPException(422, "PDF นี้ไม่มีตัวอักษรให้อ่าน (น่าจะเป็นไฟล์สแกนเป็นรูป) · ใส่ค่าเองได้ที่ปุ่ม แก้ไขค่าเอง")
     fname = filename or ""
-    doc = (_TP_DOC_RE.search(fname.upper()) or _TP_DOC_RE.search(text_all) or [None, ""])[1]
-    rev = (re.search(r"\bRe(?:v)?\.?\s*(\d{1,3})", fname, re.I) or _TP_REV_RE.search(text_all) or [None, ""])[1]
-    eff = re.sub(r"\s", "", (_TP_EFF_RE.search(text_all) or [None, ""])[1])
-    return {"doc": doc, "rev": rev, "eff": eff, "progs": [progs[k] for k in order],
+    ct = "\n".join(cells)
+    doc = (_TP_DOC_RE.search(fname.upper()) or _TP_DOC_RE.search(ct) or _TP_DOC_RE.search(text_all) or [None, ""])[1]
+    rev = (re.search(r"\bRe(?:v)?\.?\s*(\d{1,3})", fname, re.I) or _TP_REV_RE.search(ct) or _TP_REV_RE.search(text_all) or [None, ""])[1]
+    eff = re.sub(r"\s", "", (_TP_EFF_RE.search(ct) or _TP_EFF_RE.search(text_all) or [None, ""])[1])
+    head = text_all[:1500]
+    tl = re.search(r"(?:^|\n)\s*(?:เรื่อง|title)\s*:?\s*(.+)", ct, re.I) or re.search(r"(?:เรื่อง|title)\s*:?\s*(.+)", head, re.I)
+    title = re.sub(r"\s+", " ", tl.group(1)).strip()[:160] if tl else ""
+    return {"doc": doc, "rev": rev, "eff": eff, "title": title, "retorts": _tp_retorts(title) or _tp_retorts(next((c for c in cells if re.search(r"สำหรับ|for\b", c, re.I) and _TP_RET_RE.search(c)), "")),
+            "progs": [progs[k] for k in order],
             "pages": len(text_all.split("\f")), "tables": n_tables, "chars": len(text_all)}
 
 

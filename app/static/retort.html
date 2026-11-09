@@ -310,6 +310,7 @@ body.tpdrag #main::after{content:"วางไฟล์ PDF ที่นี่ �
 .tph label{font-weight:700;display:flex;align-items:center;gap:6px}
 .tph .tpno{width:64px;min-height:38px;padding:6px 8px;text-align:center;font-weight:700}
 .tph .tpnote{flex:1;min-width:140px;min-height:38px;padding:6px 10px;font-size:14px}
+.tph .tpret{width:170px;min-height:38px;padding:6px 10px;font-size:14px}
 .tpt td{padding:3px}
 .tpt input,.tpt select{min-height:36px;padding:5px 6px;font-size:15px;min-width:64px}
 .tpt select{min-width:112px;padding-right:24px;background-position:right 6px center}
@@ -2172,8 +2173,11 @@ function tpCard() {
 const tpCur = doc => TP_PROGS.filter(p => p.doc === doc);
 function tpOpen(parsed, src, dry) {
   const doc = parsed.doc || "", cur = docOf(doc) || {};
-  TPD.d = { doc, rev: parsed.rev || "", eff: parsed.eff || cur.eff || "", title: cur.title || "", plant: cur.plant || "PF1", retorts: (cur.retorts || []).join(", "), src: src || "",
-    progs: (parsed.progs || []).map(p => ({ no: String(p.no || ""), note: p.note || "", retorts: "", steps: (p.steps || []).map(s => [s[0], s[1], s[2], s[3], s[4] ?? ""]) })),
+  const tt = parsed.title || "", plant0 = cur.plant || (/PF\s*2/i.test(tt) ? "PF2" : "PF1");
+  const curP = new Map(TP_PROGS.filter(p => p.doc === doc).map(p => [String(p.no), p]));
+  TPD.d = { doc, rev: parsed.rev || "", eff: parsed.eff || cur.eff || "", title: cur.title || tt, plant: plant0, retorts: ((cur.retorts || []).length ? cur.retorts : (parsed.retorts || [])).join(", "), src: src || "",
+    progs: (parsed.progs || []).map(p => { const c = curP.get(String(p.no)), docR = (cur.retorts || parsed.retorts || []).join(","), cr = c && c.retorts.join(",") !== docR ? c.retorts : [];
+      return { no: String(p.no || ""), note: p.note || "", retorts: ((p.retorts || []).length ? p.retorts : cr).join(", "), steps: (p.steps || []).map(s => [s[0], s[1], s[2], s[3], s[4] ?? ""]) }; }),
     keep: {}, ok: false, parsed: !!src };
   if (!dry) tpModal();
 }
@@ -2199,7 +2203,7 @@ function tpModal() {
     ${d.parsed && !d.progs.length ? `<div class="alert a-warn">${I("alert")}<div>อ่านตารางค่าควบคุมไม่พบ (รูปแบบเอกสารอาจต่างจากที่รองรับ) · เพิ่มโปรแกรมแล้วใส่ค่าเองได้</div></div>` : ""}
     <div class="tplist">${d.progs.map((p, pi) => { const c = cur.get(p.no);
       return `<div class="tpp ${!c ? "isnew" : ""}"><div class="tph"><label>โปรแกรม <input class="tpno" data-pno="${pi}" value="${esc(p.no)}"></label>${!c ? `<span class="tag">ใหม่</span>` : ""}
-        <input class="tpnote" data-pnote="${pi}" value="${esc(p.note)}" placeholder="หมายเหตุ เช่น เฉพาะ RP01-RP04"><button class="ghost sm" data-pdel="${pi}">ลบ</button></div>
+        <input class="tpnote" data-pnote="${pi}" value="${esc(p.note)}" placeholder="หมายเหตุ เช่น เฉพาะ RP01-RP04"><input class="tpret" data-pret="${pi}" value="${esc(p.retorts)}" placeholder="หม้อ (ว่าง = ทุกหม้อของเอกสาร)" title="ใช้กับหม้อไหน (ว่าง = ทุกหม้อของเอกสาร)"><button class="ghost sm" data-pdel="${pi}">ลบ</button></div>
         <div class="tscroll"><table class="tbl tpt"><thead><tr><th>#</th><th>ช่วง</th><th>อุณหภูมิ °C</th><th>เวลา (นาที)</th><th>ความดัน Bar</th><th>Holding</th><th></th></tr></thead><tbody>
         ${p.steps.map((s, si) => { const b = c ? c.steps[si] : null;
           return `<tr><td class="n">${si + 1}</td><td><select class="tpc ${b && b[0] !== s[0] ? "chg" : ""}" data-p="${pi}" data-s="${si}" data-k="0">${Object.entries(PHASE).map(([k, l]) => `<option value="${k}" ${s[0] === k ? "selected" : ""}>${l}</option>`).join("")}</select></td>
@@ -2219,7 +2223,8 @@ function tpModal() {
         if (t.dataset.b != null) { const ch = t.value.trim() !== t.dataset.b; t.classList.toggle("chg", ch); t.title = ch ? `เดิม: ${t.dataset.b || "-"}` : ""; }
         if (d.ok) { d.ok = false; box.querySelector("#tpOk").checked = false; box.querySelector("#tpSave").disabled = true; } }
       else if (t.dataset.pno != null) d.progs[+t.dataset.pno].no = t.value.trim();
-      else if (t.dataset.pnote != null) d.progs[+t.dataset.pnote].note = t.value; });
+      else if (t.dataset.pnote != null) d.progs[+t.dataset.pnote].note = t.value;
+      else if (t.dataset.pret != null) d.progs[+t.dataset.pret].retorts = t.value; });
     box.addEventListener("change", e => { const t = e.target;
       if (t.id === "tpOk") { d.ok = t.checked; box.querySelector("#tpSave").disabled = !t.checked; }
       else if (t.dataset.keep != null) d.keep[t.dataset.keep] = t.checked;
@@ -2246,7 +2251,7 @@ async function tpSave() {
   const rets = d.retorts.split(",").map(x => x.trim().toUpperCase()).filter(Boolean).map(r => d.plant === "PF2" ? toRC(r) : r);
   const keepOld = tpCur(d.doc).filter(p => !nos.includes(String(p.no)) && d.keep[String(p.no)] !== false)
     .map(p => ({ no: String(p.no), note: p.note, retorts: p.retorts, steps: p.steps }));
-  const progs = [...d.progs.map(p => { const hold = p.steps.some(s => s[4] !== ""); return { no: p.no, note: p.note.trim(), retorts: [], steps: p.steps.map(s => hold ? s.slice(0, 5) : s.slice(0, 4)) }; }), ...keepOld];
+  const progs = [...d.progs.map(p => { const hold = p.steps.some(s => s[4] !== ""); return { no: p.no, note: p.note.trim(), retorts: String(p.retorts || "").split(",").map(x => x.trim().toUpperCase()).filter(Boolean).map(r => d.plant === "PF2" ? toRC(r) : r), steps: p.steps.map(s => hold ? s.slice(0, 5) : s.slice(0, 4)) }; }), ...keepOld];
   const prev = S.config.progDocs;
   const prevIso = S.config.isoDocs;
   S.config.progDocs = { ...progOv(), [d.doc]: { doc: d.doc, rev: d.rev, eff: d.eff, title: d.title, plant: d.plant, retorts: rets, progs, by: S.user, at: Date.now(), src: d.src } };
