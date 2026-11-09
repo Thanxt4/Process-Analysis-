@@ -325,6 +325,8 @@ body.tpdrag #main::after{content:"วางไฟล์ PDF ที่นี่ �
 .isorow .b b{font-size:16px}
 .isorow.sm{padding:6px 0}
 .isolink.done{border-color:var(--ok,#16a34a);color:var(--ok,#16a34a)}
+.isonext{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:12px;padding:10px 14px;font-weight:700;color:#fff;text-decoration:none;background:linear-gradient(135deg,#1b2a41,#2c4a72);text-align:center}
+.isonext .i{stroke:#fff}.isonext.fin{background:#16a34a;cursor:pointer}
 .isosteps{margin:6px 0 12px;padding-left:20px;font-size:14.5px;line-height:1.55}
 .isosteps li{margin-bottom:4px}
 .isowarn{font-size:12.5px;font-weight:700;color:#b45309}
@@ -2294,19 +2296,26 @@ function isoCard() {
 // ดาวน์โหลดทุกไฟล์ผ่านเบราว์เซอร์ที่ล็อกอินบริษัทไว้ (แอปดึงเองไม่ได้) → ลากทั้งหมดกลับมาวาง
 const isoDl = u => u + (u.includes("?") ? "&" : "?") + "download=1";
 function openIsoAll() {
+  // เบราว์เซอร์ยอมให้เปิด/ดาวน์โหลดได้ 1 ไฟล์ต่อการกด 1 ครั้ง (เปิดหลายแท็บพร้อมกันจะถูกบล็อกเป็นป๊อปอัป) → กดปุ่มเดิมไปเรื่อย ๆ
   const L = isoDocs().slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true }));
+  const got = new Set();
   modal(`<h2>โหลด PDF ทั้งหมดแล้วอัปเดต</h2>
-    <ol class="isosteps"><li>กด <b>ดาวน์โหลดทั้งหมด</b> เบราว์เซอร์จะดาวน์โหลด ${L.length} ไฟล์ด้วยบัญชีบริษัทที่ล็อกอินไว้ (ถ้าเบราว์เซอร์ถามว่า "อนุญาตให้ดาวน์โหลดหลายไฟล์/ป๊อปอัป" ให้กด อนุญาต)</li>
-      <li>เปิดโฟลเดอร์ Downloads เลือกไฟล์ทั้งหมด แล้ว<b>ลากมาวางที่หน้านี้</b> (หรือกดปุ่ม อัปโหลด PDF แล้วเลือกหลายไฟล์)</li>
-      <li>ระบบอ่านทีละไฟล์ · เอกสารที่ค่าไม่เปลี่ยนจะข้ามให้เอง · ที่เปลี่ยนจะให้ตรวจแล้วกดยืนยัน</li></ol>
-    <button class="blk pri" id="isoGo">${I("download")}ดาวน์โหลดทั้งหมด (${L.length} ไฟล์)</button>
-    <div class="isolist" style="margin-top:10px">${L.map(x => `<div class="isorow sm"><div class="b"><b>${esc(x.doc)}</b><span class="sub">${x.rev ? "Rev." + esc(x.rev) : ""}</span></div><a class="isolink" href="${esc(isoDl(x.url))}" target="_blank" rel="noopener" data-iso="${esc(x.doc)}">${I("download")}ดาวน์โหลด</a></div>`).join("")}</div>
+    <ol class="isosteps"><li>กดปุ่มด้านล่าง<b>ทีละครั้ง</b> กด 1 ครั้ง = ดาวน์โหลด 1 ไฟล์ ด้วยบัญชีบริษัทที่ล็อกอินไว้ (กดซ้ำได้เรื่อย ๆ จนครบ)</li>
+      <li>ครบแล้ว เปิดโฟลเดอร์ Downloads เลือกไฟล์ทั้งหมด แล้ว<b>ลากมาวางที่หน้านี้</b></li>
+      <li>ระบบอ่านทีละไฟล์ · ค่าไม่เปลี่ยนข้ามให้เอง · ที่เปลี่ยนให้ตรวจแล้วกดยืนยัน</li></ol>
+    <a class="blk pri isonext" id="isoGo" target="_blank" rel="noopener"></a>
+    <p class="sub" style="margin:8px 0 0">ถ้ากดแล้วเปิดเป็นหน้า PDF แทนการดาวน์โหลด ให้กด ดาวน์โหลด (⤓) ที่มุมขวาบนของหน้านั้น · ถ้าขึ้นหน้าล็อกอิน ให้ล็อกอิน Thai Union ก่อน แล้วกดใหม่</p>
+    <div class="isolist" style="margin-top:10px">${L.map(x => `<div class="isorow sm"><div class="b"><b>${esc(x.doc)}</b><span class="sub">${x.rev ? "Rev." + esc(x.rev) : ""}</span></div>
+      <a class="isolink" href="${esc(isoDl(x.url))}" target="_blank" rel="noopener" data-iso="${esc(x.doc)}">${I("download")}ดาวน์โหลด</a><a class="isolink" href="${esc(x.url)}" target="_blank" rel="noopener" title="เปิดดูในเบราว์เซอร์">เปิดดู</a></div>`).join("")}</div>
     <div class="row" style="margin-top:12px"><button class="blk" data-close>ปิด</button></div>`, box => {
-    box.querySelector("#isoGo").onclick = () => {
-      L.forEach((x, i) => setTimeout(() => { const a = document.createElement("a"); a.href = isoDl(x.url); a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
-        const r = box.querySelector(`[data-iso="${CSS.escape(x.doc)}"]`); if (r) r.classList.add("done"); }, i * 700));
-      toast(`กำลังเปิดดาวน์โหลด ${L.length} ไฟล์… เสร็จแล้วลากไฟล์มาวางที่หน้านี้`);
-    };
+    const go = box.querySelector("#isoGo");
+    const next = () => { const x = L.find(y => !got.has(y.doc));
+      if (!x) { go.removeAttribute("href"); go.classList.add("fin"); go.innerHTML = `${I("check")}ครบ ${L.length} ไฟล์แล้ว · ลากไฟล์จาก Downloads มาวางที่หน้านี้`; return; }
+      go.href = isoDl(x.url); go.dataset.doc = x.doc; go.innerHTML = `${I("download")}ดาวน์โหลดไฟล์ถัดไป (${got.size + 1}/${L.length}): ${esc(x.doc)}`; };
+    const mark = doc => { got.add(doc); const r = box.querySelector(`[data-iso="${CSS.escape(doc)}"]`); if (r) r.classList.add("done"); };
+    go.onclick = e => { if (!go.getAttribute("href")) { e.preventDefault(); closeModal(); return; } const d = go.dataset.doc; setTimeout(() => { mark(d); next(); }, 50); };
+    box.querySelectorAll("[data-iso]").forEach(a => a.addEventListener("click", () => setTimeout(() => { mark(a.dataset.iso); next(); }, 50)));
+    next();
   });
 }
 function openIsoEditor(done) {
