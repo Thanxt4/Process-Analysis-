@@ -25,16 +25,27 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 REM ---- install libraries if missing ----
-".venv\Scripts\python.exe" -c "import uvicorn, fastapi, pptx, PIL, multipart, pdfplumber" 2>nul
+".venv\Scripts\python.exe" -c "import uvicorn, fastapi, pptx, PIL, multipart" 2>nul
 if errorlevel 1 (
   echo Installing libraries - first time only...
   ".venv\Scripts\python.exe" -m pip install -r requirements.txt
-  ".venv\Scripts\python.exe" -c "import uvicorn, fastapi, pptx, PIL, multipart, pdfplumber" 2>nul
+  ".venv\Scripts\python.exe" -c "import uvicorn, fastapi, pptx, PIL, multipart" 2>nul
   if errorlevel 1 (
     echo.
     echo [ERROR] Library install failed - check internet or company proxy, then run again.
     pause
     exit /b 1
+  )
+)
+
+REM ---- PDF reader for Retort programs (optional: server still runs without it) ----
+".venv\Scripts\python.exe" -c "import pdfplumber" 2>nul
+if errorlevel 1 (
+  echo Installing PDF reader pdfplumber...
+  ".venv\Scripts\python.exe" -m pip install pdfplumber
+  ".venv\Scripts\python.exe" -c "import pdfplumber" 2>nul
+  if errorlevel 1 (
+    echo [WARNING] pdfplumber not installed - PDF upload in Retort will not work. Server will still start.
   )
 )
 
