@@ -518,6 +518,14 @@ with db() as con:
             seq INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_img_sub ON images(submission_id);
+        CREATE TABLE IF NOT EXISTS item_comments(
+            id TEXT PRIMARY KEY,
+            area_id TEXT NOT NULL,
+            parent TEXT,
+            data TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_cm_area ON item_comments(area_id);
         CREATE TABLE IF NOT EXISTS retort_surveys(
             id TEXT PRIMARY KEY,
             data TEXT NOT NULL,
@@ -2290,6 +2298,106 @@ async def api_retort_ai(request: Request):
         reason = (cands[0].get("finishReason") if cands else "") or (r["data"].get("promptFeedback") or {}).get("blockReason", "")
         raise HTTPException(502, f"AI ไม่ได้ตอบกลับ ({reason or 'ไม่ทราบสาเหตุ'})")
     return {"text": text.strip(), "model": "AI"}  # ไม่ส่งชื่อรุ่นไปที่หน้าเว็บ
+
+
+# ---------------------------------------------------------------- ถาม-ตอบ / ความคิดเห็น ในแต่ละหัวข้อ Checklist (Process Control / GMP)
+def _cm_rows(con, where="", args=()):
+    return [json.loads(r["data"]) for r in con.execute(f"SELECT data FROM item_comments {where} ORDER BY created_at", args)]
+
+
+def _cm_threads(items):
+    """จัดเป็นกระทู้: ความคิดเห็น/คำถาม + คำตอบใต้แต่ละอัน · คำถามที่ยังไม่มีคำตอบ = รอตอบ"""
+    top = [dict(x, replies=[]) for x in items if not x.get("parent")]
+    by = {x["id"]: x for x in top}
+    for x in items:
+        if x.get("parent") in by:
+            by[x["parent"]]["replies"].append(x)
+    for t in top:
+        t["open"] = bool(t.get("question")) and not t["replies"] and not t.get("closed")
+    return top
+
+
+@app.get("/api/comments")
+def api_comments(area: str):
+    with db() as con:
+        items = _cm_rows(con, "WHERE area_id=?", (area,))
+    return {"threads": _cm_threads(items)}
+
+
+@app.get("/api/comments/summary")
+def api_comments_summary():
+    """จำนวนความคิดเห็นต่อหัวข้อ + คำถามที่ยังรอคำตอบ (แสดงป้ายในรายการ / สรุปในหน้า Checklist)"""
+    with db() as con:
+        items = _cm_rows(con)
+    per, open_q = {}, []
+    groups = {}
+    for x in items:
+        groups.setdefault(x["area_id"], []).append(x)
+    for aid, L in groups.items():
+        th = _cm_threads(L)
+        per[aid] = {"n": len(L), "open": sum(1 for t in th if t["open"]), "last": max(x["at"] for x in L)}
+        it = ITEM_MAP.get(aid, {})
+        for t in th:
+            if t["open"]:
+                open_q.append({"id": t["id"], "area_id": aid, "no": it.get("no", ""), "name": it.get("name", aid), "zone": it.get("zone", ""),
+                               "text": t["text"][:200], "by": t["by"], "at": t["at"]})
+    open_q.sort(key=lambda q: -q["at"])
+    return {"items": per, "open": open_q[:100]}
+
+
+@app.post("/api/comments")
+async def api_comment_add(request: Request):
+    data = await request.json()
+    aid = str(data.get("area_id") or "")
+    if aid not in ITEM_MAP:
+        raise HTTPException(404, "ไม่พบหัวข้อนี้")
+    text = _fu_txt(data.get("text"), 1000)
+    by = _fu_txt(data.get("by"), 60)
+    if not by:
+        raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
+    if not text:
+        raise HTTPException(400, "พิมพ์ข้อความก่อน")
+    parent = str(data.get("parent") or "")
+    ts = _fu_ms()
+    with db() as con:
+        if parent:
+            pr = con.execute("SELECT data FROM item_comments WHERE id=? AND area_id=?", (parent, aid)).fetchone()
+            if not pr or json.loads(pr["data"]).get("parent"):
+                raise HTTPException(404, "ไม่พบความคิดเห็นที่จะตอบ")
+        x = {"id": "c" + uuid.uuid4().hex[:10], "area_id": aid, "parent": parent or None, "text": text, "by": by, "at": ts,
+             "question": bool(data.get("question")) and not parent, "round": str(data.get("round") or "")[:10]}
+        con.execute("INSERT INTO item_comments(id, area_id, parent, data, created_at) VALUES(?,?,?,?,?)",
+                    (x["id"], aid, parent or None, json.dumps(x, ensure_ascii=False), ts))
+        items = _cm_rows(con, "WHERE area_id=?", (aid,))
+    return {"ok": True, "threads": _cm_threads(items)}
+
+
+@app.post("/api/comments/{cid}/close")
+async def api_comment_close(cid: str, request: Request):
+    """ปิดคำถาม (ไม่ต้องตอบแล้ว) / เปิดใหม่"""
+    data = await request.json()
+    with db() as con:
+        r = con.execute("SELECT area_id, data FROM item_comments WHERE id=?", (cid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบความคิดเห็นนี้")
+        x = json.loads(r["data"])
+        x["closed"] = bool(data.get("closed"))
+        x["closed_by"] = _fu_txt(data.get("by"), 60)
+        con.execute("UPDATE item_comments SET data=? WHERE id=?", (json.dumps(x, ensure_ascii=False), cid))
+        items = _cm_rows(con, "WHERE area_id=?", (r["area_id"],))
+    return {"ok": True, "threads": _cm_threads(items)}
+
+
+@app.delete("/api/comments/{cid}")
+def api_comment_delete(cid: str, pin: str = ""):
+    _check_edit_pin(pin)
+    with db() as con:
+        r = con.execute("SELECT area_id FROM item_comments WHERE id=?", (cid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบความคิดเห็นนี้")
+        con.execute("DELETE FROM item_comments WHERE id=? OR parent=?", (cid, cid))
+        items = _cm_rows(con, "WHERE area_id=?", (r["area_id"],))
+    return {"ok": True, "threads": _cm_threads(items)}
 
 
 # ---------------------------------------------------------------- เรื่องที่ต้องติดตาม (Follow-up)
