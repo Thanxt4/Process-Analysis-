@@ -292,6 +292,16 @@ button.dash{color:var(--navy)}
 @media(max-width:699px){.nav .in{gap:2px}.nav button{min-width:0;padding:6px 2px;font-size:11.5px}.nav button svg.i{width:20px;height:20px}}
 .zcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .zcards.two{grid-template-columns:1fr 1fr}
+.isolink{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font-weight:700;font-size:14px;color:var(--navy);text-decoration:none;white-space:nowrap}
+.isolink .i{width:16px;height:16px}
+.isolink.inspec{margin-top:8px}
+.isolist{display:flex;flex-direction:column}
+.isorow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.isorow:first-child{border-top:0}
+.isorow .b{flex:1;min-width:0;display:flex;flex-direction:column}
+.isorow .b b{font-size:16px}
+.isorow.sm{padding:6px 0}
+.isowarn{font-size:12.5px;font-weight:700;color:#b45309}
 .rgtabs{display:flex;gap:8px;margin:0 0 12px;overflow-x:auto;scrollbar-width:none}
 .rgtabs button{flex:1 0 auto;min-width:66px;min-height:46px;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font-weight:700;font-size:17px;color:var(--navy);display:flex;align-items:center;justify-content:center;gap:6px}
 .rgtabs button em{font-style:normal;font-size:11px;font-weight:700;background:#eef2f7;color:var(--mute);border-radius:99px;padding:1px 7px}
@@ -915,7 +925,7 @@ table.xls{border-collapse:separate;border-spacing:0;width:max-content;min-width:
 
 <script>
 /* ---------- icons ---------- */
-const IP = {
+const IP = { doc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
   pen:'<path d="M4 20h4L18.5 9.5a2.83 2.83 0 0 0-4-4L4 16v4"/><path d="m13.5 6.5 4 4"/>',
   settings:'<path d="M10.3 4.3c.4-1.8 3-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.5 1.8 3.1 0 3.5a1.7 1.7 0 0 0-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.9-2.4-2.4a1.7 1.7 0 0 0-1-2.6c-1.8-.4-1.8-3 0-3.4a1.7 1.7 0 0 0 1-2.6c-.9-1.5.9-3.3 2.4-2.4a1.7 1.7 0 0 0 2.6-1.1z"/><circle cx="12" cy="12" r="3"/>',
@@ -1192,7 +1202,7 @@ function specTable(p, opts = {}) {
   const cu = p.steps.filter(s => s[0] === "come").reduce((a, s) => a + (parseFloat(s[2]) || 0), 0);
   return `<div class="spec">
     <div class="spec-h"><div><b>โปรแกรม ${esc(p.no)}</b> <span class="tag">${esc(p.doc)} Rev.${esc(d.rev || "")}</span>${p.note ? ` <span class="tag hold">${esc(p.note)}</span>` : ""}</div>
-      <div class="sub">${esc(d.title || "")} · เริ่มใช้ ${esc(d.eff || "")} · ใช้กับ ${esc(p.retorts.join(", "))}</div></div>
+      <div class="sub">${esc(d.title || "")} · เริ่มใช้ ${esc(d.eff || "")} · ใช้กับ ${esc(p.retorts.join(", "))}</div>${isoBtn(p.doc, "inspec")}</div>
     <div class="spec-k"><span>อุณหภูมิฆ่าเชื้อ <b>${esc([...new Set(cookT)].join(" / "))} °C</b></span><span>Come up รวม <b>${cu} นาที</b></span><span>${p.steps.length} ขั้นตอน</span></div>
     <div class="tscroll"><table class="tbl spec-t"><thead><tr><th>#</th><th>ช่วง</th><th class="num">อุณหภูมิ (°C)</th><th class="num">เวลา (นาที)</th><th class="num">ความดัน (Bar)</th>${hasHold ? `<th class="num">Holding (นาที)</th>` : ""}</tr></thead><tbody>${rows}</tbody></table></div>
     ${opts.foot === false ? "" : `<p class="sub" style="margin:6px 0 0">"XX" = เวลาฆ่าเชื้อของแต่ละผลิตภัณฑ์ตามตารางฆ่าเชื้อ ที่พนักงานคุม Retort ต้องคีย์ก่อนเริ่มฆ่าเชื้อ · ค่าทั้งหมดแสดงตามเอกสาร ${esc(p.doc)} Rev.${esc(d.rev || "")}</p>`}
@@ -2071,6 +2081,67 @@ function showItem(id) {
 }
 
 /* ---------- โปรแกรมฆ่าเชื้อ: ดูค่าควบคุมของแต่ละโปรแกรม ---------- */
+/* ---------- เอกสาร ISO Master: เก็บแค่ลิงก์ (ไม่ต้องอัปโหลดไฟล์) · วางลิงก์ทีเดียวหลายเอกสารได้ ---------- */
+const isoDocs = () => Array.isArray(S.config.isoDocs) ? S.config.isoDocs : [];
+const isoOf = code => isoDocs().find(x => x.doc === code);
+// อ่านรหัสเอกสาร + Rev. จากชื่อไฟล์ เช่น .../MAIN_TP002-N%20(ISO)%20Re.36.pdf → TP002-N, 36
+function isoParseUrl(url) {
+  let f = url; try { f = decodeURIComponent(url.split("?")[0].split("/").pop()); } catch {}
+  const m = /([A-Z]{2,6}\d{2,4}-[A-Z0-9]+)/i.exec(f.replace(/^MAIN_/i, "")); if (!m) return null;
+  const r = /\bRe(?:v)?\.?\s*(\d+)/i.exec(f);
+  return { doc: m[1].toUpperCase(), rev: r ? r[1] : "" };
+}
+// รับข้อความที่วาง: ลิงก์ล้วน หรือคัดลอกทั้งตาราง (มี วันที่ประกาศใช้ อยู่ในแถวเดียวกัน)
+function isoParse(text, html) {
+  const rows = [];
+  if (html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    doc.querySelectorAll("a[href]").forEach(a => { const tr = a.closest("tr, li, p, div"); rows.push({ url: a.href, line: tr ? tr.textContent : a.textContent }); });
+  }
+  (text || "").split(/\n/).forEach(line => (line.match(/https?:\/\/[^\s<>"']+/g) || []).forEach(u => rows.push({ url: u, line })));
+  const out = new Map();
+  rows.forEach(({ url, line }) => {
+    if (!/^https:\/\//i.test(url)) return;
+    const pu = isoParseUrl(url) || (() => { const m = /([A-Z]{2,6}\d{2,4}-[A-Z0-9]+)/i.exec(line || ""); return m ? { doc: m[1].toUpperCase(), rev: "" } : null; })();
+    if (!pu) return;
+    const eff = (/(\d{1,2}\/\d{1,2}\/\d{2,4})/.exec(line || "") || [])[1] || "";
+    out.set(pu.doc, { doc: pu.doc, rev: pu.rev, eff, url: url.trim() });
+  });
+  return [...out.values()];
+}
+const isoBtn = (code, cls = "") => { const x = isoOf(code); return x ? `<a class="isolink ${cls}" href="${esc(x.url)}" target="_blank" rel="noopener">${I("doc")}เปิด PDF ${esc(code)}${x.rev ? ` Rev.${esc(x.rev)}` : ""}</a>` : ""; };
+function isoCard() {
+  const L = isoDocs().slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true }));
+  const app = new Map(TP_DOCS.map(d => [d.doc, d]));
+  return `<div class="card">${sec("doc", `เอกสาร ISO Master (${L.length})`, "เปิดไฟล์ PDF จากระบบ ISO โดยตรง · ต้องล็อกอินบัญชีบริษัทในเครื่อง", `<button class="ghost sm" id="isoEdit">${I("pen")}วางลิงก์ / แก้ไข</button>`)}
+    ${L.length ? `<div class="isolist">${L.map(x => { const a = app.get(x.doc), diff = a && x.rev && a.rev !== x.rev;
+      return `<div class="isorow"><div class="b"><b>${esc(x.doc)}</b><span class="sub">${x.rev ? `Rev.${esc(x.rev)}` : ""}${x.eff ? ` · ประกาศใช้ ${esc(x.eff)}` : ""}${a ? ` · ${esc(a.title)}` : ""}</span>
+        ${diff ? `<span class="isowarn">ค่าในแอปเป็น Rev.${esc(a.rev)} — ตรวจสอบกับเอกสารล่าสุด</span>` : ""}</div>
+        <a class="isolink" href="${esc(x.url)}" target="_blank" rel="noopener">${I("doc")}เปิด PDF</a></div>`; }).join("")}</div>`
+      : `<p class="sub" style="margin:4px 0 0">ยังไม่มีลิงก์ · กด <b>วางลิงก์ / แก้ไข</b> แล้ววางลิงก์ไฟล์จาก ISO Master (วางทีละหลายลิงก์ได้)</p>`}</div>`;
+}
+function openIsoEditor(done) {
+  const cur = isoDocs();
+  modal(`<h2>เอกสาร ISO Master</h2><p class="sub" style="margin:2px 0 10px">วางลิงก์ไฟล์ PDF ทีเดียวหลายอันได้ (หรือคัดลอกทั้งตารางมาวาง) ระบบอ่านรหัสเอกสารและ Rev. จากชื่อไฟล์ให้เอง</p>
+    <textarea id="isoIn" rows="5" placeholder="https://thaiunion.sharepoint.com/.../MAIN_TP002-N%20(ISO)%20Re.36.pdf"></textarea>
+    <p class="sub" id="isoMsg" style="min-height:20px;margin:6px 0"></p>
+    <div id="isoCur">${cur.length ? cur.slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true })).map(x => `<div class="isorow sm"><div class="b"><b>${esc(x.doc)}</b><span class="sub">${x.rev ? "Rev." + esc(x.rev) : ""}${x.eff ? " · " + esc(x.eff) : ""}</span></div><button class="ghost sm" data-isodel="${esc(x.doc)}">ลบ</button></div>`).join("") : ""}</div>
+    <div class="row" style="margin-top:12px"><button class="blk" data-close>ปิด</button><button class="blk pri" id="isoSave">บันทึก</button></div>`, box => {
+    let html = ""; const inp = box.querySelector("#isoIn"), msg = box.querySelector("#isoMsg"), del = new Set();
+    const preview = () => { const n = isoParse(inp.value, html); msg.innerHTML = inp.value.trim() ? (n.length ? `พบ ${n.length} เอกสาร: <b>${n.map(x => esc(x.doc) + (x.rev ? " Rev." + esc(x.rev) : "")).join(", ")}</b>` : `<span style="color:var(--bad)">ไม่พบลิงก์เอกสาร (ต้องเป็นลิงก์ https)</span>`) : ""; };
+    inp.addEventListener("paste", e => { html = e.clipboardData.getData("text/html") || ""; setTimeout(preview, 0); });
+    inp.addEventListener("input", preview);
+    box.querySelector("#isoCur").onclick = e => { const b = e.target.closest("[data-isodel]"); if (!b) return; del.add(b.dataset.isodel); b.closest(".isorow").remove(); };
+    box.querySelector("#isoSave").onclick = async () => {
+      const add = isoParse(inp.value, html);
+      if (inp.value.trim() && !add.length) { preview(); return; }
+      const m = new Map(cur.filter(x => !del.has(x.doc)).map(x => [x.doc, x]));
+      add.forEach(x => m.set(x.doc, { ...(m.get(x.doc) || {}), ...x, eff: x.eff || (m.get(x.doc) || {}).eff || "" }));
+      const prev = S.config.isoDocs; S.config.isoDocs = [...m.values()];
+      if (await saveConfig()) { closeModal(); toast(add.length ? `บันทึกลิงก์ ${add.length} เอกสารแล้ว` : "บันทึกแล้ว"); done(); } else S.config.isoDocs = prev;
+    };
+  });
+}
 function viewProgs() {
   const f = S.pf || (S.pf = { rt: lsGet("rt_pf_rt", ""), q: "", open: "" });
   const rets = [...new Set(TP_PROGS.flatMap(p => p.retorts))].sort(byRetort);
@@ -2084,10 +2155,11 @@ function viewProgs() {
     ${L.length ? L.map(p => { const k = progKey(p), d = docOf(p.doc) || {}, op = f.open === k;
       const cook = [...new Set(p.steps.filter(s => s[0] === "cook").map(s => s[1]))].join("/");
       return `<div class="pgrow ${op ? "open" : ""}"><button class="pgh" data-popen="${esc(k)}"><span class="pno">${esc(p.no)}</span><span class="b"><b>${esc(p.doc)} <small>Rev.${esc(d.rev || "")}</small></b><span class="meta">${esc(p.retorts.join(", "))} · Cooking ${esc(cook)} °C${p.note ? " · " + esc(p.note) : ""}</span></span>${I(op ? "up" : "down")}</button>${op ? specTable(p) : ""}</div>`; }).join("") : `<p class="sub">ไม่พบโปรแกรม</p>`}</div>`;
-  $("#main").innerHTML = h;
+  $("#main").innerHTML = h + isoCard();
   const m = $("#main");
   m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
-    if (b.dataset.prt != null) { f.rt = b.dataset.prt; lsSet("rt_pf_rt", f.rt); f.open = ""; viewProgs(); }
+    if (b.id === "isoEdit") needEditPin("แก้ไขลิงก์เอกสาร ISO Master", () => openIsoEditor(() => { const y = window.scrollY; viewProgs(); window.scrollTo(0, y); }));
+    else if (b.dataset.prt != null) { f.rt = b.dataset.prt; lsSet("rt_pf_rt", f.rt); f.open = ""; viewProgs(); }
     else if (b.dataset.popen) { f.open = f.open === b.dataset.popen ? "" : b.dataset.popen; const y = window.scrollY; viewProgs(); window.scrollTo(0, y); } };
   m.oninput = e => { if (e.target.id === "pq") { f.q = e.target.value; clearTimeout(S.pqT); S.pqT = setTimeout(() => { viewProgs(); const q = $("#pq"); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 300); } };
 }
