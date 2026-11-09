@@ -2174,10 +2174,14 @@ function tpCard() {
       <button class="blk" id="tpManual" style="flex:1">${I("pen")}แก้ไขค่าเอง</button></div>
     <div class="tpdrop">หรือ <b>ลากไฟล์ PDF มาวาง</b> ที่หน้านี้ (หลายไฟล์พร้อมกันได้)</div>
     <p class="sub" style="margin:8px 0 0">อ่านได้เฉพาะ PDF ที่เป็นตัวอักษร (ไฟล์สแกนเป็นรูปอ่านไม่ได้) · ค่าที่อ่านได้ต้องตรวจเทียบเอกสารทุกครั้งก่อนยืนยัน</p>
-    ${ups.length ? `<div class="isolist" style="margin-top:8px">${ups.map(o => `<div class="isorow"><div class="b"><b>${esc(o.doc)} Rev.${esc(o.rev || "-")}</b><span class="sub">${(o.progs || []).length} โปรแกรม · อัปเดตโดย ${esc(o.by || "-")}${o.at ? " · " + new Date(o.at).toLocaleDateString("th-TH") : ""}${o.src ? " · จาก " + esc(o.src) : ""}</span></div>
-      ${BASE_DOCS.some(d => d.doc === o.doc) ? `<button class="ghost sm" data-tprev="${esc(o.doc)}">ใช้ค่าเดิมในแอป</button>` : `<button class="ghost sm" data-tprev="${esc(o.doc)}">ลบ</button>`}</div>`).join("")}</div>` : ""}</div>`;
+    ${ups.length ? `<div class="sub" style="margin:10px 0 0"><b>เอกสารที่อัปเดตค่าแล้ว ${ups.length} เอกสาร</b>${ups.some(o => !tpRetsOf(o).length) ? ` · <span style="color:var(--bad);font-weight:700">${ups.filter(o => !tpRetsOf(o).length).length} เอกสารยังไม่ผูกกับหม้อ</span>` : ""}</div>
+      <div class="isolist" style="margin-top:4px">${ups.map(o => { const rs = tpRetsOf(o); return `<div class="isorow"><div class="b"><b>${esc(o.doc)} Rev.${esc(o.rev || "-")}</b>
+        <span class="sub">${rs.length ? `หม้อ ${esc(retRangeText(rs.slice().sort(byRetort)))}` : `<span class="isowarn">ยังไม่ระบุหม้อ — หม้อไหนก็ยังไม่เห็นโปรแกรมของเอกสารนี้</span>`}</span><span class="sub">${(o.progs || []).length} โปรแกรม · อัปเดตโดย ${esc(o.by || "-")}${o.at ? " · " + new Date(o.at).toLocaleDateString("th-TH") : ""}${o.src ? " · จาก " + esc(o.src) : ""}</span></div>
+      <button class="ghost sm" data-tpedit="${esc(o.doc)}">${I("pen")}แก้ไข</button>${BASE_DOCS.some(d => d.doc === o.doc) ? `<button class="ghost sm" data-tprev="${esc(o.doc)}">ใช้ค่าเดิมในแอป</button>` : `<button class="ghost sm" data-tprev="${esc(o.doc)}">ลบ</button>`}</div>`; }).join("")}</div>` : ""}</div>`;
 }
 const tpCur = doc => TP_PROGS.filter(p => p.doc === doc);
+const tpRetsOf = o => [...new Set([...(o.retorts || []), ...(o.progs || []).flatMap(p => p.retorts || [])])];
+function tpEditDoc(doc) { const cur = docOf(doc) || {}; tpOpen({ doc, rev: cur.rev || "", eff: cur.eff || "", title: cur.title || "", progs: tpCur(doc).map(p => ({ no: p.no, note: p.note, steps: p.steps, retorts: (cur.retorts || []).join(",") === p.retorts.join(",") ? [] : p.retorts })) }, ""); }
 function tpOpen(parsed, src, dry) {
   const doc = parsed.doc || "", cur = docOf(doc) || {};
   const tt = parsed.title || "", plant0 = cur.plant || (/PF\s*2/i.test(tt) ? "PF2" : "PF1");
@@ -2266,6 +2270,8 @@ async function tpSave() {
   for (const p of d.progs) for (const [i, s] of p.steps.entries())
     if (!num(s[1]) || !num(s[2]) || !num(s[3]) || (s[4] !== "" && !num(s[4]))) { toast(`โปรแกรม ${p.no} ขั้นที่ ${i + 1}: ใส่ตัวเลขให้ครบ`); return; }
   const rets = d.retorts.split(",").map(x => x.trim().toUpperCase()).filter(Boolean).map(r => d.plant === "PF2" ? toRC(r) : r);
+  const noRet = d.progs.filter(p => !String(p.retorts || "").trim()).map(p => p.no);
+  if (!rets.length && noRet.length) { toast(`ใส่ "หม้อที่ใช้" ก่อน (โปรแกรม ${noRet.join(", ")} ยังไม่ผูกกับหม้อไหน) เช่น RP05, RP06`); const i = $("#tpRet"); if (i) { i.focus(); i.classList.add("err"); } return; }
   const keepOld = tpCur(d.doc).filter(p => !nos.includes(String(p.no)) && d.keep[String(p.no)] !== false)
     .map(p => ({ no: String(p.no), note: p.note, retorts: p.retorts, steps: p.steps }));
   const progs = [...d.progs.map(p => { const hold = p.steps.some(s => s[4] !== ""); return { no: p.no, note: p.note.trim(), retorts: String(p.retorts || "").split(",").map(x => x.trim().toUpperCase()).filter(Boolean).map(r => d.plant === "PF2" ? toRC(r) : r), steps: p.steps.map(s => hold ? s.slice(0, 5) : s.slice(0, 4)) }; }), ...keepOld];
@@ -2379,6 +2385,7 @@ function viewProgs() {
   const m = $("#main");
   m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
     if (b.id === "tpManual") needEditPin("แก้ไขค่าโปรแกรม", tpManualPick);
+    else if (b.dataset.tpedit) needEditPin("แก้ไขค่าโปรแกรม", () => tpEditDoc(b.dataset.tpedit));
     else if (b.dataset.tprev) needEditPin("ใช้ค่าเดิมในแอป", () => confirmBox(`เลิกใช้ค่าที่อัปเดตของ ${b.dataset.tprev}?`, async () => {
       const prev = S.config.progDocs, ov = { ...progOv() }; delete ov[b.dataset.tprev]; S.config.progDocs = ov;
       if (await saveConfig()) { progCfgRef = null; toast("กลับไปใช้ค่าเดิมแล้ว"); render(); } else S.config.progDocs = prev; }));
