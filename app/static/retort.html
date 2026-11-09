@@ -292,6 +292,26 @@ button.dash{color:var(--navy)}
 @media(max-width:699px){.nav .in{gap:2px}.nav button{min-width:0;padding:6px 2px;font-size:11.5px}.nav button svg.i{width:20px;height:20px}}
 .zcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .zcards.two{grid-template-columns:1fr 1fr}
+.tpup{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.tpmeta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tpmeta .wide{grid-column:1/-1}
+@media(max-width:560px){.tpmeta{grid-template-columns:1fr 1fr}}
+.tpsum{margin:10px 0;padding:10px 12px;background:#f8fafc;border-radius:12px;font-size:14px}
+.tpsum .c{color:#b45309;font-weight:700}.tpsum .n{color:#1d4ed8;font-weight:700}
+.tpmiss{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--bad)}
+.tpmiss label{display:inline-flex;gap:6px;align-items:center;color:var(--ink)}
+.tpmiss input,.tpok input{-webkit-appearance:checkbox;appearance:auto;width:20px;height:20px;min-height:0;padding:0;margin:0;flex:none;accent-color:var(--navy)}
+.tpp{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
+.tpp.isnew{border-color:#93c5fd}
+.tph{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.tph label{font-weight:700;display:flex;align-items:center;gap:6px}
+.tph .tpno{width:64px;min-height:38px;padding:6px 8px;text-align:center;font-weight:700}
+.tph .tpnote{flex:1;min-width:140px;min-height:38px;padding:6px 10px;font-size:14px}
+.tpt td{padding:3px}
+.tpt input,.tpt select{min-height:36px;padding:5px 6px;font-size:15px;min-width:64px}
+.tpt select{min-width:112px;padding-right:24px;background-position:right 6px center}
+.tpt .chg{background:#fef3c7;border-color:#f59e0b;font-weight:700}
+.tpok{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-weight:700}
 .isolink{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font-weight:700;font-size:14px;color:var(--navy);text-decoration:none;white-space:nowrap}
 .isolink .i{width:16px;height:16px}
 .isolink.inspec{margin-top:8px}
@@ -1160,6 +1180,18 @@ TP_DOCS.forEach(d => { if (d.plant !== "PF1") { d.plant = d.plant || "PF2"; d.re
 { const pf2Docs = new Set(TP_DOCS.filter(d => d.plant === "PF2").map(d => d.doc));
   TP_PROGS.forEach(p => { if (pf2Docs.has(p.doc)) { p.retorts = p.retorts.map(toRC); p.note = toRCText(p.note); } }); }
 const PHASE = { come: "Come up", cook: "Cooking", cool: "Cooling" };
+/* ค่าโปรแกรมที่หัวหน้าอัปเดตจาก PDF (config.progDocs) ใช้แทนค่าที่ฝังในแอปทั้งเอกสาร */
+const BASE_DOCS = JSON.parse(JSON.stringify(TP_DOCS)), BASE_PROGS = JSON.parse(JSON.stringify(TP_PROGS));
+let progCfgRef = null;
+const progOv = () => S.config.progDocs && typeof S.config.progDocs === "object" ? S.config.progDocs : {};
+function applyProgOverrides() {
+  if (progCfgRef === S.config) return; progCfgRef = S.config;
+  const ov = progOv(), keep = (o, k, d) => o[k] != null && o[k] !== "" ? o[k] : d;
+  const docs = BASE_DOCS.map(d => { const o = ov[d.doc]; return o ? { ...d, rev: keep(o, "rev", d.rev), eff: keep(o, "eff", d.eff), title: keep(o, "title", d.title), plant: keep(o, "plant", d.plant), retorts: (o.retorts || []).length ? o.retorts : d.retorts, upd: o } : { ...d }; });
+  Object.values(ov).forEach(o => { if (o && o.doc && !docs.some(d => d.doc === o.doc)) docs.push({ doc: o.doc, rev: o.rev || "", eff: o.eff || "", title: o.title || "", plant: o.plant || "", retorts: o.retorts || [], upd: o }); });
+  const progs = BASE_PROGS.filter(p => !ov[p.doc]).concat(Object.values(ov).filter(o => o && o.doc).flatMap(o => (o.progs || []).map(p => ({ doc: o.doc, no: String(p.no), note: p.note || "", retorts: (p.retorts || []).length ? p.retorts : (o.retorts || []), steps: p.steps || [] }))));
+  TP_DOCS.splice(0, TP_DOCS.length, ...docs); TP_PROGS.splice(0, TP_PROGS.length, ...progs);
+}
 const docOf = code => TP_DOCS.find(d => d.doc === code);
 const progsFor = rt => TP_PROGS.filter(p => p.retorts.includes(rt)).sort((a, b) => (+a.no - +b.no) || a.doc.localeCompare(b.doc));
 const progKey = p => p.doc + "#" + p.no;
@@ -1346,6 +1378,7 @@ function renderNav() {
   $("#nav").innerHTML = vis.map(t => `<button data-view="${t.k}" class="${S.view === t.k ? "on" : ""}">${I(VIEW_ICON[t.k])}${esc(t.label)}</button>`).join("");
 }
 function render() {
+  applyProgOverrides();
   RANK = RANK_COLOR = null;
   applyUI();
   $("#userBtn").textContent = initials(S.user);
@@ -2110,6 +2143,114 @@ function isoParse(text, html) {
   return [...out.values()];
 }
 const isoBtn = (code, cls = "") => { const x = isoOf(code); return x ? `<a class="isolink ${cls}" href="${esc(x.url)}" target="_blank" rel="noopener">${I("doc")}เปิด PDF ${esc(code)}${x.rev ? ` Rev.${esc(x.rev)}` : ""}</a>` : ""; };
+/* ---------- อัปเดตค่าโปรแกรมจาก PDF (หัวหน้า) : อัปโหลด → ระบบอ่านตาราง → ตรวจ/แก้ → ยืนยัน ---------- */
+const TPD = { d: null };
+function tpCard() {
+  const ups = Object.values(progOv()).filter(o => o && o.doc).sort((a, b) => a.doc.localeCompare(b.doc));
+  return `<div class="card">${sec("thermo", "อัปเดตค่าโปรแกรมจากเอกสาร", "อัปโหลด PDF ของ Rev. ใหม่ ระบบอ่านค่าให้ แล้วตรวจก่อนยืนยัน (เฉพาะหัวหน้า)")}
+    <div class="row" style="gap:8px;flex-wrap:wrap"><label class="blk pri tpup" style="flex:1"><input type="file" accept="application/pdf,.pdf" id="tpFile" hidden>${I("download")}อัปโหลด PDF อ่านค่าอัตโนมัติ</label>
+      <button class="blk" id="tpManual" style="flex:1">${I("pen")}แก้ไขค่าเอง</button></div>
+    <p class="sub" style="margin:8px 0 0">อ่านได้เฉพาะ PDF ที่เป็นตัวอักษร (ไฟล์สแกนเป็นรูปอ่านไม่ได้) · ค่าที่อ่านได้ต้องตรวจเทียบเอกสารทุกครั้งก่อนยืนยัน</p>
+    ${ups.length ? `<div class="isolist" style="margin-top:8px">${ups.map(o => `<div class="isorow"><div class="b"><b>${esc(o.doc)} Rev.${esc(o.rev || "-")}</b><span class="sub">${(o.progs || []).length} โปรแกรม · อัปเดตโดย ${esc(o.by || "-")}${o.at ? " · " + new Date(o.at).toLocaleDateString("th-TH") : ""}${o.src ? " · จาก " + esc(o.src) : ""}</span></div>
+      ${BASE_DOCS.some(d => d.doc === o.doc) ? `<button class="ghost sm" data-tprev="${esc(o.doc)}">ใช้ค่าเดิมในแอป</button>` : `<button class="ghost sm" data-tprev="${esc(o.doc)}">ลบ</button>`}</div>`).join("")}</div>` : ""}</div>`;
+}
+const tpCur = doc => TP_PROGS.filter(p => p.doc === doc);
+function tpOpen(parsed, src) {
+  const doc = parsed.doc || "", cur = docOf(doc) || {};
+  TPD.d = { doc, rev: parsed.rev || "", eff: parsed.eff || cur.eff || "", title: cur.title || "", plant: cur.plant || "PF1", retorts: (cur.retorts || []).join(", "), src: src || "",
+    progs: (parsed.progs || []).map(p => ({ no: String(p.no || ""), note: p.note || "", retorts: "", steps: (p.steps || []).map(s => [s[0], s[1], s[2], s[3], s[4] ?? ""]) })),
+    keep: {}, ok: false, parsed: !!src };
+  tpModal();
+}
+function tpDiff() {  // เทียบกับค่าปัจจุบันของเอกสารเดียวกัน
+  const d = TPD.d, cur = new Map(tpCur(d.doc).map(p => [String(p.no), p]));
+  const res = { chg: 0, add: 0, same: 0, miss: [...cur.keys()].filter(no => !d.progs.some(p => p.no === no)) };
+  d.progs.forEach(p => { const c = cur.get(p.no); if (!c) { res.add++; return; }
+    const diff = c.steps.length !== p.steps.length || p.steps.some((s, i) => [0, 1, 2, 3, 4].some(k => String(s[k] ?? "") !== String((c.steps[i] || [])[k] ?? (k === 4 ? "" : "")))); diff ? res.chg++ : res.same++; });
+  return res;
+}
+function tpModal() {
+  const d = TPD.d, cur = new Map(tpCur(d.doc).map(p => [String(p.no), p])), r = tpDiff(), oldRev = (docOf(d.doc) || {}).rev;
+  const cell = (pi, si, k, v, base) => { const ch = base !== undefined && String(v ?? "") !== String(base ?? ""); return `<td><input class="tpc ${ch ? "chg" : ""}" data-p="${pi}" data-s="${si}" data-k="${k}" value="${esc(v ?? "")}" ${base !== undefined ? `data-b="${esc(base ?? "")}"` : ""} ${ch ? `title="เดิม: ${esc(base ?? "-")}"` : ""} inputmode="decimal"></td>`; };
+  modal(`<h2>${d.parsed ? "ตรวจค่าที่อ่านจาก PDF" : "แก้ไขค่าโปรแกรม"}</h2>
+    ${d.src ? `<p class="sub" style="margin:2px 0 8px">ไฟล์: ${esc(d.src)}</p>` : ""}
+    <div class="tpmeta"><label class="f"><span class="lab">เอกสาร</span><input id="tpDoc" value="${esc(d.doc)}" placeholder="TP002-N"></label>
+      <label class="f"><span class="lab">Rev.</span><input id="tpRev" value="${esc(d.rev)}" inputmode="numeric"></label>
+      <label class="f"><span class="lab">วันที่ประกาศใช้</span><input id="tpEff" value="${esc(d.eff)}" placeholder="18/06/69"></label>
+      <label class="f"><span class="lab">Plant</span><select id="tpPlant">${plantsList().map(pl => `<option ${pl === d.plant ? "selected" : ""}>${esc(pl)}</option>`).join("")}</select></label>
+      <label class="f wide"><span class="lab">หม้อที่ใช้ (คั่นด้วย ,)</span><input id="tpRet" value="${esc(d.retorts)}" placeholder="RP01, RP02"></label></div>
+    <div class="tpsum">${d.doc ? `เทียบกับค่าปัจจุบัน${oldRev ? ` (Rev.${esc(oldRev)})` : ""}: ` : ""}<b>${d.progs.length} โปรแกรม</b> · <span class="c">เปลี่ยน ${r.chg}</span> · <span class="n">ใหม่ ${r.add}</span> · เหมือนเดิม ${r.same}
+      ${r.miss.length ? `<div class="tpmiss">ไม่พบใน PDF: ${r.miss.map(no => `<label><input type="checkbox" data-keep="${esc(no)}" ${d.keep[no] !== false ? "checked" : ""}> เก็บโปรแกรม ${esc(no)}</label>`).join("")}</div>` : ""}</div>
+    ${d.parsed && !d.progs.length ? `<div class="alert a-warn">${I("alert")}<div>อ่านตารางค่าควบคุมไม่พบ (รูปแบบเอกสารอาจต่างจากที่รองรับ) · เพิ่มโปรแกรมแล้วใส่ค่าเองได้</div></div>` : ""}
+    <div class="tplist">${d.progs.map((p, pi) => { const c = cur.get(p.no);
+      return `<div class="tpp ${!c ? "isnew" : ""}"><div class="tph"><label>โปรแกรม <input class="tpno" data-pno="${pi}" value="${esc(p.no)}"></label>${!c ? `<span class="tag">ใหม่</span>` : ""}
+        <input class="tpnote" data-pnote="${pi}" value="${esc(p.note)}" placeholder="หมายเหตุ เช่น เฉพาะ RP01-RP04"><button class="ghost sm" data-pdel="${pi}">ลบ</button></div>
+        <div class="tscroll"><table class="tbl tpt"><thead><tr><th>#</th><th>ช่วง</th><th>อุณหภูมิ °C</th><th>เวลา (นาที)</th><th>ความดัน Bar</th><th>Holding</th><th></th></tr></thead><tbody>
+        ${p.steps.map((s, si) => { const b = c ? c.steps[si] : null;
+          return `<tr><td class="n">${si + 1}</td><td><select class="tpc ${b && b[0] !== s[0] ? "chg" : ""}" data-p="${pi}" data-s="${si}" data-k="0">${Object.entries(PHASE).map(([k, l]) => `<option value="${k}" ${s[0] === k ? "selected" : ""}>${l}</option>`).join("")}</select></td>
+            ${cell(pi, si, 1, s[1], b ? b[1] : c ? "" : undefined)}${cell(pi, si, 2, s[2], b ? b[2] : c ? "" : undefined)}${cell(pi, si, 3, s[3], b ? b[3] : c ? "" : undefined)}${cell(pi, si, 4, s[4], b ? (b[4] ?? "") : c ? "" : undefined)}
+            <td><button class="ghost sm" data-sdel="${pi}.${si}" aria-label="ลบแถว">×</button></td></tr>`; }).join("")}
+        ${c && c.steps.length > p.steps.length ? `<tr><td colspan="7" class="sub" style="color:var(--bad)">ค่าเดิมมี ${c.steps.length} ขั้น · PDF มี ${p.steps.length} ขั้น</td></tr>` : ""}
+        </tbody></table></div><button class="ghost sm" data-sadd="${pi}">+ เพิ่มขั้นตอน</button></div>`; }).join("")}</div>
+    <button class="blk" id="tpAddP" style="margin-top:8px">+ เพิ่มโปรแกรม</button>
+    <label class="tpok"><input type="checkbox" id="tpOk" ${d.ok ? "checked" : ""}> ตรวจค่าทุกช่องเทียบกับเอกสาร PDF แล้ว (ช่องสีเหลือง = ต่างจากค่าเดิม)</label>
+    <div class="row" style="margin-top:12px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="tpSave" ${d.ok ? "" : "disabled"}>ยืนยันและบันทึก</button></div>`, box => {
+    const grab = () => { d.doc = box.querySelector("#tpDoc").value.trim().toUpperCase(); d.rev = box.querySelector("#tpRev").value.trim(); d.eff = box.querySelector("#tpEff").value.trim();
+      d.plant = box.querySelector("#tpPlant").value; d.retorts = box.querySelector("#tpRet").value; };
+    const redraw = () => { grab(); const y = box.scrollTop; tpModal(); const nb = $("#modalRoot .box"); if (nb) nb.scrollTop = y; };
+    box.addEventListener("input", e => { const t = e.target;
+      if (t.dataset.k != null) { d.progs[+t.dataset.p].steps[+t.dataset.s][+t.dataset.k] = t.value.trim();
+        if (t.dataset.b != null) { const ch = t.value.trim() !== t.dataset.b; t.classList.toggle("chg", ch); t.title = ch ? `เดิม: ${t.dataset.b || "-"}` : ""; }
+        if (d.ok) { d.ok = false; box.querySelector("#tpOk").checked = false; box.querySelector("#tpSave").disabled = true; } }
+      else if (t.dataset.pno != null) d.progs[+t.dataset.pno].no = t.value.trim();
+      else if (t.dataset.pnote != null) d.progs[+t.dataset.pnote].note = t.value; });
+    box.addEventListener("change", e => { const t = e.target;
+      if (t.id === "tpOk") { d.ok = t.checked; box.querySelector("#tpSave").disabled = !t.checked; }
+      else if (t.dataset.keep != null) d.keep[t.dataset.keep] = t.checked;
+      else if (t.dataset.k === "0" || t.dataset.pno != null || t.id === "tpDoc") { d.ok = false; redraw(); } });
+    box.addEventListener("click", async e => { const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.pdel != null) { d.progs.splice(+b.dataset.pdel, 1); d.ok = false; redraw(); }
+      else if (b.dataset.sdel) { const [pi, si] = b.dataset.sdel.split(".").map(Number); d.progs[pi].steps.splice(si, 1); d.ok = false; redraw(); }
+      else if (b.dataset.sadd != null) { const st = d.progs[+b.dataset.sadd].steps, l = st[st.length - 1]; st.push([l ? l[0] : "come", "", "", "", ""]); d.ok = false; redraw(); }
+      else if (b.id === "tpAddP") { d.progs.push({ no: "", note: "", retorts: "", steps: [["come", "", "", "", ""]] }); d.ok = false; redraw(); }
+      else if (b.id === "tpSave") { grab(); await tpSave(); } });
+  }, "wide");
+}
+async function tpSave() {
+  const d = TPD.d;
+  if (!/^[A-Z]{2,6}\d{2,4}-[A-Z0-9]+$/.test(d.doc)) { toast("ใส่รหัสเอกสาร เช่น TP002-N"); return; }
+  const nos = d.progs.map(p => p.no);
+  if (nos.some(n => !/^\d{1,3}$/.test(n))) { toast("ใส่เลขโปรแกรมให้ครบ (ตัวเลข)"); return; }
+  if (new Set(nos).size !== nos.length) { toast("เลขโปรแกรมซ้ำกัน"); return; }
+  const num = v => v === "XX" || (v !== "" && !isNaN(+v));
+  for (const p of d.progs) for (const [i, s] of p.steps.entries())
+    if (!num(s[1]) || !num(s[2]) || !num(s[3]) || (s[4] !== "" && !num(s[4]))) { toast(`โปรแกรม ${p.no} ขั้นที่ ${i + 1}: ใส่ตัวเลขให้ครบ`); return; }
+  const rets = d.retorts.split(",").map(x => x.trim().toUpperCase()).filter(Boolean).map(r => d.plant === "PF2" ? toRC(r) : r);
+  const keepOld = tpCur(d.doc).filter(p => !nos.includes(String(p.no)) && d.keep[String(p.no)] !== false)
+    .map(p => ({ no: String(p.no), note: p.note, retorts: p.retorts, steps: p.steps }));
+  const progs = [...d.progs.map(p => { const hold = p.steps.some(s => s[4] !== ""); return { no: p.no, note: p.note.trim(), retorts: [], steps: p.steps.map(s => hold ? s.slice(0, 5) : s.slice(0, 4)) }; }), ...keepOld];
+  const prev = S.config.progDocs;
+  S.config.progDocs = { ...progOv(), [d.doc]: { doc: d.doc, rev: d.rev, eff: d.eff, title: d.title, plant: d.plant, retorts: rets, progs, by: S.user, at: Date.now(), src: d.src } };
+  if (await saveConfig()) { closeModal(); progCfgRef = null; toast(`บันทึกค่าโปรแกรม ${d.doc} Rev.${d.rev} แล้ว`); render(); }
+  else S.config.progDocs = prev;
+}
+async function tpUpload(file) {
+  const fd = new FormData(); fd.append("file", file); if (S.pin) fd.append("pin", S.pin);
+  toast("กำลังอ่านค่าจาก PDF…");
+  try { const r = await fetch("/api/retort/tp/parse", { method: "POST", body: fd }); const j = await r.json().catch(() => ({}));
+    if (!r.ok) { toast(j.detail || "อ่าน PDF ไม่สำเร็จ"); return; }
+    tpOpen(j, file.name); }
+  catch (e) { toast("อ่าน PDF ไม่สำเร็จ: " + e.message); }
+}
+function tpManualPick() {
+  const docs = TP_DOCS.map(d => d.doc);
+  modal(`<h2>แก้ไขค่าโปรแกรมเอง</h2><p class="sub" style="margin:2px 0 10px">เลือกเอกสาร (เริ่มจากค่าปัจจุบัน) หรือพิมพ์รหัสเอกสารใหม่</p>
+    <input id="tpmDoc" list="tpmList" placeholder="TP002-N"><datalist id="tpmList">${docs.map(x => `<option value="${esc(x)}">`).join("")}</datalist>
+    <div class="row" style="margin-top:12px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="tpmGo">ถัดไป</button></div>`, box => {
+    box.querySelector("#tpmGo").onclick = () => { const doc = box.querySelector("#tpmDoc").value.trim().toUpperCase(); if (!doc) return;
+      const cur = docOf(doc) || {}; tpOpen({ doc, rev: cur.rev || "", eff: cur.eff || "", progs: tpCur(doc).map(p => ({ no: p.no, note: p.note, steps: p.steps })) }, ""); };
+  });
+}
 function isoCard() {
   const L = isoDocs().slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true }));
   const app = new Map(TP_DOCS.map(d => [d.doc, d]));
@@ -2155,12 +2296,17 @@ function viewProgs() {
     ${L.length ? L.map(p => { const k = progKey(p), d = docOf(p.doc) || {}, op = f.open === k;
       const cook = [...new Set(p.steps.filter(s => s[0] === "cook").map(s => s[1]))].join("/");
       return `<div class="pgrow ${op ? "open" : ""}"><button class="pgh" data-popen="${esc(k)}"><span class="pno">${esc(p.no)}</span><span class="b"><b>${esc(p.doc)} <small>Rev.${esc(d.rev || "")}</small></b><span class="meta">${esc(p.retorts.join(", "))} · Cooking ${esc(cook)} °C${p.note ? " · " + esc(p.note) : ""}</span></span>${I(op ? "up" : "down")}</button>${op ? specTable(p) : ""}</div>`; }).join("") : `<p class="sub">ไม่พบโปรแกรม</p>`}</div>`;
-  $("#main").innerHTML = h + isoCard();
+  $("#main").innerHTML = h + tpCard() + isoCard();
   const m = $("#main");
   m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
-    if (b.id === "isoEdit") needEditPin("แก้ไขลิงก์เอกสาร ISO Master", () => openIsoEditor(() => { const y = window.scrollY; viewProgs(); window.scrollTo(0, y); }));
+    if (b.id === "tpManual") needEditPin("แก้ไขค่าโปรแกรม", tpManualPick);
+    else if (b.dataset.tprev) needEditPin("ใช้ค่าเดิมในแอป", () => confirmBox(`เลิกใช้ค่าที่อัปเดตของ ${b.dataset.tprev}?`, async () => {
+      const prev = S.config.progDocs, ov = { ...progOv() }; delete ov[b.dataset.tprev]; S.config.progDocs = ov;
+      if (await saveConfig()) { progCfgRef = null; toast("กลับไปใช้ค่าเดิมแล้ว"); render(); } else S.config.progDocs = prev; }));
+    else if (b.id === "isoEdit") needEditPin("แก้ไขลิงก์เอกสาร ISO Master", () => openIsoEditor(() => { const y = window.scrollY; viewProgs(); window.scrollTo(0, y); }));
     else if (b.dataset.prt != null) { f.rt = b.dataset.prt; lsSet("rt_pf_rt", f.rt); f.open = ""; viewProgs(); }
     else if (b.dataset.popen) { f.open = f.open === b.dataset.popen ? "" : b.dataset.popen; const y = window.scrollY; viewProgs(); window.scrollTo(0, y); } };
+  m.onchange = e => { if (e.target.id === "tpFile") { const f = e.target.files[0]; e.target.value = ""; if (f) needEditPin("อัปโหลด PDF ค่าโปรแกรม", () => tpUpload(f)); } };
   m.oninput = e => { if (e.target.id === "pq") { f.q = e.target.value; clearTimeout(S.pqT); S.pqT = setTimeout(() => { viewProgs(); const q = $("#pq"); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 300); } };
 }
 

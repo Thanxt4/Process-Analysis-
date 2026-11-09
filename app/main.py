@@ -1887,6 +1887,146 @@ async def api_retort_remove(request: Request):
     return {"ok": True, "config": cfg}
 
 
+# ---------------------------------------------------------------- Retort: อ่านค่าโปรแกรมฆ่าเชื้อจาก PDF (TP002-*)
+# หัวหน้าอัปโหลด PDF จาก ISO Master → อ่านตาราง Come up / Cooking / Cooling → หน้าเว็บให้ตรวจ/แก้ก่อนกดยืนยัน
+# อ่านได้เฉพาะ PDF ที่เป็นตัวอักษร (ไม่ใช่ภาพสแกน) · ต้องติดตั้ง pdfplumber (อยู่ใน requirements.txt)
+_TP_DOC_RE = re.compile(r"\b(TP\d{3}-[A-Z0-9]{1,4})\b")
+_TP_PROG_RE = re.compile(r"(?:program|prog\.?|p/?g\.?|โปรแกรม)\s*(?:no\.?|number|ที่)?\s*[:#.]?\s*(\d{1,3})\b", re.I)
+_TP_REV_RE = re.compile(r"\bRev(?:ision)?\.?\s*(?:No\.?)?\s*[:.]?\s*(\d{1,3})\b", re.I)
+_TP_EFF_RE = re.compile(r"(?:effective|eff\.|มีผล|บังคับใช้|ประกาศใช้)[^0-9]{0,30}(\d{1,2}\s*[/.-]\s*\d{1,2}\s*[/.-]\s*\d{2,4})", re.I)
+
+
+def _tp_phase(t: str) -> str:
+    t = (t or "").lower()
+    if re.search(r"come\s*-?\s*up|heat(?:ing)?\s*-?\s*up|venting|ไล่อากาศ|ขึ้นอุณหภูมิ", t):
+        return "come"
+    if re.search(r"cool|หล่อเย็น|ลดอุณหภูมิ", t):
+        return "cool"
+    if re.search(r"cook|steril|ฆ่าเชื้อ", t):
+        return "cook"
+    return ""
+
+
+def _tp_num(c):
+    c = (c or "").strip().replace(",", ".")
+    if re.fullmatch(r"[xX]{1,3}", c):
+        return "XX"
+    return c if re.fullmatch(r"-?\d+(?:\.\d+)?", c) else None
+
+
+def _tp_rows(table):
+    """แตกแถวที่ pdfplumber รวมไว้ในช่องเดียว (หลายบรรทัด) ให้เป็นทีละแถว"""
+    out = []
+    for row in table:
+        cells = [str(c or "").strip() for c in row]
+        parts = [c.split("\n") for c in cells]
+        k = max([len(p) for p, c in zip(parts, cells) if _tp_num(c.split("\n")[0]) is not None] or [1])
+        if k > 1 and sum(1 for p in parts if len(p) == k) >= 2:
+            for i in range(k):
+                out.append([p[i] if len(p) == k else (p[0] if i == 0 else "") for p in parts])
+        else:
+            out.append([c.replace("\n", " ") for c in cells])
+    return out
+
+
+def _tp_table_steps(table):
+    cols = {}
+    steps, phase = [], ""
+    for cells in _tp_rows(table):
+        low = [c.lower() for c in cells]
+        hdr = {}
+        for i, c in enumerate(low):
+            if re.search(r"temp|อุณหภูมิ|°\s*c", c) and "temp" not in hdr:
+                hdr["temp"] = i
+            elif re.search(r"hold", c):
+                hdr["hold"] = i
+            elif re.search(r"press|bar|ความดัน", c) and "press" not in hdr:
+                hdr["press"] = i
+            elif re.search(r"time|เวลา|min|นาที", c) and "time" not in hdr:
+                hdr["time"] = i
+        if len(hdr) >= 2 and not any(_tp_num(c) for c in cells):
+            cols = hdr
+            continue
+        ph = next((_tp_phase(c) for c in cells if _tp_num(c) is None and _tp_phase(c)), "")
+        phase = ph or phase
+        if cols and {"temp", "time", "press"} <= set(cols):
+            g = lambda k: _tp_num(cells[cols[k]]) if k in cols and cols[k] < len(cells) else None
+            vals = [g("temp"), g("time"), g("press")]
+            hold = g("hold")
+        else:
+            nums = [n for n in (_tp_num(c) for c in cells) if n is not None]
+            if len(nums) >= 2 and re.fullmatch(r"\d{1,2}", nums[0]) and len(nums) >= 4 and not ph:
+                nums = nums[1:]  # คอลัมน์ลำดับขั้น
+            vals, hold = nums[:3], (nums[3] if len(nums) > 3 else None)
+            vals += [None] * (3 - len(vals))
+        t, tm, pr = vals
+        try:
+            ok = t not in (None, "XX") and 20 <= float(t) <= 150 and pr not in (None, "XX") and 0 <= float(pr) <= 6 and tm is not None
+        except ValueError:
+            ok = False
+        if not ok:
+            continue
+        st = [phase or ("cook" if steps and steps[-1][0] == "cook" else "come"), t, tm, pr]
+        if hold is not None:
+            st.append(hold)
+        steps.append(st)
+    return steps
+
+
+def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
+    try:
+        import pdfplumber
+    except ImportError:
+        raise HTTPException(501, "เซิร์ฟเวอร์ยังไม่มีตัวอ่าน PDF · รันคำสั่ง pip install pdfplumber (หรือ start_windows.bat ใหม่) แล้วรีสตาร์ท")
+    progs, order, text_all, n_tables = {}, [], "", 0
+    last_no = None
+    try:
+        pdf = pdfplumber.open(io.BytesIO(raw))
+    except Exception:
+        raise HTTPException(400, "เปิดไฟล์ PDF นี้ไม่ได้")
+    with pdf:
+        for page in pdf.pages[:60]:
+            text_all += (page.extract_text() or "") + "\n"
+            for tb in page.find_tables():
+                n_tables += 1
+                table = tb.extract()
+                steps = _tp_table_steps(table)
+                if not steps:
+                    continue
+                top = max(0, tb.bbox[1] - 140)
+                above = (page.crop((0, top, page.width, tb.bbox[1])).extract_text() or "") if tb.bbox[1] > 1 else ""
+                inside = " ".join(str(c or "") for r in table[:3] for c in r)
+                m = list(_TP_PROG_RE.finditer(inside)) or list(_TP_PROG_RE.finditer(above))
+                no = m[-1].group(1) if m else last_no
+                no = str(int(no)) if no and no.isdigit() else (no or f"?{len(order) + 1}")
+                note = ""
+                if above:
+                    ln = [x.strip() for x in above.split("\n") if x.strip()]
+                    note = next((x for x in reversed(ln) if _TP_PROG_RE.search(x)), "")[:120]
+                if no not in progs:
+                    progs[no] = {"no": no, "note": note, "steps": []}
+                    order.append(no)
+                progs[no]["steps"] += steps
+                last_no = no if m else last_no
+    if len(text_all.strip()) < 40:
+        raise HTTPException(422, "PDF นี้ไม่มีตัวอักษรให้อ่าน (น่าจะเป็นไฟล์สแกนเป็นรูป) · ใส่ค่าเองได้ที่ปุ่ม แก้ไขค่าเอง")
+    fname = filename or ""
+    doc = (_TP_DOC_RE.search(fname.upper()) or _TP_DOC_RE.search(text_all) or [None, ""])[1]
+    rev = (re.search(r"\bRe(?:v)?\.?\s*(\d{1,3})", fname, re.I) or _TP_REV_RE.search(text_all) or [None, ""])[1]
+    eff = re.sub(r"\s", "", (_TP_EFF_RE.search(text_all) or [None, ""])[1])
+    return {"doc": doc, "rev": rev, "eff": eff, "progs": [progs[k] for k in order],
+            "pages": len(text_all.split("\f")), "tables": n_tables, "chars": len(text_all)}
+
+
+@app.post("/api/retort/tp/parse")
+async def api_retort_tp_parse(request: Request, file: UploadFile = File(...), pin: str = Form("")):
+    _rt_sup(request, pin or None)
+    raw = await file.read()
+    if len(raw) > 30 * 1024 * 1024:
+        raise HTTPException(400, "ไฟล์ใหญ่เกิน 30 MB")
+    return await run_in_threadpool(_tp_parse_pdf, raw, file.filename or "")
+
+
 @app.post("/api/retort/config")
 async def api_retort_config(request: Request):
     data = await request.json()
