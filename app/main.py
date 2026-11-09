@@ -518,6 +518,11 @@ with db() as con:
             seq INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_img_sub ON images(submission_id);
+        CREATE TABLE IF NOT EXISTS retort_surveys(
+            id TEXT PRIMARY KEY,
+            data TEXT NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS followups(
             id TEXT PRIMARY KEY,
             data TEXT NOT NULL,
@@ -2083,6 +2088,61 @@ def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
     return {"doc": doc, "rev": rev, "eff": eff, "title": title, "retorts": _tp_retorts(title) or _tp_retorts(next((c for c in cells if re.search(r"สำหรับ|for\b", c, re.I) and _TP_RET_RE.search(c)), "")),
             "progs": [progs[k] for k in order],
             "pages": len(text_all.split("\f")), "tables": n_tables, "chars": len(text_all)}
+
+
+# ---------------------------------------------------------------- Retort Survey Filling Form (ข้อมูลอุปกรณ์ของหม้อแต่ละใบ)
+_SV_KEY = re.compile(r"^[a-z0-9_]{1,40}$")
+
+
+def _sv_txt(v, n: int) -> str:
+    return " ".join(str(v or "").split())[:n]
+
+
+@app.get("/api/retort/surveys")
+def api_rt_surveys(request: Request):
+    _rt_auth(request)
+    with db() as con:
+        rows = con.execute("SELECT data FROM retort_surveys ORDER BY updated_at DESC").fetchall()
+    return {"items": [json.loads(r["data"]) for r in rows]}
+
+
+@app.post("/api/retort/surveys")
+async def api_rt_survey_save(request: Request):
+    data = await request.json()
+    _rt_sup(request, data.get("pin"))
+    x = data.get("survey") if isinstance(data.get("survey"), dict) else {}
+    cols = []
+    for c in (x.get("cols") or [])[:80]:
+        if not isinstance(c, dict):
+            continue
+        vals = {k: _sv_txt(v, 200) for k, v in (c.get("v") or {}).items() if _SV_KEY.match(str(k)) and _sv_txt(v, 200)}
+        cols.append({"retort": _sv_txt(c.get("retort"), 20).upper(), "plant": _sv_txt(c.get("plant"), 20), "note": _sv_txt(c.get("note"), 40), "v": vals})
+    sid = str(x.get("id") or "")
+    if not re.fullmatch(r"sv[a-f0-9]{10}", sid):
+        sid = "sv" + uuid.uuid4().hex[:10]
+    ts = int(now().timestamp() * 1000)
+    out = {"id": sid, "ref": _sv_txt(x.get("ref"), 60), "date": _sv_txt(x.get("date"), 20), "rev": _sv_txt(x.get("rev"), 20),
+           "type": _sv_txt(x.get("type"), 60) or "WATER SPRAY RETORT", "plant": _sv_txt(x.get("plant"), 20),
+           "note": _sv_txt(x.get("note"), 300), "cols": cols, "by": _sv_txt(data.get("by"), 60), "updatedAt": ts}
+    with db() as con:
+        old = con.execute("SELECT data FROM retort_surveys WHERE id=?", (sid,)).fetchone()
+        out["createdAt"] = json.loads(old["data"]).get("createdAt", ts) if old else ts
+        out["createdBy"] = json.loads(old["data"]).get("createdBy", out["by"]) if old else out["by"]
+        con.execute("INSERT INTO retort_surveys(id, data, updated_at) VALUES(?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
+                    (sid, json.dumps(out, ensure_ascii=False), ts))
+    return {"ok": True, "survey": out}
+
+
+@app.delete("/api/retort/surveys/{sid}")
+def api_rt_survey_delete(sid: str, request: Request, pin: str = ""):
+    _rt_auth(request)
+    _check_edit_pin(pin)
+    with db() as con:
+        n = con.execute("DELETE FROM retort_surveys WHERE id=?", (sid,)).rowcount
+    if not n:
+        raise HTTPException(404, "ไม่พบ Survey นี้")
+    return {"ok": True}
 
 
 @app.post("/api/retort/tp/parse")

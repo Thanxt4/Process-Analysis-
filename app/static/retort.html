@@ -292,6 +292,23 @@ button.dash{color:var(--navy)}
 @media(max-width:699px){.nav .in{gap:2px}.nav button{min-width:0;padding:6px 2px;font-size:11.5px}.nav button svg.i{width:20px;height:20px}}
 .zcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .zcards.two{grid-template-columns:1fr 1fr}
+.svrow{display:flex;width:100%;text-align:left;align-items:center;gap:10px;border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 2px;background:none;min-height:0}
+.svrow:first-child{border-top:0}.svrow .b{flex:1;display:flex;flex-direction:column;gap:2px}
+.svmeta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}@media(max-width:700px){.svmeta{grid-template-columns:1fr 1fr}}
+.svstate{font-size:13px;font-weight:700;color:var(--ok,#16a34a)}.svstate.dirty{color:#b45309}
+.svpick{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:12px}
+.svg{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.svg .chip{min-height:36px;padding:4px 10px}
+.svth{margin:14px 0 6px;font-size:15px}
+.svscroll{overflow-x:auto}.svt{border-collapse:collapse;min-width:100%}
+.svt th,.svt td{border:1px solid var(--line);padding:2px;font-size:13px}
+.svt th.lab{position:sticky;left:0;z-index:1;background:#f8fafc;text-align:left;font-weight:600;min-width:210px;padding:4px 8px}
+.svt thead th{background:#eef2f7;text-align:center;font-weight:700;min-width:92px}
+.svt input{min-height:32px;padding:3px 6px;font-size:13.5px;border-radius:6px;border-color:transparent;background:transparent;text-align:center}
+.svt input:focus{border-color:var(--navy);background:#fff}
+.svt tr.gap td{height:8px;background:#f8fafc}
+.svt th.lab.sub2{font-weight:400;color:var(--mute);font-size:12.5px}
+.svtabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}.svtabs .chip{flex:none}.svtabs em{font-style:normal;font-size:11px;margin-left:4px;opacity:.7}
+.svgrp{border-top:1px solid var(--line);padding-top:6px;margin-top:6px}.svgrp .f{margin-top:6px}
 .tpup{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;min-height:48px;border-radius:12px;padding:10px 14px;font-weight:600;color:#fff;background:linear-gradient(135deg,#1b2a41,#2c4a72);border:1.5px solid #1b2a41;box-shadow:0 8px 18px -10px rgba(27,42,65,.75)}
 .tpup .i{stroke:#fff}
 .tpdrop{border:2px dashed #94a3b8;border-radius:12px;padding:12px;margin-top:10px;text-align:center;color:var(--mute);font-size:14px}
@@ -1044,7 +1061,7 @@ const UI_DEFAULT = {
   stamp: "i-Tail Corporation: Retort Analysis",
   navy: "#1b2a41", amber: "#f59e0b", scale: 100,
   tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
-    { k: "progs", label: "โปรแกรม", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
+    { k: "progs", label: "โปรแกรม", show: true }, { k: "survey", label: "Survey", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
   defaultTab: "log",
   dsStart: "07:00", dsEnd: "17:30",
   steps: ["เวลา", "พื้นที่", "หม้อ", "ปัญหา", "สาเหตุ"],
@@ -1052,7 +1069,7 @@ const UI_DEFAULT = {
   dash: { insight: true, trend: true, groups: true, hours: true, heat: true, more: true, days: 14 },
   groups: {}, aiQuick: null
 };
-const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", ai: "spark", settings: "settings", ui: "palette" };
+const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", survey: "tool", ai: "spark", settings: "settings", ui: "palette" };
 let U = JSON.parse(JSON.stringify(UI_DEFAULT));
 /* รวมค่าตั้งต้นกับค่าที่บันทึกไว้ และตรวจทุกค่า (สี/เวลา/ข้อความ) ก่อนใช้ */
 function uiCfg(raw) {
@@ -1403,11 +1420,11 @@ function render() {
   applyUI();
   $("#userBtn").textContent = initials(S.user);
   renderNav();
-  $("#main").classList.toggle("wide", S.view === "analyze" || S.view === "list");
+  $("#main").classList.toggle("wide", S.view === "analyze" || S.view === "list" || S.view === "survey");
   $("#main").classList.toggle("xwide", S.view === "analyze");
   $("#main").classList.toggle("vset", S.view === "settings" || S.view === "ui");
   S.charts = {}; $("#main").classList.remove("split");
-  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
+  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
   persistSoon();
@@ -2169,6 +2186,147 @@ function isoParse(text, html) {
   return [...out.values()];
 }
 const isoBtn = (code, cls = "") => { const x = isoOf(code); return x ? `<a class="isolink ${cls}" href="${esc(x.url)}" target="_blank" rel="noopener">${I("doc")}เปิด PDF ${esc(code)}${x.rev ? ` Rev.${esc(x.rev)}` : ""}</a>` : ""; };
+/* ---------- Retort Survey Filling Form: ข้อมูลอุปกรณ์ของหม้อแต่ละใบ (คอลัมน์ = เลขหม้อ) ---------- */
+const SV_TABLES = [
+  { no: 1, head: "The part of Retort", groups: [
+    [["steam_inlet", "Steam Inlet size"], ["steam_spreader", "Steam Spreader size"], ["steam_hole", "Steam spreader Hole size"], ["steam_hole_n", "Number of hole steam spreader"]],
+    [["water_inlet", "Water Inlet size"], ["water_spreader", "Water spreader size"], ["water_hole", "Water spreader Hole size"], ["water_hole_n", "Number of hole water spreader"], ["spray_pipe", "Spray water pipe size"], ["nozzle_hole", "Nozzle hole size"], ["nozzle_n", "Number of Nozzle per pipe"]],
+    [["vent_pipe", "Vent pipe size"], ["air_pipe", "Air pipe size"], ["cool_pipe", "Cooling water pipe size"], ["drain_pipe", "Drain pipe size"]]] },
+  { no: 2, head: "Circulation heating medium system", groups: [
+    [["pump_brand", "Brand of Pump Motor Circulate"], ["pump_rpm", "Pump Model RPM"], ["pump_hp", "Pump Horse Power"], ["flow_model", "Flow meter Model"], ["flow_cal", " - Last Calibration"], ["flow_due", " - Due date"], ["press_rec", "Pressure record Model"]],
+    [["mig", "MIG Thermometer (°C)/ TID"], ["mig_cal", " - Last Calibration/ Due date"], ["pgauge", "Pressure gauge ( Kg/cm2)"], ["pgauge_cal", " - Last Calibration/ Due date"], ["chart", "Chart recorder (°C)"], ["chart_cal", " - Last Calibration/ Due date"], ["pt100", "PT100/RTD"], ["pt100_cal", " - Last Calibration/ Due date"]]] }];
+const SV_FIELDS = SV_TABLES.flatMap(t => t.groups.flat());
+const SV_PER_PAGE = 12;
+const SV = { items: [], loaded: false, cur: null, dirty: false, mode: "", ri: 0, pick: false };
+async function svLoad() { try { const r = await api("/api/retort/surveys"); SV.items = r.items || []; SV.loaded = true; } catch (e) { if (e.status === 401) showLock(true); else toast("โหลด Survey ไม่สำเร็จ: " + e.message); SV.loaded = true; } if (S.view === "survey") viewSurvey(); }
+const svMode = () => SV.mode || (innerWidth < 760 ? "one" : "grid");
+const svFilled = c => Object.keys(c.v || {}).length;
+function svNew() { SV.cur = { id: "", ref: "", date: todayISO(), rev: "", type: "WATER SPRAY RETORT", plant: plantsList()[0] || "PF1", note: "", cols: [] }; SV.dirty = false; SV.ri = 0; SV.pick = true; viewSurvey(); scrollTo(0, 0); }
+function svOpen(id) { const x = SV.items.find(y => y.id === id); if (!x) return; SV.cur = JSON.parse(JSON.stringify(x)); SV.dirty = false; SV.ri = 0; SV.pick = false; viewSurvey(); scrollTo(0, 0); }
+function svPrev(retort, skipId) { return SV.items.filter(x => x.id !== skipId).sort((a, b) => (b.date || "").localeCompare(a.date || "") || b.updatedAt - a.updatedAt).map(x => (x.cols || []).find(c => c.retort === retort && svFilled(c))).find(Boolean); }
+function viewSurvey() {
+  if (!SV.loaded) { $("#main").innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; svLoad(); return; }
+  const m = $("#main");
+  if (!SV.cur) {
+    const L = SV.items.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "") || b.updatedAt - a.updatedAt);
+    m.innerHTML = `<div class="card">${sec("tool", "Retort Survey Filling Form", "ข้อมูลอุปกรณ์ของหม้อแต่ละใบ · ช่องหัวคอลัมน์ = เลขหม้อ", `<button class="sm pri" id="svNew">${I("plus")}สร้าง Survey ใหม่</button>`)}
+      ${L.length ? `<div class="isolist">${L.map(x => { const rs = (x.cols || []).map(c => c.retort).filter(Boolean), full = (x.cols || []).reduce((a, c) => a + svFilled(c), 0);
+        return `<button class="svrow" data-svopen="${x.id}"><div class="b"><b>${x.date ? dmy(x.date) : "ไม่ระบุวันที่"}${x.ref ? ` · Ref ${esc(x.ref)}` : ""}${x.rev ? ` · Rev.${esc(x.rev)}` : ""}</b>
+          <span class="sub">${esc(x.type || "")}${x.plant ? ` · ${esc(x.plant)}` : ""} · ${rs.length} หม้อ${rs.length ? ` (${esc(retRangeText(rs.slice().sort(byRetort)))})` : ""}</span>
+          <span class="sub">กรอกแล้ว ${full}/${rs.length * SV_FIELDS.length} ช่อง · ${esc(x.by || x.createdBy || "")} · ${new Date(x.updatedAt).toLocaleDateString("th-TH")}</span></div>${I("right")}</button>`; }).join("")}</div>`
+        : `<p class="sub" style="margin:6px 0 0">ยังไม่มี Survey · กด <b>สร้าง Survey ใหม่</b> แล้วเลือกหม้อ ระบบจะสร้างตารางแบบฟอร์มให้กรอก</p>`}</div>`;
+    m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
+      if (b.id === "svNew") needEditPin("สร้าง Survey", svNew); else if (b.dataset.svopen) svOpen(b.dataset.svopen); };
+    m.oninput = m.onchange = null; return;
+  }
+  const c = SV.cur, mode = svMode(), cols = c.cols;
+  if (SV.ri >= cols.length) SV.ri = Math.max(0, cols.length - 1);
+  const inp = (ci, k) => { const v = (cols[ci].v || {})[k] || ""; return `<input class="svin" data-c="${ci}" data-k="${k}" value="${esc(v)}">`; };
+  const picker = () => { const rl = plantRetorts(c.plant), have = new Set(cols.filter(x => x.plant === c.plant || !x.plant).map(x => x.retort));
+    return `<div class="svpick"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>เลือกหม้อ</b><select id="svPlant" style="width:auto">${plantsList().map(pl => `<option ${pl === c.plant ? "selected" : ""}>${esc(pl)}</option>`).join("")}</select>
+      <span class="sub">แตะเพื่อเพิ่ม/เอาออก (${SV_PER_PAGE} หม้อต่อ 1 หน้ากระดาษ)</span></div>
+      ${retGroups(rl).map(([g, L]) => `<div class="svg"><button class="ghost sm" data-svgrp="${esc(g)}">${esc(g)} ทั้งกลุ่ม</button>${L.map(r => `<button class="chip ${have.has(r) ? "on" : ""}" data-svret="${esc(r)}">${esc(r)}</button>`).join("")}</div>`).join("")}</div>`; };
+  let body = "";
+  if (!cols.length) body = `<p class="sub" style="margin:10px 0">เลือกหม้อด้านบนก่อน แล้วตารางจะขึ้นให้กรอก</p>`;
+  else if (mode === "grid") {
+    body = SV_TABLES.map(t => `<h3 class="svth">Table # ${t.no} · ${esc(c.type || "")}</h3><div class="tscroll svscroll"><table class="svt"><thead>
+      <tr><th class="lab">${esc(t.head)}</th>${cols.map((x, ci) => `<th>${esc(x.retort)}</th>`).join("")}</tr>
+      <tr><th class="lab sub2">หมายเหตุหัวคอลัมน์</th>${cols.map((x, ci) => `<th><input class="svnote" data-cn="${ci}" value="${esc(x.note || "")}" placeholder="หมายเหตุ"></th>`).join("")}</tr></thead><tbody>
+      ${t.groups.map((g, gi) => (gi ? `<tr class="gap"><td colspan="${cols.length + 1}"></td></tr>` : "") + g.map(([k, l]) => `<tr><th class="lab">${esc(l)}</th>${cols.map((x, ci) => `<td>${inp(ci, k)}</td>`).join("")}</tr>`).join("")).join("")}
+      </tbody></table></div>`).join("");
+  } else {
+    const ci = SV.ri, x = cols[ci], prev = svPrev(x.retort, c.id);
+    body = `<div class="svtabs">${cols.map((y, i) => `<button class="chip ${i === ci ? "on" : ""}" data-svri="${i}">${esc(y.retort)}<em>${svFilled(y)}/${SV_FIELDS.length}</em></button>`).join("")}</div>
+      <div class="svone"><div class="row sp"><h3 style="margin:0">หม้อ ${esc(x.retort)}</h3>${prev && !svFilled(x) ? `<button class="ghost sm" data-svcp1="${ci}">คัดลอกจาก Survey ก่อนหน้า</button>` : ""}</div>
+      <label class="f"><span class="lab">หมายเหตุหัวคอลัมน์</span><input class="svnote" data-cn="${ci}" value="${esc(x.note || "")}"></label>
+      ${SV_TABLES.map(t => `<h4 class="svth">Table # ${t.no} · ${esc(t.head)}</h4>${t.groups.map(g => `<div class="svgrp">${g.map(([k, l]) => `<label class="f"><span class="lab">${esc(l.trim())}</span>${inp(ci, k)}</label>`).join("")}</div>`).join("")}`).join("")}
+      <div class="row" style="margin-top:12px"><button class="blk" data-svri="${Math.max(0, ci - 1)}" ${ci ? "" : "disabled"}>${I("down")}หม้อก่อนหน้า</button><button class="blk" data-svri="${Math.min(cols.length - 1, ci + 1)}" ${ci < cols.length - 1 ? "" : "disabled"}>หม้อถัดไป${I("right")}</button></div></div>`;
+  }
+  const hasPrev = cols.some(x => !svFilled(x) && svPrev(x.retort, c.id));
+  m.innerHTML = `<div class="card svhead">
+    <div class="row sp" style="flex-wrap:wrap;gap:8px"><button class="ghost sm" id="svBack">${I("down")}รายการ Survey</button>
+      <span class="svstate ${SV.dirty ? "dirty" : ""}">${SV.dirty ? "ยังไม่บันทึก" : c.id ? "บันทึกแล้ว" : "Survey ใหม่"}</span></div>
+    <h2 style="margin:10px 0 6px">Retort Survey Filling Form</h2>
+    <div class="svmeta"><label class="f"><span class="lab">Ref #</span><input id="svRef" value="${esc(c.ref)}"></label>
+      <label class="f"><span class="lab">Survey Date</span><input type="date" id="svDate" value="${esc(c.date)}"></label>
+      <label class="f"><span class="lab">Revision</span><input id="svRev" value="${esc(c.rev)}"></label>
+      <label class="f"><span class="lab">ชนิดหม้อ</span><input id="svType" value="${esc(c.type)}" list="svTypes"><datalist id="svTypes"><option value="WATER SPRAY RETORT"><option value="WATER IMMERSION RETORT"><option value="STEAM RETORT"><option value="STEAM AIR RETORT"></datalist></label></div>
+    ${SV.pick || !cols.length ? picker() : `<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px"><span class="sub">${cols.length} หม้อ: ${esc(retRangeText(cols.map(x => x.retort).sort(byRetort)))}</span><button class="ghost sm" id="svPickOpen">${I("pen")}เพิ่ม/ลบหม้อ</button></div>`}
+    <div class="row svact" style="gap:8px;flex-wrap:wrap;margin-top:10px">
+      <div class="seg dseg"><button class="${mode === "grid" ? "on" : ""}" data-svmode="grid">ตาราง</button><button class="${mode === "one" ? "on" : ""}" data-svmode="one">ทีละหม้อ</button></div>
+      ${hasPrev ? `<button class="ghost sm" id="svCopy">คัดลอกค่าจาก Survey ก่อนหน้า</button>` : ""}
+      <button class="ghost sm" id="svPrint" ${cols.length ? "" : "disabled"}>${I("printer")}พิมพ์ / PDF</button>
+      <button class="ghost sm" id="svCsv" ${cols.length ? "" : "disabled"}>${I("download")}CSV</button>
+      ${c.id ? `<button class="ghost sm" id="svDel" style="color:var(--bad)">${I("trash")}ลบ</button>` : ""}
+      <button class="pri sm" id="svSave" style="margin-left:auto">${I("check")}บันทึก</button></div></div>
+    <div class="card">${body}</div>
+    ${cols.length ? `<button class="pri blk savebig" id="svSave2">${I("check")}บันทึก Survey</button>` : ""}`;
+  const dirty = () => { if (!SV.dirty) { SV.dirty = true; const st = m.querySelector(".svstate"); if (st) { st.textContent = "ยังไม่บันทึก"; st.classList.add("dirty"); } } };
+  m.oninput = e => { const t = e.target;
+    if (t.dataset.k) { const col = cols[+t.dataset.c]; col.v = col.v || {}; const v = t.value.trim(); if (v) col.v[t.dataset.k] = t.value; else delete col.v[t.dataset.k]; dirty(); }
+    else if (t.dataset.cn != null) { cols[+t.dataset.cn].note = t.value; dirty(); }
+    else if (["svRef", "svRev", "svType", "svDate"].includes(t.id)) { c[{ svRef: "ref", svRev: "rev", svType: "type", svDate: "date" }[t.id]] = t.value; dirty(); } };
+  m.onchange = e => { if (e.target.id === "svPlant") { c.plant = e.target.value; viewSurvey(); } };
+  m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (b.id === "svBack") { if (SV.dirty && !confirm("ยังไม่ได้บันทึก ออกจากหน้านี้?")) return; SV.cur = null; SV.dirty = false; viewSurvey(); scrollTo(0, 0); }
+    else if (b.id === "svPickOpen") { SV.pick = true; viewSurvey(); }
+    else if (ds.svret) { const i = cols.findIndex(x => x.retort === ds.svret);
+      if (i >= 0) { if (svFilled(cols[i]) && !confirm(`เอาหม้อ ${ds.svret} ออก? ค่าที่กรอกของหม้อนี้จะหายไป`)) return; cols.splice(i, 1); }
+      else { cols.push({ retort: ds.svret, plant: c.plant, note: "", v: {} }); cols.sort((a, b2) => byRetort(a.retort, b2.retort)); }
+      SV.dirty = true; const y = scrollY; viewSurvey(); scrollTo(0, y); }
+    else if (ds.svgrp) { const L = plantRetorts(c.plant).filter(r => retPre(r) === ds.svgrp), all = L.every(r => cols.some(x => x.retort === r));
+      if (all) { if (L.some(r => svFilled(cols.find(x => x.retort === r))) && !confirm(`เอาหม้อกลุ่ม ${ds.svgrp} ออกทั้งหมด?`)) return; c.cols = cols.filter(x => !L.includes(x.retort)); }
+      else L.forEach(r => { if (!cols.some(x => x.retort === r)) cols.push({ retort: r, plant: c.plant, note: "", v: {} }); });
+      c.cols.sort((a, b2) => byRetort(a.retort, b2.retort)); SV.dirty = true; const y = scrollY; viewSurvey(); scrollTo(0, y); }
+    else if (ds.svmode) { SV.mode = ds.svmode; SV.pick = false; viewSurvey(); }
+    else if (ds.svri != null) { SV.ri = +ds.svri; viewSurvey(); const o = m.querySelector(".svone"); if (o) o.scrollIntoView({ block: "start" }); }
+    else if (ds.svcp1 != null || b.id === "svCopy") { let n = 0;
+      (ds.svcp1 != null ? [cols[+ds.svcp1]] : cols).forEach(x => { if (svFilled(x)) return; const p = svPrev(x.retort, c.id); if (p) { x.v = { ...p.v }; x.note = x.note || p.note || ""; n++; } });
+      SV.dirty = true; toast(n ? `คัดลอกค่า ${n} หม้อจาก Survey ก่อนหน้าแล้ว · ตรวจ/แก้ก่อนบันทึก` : "ไม่มีค่าให้คัดลอก"); const y = scrollY; viewSurvey(); scrollTo(0, y); }
+    else if (b.id === "svPrint") svPrint(c);
+    else if (b.id === "svCsv") svCsv(c);
+    else if (b.id === "svDel") needEditPin("ลบ Survey", () => confirmBox("ลบ Survey นี้? (ต้องใส่รหัส)", async () => {
+      const pin = S.pin || prompt("ใส่รหัสเพื่อลบ Survey"); if (!pin) return;
+      try { await api(`/api/retort/surveys/${c.id}?pin=${encodeURIComponent(pin)}`, { method: "DELETE" }); SV.items = SV.items.filter(x => x.id !== c.id); SV.cur = null; SV.dirty = false; toast("ลบ Survey แล้ว"); viewSurvey(); }
+      catch (err) { toast(err.message); } }));
+    else if (b.id === "svSave" || b.id === "svSave2") needEditPin("บันทึก Survey", async () => {
+      b.disabled = true;
+      try { const r = await jpost("/api/retort/surveys", { survey: c, by: S.user, pin: S.pin || undefined });
+        SV.cur = JSON.parse(JSON.stringify(r.survey)); const i = SV.items.findIndex(x => x.id === r.survey.id); if (i >= 0) SV.items[i] = r.survey; else SV.items.unshift(r.survey);
+        SV.dirty = false; SV.pick = false; toast("บันทึก Survey แล้ว"); const y = scrollY; viewSurvey(); scrollTo(0, y); }
+      catch (err) { b.disabled = false; toast("บันทึกไม่สำเร็จ: " + err.message); if (err.status === 401) showLock(true); } }); };
+}
+function svCsv(c) {
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["Retort Survey Filling Form"], ["Ref #", c.ref], ["Survey Date", c.date], ["Revision", c.rev], ["Type", c.type], [],
+    ["Item", ...c.cols.map(x => x.retort)], ["หมายเหตุ", ...c.cols.map(x => x.note || "")]];
+  SV_TABLES.forEach(t => { rows.push([], [`Table # ${t.no} · ${t.head}`]); t.groups.flat().forEach(([k, l]) => rows.push([l.trim(), ...c.cols.map(x => (x.v || {})[k] || "")])); });
+  const blob = new Blob(["﻿" + rows.map(r => r.map(q).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `retort-survey-${c.date || "nodate"}${c.ref ? "-" + c.ref.replace(/[^\w-]+/g, "") : ""}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function svPrint(c) {
+  const pages = []; for (let i = 0; i < c.cols.length; i += SV_PER_PAGE) pages.push(c.cols.slice(i, i + SV_PER_PAGE));
+  const total = pages.length * SV_TABLES.length; let n = 0;
+  const page = (t, cs) => { n++; const pad = Array.from({ length: SV_PER_PAGE - cs.length }, () => ({ retort: "", note: "", v: {} })), all = [...cs, ...pad];
+    return `<section class="pg"><div class="pno">Page ${n}/${total}</div><h1>i-Tail Corporation Public Company Limited</h1>
+      <div class="hd"><div></div><div class="ttl"><b>Retort Survey Filling Form</b><div>Table # <u>&nbsp;&nbsp;&nbsp;${t.no}&nbsp;&nbsp;&nbsp;</u></div></div>
+        <div class="meta"><div>Ref # <span>${esc(c.ref)}</span></div><div>Survey Date: <span>${c.date ? dmy(c.date) : ""}</span></div><div>Revision : <span>${esc(c.rev)}</span></div></div></div>
+      <div class="typ">${esc(c.type || "")}</div>
+      <table><tr><td class="l" rowspan="2">${esc(t.head)}</td>${all.map(x => `<td class="h">${esc(x.retort)}</td>`).join("")}</tr><tr>${all.map(x => `<td class="h2">${esc(x.note || "")}</td>`).join("")}</tr>
+      ${t.groups.map((g, gi) => (gi ? `<tr class="gap"><td colspan="${SV_PER_PAGE + 1}"></td></tr>` : "") + g.map(([k, l]) => `<tr><td class="l">${esc(l)}</td>${all.map(x => `<td>${esc((x.v || {})[k] || "")}</td>`).join("")}</tr>`).join("")).join("")}</table></section>`; };
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Retort Survey ${esc(c.date || "")}</title><style>
+    @page{size:A4 landscape;margin:10mm}body{font-family:Arial,Helvetica,sans-serif;margin:0;color:#000}
+    .pg{position:relative;page-break-after:always;padding:2mm}.pg:last-child{page-break-after:auto}
+    .pno{position:absolute;right:2mm;top:0;font-size:9pt}h1{text-align:center;font:bold 17pt "Times New Roman",serif;margin:6px 0 4px}
+    .hd{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:end}.ttl{text-align:center;font:12pt "Times New Roman",serif;line-height:1.7}.ttl b{font-size:13pt}
+    .meta{font:9.5pt "Times New Roman",serif;line-height:2.1;justify-self:end;min-width:62mm}.meta span{display:inline-block;min-width:38mm;border-bottom:1px solid #000;margin-left:4px;padding-left:4px}
+    .typ{font-size:9.5pt;margin:8px 0 4px}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.5pt}
+    td{border:1px solid #000;height:7.2mm;padding:1px 3px;text-align:center;overflow:hidden;word-break:break-word}td.l{width:52mm;text-align:left}td.h{font-weight:bold}
+    tr.gap td{height:3mm;border-left:1px solid #000;border-right:1px solid #000}</style></head><body>
+    ${pages.map(cs => SV_TABLES.map(t => page(t, cs)).join("")).join("")}<script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`;
+  const w = window.open("", "_blank"); if (!w) { toast("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ · อนุญาตป๊อปอัปแล้วลองใหม่"); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
 /* ---------- อัปเดตค่าโปรแกรมจาก PDF (หัวหน้า) : อัปโหลด → ระบบอ่านตาราง → ตรวจ/แก้ → ยืนยัน ---------- */
 const TPD = { d: null };
 function tpCard() {
