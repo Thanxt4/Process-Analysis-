@@ -1634,7 +1634,7 @@ async function renderPrev(){
   const editable = canEdit(sheetItem.round);
   $("#prevWrap").innerHTML = subs.length ? `<h4>ผลการตรวจในรอบ${sheetItem.round===CFG.current_round?"นี้":" "+thDate(sheetItem.round)} (${subs.length})</h4>` + subs.map(s => `
     <div class="sub ${s.id===editingId?"being-edited":""}"><div class="h"><span class="pill ${s.status==="พบปัญหา"?"ng":s.status===NO_ACT?"na":"ok"}">${esc(s.status)}</span><b>${s.topic?esc(s.topic)+" · ":""}${esc(s.inspector)}</b>
-      <span class="note">${thDate(s.created_at)} ${hm(s.created_at)} น.${s.late?`<span class="tag-late">ส่งย้อนหลัง</span>`:""}${s.edited_at?`<span class="tag-ed" title="แก้ไขล่าสุด ${hm(s.edited_at)} น.">แก้ไขแล้ว</span>`:""}</span><button class="zoom" data-id="${s.id}" title="ขยายเต็มหน้าจอ" aria-label="ขยายเต็มหน้าจอ"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>ขยาย</button>${s.status==="พบปัญหา"?`<button class="fumk" data-id="${s.id}" title="เปิดเรื่องที่ต้องติดตามจากผลตรวจนี้">${FU.items.some(x => (x.src||{}).sid === s.id) ? "ดูเรื่องติดตาม" : "＋ ติดตาม"}</button>`:""}${editable?`<button class="edit" data-id="${s.id}">แก้ไข</button><button class="del" data-id="${s.id}">ลบ</button>`:""}</div>
+      <span class="note">${thDate(s.created_at)} ${hm(s.created_at)} น.${s.late?`<span class="tag-late">ส่งย้อนหลัง</span>`:""}${s.edited_at?`<span class="tag-ed" title="แก้ไขล่าสุด ${hm(s.edited_at)} น.">แก้ไขแล้ว</span>`:""}</span><button class="zoom" data-id="${s.id}" title="ขยายเต็มหน้าจอ" aria-label="ขยายเต็มหน้าจอ"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>ขยาย</button>${s.status==="พบปัญหา"?`<button class="fumk" data-id="${s.id}" title="เปิดเรื่องที่ต้องติดตามจากผลตรวจนี้">${FU.items.some(x => (x.src||{}).sid === s.id) ? "✓ ติดตามแล้ว" : "＋ ติดตาม"}</button>`:""}${editable?`<button class="edit" data-id="${s.id}">แก้ไข</button><button class="del" data-id="${s.id}">ลบ</button>`:""}</div>
       ${s.pages.map((p,i)=>`${s.pages.length>1?`<div class="pl">สไลด์ ${i+1}</div>`:""}
         ${p.note?`<p>${esc(p.note)}</p>`:""}
         ${(p.media||[]).length?`<div class="thumbs">${p.media.map(m=>`<div><img src="${m.thumb||m.poster}" data-full="${m.poster}" loading="lazy" decoding="async" alt="" ${m.kind==="video"?`data-video="${m.url}"`:""}>${m.kind==="video"?`<span class="vbadge"><svg class="ic" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l15 8-15 8z"/></svg> วิดีโอ</span>`:""}</div>`).join("")}</div>`:""}`).join("")}
@@ -1705,10 +1705,13 @@ $("#prevWrap").addEventListener("click", async e => {
   if(fm){
     const s = prevSubs[fm.dataset.id]; if(!s) return;
     const had = FU.items.find(x => (x.src || {}).sid === s.id);
-    closeSheet(); document.querySelector('nav.tabs [data-tab="follow"]').click();
-    if(had) fuOpen(had);
-    else { const it = (sheetItem && sheetItem.id === s.area_id ? sheetItem : findItem(s.area_id)) || {}; fuOpen(null, fuFromSub({sid: s.id, no: it.no || "", name: s.area_name, zone: s.zone, zone_id: s.zone_id, round: s.round_date, inspector: s.inspector,
+    if(had){ toast("หัวข้อนี้อยู่ในเรื่องที่ต้องติดตามแล้ว"); return; }
+    const it = (sheetItem && sheetItem.id === s.area_id ? sheetItem : findItem(s.area_id)) || {};
+    fm.disabled = true; fm.textContent = "กำลังเพิ่ม…";
+    try{ await fuAddSub(fuFromSub({sid: s.id, no: it.no || "", name: s.area_name, zone: s.zone, zone_id: s.zone_id, round: s.round_date, inspector: s.inspector,
       note: s.pages.map(p => p.note).filter(Boolean).join("\n") || s.note || "", cause: s.cause, action: s.action, media: s.pages.flatMap(p => p.media || [])})); }
+    catch(err){ toast(err.message, true); }
+    fm.disabled = false; fm.textContent = FU.items.some(x => (x.src || {}).sid === s.id) ? "✓ ติดตามแล้ว" : "＋ ติดตาม";
     return;
   }
   const ed = e.target.closest(".edit");
@@ -2971,6 +2974,12 @@ async function loadFollowups(){
 const fuOf = sid => FU.items.find(x => (x.src || {}).sid === sid);
 const fuBtn = sid => { const x = fuOf(sid); return `<button type="button" class="fubtn ${x ? "on" : ""}" data-fusid="${esc(sid)}" title="${x ? "ดูในหน้า เรื่องที่ต้องติดตาม" : "เพิ่มหัวข้อนี้ไปที่ เรื่องที่ต้องติดตาม"}">${x ? "✓ ติดตามแล้ว" : "＋ ติดตาม"}</button>`; };
 function fuMarkBtns(){ document.querySelectorAll(".fubtn[data-fusid]").forEach(b => { const on = !!fuOf(b.dataset.fusid); if(b.classList.contains("on") !== on){ b.classList.toggle("on", on); b.textContent = on ? "✓ ติดตามแล้ว" : "＋ ติดตาม"; } }); }
+async function fuAddSub(pre){
+  const by = getMyName(); if(!by){ toast("ตั้งชื่อผู้ใช้ก่อน", true); openNameBox(); return null; }
+  const r = await api("/api/followups", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...pre, src_info: undefined, status: "open", by})});
+  r.item.src_info = pre.src_info || null; fuPut(r.item); loadFollowups();
+  toast(`เพิ่ม "${pre.title}" ไปที่ เรื่องที่ต้องติดตามแล้ว`); return r.item;
+}
 async function fuQuick(b){
   const sid = b.dataset.fusid, had = fuOf(sid);
   if(had){ document.querySelector('nav.tabs [data-tab="follow"]').click(); fuOpen(had); return; }
@@ -2981,9 +2990,7 @@ async function fuQuick(b){
     const subs = await api(`/api/submissions?round=${viewRound}&area=${encodeURIComponent(area)}`), s = subs.find(x => x.id === sid) || {};
     const pre = fuFromSub({sid, no: it.no || "", name: it.name || s.area_name || "", zone_id: s.zone_id || it.zone_id || "",
       note: (s.pages || []).map(p => p.note).filter(Boolean).join("\n") || s.note || "", cause: s.cause, action: s.action});
-    const r = await api("/api/followups", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...pre, src_info: undefined, status: "open", by})});
-    r.item.src_info = null; fuPut(r.item); loadFollowups();
-    toast(`เพิ่ม "${it.no || ""} ${it.name || ""}" ไปที่ เรื่องที่ต้องติดตามแล้ว`);
+    await fuAddSub(pre);
   }catch(err){ toast(err.message, true); }
   finally{ b.disabled = false; const on = !!fuOf(sid); b.classList.toggle("on", on); b.textContent = on ? "✓ ติดตามแล้ว" : "＋ ติดตาม"; fuMarkBtns(); }
 }
@@ -3108,7 +3115,9 @@ $("#fuQ").addEventListener("input", e => { FU.q = e.target.value; renderFollow()
 $("#tab-follow").addEventListener("click", e => {
   const f = e.target.closest("[data-fuf]"); if(f){ FU.filter = f.dataset.fuf; store.set("pc_fufilter", FU.filter); renderFollow(); return; }
   const c = e.target.closest("[data-fu]"); if(c){ const x = FU.items.find(y => y.id === c.dataset.fu); if(x) fuOpen(x); return; }
-  const i = e.target.closest("[data-fuiss]"); if(i){ const s = FU.issues.find(y => y.sid === i.dataset.fuiss); if(s) fuOpen(null, fuFromSub(s)); return; }
+  const i = e.target.closest("[data-fuiss]"); if(i){ const s = FU.issues.find(y => y.sid === i.dataset.fuiss); if(!s || i.disabled) return;
+    const y = scrollY; i.disabled = true; i.textContent = "กำลังเพิ่ม…";
+    fuAddSub(fuFromSub(s)).catch(err => toast(err.message, true)).finally(() => { renderFollow(); scrollTo(0, y); }); return; }
   if(e.target.id === "fuIssMore"){ FU.issAll = true; renderFollow(); }
 });
 $("#fuBody").addEventListener("change", e => {
