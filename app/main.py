@@ -2473,6 +2473,60 @@ def api_comment_delete(cid: str, pin: str = ""):
     return {"ok": True, "threads": _cm_threads(items)}
 
 
+# ---------------------------------------------------------------- การแจ้งเตือน (กระดิ่งมุมขวาบน)
+@app.get("/api/notifications")
+def api_notifications(name: str = "", days: int = Query(14, ge=1, le=60)):
+    """ความเคลื่อนไหวล่าสุด: ความคิดเห็น/คำถาม/คำตอบ และเรื่องที่ต้องติดตาม
+    mine = เกี่ยวกับชื่อนี้ (คอมเม้นผลตรวจของฉัน · ตอบคำถาม/กระทู้ที่ฉันร่วม · เรื่องที่ฉันเปิดหรือรับผิดชอบ)"""
+    me = " ".join(str(name or "").split()).lower()
+    since = _fu_ms() - days * 86400 * 1000
+    same = lambda x: me and " ".join(str(x or "").split()).lower() == me
+    ev = []
+    with db() as con:
+        cms = _cm_rows(con, "WHERE created_at>=?", (since,))
+        tops = {x["id"]: x for x in _cm_rows(con, "WHERE parent IS NULL")}
+        allc = _cm_rows(con)
+        sids = {x.get("sid") for x in cms if x.get("sid")} | {tops.get(x.get("parent"), {}).get("sid") for x in cms if x.get("parent")}
+        insp = {}
+        for sid in sids - {None}:
+            r = con.execute("SELECT inspector, round_date FROM submissions WHERE id=?", (sid,)).fetchone()
+            if r:
+                insp[sid] = (r["inspector"], r["round_date"])
+        fus = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups WHERE updated_at>=?", (since,))]
+    for x in cms:
+        top = tops.get(x.get("parent")) if x.get("parent") else x
+        sid = (top or {}).get("sid")
+        it = ITEM_MAP.get(x["area_id"], {})
+        who, rd = insp.get(sid, ("", x.get("round") or ""))
+        thread = [c for c in allc if c["id"] == (top or {}).get("id") or c.get("parent") == (top or {}).get("id")]
+        reason = ""
+        if not same(x["by"]):
+            if x.get("parent") and top and same(top["by"]):
+                reason = "ตอบคำถามของคุณ" if top.get("question") else "ตอบกลับความคิดเห็นของคุณ"
+            elif same(who):
+                reason = "ถามในผลตรวจของคุณ" if x.get("question") else "แสดงความคิดเห็นในผลตรวจของคุณ"
+            elif x.get("parent") and any(same(c["by"]) for c in thread if c["at"] < x["at"]):
+                reason = "ตอบกลับในกระทู้ที่คุณร่วม"
+        ev.append({"id": x["id"], "type": "reply" if x.get("parent") else ("question" if x.get("question") else "comment"),
+                   "at": x["at"], "by": x["by"], "text": x["text"][:160], "area_id": x["area_id"], "sid": sid, "round": rd,
+                   "title": f'{it.get("no", "")} {it.get("name", x["area_id"])}'.strip(), "zone": it.get("zone", ""),
+                   "mine": bool(reason), "reason": reason})
+    for f in fus:
+        for n in (f.get("notes") or []) + [{"at": f.get("created_at"), "by": f.get("created_by"), "text": "เปิดเรื่องติดตาม", "kind": "open"}]:
+            if not n.get("at") or n["at"] < since:
+                continue
+            reason = ""
+            if not same(n.get("by")):
+                if same(f.get("owner")):
+                    reason = "มอบหมายให้คุณรับผิดชอบ" if n.get("kind") == "open" else "อัปเดตเรื่องที่คุณรับผิดชอบ"
+                elif same(f.get("created_by")):
+                    reason = "อัปเดตเรื่องที่คุณเปิดไว้"
+            ev.append({"id": f'{f["id"]}:{n["at"]}', "type": "followup", "fid": f["id"], "at": n["at"], "by": n.get("by") or "",
+                       "text": n.get("text", "")[:160], "title": f.get("title", ""), "zone": f.get("zone", ""), "mine": bool(reason), "reason": reason})
+    ev.sort(key=lambda e: -e["at"])
+    return {"items": ev[:150], "now": _fu_ms()}
+
+
 # ---------------------------------------------------------------- เรื่องที่ต้องติดตาม (Follow-up)
 # เพิ่ม/แก้ไข/ปิดเรื่องได้จากหน้าเว็บ · ลบต้องใส่รหัสแก้ไข (EDIT_PIN) · รูปเก็บที่ uploads/followups/
 FU_STATUS = {"open": "รอดำเนินการ", "doing": "กำลังดำเนินการ", "done": "เสร็จแล้ว"}

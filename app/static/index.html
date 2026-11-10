@@ -879,6 +879,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .igmore{display:block;border:0;background:none;padding:2px 0;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
 .igl{padding:3px 0}.igl p{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-wrap}
 .igl.rep{margin-left:22px}
+.igl.flash{animation:flash 2s ease}@keyframes flash{0%,40%{background:#fef9c3}100%{background:transparent}}
 .igm{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:1px}
 .igm button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
 .igm button.del{color:#f87171}
@@ -890,6 +891,35 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .igq.on{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
 .igsend{border:0;background:none;color:#2563eb;font-weight:800;font-size:14.5px;padding:6px 4px;cursor:pointer}
 .subfull .igc{display:none}
+
+/* ---- กระดิ่งแจ้งเตือน ---- */
+.hright{display:flex;align-items:flex-start;gap:12px}
+.bell{position:relative;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none}
+.bell svg{width:22px;height:22px}
+.bell:hover{background:rgba(255,255,255,.16)}
+.bell em{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#ef4444;color:#fff;font-style:normal;font-size:11.5px;font-weight:800;line-height:20px;text-align:center;border:2px solid var(--navy)}
+.bell.ring svg{animation:ring .9s ease 2}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-5deg)}}
+.ntbg{position:fixed;inset:0;z-index:60;display:none}
+.ntbg.on{display:block}
+.ntp{position:absolute;top:calc(64px + env(safe-area-inset-top));right:max(12px, calc((100vw - 1100px)/2));width:min(420px,calc(100vw - 24px));max-height:min(72vh,640px);display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 20px 50px -10px rgba(15,23,42,.45);border:1px solid var(--line);overflow:hidden}
+.nth{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.nth b{flex:1;font-size:16px}
+#ntList{overflow:auto;flex:1}
+.nti{display:flex;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #f1f5f9;background:#fff;padding:11px 14px;font:inherit;cursor:pointer}
+.nti:hover{background:#f8fafc}
+.nti.new{background:#eff6ff}
+.nti .ic2{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#f1f5f9;color:var(--navy)}
+.nti .ic2 svg{width:18px;height:18px}
+.nti.t-question .ic2{background:#fee2e2;color:#b91c1c}.nti.t-reply .ic2{background:#dcfce7;color:#166534}.nti.t-followup .ic2{background:#fef3c7;color:#92400e}
+.nti .b{flex:1;min-width:0;font-size:14px;line-height:1.4}
+.nti .r{display:block;font-size:12px;font-weight:700;color:#2563eb}
+.nti .tt{display:block;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nti .x2{display:block;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.nti small{color:var(--muted);font-size:12px}
+.ntf{padding:10px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ntf button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer}
+@media(max-width:699px){.ntp{top:calc(58px + env(safe-area-inset-top));right:8px;width:calc(100vw - 16px)}.bell{width:38px;height:38px}}
 </style>
 </head>
 <body>
@@ -898,7 +928,8 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
     <div class="hrow">
       <div class="brand"><small id="appTitle">LINE QC / PROCESS CONTROL</small><h1>ฟอร์มตรวจพื้นที่หน้างาน</h1>
         <button class="me" id="meBtn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> <span id="meName">ตั้งชื่อผู้ตรวจ</span> <em>เปลี่ยน</em></button></div>
-      <div class="clock"><b id="roundLbl">–</b>ตัดรอบใน <span class="cd" id="countdown">--:--:--</span><br><button class="install" id="installBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v7m0 0-3-3m3 3 3-3"/></svg> ติดตั้งแอป</button></div>
+      <div class="hright"><button class="bell" id="bellBtn" type="button" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button>
+      <div class="clock"><b id="roundLbl">–</b>ตัดรอบใน <span class="cd" id="countdown">--:--:--</span><br><button class="install" id="installBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v7m0 0-3-3m3 3 3-3"/></svg> ติดตั้งแอป</button></div></div>
     </div>
     <div class="overall"><span>ตรวจแล้ว <b id="ovNum">0/0</b></span><div class="bar"><i id="ovBar" style="width:0"></i></div><span id="ovIssue"></span></div>
   </div>
@@ -1146,6 +1177,11 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
     <button class="btn submit" id="nameSave" type="button">บันทึกชื่อ</button>
   </div>
 </div>
+<!-- การแจ้งเตือน -->
+<div class="ntbg" id="ntBg"><div class="ntp" id="ntPanel" role="dialog" aria-label="การแจ้งเตือน">
+  <div class="nth"><b>การแจ้งเตือน</b><div class="seg" id="ntTabs"><button type="button" data-nt="mine">ของฉัน</button><button type="button" data-nt="all">ทั้งหมด</button></div><button class="x" id="ntX" aria-label="ปิด">×</button></div>
+  <div id="ntList"></div><div class="ntf" id="ntFoot"></div>
+</div></div>
 <!-- เรื่องที่ต้องติดตาม: เพิ่ม / แก้ไข / อัปเดตความคืบหน้า -->
 <div class="sheet-bg" id="fuBg">
   <div class="sheet fu-sheet" role="dialog" aria-modal="true">
@@ -3168,7 +3204,7 @@ function drawCm(loading){
 async function cmPost(body){
   const by = getMyName(); if(!by){ toast("ตั้งชื่อผู้ใช้ก่อน", true); openNameBox(); return false; }
   try{ const r = await api("/api/comments", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...body, area_id: CM.area, by, round: sheetItem ? sheetItem.round : ""})});
-    CM.threads = r.threads; drawCm(); cmUpdateSum(); return true; }
+    CM.threads = r.threads; drawCm(); cmUpdateSum(); setTimeout(loadNotif, 300); return true; }
   catch(err){ toast(err.message, true); return false; }
 }
 $("#shCm").onclick = () => { const t = CM.threads.find(x => x.open) || CM.threads[CM.threads.length - 1]; const el = t && t.sid ? document.querySelector(`.igc[data-igsid="${t.sid}"]`) : $("#cmWrap"); if(t && t.sid) IG.open.add(t.sid), drawIg(); (el || $("#prevWrap")).scrollIntoView({behavior: "smooth", block: "center"}); };
@@ -3191,7 +3227,7 @@ function drawIg(){
   document.querySelectorAll("#prevWrap .igc[data-igsid]").forEach(box => {
     const sid = box.dataset.igsid, T = CM.threads.filter(t => t.sid === sid), n = T.reduce((a, t) => a + 1 + t.replies.length, 0);
     const wait = T.filter(t => t.open).length, all = IG.open.has(sid), show = all ? T : T.slice(-2), rp = IG.reply[sid];
-    const line = (x, top) => `<div class="igl ${top ? "" : "rep"}"><p><b>${esc(x.by)}</b> ${top && x.question ? `<span class="cmk ${x.closed ? "cl" : x.parent || (T.find(t => t.id === x.id) || {}).replies?.length ? "ok" : "wait"}">${x.closed ? "ปิดแล้ว" : (T.find(t => t.id === x.id) || {}).replies?.length ? "ตอบแล้ว" : "คำถาม · รอตอบ"}</span> ` : ""}${esc(x.text)}</p>
+    const line = (x, top) => `<div class="igl ${top ? "" : "rep"}" data-cid="${x.id}"><p><b>${esc(x.by)}</b> ${top && x.question ? `<span class="cmk ${x.closed ? "cl" : x.parent || (T.find(t => t.id === x.id) || {}).replies?.length ? "ok" : "wait"}">${x.closed ? "ปิดแล้ว" : (T.find(t => t.id === x.id) || {}).replies?.length ? "ตอบแล้ว" : "คำถาม · รอตอบ"}</span> ` : ""}${esc(x.text)}</p>
       <div class="igm"><span>${cmAt(x.at)}</span>${top ? `<button type="button" data-igrep="${x.id}" data-n="${esc(x.by)}">ตอบกลับ</button>` : ""}${top && x.question ? `<button type="button" data-cmclose="${x.id}" data-v="${x.closed ? 0 : 1}">${x.closed ? "เปิดคำถาม" : "ปิดคำถาม"}</button>` : ""}<button type="button" class="del" data-cmdel="${x.id}">ลบ</button></div></div>`;
     box.innerHTML = `<div class="igbar"><button type="button" class="igbtn ${wait ? "q" : ""}" data-igtog="${sid}">${CM_IC}${n ? `${n} ความคิดเห็น${wait ? ` · รอตอบ ${wait}` : ""}` : "แสดงความคิดเห็น"}</button></div>
       ${!all && T.length > 2 ? `<button type="button" class="igmore" data-igtog="${sid}">ดูความคิดเห็นทั้งหมด ${n} รายการ</button>` : ""}
@@ -3221,6 +3257,68 @@ $("#prevWrap").addEventListener("click", e => {
 }, true);
 $("#prevWrap").addEventListener("keydown", e => { const i = e.target.closest("[data-igtext]"); if(i && e.key === "Enter"){ e.preventDefault(); igSend(i.dataset.igtext, i.closest(".igc")); } });
 
+/* ---------- การแจ้งเตือน (กระดิ่งมุมขวาบน) ---------- */
+const NT = { items: [], tab: store.get("pc_nttab", "mine"), seen: +store.get("pc_ntseen", "0") || 0, popped: +store.get("pc_ntpop", "0") || 0, lastSeen: 0 };
+const NT_IC = { comment: CM_IC, question: CM_IC, reply: CM_IC,
+  followup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>` };
+const ntVerb = e => e.type === "followup" ? "เรื่องที่ต้องติดตาม" : e.type === "question" ? "ถามคำถาม" : e.type === "reply" ? "ตอบกลับ" : "แสดงความคิดเห็น";
+const ntAgo = ms => { const m = Math.round((Date.now() - ms) / 6e4); return m < 1 ? "เมื่อสักครู่" : m < 60 ? `${m} นาทีที่แล้ว` : m < 1440 ? `${Math.round(m / 60)} ชม.ที่แล้ว` : cmAt(ms); };
+const ntMineMode = () => !!getMyName();
+async function loadNotif(){
+  try{ const r = await api(`/api/notifications?name=${encodeURIComponent(getMyName())}`); NT.items = r.items || []; }catch{ return; }
+  ntBadge(); if($("#ntBg").classList.contains("on")) ntRender(); ntPop();
+}
+function ntBadge(){
+  const pool = ntMineMode() ? NT.items.filter(e => e.mine) : NT.items, n = pool.filter(e => e.at > NT.seen).length, b = $("#bellN");
+  const was = +(b.textContent || 0);
+  b.hidden = !n; b.textContent = n > 99 ? "99+" : n;
+  $("#bellBtn").title = n ? `มีการแจ้งเตือนใหม่ ${n} รายการ` : "การแจ้งเตือน";
+  if(n > was){ const bt = $("#bellBtn"); bt.classList.remove("ring"); void bt.offsetWidth; bt.classList.add("ring"); }
+}
+function ntRender(){
+  const tab = ntMineMode() ? NT.tab : "all";
+  $("#ntTabs").querySelectorAll("button").forEach(b => { b.classList.toggle("on", b.dataset.nt === tab); b.disabled = !ntMineMode() && b.dataset.nt === "mine"; });
+  const L = tab === "mine" ? NT.items.filter(e => e.mine) : NT.items;
+  $("#ntList").innerHTML = L.length ? L.slice(0, 80).map(e => `<button type="button" class="nti t-${e.type} ${e.at > NT.lastSeen ? "new" : ""}" data-nti="${esc(e.id)}">
+      <span class="ic2">${NT_IC[e.type] || CM_IC}</span><span class="b">${e.reason ? `<span class="r">${esc(e.reason)}</span>` : ""}
+      <span class="tt">${esc(e.title)}</span><span class="x2"><b>${esc(e.by)}</b> ${e.type === "followup" ? "" : ntVerb(e) + ": "}${esc(e.text)}</span>
+      <small>${esc(e.zone || "")}${e.zone ? " · " : ""}${ntAgo(e.at)}</small></span></button>`).join("")
+    : `<div class="empty" style="padding:28px 16px">${tab === "mine" ? "ยังไม่มีการแจ้งเตือนที่เกี่ยวกับคุณ<br><small>เช่น มีคนคอมเม้นผลตรวจของคุณ หรือตอบคำถามของคุณ</small>" : "ยังไม่มีความเคลื่อนไหว"}</div>`;
+  const perm = "Notification" in window ? Notification.permission : "na";
+  $("#ntFoot").innerHTML = `${ntMineMode() ? `แจ้งเตือนของ <b>${esc(getMyName())}</b>` : `ตั้งชื่อผู้ใช้ก่อน จึงจะมีแท็บ ของฉัน`}${perm === "default" ? `<button type="button" id="ntPerm">เปิดแจ้งเตือนบนเครื่อง</button>` : perm === "granted" ? " · แจ้งเตือนบนเครื่อง: เปิด" : ""}`;
+}
+function ntOpen(){
+  NT.lastSeen = NT.seen; $("#ntBg").classList.add("on"); ntRender();
+  NT.seen = Date.now(); store.set("pc_ntseen", String(NT.seen)); ntBadge(); loadNotif();
+}
+function ntClose(){ $("#ntBg").classList.remove("on"); }
+// แจ้งเตือนบนเครื่อง (ทำงานขณะเปิดแอปไว้ · ใช้ได้เมื่ออนุญาตแล้ว)
+function ntPop(){
+  if(!("Notification" in window) || Notification.permission !== "granted") return;
+  const fresh = NT.items.filter(e => e.mine && e.at > Math.max(NT.popped, NT.seen));
+  if(!NT.popped){ NT.popped = Date.now(); store.set("pc_ntpop", String(NT.popped)); return; }  // ครั้งแรก: ไม่เด้งของเก่า
+  fresh.slice(0, 3).reverse().forEach(e => { try{ const n = new Notification(e.reason || "การแจ้งเตือนใหม่", {body: `${e.title}\n${e.by}: ${e.text}`, tag: e.id, icon: "/icon-192.png"});
+    n.onclick = () => { focus(); ntGo(e); n.close(); }; }catch{} });
+  if(fresh.length){ NT.popped = fresh[0].at; store.set("pc_ntpop", String(NT.popped)); }
+}
+async function ntGo(e){
+  ntClose();
+  if(e.type === "followup"){ document.querySelector('nav.tabs [data-tab="follow"]').click(); if(!FU.loaded) await loadFollowups(); const x = FU.items.find(y => y.id === e.fid); if(x) fuOpen(x); else toast("ไม่พบเรื่องนี้ (อาจถูกลบไปแล้ว)", true); return; }
+  if(!findItem(e.area_id)){ toast("ไม่พบหัวข้อนี้ (อาจถูกลบไปแล้ว)", true); return; }
+  await openSheet(e.area_id, e.round || CFG.current_round);
+  if(e.sid) IG.open.add(e.sid);
+  setTimeout(() => { drawIg(); const el = document.querySelector(`[data-cid="${e.id}"]`) || (e.sid && document.querySelector(`.igc[data-igsid="${e.sid}"]`));
+    if(el){ el.scrollIntoView({behavior: "smooth", block: "center"}); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 2000); } }, 600);
+}
+$("#bellBtn").onclick = () => $("#ntBg").classList.contains("on") ? ntClose() : ntOpen();
+$("#ntX").onclick = ntClose;
+$("#ntBg").addEventListener("click", e => { if(e.target.id === "ntBg") ntClose(); });
+$("#ntTabs").addEventListener("click", e => { const b = e.target.closest("[data-nt]"); if(!b || b.disabled) return; NT.tab = b.dataset.nt; store.set("pc_nttab", NT.tab); ntRender(); });
+$("#ntList").addEventListener("click", e => { const b = e.target.closest("[data-nti]"); if(!b) return; const ev = NT.items.find(x => x.id === b.dataset.nti); if(ev) ntGo(ev); });
+$("#ntFoot").addEventListener("click", async e => { if(e.target.id === "ntPerm"){ const r = await Notification.requestPermission(); if(r === "granted"){ NT.popped = Date.now(); store.set("pc_ntpop", String(NT.popped)); toast("เปิดแจ้งเตือนบนเครื่องแล้ว (ขณะเปิดแอปไว้)"); } ntRender(); } });
+document.addEventListener("keydown", e => { if(e.key === "Escape" && $("#ntBg").classList.contains("on")) ntClose(); });
+setInterval(() => { if(!document.hidden) loadNotif(); }, 45000);
+
 /* countdown + round rollover */
 function tick(){
   if(!CFG) return;
@@ -3239,6 +3337,7 @@ async function refreshAll(){
       ["check", "slides"].includes(curTab()) ? api("/api/rounds") : null]);
     loadFollowups();  // ตัวเลขเรื่องค้างบนแถบ ติดตาม
     loadCmSummary();  // ป้ายถาม-ตอบ ในแต่ละหัวข้อ
+    loadNotif();      // กระดิ่งแจ้งเตือน
     await loadConfig(cfg);
     if(prevRound && prevRound !== CFG.current_round){ viewRound = CFG.current_round; toast("ตัดรอบแล้ว เริ่มรอบใหม่ "+thDate(CFG.current_round)); }
     await loadStatus(st);
