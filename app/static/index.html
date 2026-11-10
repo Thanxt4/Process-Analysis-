@@ -893,17 +893,17 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .subfull .igc{display:none}
 
 /* ---- กระดิ่งแจ้งเตือน ---- */
-.hright{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.hright .clock{order:1}
-.bell{order:2;position:relative;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none}
-.bell svg{width:19px;height:19px}
+.merow{display:flex;align-items:center;gap:8px;margin-top:6px}
+.merow .me{margin-top:0}
+.bell{position:relative;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;padding:3px 10px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none;align-self:stretch}
+.bell svg{width:15px;height:15px}
 .bell:hover{background:rgba(255,255,255,.16)}
-.bell em{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#ef4444;color:#fff;font-style:normal;font-size:11.5px;font-weight:800;line-height:20px;text-align:center;border:2px solid var(--navy)}
+.bell em{position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:#ef4444;color:#fff;font-style:normal;font-size:11px;font-weight:800;line-height:18px;text-align:center;border:2px solid var(--navy)}
 .bell.ring svg{animation:ring .9s ease 2}
 @keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-5deg)}}
 .ntbg{position:fixed;inset:0;z-index:60;display:none}
 .ntbg.on{display:block}
-.ntp{position:absolute;top:calc(104px + env(safe-area-inset-top));right:max(12px, calc((100vw - 1100px)/2));width:min(420px,calc(100vw - 24px));max-height:min(72vh,640px);display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 20px 50px -10px rgba(15,23,42,.45);border:1px solid var(--line);overflow:hidden}
+.ntp{position:absolute;top:calc(104px + env(safe-area-inset-top));left:max(12px, calc((100vw - 1100px)/2));width:min(420px,calc(100vw - 24px));max-height:min(72vh,640px);display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 20px 50px -10px rgba(15,23,42,.45);border:1px solid var(--line);overflow:hidden}
 .nth{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
 .nth b{flex:1;font-size:16px}
 #ntList{overflow:auto;flex:1}
@@ -920,7 +920,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .nti small{color:var(--muted);font-size:12px}
 .ntf{padding:10px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .ntf button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer}
-@media(max-width:699px){.ntp{top:calc(96px + env(safe-area-inset-top));right:8px;width:calc(100vw - 16px)}.bell{width:34px;height:34px}}
+@media(max-width:699px){.ntp{top:calc(96px + env(safe-area-inset-top));left:8px;right:auto;width:calc(100vw - 16px)}}
 </style>
 </head>
 <body>
@@ -928,9 +928,8 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
   <div class="wrap">
     <div class="hrow">
       <div class="brand"><small id="appTitle">LINE QC / PROCESS CONTROL</small><h1>ฟอร์มตรวจพื้นที่หน้างาน</h1>
-        <button class="me" id="meBtn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> <span id="meName">ตั้งชื่อผู้ตรวจ</span> <em>เปลี่ยน</em></button></div>
-      <div class="hright"><button class="bell" id="bellBtn" type="button" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button>
-      <div class="clock"><b id="roundLbl">–</b>ตัดรอบใน <span class="cd" id="countdown">--:--:--</span><br><button class="install" id="installBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v7m0 0-3-3m3 3 3-3"/></svg> ติดตั้งแอป</button></div></div>
+        <span class="merow"><button class="me" id="meBtn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> <span id="meName">ตั้งชื่อผู้ตรวจ</span> <em>เปลี่ยน</em></button><button class="bell" id="bellBtn" type="button" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button></span></div>
+      <div class="hright">      <div class="clock"><b id="roundLbl">–</b>ตัดรอบใน <span class="cd" id="countdown">--:--:--</span><br><button class="install" id="installBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v7m0 0-3-3m3 3 3-3"/></svg> ติดตั้งแอป</button></div></div>
     </div>
     <div class="overall"><span>ตรวจแล้ว <b id="ovNum">0/0</b></span><div class="bar"><i id="ovBar" style="width:0"></i></div><span id="ovIssue"></span></div>
   </div>
