@@ -1435,6 +1435,7 @@ async def api_admin_save(request: Request):
         # ให้หัวข้อเพิ่มเติมอยู่ท้ายสุดเสมอ
         items.sort(key=lambda i: bool(i.get("extra")))
         zbase = {k: v for k, v in old_zones.get(zid, {}).items() if k not in ("hidden", "items")}
+        items = _proc_sort_items(items, process_tags())  # บันทึกแล้วเรียงตามกระบวนการอัตโนมัติ
         zbase.update({"id": zid, "name": name, "owner": str(z.get("owner") or "").strip()[:80], "items": items})
         if zid not in old_zones and z.get("deck") in DECKS and z.get("deck") != "pc":
             zbase["deck"] = z["deck"]  # พื้นที่ใหม่ที่เพิ่มในกลุ่ม GMP
