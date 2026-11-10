@@ -2482,6 +2482,62 @@ def api_comment_delete(cid: str, by: str = ""):
     return {"ok": True, "threads": _cm_threads(items)}
 
 
+# ---------------------------------------------------------------- ค้นหาทุกอย่าง (ปุ่มแว่นขยายบนหัวเว็บ)
+@app.get("/api/search")
+def api_search(q: str = "", days: int = Query(90, ge=1, le=400)):
+    """ค้นหัวข้อ Checklist · ผลตรวจ (สิ่งที่พบ/สาเหตุ/การแก้ไข/หมายเหตุ/ผู้ตรวจ) · เรื่องที่ต้องติดตาม · ความคิดเห็น
+    หลายคำ (เว้นวรรค) = ต้องเจอทุกคำ"""
+    terms = [t for t in " ".join(str(q or "").split()).lower().split(" ") if t][:6]
+    if not terms or len("".join(terms)) < 1:
+        return {"items": [], "subs": [], "followups": [], "comments": []}
+    hit = lambda *xs: all(t in " ".join(str(x or "") for x in xs).lower() for t in terms)
+    zdeck = {z["id"]: zone_deck(z) for z in AREAS["zones"]}
+    items = [{"id": aid, "no": it.get("no", ""), "name": it.get("name", ""), "zone": it.get("zone", ""), "deck": zdeck.get(it.get("zone_id"), "pc"),
+              "proc": it.get("proc", ""), "cust": it.get("cust", "")}
+             for aid, it in ITEM_MAP.items() if not it.get("hidden") and not it.get("extra")
+             and hit(it.get("no"), it.get("name"), it.get("zone"), it.get("proc"), it.get("cust"))][:30]
+    since = (round_of(now()) - timedelta(days=days)).isoformat()
+    subs = []
+    with db() as con:
+        for r in con.execute("SELECT * FROM submissions WHERE round_date>=? ORDER BY created_at DESC", (since,)):
+            r = dict(r)
+            it = ITEM_MAP.get(r["area_id"], {})
+            try:
+                pages = json.loads(r.get("pages") or "null") or []
+            except ValueError:
+                pages = []
+            notes = " ".join(p if isinstance(p, str) else str((p or {}).get("note", "")) for p in pages) or (r.get("note") or "")
+            if not hit(notes, r.get("topic"), r.get("cause"), r.get("action"), r.get("remark"), r.get("inspector"), r.get("status"),
+                       it.get("no"), it.get("name"), it.get("zone")):
+                continue
+            f = con.execute("SELECT filename FROM images WHERE submission_id=? ORDER BY page, seq LIMIT 1", (r["id"],)).fetchone()
+            subs.append({"sid": r["id"], "area_id": r["area_id"], "round": r["round_date"], "at": r["created_at"], "inspector": r["inspector"],
+                         "status": r["status"], "no": it.get("no", ""), "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""),
+                         "text": " · ".join(x for x in [r.get("topic") or "", notes, r.get("cause") and "สาเหตุ: " + r["cause"],
+                                                          r.get("action") and "แก้ไข: " + r["action"], r.get("remark") or ""] if x)[:400],
+                         "thumb": media_info(f["filename"])["thumb"] if f else ""})
+            if len(subs) >= 60:
+                break
+        fus = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups ORDER BY updated_at DESC")]
+        cms = _cm_rows(con)
+    fu = [{"id": x["id"], "title": x.get("title", ""), "status": x.get("status", ""), "zone": x.get("zone", ""), "owner": x.get("owner", ""),
+           "due": x.get("due", ""), "text": (x.get("detail") or "")[:300]}
+          for x in fus if hit(x.get("title"), x.get("detail"), x.get("zone"), x.get("owner"), x.get("created_by"),
+                              " ".join(n.get("text", "") for n in x.get("notes") or []))][:30]
+    tops = {c["id"]: c for c in cms if not c.get("parent")}
+    cm = []
+    for c in reversed(cms):
+        if c.get("deleted") or not hit(c.get("text"), c.get("by")):
+            continue
+        it = ITEM_MAP.get(c["area_id"], {})
+        sid = c.get("sid") or (tops.get(c.get("parent")) or {}).get("sid")
+        cm.append({"id": c["id"], "area_id": c["area_id"], "sid": sid, "round": c.get("round") or "", "by": c["by"], "at": c["at"],
+                   "text": c["text"][:300], "no": it.get("no", ""), "name": it.get("name", c["area_id"]), "zone": it.get("zone", "")})
+        if len(cm) >= 30:
+            break
+    return {"items": items, "subs": subs, "followups": fu, "comments": cm, "days": days}
+
+
 # ---------------------------------------------------------------- การแจ้งเตือน (กระดิ่งมุมขวาบน)
 @app.get("/api/notifications")
 def api_notifications(name: str = "", days: int = Query(14, ge=1, le=60)):

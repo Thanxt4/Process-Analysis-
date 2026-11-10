@@ -883,7 +883,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .igl{padding:3px 0}.igl p{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-wrap}
 .igl.rep{margin-left:22px}
 .igl.del i{color:var(--muted);font-size:13.5px}
-.igl.flash{animation:flash 2s ease}@keyframes flash{0%,40%{background:#fef9c3}100%{background:transparent}}
+.igl.flash,.sub.flash{animation:flash 2s ease}@keyframes flash{0%,40%{background:#fef9c3}100%{background:transparent}}
 .igm{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:1px}
 .igm button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
 .igm button.del{color:#f87171}
@@ -926,6 +926,30 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .ntf{padding:10px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .ntf button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer}
 @media(max-width:699px){.ntp{top:calc(96px + env(safe-area-inset-top));left:8px;right:auto;width:calc(100vw - 16px)}}
+
+/* ---- ค้นหาทุกอย่าง ---- */
+.srs{max-width:760px;padding-top:12px}
+@media(min-width:700px){#srBg{align-items:flex-start;padding-top:6vh}}
+.srtop{display:flex;align-items:center;gap:8px;position:sticky;top:-12px;background:#fff;padding:4px 0 8px;z-index:1}
+.srtop .sri{color:var(--muted);display:grid;place-items:center}.srtop .sri svg{width:20px;height:20px}
+.srtop input{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:16px;outline:none;min-width:0}
+.srtop input:focus{border-color:var(--navy)}
+.srf{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
+.srf button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:4px 11px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.srf button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.srf button b{font-weight:800;margin-left:3px}
+.srg h4{margin:14px 0 6px;font-size:14px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.srr{display:flex;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #f1f5f9;background:none;padding:9px 4px;font:inherit;cursor:pointer;border-radius:8px}
+.srr:hover{background:#f8fafc}
+.srr img{width:46px;height:46px;border-radius:8px;object-fit:cover;flex:none;background:#f1f5f9}
+.srr .b{flex:1;min-width:0;font-size:14px;line-height:1.4}
+.srr .t{display:block;font-weight:700;color:var(--ink)}
+.srr small{display:block;color:var(--muted);font-size:12.5px}
+.srr .x2{display:block;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.srr mark{background:#fef08a;color:inherit;border-radius:3px;padding:0 1px}
+.srhint{color:var(--muted);font-size:14px;padding:18px 4px;text-align:center}
+.srrec{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.srrec button{border:1px solid var(--line);background:#f8fafc;border-radius:99px;padding:4px 10px;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -933,7 +957,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
   <div class="wrap">
     <div class="hrow">
       <div class="brand"><small id="appTitle">LINE QC / PROCESS CONTROL</small><h1>ฟอร์มตรวจพื้นที่หน้างาน</h1>
-        <span class="merow"><button class="me" id="meBtn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> <span id="meName">ตั้งชื่อผู้ตรวจ</span> <em>เปลี่ยน</em></button><button class="bell" id="bellBtn" type="button" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button></span></div>
+        <span class="merow"><button class="me" id="meBtn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> <span id="meName">ตั้งชื่อผู้ตรวจ</span> <em>เปลี่ยน</em></button><button class="bell" id="srchBtn" type="button" aria-label="ค้นหา" title="ค้นหาทุกอย่าง"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><button class="bell" id="bellBtn" type="button" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button></span></div>
       <div class="hright">      <div class="clock"><b id="roundLbl">–</b>ตัดรอบใน <span class="cd" id="countdown">--:--:--</span><br><button class="install" id="installBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v7m0 0-3-3m3 3 3-3"/></svg> ติดตั้งแอป</button></div></div>
     </div>
     <div class="overall"><span>ตรวจแล้ว <b id="ovNum">0/0</b></span><div class="bar"><i id="ovBar" style="width:0"></i></div><span id="ovIssue"></span></div>
@@ -1182,6 +1206,12 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
     <button class="btn submit" id="nameSave" type="button">บันทึกชื่อ</button>
   </div>
 </div>
+<!-- ค้นหาทุกอย่าง -->
+<div class="sheet-bg" id="srBg"><div class="sheet srs" role="dialog" aria-modal="true" aria-label="ค้นหา">
+  <div class="srtop"><span class="sri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span><input type="search" id="srIn" placeholder="ค้นหา หัวข้อ · สิ่งที่พบ · ผู้ตรวจ · เรื่องติดตาม · ความคิดเห็น" autocomplete="off" enterkeyhint="search"><button class="x" id="srX" aria-label="ปิด">×</button></div>
+  <div class="srf" id="srF"></div>
+  <div id="srOut"></div>
+</div></div>
 <!-- การแจ้งเตือน -->
 <div class="ntbg" id="ntBg"><div class="ntp" id="ntPanel" role="dialog" aria-label="การแจ้งเตือน">
   <div class="nth"><b>การแจ้งเตือน</b><div class="seg" id="ntTabs"><button type="button" data-nt="mine">ของฉัน</button><button type="button" data-nt="all">ทั้งหมด</button></div><button class="x" id="ntX" aria-label="ปิด">×</button></div>
@@ -3363,6 +3393,63 @@ $("#ntList").addEventListener("click", e => { const b = e.target.closest("[data-
 $("#ntFoot").addEventListener("click", async e => { if(e.target.id === "ntPerm"){ const r = await Notification.requestPermission(); if(r === "granted"){ NT.popped = Date.now(); store.set("pc_ntpop", String(NT.popped)); toast("เปิดแจ้งเตือนบนเครื่องแล้ว (ขณะเปิดแอปไว้)"); } ntRender(); } });
 document.addEventListener("keydown", e => { if(e.key === "Escape" && $("#ntBg").classList.contains("on")) ntClose(); });
 setInterval(() => { if(!document.hidden) loadNotif(); }, 45000);
+
+/* ---------- ค้นหาทุกอย่าง (ปุ่มแว่นขยาย / กด / บนคีย์บอร์ด) ---------- */
+const SR = { q: "", data: null, f: "all", t: 0, seq: 0 };
+const srRecent = () => { try{ return JSON.parse(store.get("pc_srrec", "[]")) || []; }catch{ return []; } };
+function srMark(text, q){
+  const ts = q.trim().split(/\s+/).filter(Boolean).map(t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const raw = String(text || ""); if(!ts.length) return esc(raw);
+  const re = new RegExp(`(${ts.sort((a, b) => b.length - a.length).join("|")})`, "gi");
+  return raw.split(re).map((part, k) => k % 2 ? `<mark>${esc(part)}</mark>` : esc(part)).join("");
+}
+function srOpen(){ $("#srBg").classList.add("on"); document.body.style.overflow = "hidden"; srRender(); setTimeout(() => { $("#srIn").focus(); $("#srIn").select(); }, 50); }
+function srClose(){ $("#srBg").classList.remove("on"); document.body.style.overflow = ""; }
+async function srRun(){
+  const q = $("#srIn").value.trim(); SR.q = q;
+  if(!q){ SR.data = null; srRender(); return; }
+  const my = ++SR.seq; $("#srOut").innerHTML = `<div class="srhint">กำลังค้นหา…</div>`;
+  try{ const r = await api(`/api/search?q=${encodeURIComponent(q)}`); if(my !== SR.seq) return; SR.data = r; }catch(err){ $("#srOut").innerHTML = `<div class="srhint">ค้นหาไม่ได้: ${esc(err.message)}</div>`; return; }
+  srRender();
+}
+function srRender(){
+  const d = SR.data, q = SR.q;
+  if(!d){ const rec = srRecent(); $("#srF").innerHTML = "";
+    $("#srOut").innerHTML = `<div class="srhint">พิมพ์คำที่ต้องการค้นหา เช่น ชื่อหัวข้อ, ถังแดง, ชื่อผู้ตรวจ, PF2${rec.length ? `<div class="srrec">${rec.map(r => `<button type="button" data-srq="${esc(r)}">${esc(r)}</button>`).join("")}</div>` : ""}</div>`; return; }
+  const G = [["items", "หัวข้อ Checklist"], ["subs", `ผลตรวจ (${d.days} วันล่าสุด)`], ["followups", "เรื่องที่ต้องติดตาม"], ["comments", "ความคิดเห็น"]];
+  const n = Object.fromEntries(G.map(([k]) => [k, (d[k] || []).length])), tot = G.reduce((a, [k]) => a + n[k], 0);
+  $("#srF").innerHTML = `<button type="button" data-srf="all" class="${SR.f === "all" ? "on" : ""}">ทั้งหมด<b>${tot}</b></button>` + G.filter(([k]) => n[k]).map(([k, l]) => `<button type="button" data-srf="${k}" class="${SR.f === k ? "on" : ""}">${l.replace(/ \(.*/, "")}<b>${n[k]}</b></button>`).join("");
+  const row = {
+    items: x => `<button type="button" class="srr" data-sr="item" data-a="${esc(x.id)}"><span class="b"><span class="t">${srMark(`${x.no} ${x.name}`, q)}</span><small>${esc(deckName(x.deck))} · ${srMark(x.zone, q)}${x.proc ? " · " + esc(x.proc) : ""}</small></span></button>`,
+    subs: x => `<button type="button" class="srr" data-sr="sub" data-a="${esc(x.area_id)}" data-r="${esc(x.round)}" data-sid="${esc(x.sid)}">${x.thumb ? `<img src="${esc(x.thumb)}" loading="lazy" alt="">` : ""}<span class="b"><span class="t">${srMark(`${x.no} ${x.name}`, q)} <span class="pill ${x.status === "พบปัญหา" ? "ng" : x.status === NO_ACT ? "na" : "ok"}">${esc(x.status)}</span></span><small>${esc(x.zone)} · ${thDate(x.round)} · ${srMark(x.inspector, q)}</small>${x.text ? `<span class="x2">${srMark(x.text, q)}</span>` : ""}</span></button>`,
+    followups: x => `<button type="button" class="srr" data-sr="fu" data-id="${esc(x.id)}"><span class="b"><span class="t">${srMark(x.title, q)} <span class="fu-st st-${x.status}">${FU_ST[x.status] || ""}</span></span><small>${esc(x.zone || "")}${x.owner ? " · ผู้รับผิดชอบ " + srMark(x.owner, q) : ""}${x.due ? " · กำหนด " + thDate(x.due) : ""}</small>${x.text ? `<span class="x2">${srMark(x.text, q)}</span>` : ""}</span></button>`,
+    comments: x => `<button type="button" class="srr" data-sr="cm" data-a="${esc(x.area_id)}" data-r="${esc(x.round)}" data-sid="${esc(x.sid || "")}" data-cid="${esc(x.id)}"><span class="b"><span class="t">${esc(`${x.no} ${x.name}`)}</span><span class="x2"><b>${srMark(x.by, q)}</b> ${srMark(x.text, q)}</span><small>${esc(x.zone)} · ${cmAt(x.at)}</small></span></button>`
+  };
+  const html = G.filter(([k]) => n[k] && (SR.f === "all" || SR.f === k)).map(([k, l]) => `<div class="srg"><h4>${l} · ${n[k] >= (k === "subs" ? 60 : 30) ? `${n[k]} รายการล่าสุด (พิมพ์คำเพิ่มเพื่อให้แคบลง)` : n[k]}</h4>${(SR.f === "all" ? d[k].slice(0, 6) : d[k]).map(row[k]).join("")}${SR.f === "all" && n[k] > 6 ? `<button type="button" class="fu-more" data-srf="${k}">ดูทั้งหมด ${n[k]} รายการ ▾</button>` : ""}</div>`).join("");
+  $("#srOut").innerHTML = tot ? html : `<div class="srhint">ไม่พบ "${esc(q)}"<br><small>ลองคำที่สั้นลง หรือสะกดแบบอื่น</small></div>`;
+}
+function srSave(){ const q = SR.q; if(!q) return; const L = [q, ...srRecent().filter(x => x !== q)].slice(0, 8); store.set("pc_srrec", JSON.stringify(L)); }
+async function srGo(b){
+  srSave(); const t = b.dataset.sr; srClose();
+  if(t === "fu"){ document.querySelector('nav.tabs [data-tab="follow"]').click(); let x = FU.items.find(y => y.id === b.dataset.id);
+    if(!x){ await loadFollowups(); x = FU.items.find(y => y.id === b.dataset.id); } if(x) fuOpen(x); else toast("ไม่พบเรื่องนี้ (อาจถูกลบไปแล้ว)", true); return; }
+  const area = b.dataset.a; if(!findItem(area)){ toast("ไม่พบหัวข้อนี้ (อาจถูกลบไปแล้ว)", true); return; }
+  await openSheet(area, b.dataset.r || CFG.current_round);
+  const sid = b.dataset.sid, cid = b.dataset.cid;
+  if(sid && cid) IG.open.add(sid);
+  setTimeout(() => { if(cid) drawIg(); const el = (cid && document.querySelector(`[data-cid="${cid}"]`)) || (sid && document.querySelector(`.igc[data-igsid="${sid}"]`)?.closest(".sub"));
+    if(el){ el.scrollIntoView({behavior: "smooth", block: "center"}); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 2000); } }, 600);
+}
+$("#srchBtn").onclick = srOpen;
+$("#srX").onclick = srClose;
+$("#srBg").addEventListener("click", e => { if(e.target.id === "srBg") srClose(); });
+$("#srIn").addEventListener("input", () => { clearTimeout(SR.t); SR.f = "all"; SR.t = setTimeout(srRun, 250); });
+$("#srIn").addEventListener("keydown", e => { if(e.key === "Enter"){ clearTimeout(SR.t); srRun(); srSave(); } if(e.key === "Escape") srClose(); });
+$("#srF").addEventListener("click", e => { const b = e.target.closest("[data-srf]"); if(b){ SR.f = b.dataset.srf; srRender(); } });
+$("#srOut").addEventListener("click", e => { const q = e.target.closest("[data-srq]"); if(q){ $("#srIn").value = q.dataset.srq; srRun(); return; }
+  const f = e.target.closest("[data-srf]"); if(f){ SR.f = f.dataset.srf; srRender(); $("#srOut").scrollTop = 0; return; }
+  const b = e.target.closest("[data-sr]"); if(b) srGo(b); });
+document.addEventListener("keydown", e => { if(e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || "") && !$("#srBg").classList.contains("on")){ e.preventDefault(); srOpen(); } });
 
 /* countdown + round rollover */
 function tick(){
