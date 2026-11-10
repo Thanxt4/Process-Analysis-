@@ -92,7 +92,7 @@ AREAS, ITEM_MAP = load_areas()
 
 
 # ป้ายบอกว่ารายการตรวจอยู่ในกระบวนการไหน (เลือกได้ในหน้าแก้ไขหัวข้อ) — แก้รายการได้ที่ "process_tags" ใน areas.json
-DEFAULT_PROCESS_TAGS = ["Rawmat", "จุดเตรียม", "บรรจุ", "Retort&Store", "ห้องเคมี", "ห้องอิ้ง", "Warehouse"]
+DEFAULT_PROCESS_TAGS = ["Rawmat", "จุดเตรียม", "ห้องเย็น", "ห้องเคมี", "บรรจุ", "ห้องอิ้ง", "Retort&Store", "Warehouse"]
 
 
 def process_tags():
@@ -359,6 +359,34 @@ def _migrate_new_items_v1():
     print(f"[areas] เพิ่มหัวข้อใหม่ {added}/{len(NEW_ITEMS_V1)} หัวข้อ (★ ยังไม่นับใน % ของ Dashboard)"
           + (f" · ไม่พบพื้นที่: {', '.join(missing)}" if missing else ""), flush=True)
     _save_areas(AREAS, "new_items_v1")
+    AREAS, ITEM_MAP = load_areas()
+
+
+def _proc_sort_items(items, order):
+    """เรียงหัวข้อในพื้นที่ตามลำดับกระบวนการ (หัวข้อในกระบวนการเดียวกันคงลำดับเดิม · ไม่มีป้ายไว้ท้าย · หัวข้อเพิ่มเติมไว้ท้ายสุด)"""
+    rank = {p: i for i, p in enumerate(order)}
+    key = lambda it: (2, 0) if it.get("extra") else (0, rank[it["proc"]]) if it.get("proc") in rank else (1, 0)
+    return sorted(items, key=key)  # sorted() คงลำดับเดิมของตัวที่ key เท่ากัน
+
+
+def _migrate_proc_order_v1():
+    """ครั้งเดียว: ลำดับกระบวนการ Rawmat → จุดเตรียม → ห้องเย็น → ห้องเคมี → บรรจุ → ห้องอิ้ง → Retort&Store → Warehouse
+    แล้วเรียงหัวข้อในแต่ละพื้นที่ตามลำดับนี้ (สำรองไฟล์ก่อนบันทึก)"""
+    global AREAS, ITEM_MAP
+    if AREAS.get("proc_order_v1"):
+        return
+    cur = AREAS.get("process_tags") if isinstance(AREAS.get("process_tags"), list) else None
+    if cur:  # เคยตั้งรายการเอง: ใช้ลำดับใหม่ แล้วต่อด้วยป้ายที่ตั้งเองเพิ่ม
+        AREAS["process_tags"] = DEFAULT_PROCESS_TAGS + [t for t in cur if t not in DEFAULT_PROCESS_TAGS]
+    order = process_tags()
+    moved = 0
+    for z in AREAS["zones"]:
+        new = _proc_sort_items(z["items"], order)
+        moved += sum(1 for a, b in zip(z["items"], new) if a is not b)
+        z["items"] = new
+    AREAS["proc_order_v1"] = True
+    print(f"[areas] เรียงหัวข้อตามกระบวนการ ({' → '.join(order)}) · ย้ายตำแหน่ง {moved} หัวข้อ", flush=True)
+    _save_areas(AREAS, "proc_order_v1")
     AREAS, ITEM_MAP = load_areas()
 
 
@@ -800,6 +828,7 @@ def _start():
         _migrate_delay_qty()
         _migrate_cust_list()
         _migrate_new_items_v1()
+        _migrate_proc_order_v1()
     except Exception as e:  # noqa
         print("[areas] backfill error:", e, flush=True)
     try:

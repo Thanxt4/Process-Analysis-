@@ -322,6 +322,7 @@ textarea{min-height:96px;resize:vertical}
 .ptag.pt4{background:#ccfbf1;color:#115e59}
 .ptag.pt5{background:#fae8ff;color:#86198f}
 .ptag.pt6{background:#e0e7ff;color:#3730a3}
+.ptag.pt7{background:#dcfce7;color:#166534}
 .ptag.pt9{background:#e2e8f0;color:#334155}
 .er.extra input{border-style:dashed;background:#fffbeb}
 .er .acts{display:flex;gap:4px}
@@ -2776,7 +2777,7 @@ function renderEditor(){
       <button type="button" class="del zdel" title="ลบพื้นที่นี้"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>
       ${rows}<button type="button" class="additem">＋ เพิ่มรายการ</button></div>`;
   };
-  const sect = (deck, title) => `<div class="ed-grp"><span>${title}</span><span class="ed-bulk">ลูกค้าทุกหัวข้อ: <button type="button" data-bulk="${deck}" data-v="">ไม่มีลูกค้า</button><button type="button" data-bulk="${deck}" data-v="${BOTH}">${BOTH_CUST}</button></span></div>` +
+  const sect = (deck, title) => `<div class="ed-grp"><span>${title}</span><span class="ed-bulk">ลูกค้าทุกหัวข้อ: <button type="button" data-bulk="${deck}" data-v="">ไม่มีลูกค้า</button><button type="button" data-bulk="${deck}" data-v="${BOTH}">${BOTH_CUST}</button></span><span class="ed-bulk"><button type="button" data-psort="${deck}" title="${esc((CFG.process_tags || []).join(" → "))}">เรียงตามกระบวนการ</button></span></div>` +
     editZones.map((z, zi) => ((z.deck || "pc") === deck ? block(z, zi) : "")).join("") +
     `<button type="button" class="btn ghost addpage addzone" data-deck="${deck}">＋ เพิ่มพื้นที่${deck==="pc"?"":" " + deckName(deck)}</button>`;
   $("#editZones").innerHTML = sect("pc", "Process Control") + sect("gmp", "GMP") + (editZones.some(z => z.deck === "retort") ? sect("retort", "Retort Analysis (แบบเก่า)") : "");
@@ -2799,6 +2800,12 @@ $("#editZones").addEventListener("click", e => {
   if(b.dataset.bulk != null){  // ตั้งลูกค้าของทุกหัวข้อในกลุ่มนี้ (ยังไม่บันทึกจนกว่าจะกด บันทึกการแก้ไข)
     let n = 0; editZones.forEach(z => { if((z.deck || "pc") === b.dataset.bulk) z.items.forEach(it => { if(!it.extra){ it.cust = b.dataset.v; n++; } }); });
     renderEditor(); toast(`ตั้ง ${n} หัวข้อเป็น "${b.dataset.v ? BOTH_CUST : "ไม่มีลูกค้า"}" แล้ว · กด บันทึกการแก้ไข เพื่อยืนยัน`); return;
+  }
+  if(b.dataset.psort){  // เรียงหัวข้อในทุกพื้นที่ของชุดนี้ตามลำดับกระบวนการ (ตัวที่อยู่กระบวนการเดียวกันคงลำดับเดิม)
+    const order = CFG.process_tags || [], rk = it => it.extra ? 2e3 : order.includes(it.proc) ? order.indexOf(it.proc) : 1e3;
+    let n = 0; editZones.forEach(z => { if((z.deck || "pc") !== b.dataset.psort) return; const s0 = z.items.slice();
+      z.items = z.items.map((it, i) => [it, i]).sort((x, y) => rk(x[0]) - rk(y[0]) || x[1] - y[1]).map(x => x[0]); n += z.items.filter((it, i) => it !== s0[i]).length; });
+    renderEditor(); toast(n ? `เรียงตามกระบวนการแล้ว (ย้าย ${n} หัวข้อ) · กด บันทึกการแก้ไข เพื่อใช้งาน` : "เรียงตามกระบวนการอยู่แล้ว"); return;
   }
   if(b.classList.contains("addzone")){
     editZones.push({name:"", owner:"", deck:b.dataset.deck, items:[{no:1, name:""}]}); renderEditor();
