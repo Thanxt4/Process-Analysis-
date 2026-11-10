@@ -870,6 +870,26 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .cmq{display:block;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:10px 16px;font:inherit;cursor:pointer}
 .cmq small{display:block;color:var(--muted)}
 .cmq p{margin:3px 0 0;color:var(--text)}
+
+/* ---- ความคิดเห็นใต้ผลตรวจ (แบบ Instagram) ---- */
+.igc{margin-top:8px;border-top:1px solid #f1f5f9;padding-top:6px}
+.igbtn{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:4px 0;font:inherit;font-size:14px;font-weight:700;color:var(--navy);cursor:pointer}
+.igbtn svg{width:20px;height:20px}
+.igbtn.q{color:#b91c1c}
+.igmore{display:block;border:0;background:none;padding:2px 0;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.igl{padding:3px 0}.igl p{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-wrap}
+.igl.rep{margin-left:22px}
+.igm{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:1px}
+.igm button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
+.igm button.del{color:#f87171}
+.igin{margin-top:6px}
+.igto{font-size:12.5px;color:var(--muted);margin-bottom:3px}.igto button{border:0;background:none;color:var(--navy);font-weight:700;cursor:pointer}
+.igrow{display:flex;gap:6px;align-items:center}
+.igrow input{flex:1;border:1.5px solid var(--line);border-radius:99px;padding:8px 14px;font-size:14.5px;min-width:0}
+.igq{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 10px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}
+.igq.on{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+.igsend{border:0;background:none;color:#2563eb;font-weight:800;font-size:14.5px;padding:6px 4px;cursor:pointer}
+.subfull .igc{display:none}
 </style>
 </head>
 <body>
@@ -1570,6 +1590,7 @@ let editingId = null, prevSubs = {};
 async function renderPrev(){
   const subs = await api(`/api/submissions?round=${sheetItem.round}&area=${sheetItem.id}`);
   prevSubs = Object.fromEntries(subs.map(x => [x.id, x]));
+  setTimeout(drawIg, 0);
   const editable = canEdit(sheetItem.round);
   $("#prevWrap").innerHTML = subs.length ? `<h4>ผลการตรวจในรอบ${sheetItem.round===CFG.current_round?"นี้":" "+thDate(sheetItem.round)} (${subs.length})</h4>` + subs.map(s => `
     <div class="sub ${s.id===editingId?"being-edited":""}"><div class="h"><span class="pill ${s.status==="พบปัญหา"?"ng":s.status===NO_ACT?"na":"ok"}">${esc(s.status)}</span><b>${s.topic?esc(s.topic)+" · ":""}${esc(s.inspector)}</b>
@@ -1580,7 +1601,7 @@ async function renderPrev(){
       ${qtyLine(s)}
       ${s.cause?`<p class="extra-l act"><b>สาเหตุ:</b> ${esc(s.cause)}</p>`:""}
       ${s.action?`<p class="extra-l act"><b>การแก้ไข:</b> ${esc(s.action)}</p>`:""}
-      ${s.remark?`<p class="extra-l"><b>หมายเหตุ:</b> ${esc(s.remark)}</p>`:""}</div>`).join("")
+      ${s.remark?`<p class="extra-l"><b>หมายเหตุ:</b> ${esc(s.remark)}</p>`:""}<div class="igc" data-igsid="${s.id}"></div></div>`).join("")
     : (editable ? "" : `<div class="empty">ไม่มีการตรวจพื้นที่นี้ในรอบนั้น</div>`);
 }
 function startEdit(id){
@@ -3128,21 +3149,21 @@ function cmUpdateSum(){
   cmDecorate(); renderCmOpen();
 }
 function drawCm(loading){
+  setTimeout(drawIg, 0);
   const T = CM.threads, n = T.reduce((a, t) => a + 1 + t.replies.length, 0), open = T.filter(t => t.open).length;
   const j = $("#shCm"); j.hidden = loading || !n; j.className = "cmjump" + (open ? " q" : ""); j.innerHTML = CM_IC + `ถาม-ตอบ ${n}${open ? ` · รอตอบ ${open}` : ""}`;
   const head = `<h4>${CM_IC.replace("<svg", '<svg width="18" height="18"')}ถาม-ตอบ / ความคิดเห็น${n ? ` (${n})` : ""}</h4>`;
   if(loading){ $("#cmWrap").innerHTML = head + `<p class="note">กำลังโหลด…</p>`; return; }
   const one = (x, isRep) => `<div class="cmh"><b>${esc(x.by)}</b><span>${cmAt(x.at)}</span>${x.round && x.round !== CFG.current_round ? `<span>· รอบ ${thDate(x.round)}</span>` : ""}</div><p class="cmx">${esc(x.text)}</p>`;
-  $("#cmWrap").innerHTML = head + (T.length ? T.map(t => {
+  const L0 = T.filter(t => !t.sid);
+  $("#cmWrap").innerHTML = head.replace("ถาม-ตอบ / ความคิดเห็น", "ความคิดเห็นทั่วไปของหัวข้อ (ก่อนอัปเดต)") + (L0.length ? L0.map(t => {
     const st = t.question ? (t.closed ? `<span class="cmk cl">ปิดแล้ว</span>` : t.replies.length ? `<span class="cmk ok">ตอบแล้ว</span>` : `<span class="cmk wait">รอตอบ</span>`) : "";
     return `<div class="cmth ${t.open ? "open" : ""}" data-cmt="${t.id}"><div class="cmh"><span class="cmk ${t.question ? "q" : "c"}">${t.question ? "คำถาม" : "ความคิดเห็น"}</span>${st}</div>${one(t)}
       ${t.replies.map(r => `<div class="cmr">${one(r, true)}<div class="cma"><button type="button" class="del" data-cmdel="${r.id}">ลบ</button></div></div>`).join("")}
       <div class="cma"><button type="button" data-cmrep="${t.id}">ตอบ</button>${t.question ? `<button type="button" data-cmclose="${t.id}" data-v="${t.closed ? 0 : 1}">${t.closed ? "เปิดคำถามอีกครั้ง" : "ปิดคำถาม"}</button>` : ""}<button type="button" class="del" data-cmdel="${t.id}">ลบ</button></div>
       <div class="cmrep" id="cmrep-${t.id}"><textarea maxlength="1000" placeholder="พิมพ์คำตอบ…"></textarea><button type="button" class="btn sm" data-cmsend="${t.id}">ส่งคำตอบ</button></div></div>`; }).join("")
     : `<p class="note" style="margin:0 0 10px">ยังไม่มีความคิดเห็นในหัวข้อนี้ · ถามหรือฝากข้อมูลให้ทีมได้ด้านล่าง</p>`)
-    + `<div class="cmnew"><div class="seg" id="cmKind"><button type="button" data-k="c" class="${CM.kind === "c" ? "on" : ""}">ความคิดเห็น</button><button type="button" data-k="q" class="${CM.kind === "q" ? "on" : ""}">ถามคำถาม</button></div>
-      <textarea id="cmText" maxlength="1000" placeholder="${CM.kind === "q" ? "พิมพ์คำถาม เช่น หัวข้อนี้ต้องตรวจจุดไหนบ้าง?" : "พิมพ์ความคิดเห็น / ข้อมูลที่อยากฝากทีม"}"></textarea>
-      <button type="button" class="btn" id="cmSend">${CM.kind === "q" ? "ส่งคำถาม" : "ส่งความคิดเห็น"}</button></div>`;
+    + `<p class="note" style="margin:0">ความคิดเห็นใหม่ ให้พิมพ์ใต้ผลตรวจแต่ละรายการด้านบน</p>`;
 }
 async function cmPost(body){
   const by = getMyName(); if(!by){ toast("ตั้งชื่อผู้ใช้ก่อน", true); openNameBox(); return false; }
@@ -3150,9 +3171,10 @@ async function cmPost(body){
     CM.threads = r.threads; drawCm(); cmUpdateSum(); return true; }
   catch(err){ toast(err.message, true); return false; }
 }
-$("#shCm").onclick = () => $("#cmWrap").scrollIntoView({behavior: "smooth", block: "start"});
-$("#cmWrap").addEventListener("click", async e => {
-  const b = e.target.closest("button"); if(!b) return;
+$("#shCm").onclick = () => { const t = CM.threads.find(x => x.open) || CM.threads[CM.threads.length - 1]; const el = t && t.sid ? document.querySelector(`.igc[data-igsid="${t.sid}"]`) : $("#cmWrap"); if(t && t.sid) IG.open.add(t.sid), drawIg(); (el || $("#prevWrap")).scrollIntoView({behavior: "smooth", block: "center"}); };
+$("#cmWrap").addEventListener("igact", e => cmAct(e.detail));
+$("#cmWrap").addEventListener("click", e => { const b = e.target.closest("button"); if(b) cmAct(b); });
+async function cmAct(b){
   if(b.dataset.k){ CM.kind = b.dataset.k; store.set("pc_cmkind", CM.kind); const t = $("#cmText").value; drawCm(); $("#cmText").value = t; $("#cmText").focus(); return; }
   if(b.id === "cmSend"){ const t = $("#cmText").value.trim(); if(!t){ $("#cmText").focus(); return; } b.disabled = true; if(await cmPost({text: t, question: CM.kind === "q"})) toast(CM.kind === "q" ? "ส่งคำถามแล้ว" : "ส่งความคิดเห็นแล้ว"); else b.disabled = false; return; }
   if(b.dataset.cmrep){ const box = $(`#cmrep-${b.dataset.cmrep}`); box.classList.toggle("on"); if(box.classList.contains("on")) box.querySelector("textarea").focus(); return; }
@@ -3160,7 +3182,44 @@ $("#cmWrap").addEventListener("click", async e => {
   if(b.dataset.cmclose){ try{ const r = await api(`/api/comments/${b.dataset.cmclose}/close`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({closed: b.dataset.v === "1", by: getMyName()})}); CM.threads = r.threads; drawCm(); cmUpdateSum(); }catch(err){ toast(err.message, true); } return; }
   if(b.dataset.cmdel){ if(!confirm("ลบข้อความนี้? (ถ้าเป็นข้อความหลัก คำตอบทั้งหมดจะถูกลบด้วย)")) return; const pin = prompt("ใส่รหัสเพื่อลบ"); if(!pin) return;
     try{ const r = await api(`/api/comments/${b.dataset.cmdel}?pin=${encodeURIComponent(pin)}`, {method: "DELETE"}); CM.threads = r.threads; drawCm(); cmUpdateSum(); toast("ลบแล้ว"); }catch(err){ toast(err.message, true); } }
-});
+}
+
+/* ---------- ความคิดเห็นใต้แต่ละผลตรวจ (แบบ Instagram): ปุ่ม 💬 · ความคิดเห็นล่าสุด · ช่องพิมพ์ ---------- */
+const IG = { open: new Set(), reply: {} };
+function drawIg(){
+  if(!sheetItem || CM.area !== sheetItem.id) return;
+  document.querySelectorAll("#prevWrap .igc[data-igsid]").forEach(box => {
+    const sid = box.dataset.igsid, T = CM.threads.filter(t => t.sid === sid), n = T.reduce((a, t) => a + 1 + t.replies.length, 0);
+    const wait = T.filter(t => t.open).length, all = IG.open.has(sid), show = all ? T : T.slice(-2), rp = IG.reply[sid];
+    const line = (x, top) => `<div class="igl ${top ? "" : "rep"}"><p><b>${esc(x.by)}</b> ${top && x.question ? `<span class="cmk ${x.closed ? "cl" : x.parent || (T.find(t => t.id === x.id) || {}).replies?.length ? "ok" : "wait"}">${x.closed ? "ปิดแล้ว" : (T.find(t => t.id === x.id) || {}).replies?.length ? "ตอบแล้ว" : "คำถาม · รอตอบ"}</span> ` : ""}${esc(x.text)}</p>
+      <div class="igm"><span>${cmAt(x.at)}</span>${top ? `<button type="button" data-igrep="${x.id}" data-n="${esc(x.by)}">ตอบกลับ</button>` : ""}${top && x.question ? `<button type="button" data-cmclose="${x.id}" data-v="${x.closed ? 0 : 1}">${x.closed ? "เปิดคำถาม" : "ปิดคำถาม"}</button>` : ""}<button type="button" class="del" data-cmdel="${x.id}">ลบ</button></div></div>`;
+    box.innerHTML = `<div class="igbar"><button type="button" class="igbtn ${wait ? "q" : ""}" data-igtog="${sid}">${CM_IC}${n ? `${n} ความคิดเห็น${wait ? ` · รอตอบ ${wait}` : ""}` : "แสดงความคิดเห็น"}</button></div>
+      ${!all && T.length > 2 ? `<button type="button" class="igmore" data-igtog="${sid}">ดูความคิดเห็นทั้งหมด ${n} รายการ</button>` : ""}
+      ${(all || T.length) ? show.map(t => line(t, true) + t.replies.map(r => line(r, false)).join("")).join("") : ""}
+      ${all || T.length || IG.open.has(sid) ? `<div class="igin">${rp ? `<div class="igto">ตอบกลับ <b>${esc(rp.n)}</b> <button type="button" data-igcancel="${sid}">ยกเลิก</button></div>` : ""}
+        <div class="igrow"><input type="text" maxlength="1000" placeholder="${rp ? `ตอบกลับ ${esc(rp.n)}…` : "เพิ่มความคิดเห็น…"}" data-igtext="${sid}">
+        ${rp ? "" : `<button type="button" class="igq ${IG.q === sid ? "on" : ""}" data-igq="${sid}" title="ตั้งเป็นคำถาม (รอคำตอบ)">ถาม?</button>`}<button type="button" class="igsend" data-igsend="${sid}">ส่ง</button></div></div>` : ""}`;
+  });
+  // ความคิดเห็นเก่าที่ไม่ได้ผูกกับผลตรวจ (ก่อนอัปเดต) ยังแสดงด้านล่างเหมือนเดิม
+  const legacy = CM.threads.filter(t => !t.sid);
+  $("#cmWrap").hidden = !legacy.length;
+}
+async function igSend(sid, box){
+  const inp = box.querySelector(`[data-igtext="${sid}"]`), t = inp.value.trim(); if(!t){ inp.focus(); return; }
+  const rp = IG.reply[sid], ok = await cmPost(rp ? {text: t, parent: rp.id} : {text: t, sid, question: IG.q === sid});
+  if(ok){ delete IG.reply[sid]; IG.q = ""; IG.open.add(sid); drawIg(); }
+}
+$("#prevWrap").addEventListener("click", e => {
+  const b = e.target.closest(".igc button"); if(!b) return; e.stopPropagation();
+  const box = b.closest(".igc"), sid = box.dataset.igsid, d = b.dataset;
+  if(d.igtog){ if(IG.open.has(sid)) IG.open.delete(sid); else IG.open.add(sid); drawIg(); const i = document.querySelector(`[data-igtext="${sid}"]`); if(i && IG.open.has(sid)) i.focus(); }
+  else if(d.igrep){ IG.reply[sid] = {id: d.igrep, n: d.n}; IG.open.add(sid); drawIg(); document.querySelector(`[data-igtext="${sid}"]`).focus(); }
+  else if(d.igcancel){ delete IG.reply[sid]; drawIg(); }
+  else if(d.igq){ IG.q = IG.q === sid ? "" : sid; const keep = box.querySelector("input").value; drawIg(); const i = document.querySelector(`[data-igtext="${sid}"]`); i.value = keep; i.focus(); }
+  else if(d.igsend) igSend(sid, box);
+  else if(d.cmclose || d.cmdel) $("#cmWrap").dispatchEvent(new CustomEvent("igact", {detail: b}));
+}, true);
+$("#prevWrap").addEventListener("keydown", e => { const i = e.target.closest("[data-igtext]"); if(i && e.key === "Enter"){ e.preventDefault(); igSend(i.dataset.igtext, i.closest(".igc")); } });
 
 /* countdown + round rollover */
 function tick(){

@@ -2360,13 +2360,18 @@ async def api_comment_add(request: Request):
     if not text:
         raise HTTPException(400, "พิมพ์ข้อความก่อน")
     parent = str(data.get("parent") or "")
+    sid = str(data.get("sid") or "")
     ts = _fu_ms()
     with db() as con:
+        if sid and not con.execute("SELECT 1 FROM submissions WHERE id=? AND area_id=?", (sid, aid)).fetchone():
+            raise HTTPException(404, "ไม่พบผลตรวจนี้")
         if parent:
             pr = con.execute("SELECT data FROM item_comments WHERE id=? AND area_id=?", (parent, aid)).fetchone()
             if not pr or json.loads(pr["data"]).get("parent"):
                 raise HTTPException(404, "ไม่พบความคิดเห็นที่จะตอบ")
-        x = {"id": "c" + uuid.uuid4().hex[:10], "area_id": aid, "parent": parent or None, "text": text, "by": by, "at": ts,
+        if parent:  # คำตอบอยู่ในผลตรวจเดียวกับข้อความหลัก
+            sid = json.loads(pr["data"]).get("sid") or ""
+        x = {"id": "c" + uuid.uuid4().hex[:10], "area_id": aid, "sid": sid or None, "parent": parent or None, "text": text, "by": by, "at": ts,
              "question": bool(data.get("question")) and not parent, "round": str(data.get("round") or "")[:10]}
         con.execute("INSERT INTO item_comments(id, area_id, parent, data, created_at) VALUES(?,?,?,?,?)",
                     (x["id"], aid, parent or None, json.dumps(x, ensure_ascii=False), ts))
