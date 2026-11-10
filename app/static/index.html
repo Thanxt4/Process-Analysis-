@@ -884,6 +884,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .igl{padding:3px 0}.igl p{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-wrap}
 .igl.rep{margin-left:22px}
 .igl.del i{color:var(--muted);font-size:13.5px}
+.dsearch{margin:10px 0 4px}.dsnote{margin:0 0 8px}
 .igl.flash,.sub.flash{animation:flash 2s ease}@keyframes flash{0%,40%{background:#fef9c3}100%{background:transparent}}
 .igm{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:1px}
 .igm button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
@@ -1015,6 +1016,8 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
         <div><b>Dashboard</b><span>Heat map สถานะการตรวจย้อนหลัง และจุดที่พบปัญหาบ่อย · แตะเพื่อเปิด/ปิด</span></div>
         <span class="chev" aria-hidden="true"></span>
       </summary>
+      <div class="search dsearch"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="dashSearch" placeholder="ค้นหาหัวข้อ / เลขที่ / พื้นที่ / กระบวนการ ใน Dashboard" autocomplete="off"></div>
+      <div class="note dsnote" id="dashSearchNote" hidden></div>
       <div class="dash-cust">
         <label for="hmCust" class="dash-lbl cu">Customer</label>
         <select id="hmCust" aria-label="เลือกลูกค้า"><option value="">ทุกหัวข้อ (รวมไม่มีลูกค้า)</option><option value="any">ลูกค้าทั้งหมด (Weruva, Smucker)</option><option value="Weruva">Weruva</option><option value="Smucker">Smucker</option><option value="none">ไม่มีลูกค้า</option></select>
@@ -2162,7 +2165,7 @@ async function applyCmp(){
   HM.prev = idx.length ? {from: H.rounds[idx[0]], to: H.rounds[idx[idx.length - 1]], k: idx.length} : null;
 }
 let hotMetric = store.get("pc_hotmetric", "p");  // "p" = % พบปัญหา, "n" = จำนวนครั้ง
-let hotBarAll = false;
+let hotBarAll = false, dashQ = "";
 function hotBars(all_rows){
   const zones0 = HM.zones.filter(z => deckOf(z) === hotDeck && z.items.some(it => !it.extra)).sort((a, b) => plantRank(a) - plantRank(b));
   if(!zones0.length) return "";
@@ -2184,8 +2187,8 @@ function hotBars(all_rows){
   const subNames = [];  // plant ที่มีหลายส่วน (PF1 - จุดเตรียม / บรรจุ) แสดงเป็นรายการยาวรายการเดียว
   const parts = subNames.length > 1
     ? subNames.map(sn => { const rr = rows.filter(r => plantOf(r.z).sub === sn); const l = list.filter(r => plantOf(r.z).sub === sn);
-        return {name: sn || hotPlant, all: l, rows: hotBarAll ? l : l.slice(0, 10), c: sum(rr, "cnt"), g: sum(rr, "ng")}; })
-    : [{name: "", all: list, rows: hotBarAll ? list : list.slice(0, 10)}];
+        return {name: sn || hotPlant, all: l, rows: hotBarAll || dashQ ? l : l.slice(0, 10), c: sum(rr, "cnt"), g: sum(rr, "ng")}; })
+    : [{name: "", all: list, rows: hotBarAll || dashQ ? list : list.slice(0, 10)}];
   const shown = parts.flatMap(pt => pt.rows);
   // สเกลแกน: ปัดให้เป็นเลขสวย แบ่ง 4 ช่อง
   const rawMax = Math.max(1, ...shown.flatMap(r => [val(r.ng, r.cnt), hasPrev ? val(r.pg, r.pc) : 0]));
@@ -2554,7 +2557,7 @@ function renderHot(){
     const sh = sb.name ? `<div class="hot-subh"><span class="n">${k + 1}</span><b>${esc(sb.name)}</b><em>ตรวจ ${sc} · พบปัญหา ${sn} ครั้ง${sc ? ` · ${Math.round(sn / sc * 100)}%` : ""}</em><span class="c">${shot.length ? `${shot.length} หัวข้อที่พบปัญหา` : ""}</span></div>` : "";
     if(!lst.length) return sh + `<div class="hot-none empty">ไม่มีหัวข้อ</div>`;
     const okNote = !shot.length && sc ? `<div class="hot-none ok-top">ไม่พบปัญหาในช่วงนี้ ✓ · ตรวจแล้ว ${sc} ครั้ง</div>` : "";
-    const all = hotAll.has(sb.id), shown = all ? lst : lst.slice(0, 10);
+    const all = hotAll.has(sb.id) || !!dashQ, shown = all ? lst : lst.slice(0, 10);
     const body = shown.map(({z: rz, it, codes, cnt, ng, p, cp, rg}, i) => {
       const tds = codes.map((c, j) => { const r = R[off + j];
         const cls = c === 2 ? "c2" : c === 1 ? "ok" : c === 3 ? "c3" : "na", st = c === 2 ? "พบปัญหา" : c === 1 ? "ตรวจแล้ว ปกติ" : c === 3 ? NO_ACT : "ไม่ได้ตรวจ";
@@ -3457,6 +3460,30 @@ $("#srOut").addEventListener("click", e => { const q = e.target.closest("[data-s
   const f = e.target.closest("[data-srf]"); if(f){ SR.f = f.dataset.srf; srRender(); $("#srOut").scrollTop = 0; return; }
   const b = e.target.closest("[data-sr]"); if(b) srGo(b); });
 document.addEventListener("keydown", e => { if(e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || "") && !$("#srBg").classList.contains("on")){ e.preventDefault(); srOpen(); } });
+
+/* ---------- ค้นหาใน Dashboard: กรองกราฟ Top 10 · ตารางพบปัญหาบ่อย · % ตรวจแต่ละพื้นที่ · สถานะรายการ ---------- */
+const dsHit = t => { const ws = dashQ.split(" ").filter(Boolean); const x = norm(t); return ws.every(w => x.includes(w)); };
+function dashFilter(){
+  const on = !!dashQ; let nItems = 0;
+  const show = (el, v) => { if(el) el.hidden = !v; };
+  document.querySelectorAll("#dashBox .hb-row[data-tr]").forEach(r => show(r, !on || dsHit(r.textContent)));
+  document.querySelectorAll("#hmHot th.rh[data-tr]").forEach(th => show(th.closest("tr"), !on || dsHit(th.textContent)));
+  const Z = (typeof HM !== "undefined" && HM && HM.zones) || [];
+  const rows = [...document.querySelectorAll("#hmZones tbody tr")].filter(r => !r.classList.contains("grp"));
+  rows.forEach((r, k) => { const z = Z[k]; const zHit = z && (dsHit(z.name) || (z.items || []).some(it => !it.extra && dsHit(`${it.no} ${it.name} ${it.proc || ""}`)));
+    show(r, !on || zHit); });
+  document.querySelectorAll("#hmItems details.hmz").forEach(d => {
+    const zn = d.querySelector("summary b"), zHit = on && zn && dsHit(zn.textContent); let n = 0;
+    d.querySelectorAll("tbody tr").forEach(tr => { const th = tr.querySelector("th"); const ok = !on || zHit || (th && dsHit(th.textContent)); show(tr, ok); if(on && ok) n++; });
+    show(d, !on || n > 0); if(on && n){ d.open = true; nItems += n; }
+  });
+  // หัวกลุ่ม (Process Control / GMP) ที่ไม่มีอะไรเหลือ
+  document.querySelectorAll("#hmItems .grp-h").forEach(h => { let el = h.nextElementSibling, any = false; while(el && !el.classList.contains("grp-h")){ if(!el.hidden) any = true; el = el.nextElementSibling; } show(h, !on || any); });
+  const nt = $("#dashSearchNote"); nt.hidden = !on;
+  if(on) nt.textContent = nItems ? `พบ ${nItems} หัวข้อที่ตรงกับ "${$("#dashSearch").value.trim()}" · ลบคำค้นเพื่อดูทั้งหมด` : `ไม่พบหัวข้อที่ตรงกับ "${$("#dashSearch").value.trim()}" ในช่วงนี้`;
+}
+{ let t = 0, t2 = 0; $("#dashSearch").addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => { const was = !!dashQ; dashQ = norm(e.target.value); if(was !== !!dashQ || dashQ) renderHot(); dashFilter(); }, 200); });
+  new MutationObserver(() => { clearTimeout(t2); t2 = setTimeout(() => { if(dashQ) dashFilter(); }, 40); }).observe($("#dashBox"), {childList: true, subtree: true}); }
 
 /* countdown + round rollover */
 function tick(){
