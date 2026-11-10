@@ -2040,6 +2040,72 @@ def _tp_table_multi(table):
     return [x for x in out if x[2]]
 
 
+def _tp_n(v: str) -> str:
+    """90.0 → 90 (อุณหภูมิ/เวลา ให้ตรงกับค่าเดิมในแอป)"""
+    try:
+        f = float(v)
+        return str(int(f)) if f == int(f) else v
+    except (TypeError, ValueError):
+        return v
+
+
+def _tp_table_transposed(table):
+    """ตารางแบบ Profile (เช่น TP003): ขั้นตอนเป็นคอลัมน์ (Come Up Time / Cook / Cooling)
+    แถว = อุณหภูมิ / เวลา / ความดัน · เลขโปรแกรมอยู่ใต้หัว Profile Name · ช่องที่ไม่ใช้เป็น 0
+    คืน [(เลขโปรแกรม, หมายเหตุ, ขั้นตอน)] หรือ None ถ้าไม่ใช่รูปแบบนี้"""
+    rows = [[str(c).strip() if c is not None else None for c in r] for r in table]
+    width = max((len(r) for r in rows), default=0)
+    rows = [r + [None] * (width - len(r)) for r in rows]
+    lab = lambda r: " ".join(c for c in r[:3] if c and _tp_num(c) is None).lower()
+    kind = lambda r: ("temp" if re.search(r"อุณหภูมิ|temp", lab(r)) else "time" if re.search(r"เวลา|time|นาที|min", lab(r))
+                      else "press" if re.search(r"ความดัน|press|bar", lab(r)) else "hold" if re.search(r"hold", lab(r)) else "")
+    if not any(kind(r) == "temp" and sum(1 for c in r if _tp_num(c) is not None) >= 3 for r in rows):
+        return None
+    out, cur, phases = [], None, {}
+    for i, r in enumerate(rows):
+        first = next((c for c in r if c), "") or ""
+        if re.search(r"profile\s*name|program\s*name|หมายเลขโปรแกรม", first, re.I):
+            continue
+        prev = next((c for c in (rows[i - 1] if i else []) if c), "") or ""
+        if re.fullmatch(r"\d{1,3}", first) and (re.search(r"profile|program|โปรแกรม", prev, re.I) or not cur):
+            note = " ".join(c for c in r[1:] if c).strip()
+            cur = {"no": str(int(first)), "note": note[:120], "vals": {}}
+            out.append(cur)
+            phases = {}
+            continue
+        ph_cells = [(ci, _tp_phase(c)) for ci, c in enumerate(r) if c and _tp_phase(c)]
+        if ph_cells and not any(_tp_num(c) is not None for c in r):
+            phases, ph = {}, ""
+            start = ph_cells[0][0]
+            for ci in range(start, width):
+                p2 = _tp_phase(r[ci]) if r[ci] else ""
+                ph = p2 or ph
+                phases[ci] = ph
+            continue
+        k = kind(r)
+        if k and cur is not None:
+            cur["vals"][k] = {ci: _tp_num(c) for ci, c in enumerate(r) if c is not None and _tp_num(c) is not None and (not phases or ci in phases)}
+            cur["phases"] = dict(phases)
+    res = []
+    for p in out:
+        v, ph = p["vals"], p.get("phases") or {}
+        steps = []
+        for ci in sorted(v.get("temp", {})):
+            t, tm, pr = v["temp"].get(ci), v.get("time", {}).get(ci), v.get("press", {}).get(ci)
+            try:
+                if t is None or float(t) <= 0 and (tm in (None, "0", "0.0") or float(tm or 0) <= 0):
+                    continue  # ช่องที่ไม่ใช้ (0.0)
+            except ValueError:
+                pass
+            st = [ph.get(ci) or (steps[-1][0] if steps else "come"), _tp_n(t), _tp_n(tm if tm is not None else ""), pr if pr is not None else ""]
+            if "hold" in v:
+                st.append(v["hold"].get(ci, ""))
+            steps.append(st)
+        if steps:
+            res.append((p["no"], p["note"], steps))
+    return res or None
+
+
 def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
     try:
         import pdfplumber
@@ -2059,7 +2125,7 @@ def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
                 table = tb.extract()
                 if page.page_number <= 2:  # ช่องหัวเอกสาร (เรื่อง / แก้ไขครั้งที่ / วันที่เริ่มใช้) อ่านจากช่องตารางได้ตรงกว่าข้อความทั้งหน้า
                     cells += [re.sub(r"\s+", " ", str(c)).strip() for r in table for c in r if c]
-                multi = _tp_table_multi(table)
+                multi = _tp_table_multi(table) or _tp_table_transposed(table)
                 if multi:
                     for no, note, steps in multi:
                         if no not in progs:
