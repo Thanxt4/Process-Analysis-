@@ -1770,6 +1770,34 @@ $("#statusSeg").addEventListener("click", e => { const b=e.target.closest("butto
 $("#naSeg").addEventListener("click", e => { const b=e.target.closest("button"); if(b) setStatus(sheetStatus === NO_ACT ? "ปกติ" : NO_ACT); });
 
 /* ประทับวันที่-เวลาลงบนรูป (มุมขวาล่าง) */
+/* เวลาถ่ายจริงของรูปจากคลัง: EXIF DateTimeOriginal (มือถือใส่ไว้ทุกรูป) → ไม่มีใช้เวลาไฟล์ → ไม่มีใช้เวลาตอนนี้ */
+function exifDate(v){
+  if(v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return null;
+  let o = 2;
+  while(o + 10 < v.byteLength){
+    const mk = v.getUint16(o), len = v.getUint16(o + 2);
+    if((mk & 0xFF00) !== 0xFF00 || mk === 0xFFDA) break;
+    if(mk === 0xFFE1 && v.getUint32(o + 4) === 0x45786966){
+      const t = o + 10, le = v.getUint16(t) === 0x4949;
+      const u16 = q => v.getUint16(t + q, le), u32 = q => v.getUint32(t + q, le);
+      const ifd = off => { const out = {}, n = u16(off); for(let i = 0; i < n && i < 400; i++){ const e = off + 2 + i * 12; out[u16(e)] = e; } return out; };
+      const str = e => { const n = u32(e + 4), q = n > 4 ? u32(e + 8) : e + 8; let r = ""; for(let i = 0; i < n - 1 && i < 40; i++) r += String.fromCharCode(v.getUint8(t + q + i)); return r; };
+      const i0 = ifd(u32(4)); let dt = "";
+      if(i0[0x8769]){ const ex = ifd(u32(i0[0x8769] + 8)); if(ex[0x9003]) dt = str(ex[0x9003]); else if(ex[0x9004]) dt = str(ex[0x9004]); }
+      if(!dt && i0[0x0132]) dt = str(i0[0x0132]);
+      const m = /^(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/.exec(dt);
+      return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null;
+    }
+    o += 2 + len;
+  }
+  return null;
+}
+async function photoTime(file){
+  const ok = d => d && !isNaN(d) && d.getFullYear() >= 2015 && d.getTime() <= Date.now() + 5 * 60e3;
+  try{ const t = exifDate(new DataView(await file.slice(0, 256 * 1024).arrayBuffer())); if(ok(t)) return t.getTime(); }catch{}
+  if(file.lastModified && ok(new Date(file.lastModified))) return file.lastModified;
+  return Date.now() + clockOffset;
+}
 function stampText(ts){
   const d = new Date(ts), p2 = n => String(n).padStart(2,"0");
   return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()+543}  ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
@@ -1779,7 +1807,7 @@ function drawStamp(ctx, w, h, ts){
   const fs = Math.max(16, Math.round(Math.min(w, h) * 0.045));
   ctx.font = `700 ${fs}px Sarabun, "Leelawadee UI", Tahoma, Arial, sans-serif`;
   const tw = ctx.measureText(txt).width, padX = fs * 0.5, padY = fs * 0.32, m = Math.round(fs * 0.6);
-  const bw = tw + padX * 2, bh = fs + padY * 2, x = w - bw - m, y = h - bh - m;
+  const bw = tw + padX * 2, bh = fs + padY * 2, x = m, y = m;  // มุมบนซ้าย
   ctx.fillStyle = "rgba(0,0,0,.55)";
   if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x, y, bw, bh, fs * 0.25); ctx.fill(); } else ctx.fillRect(x, y, bw, bh);
   ctx.fillStyle = "#fbbf24"; ctx.textBaseline = "middle";
@@ -1854,7 +1882,7 @@ async function addFiles(i, list, stamp){
         if(mb > 15) toast(`วิดีโอขนาด ${mb.toFixed(0)} MB อาจอัปโหลดนาน — แนะนำตั้งกล้องเป็น 720p/1080p (ไม่ใช่ 4K)`, true); }
       continue;
     }
-    const cf = await compress(f, stamp ? ts : 0);
+    const cf = await compress(f, stamp ? ts : await photoTime(f));  // ถ่ายตอนนี้ = เวลาปัจจุบัน · จากคลัง = เวลาถ่ายจริงของรูป
     pages[i].files.push({file:cf, url:URL.createObjectURL(cf), kind:"image"});
   }
   renderPageThumbs(i);
