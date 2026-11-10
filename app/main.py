@@ -2498,9 +2498,9 @@ def api_notifications(name: str = "", days: int = Query(14, ge=1, le=60)):
         sids = {x.get("sid") for x in cms if x.get("sid")} | {tops.get(x.get("parent"), {}).get("sid") for x in cms if x.get("parent")}
         insp = {}
         for sid in sids - {None}:
-            r = con.execute("SELECT inspector, round_date FROM submissions WHERE id=?", (sid,)).fetchone()
+            r = con.execute("SELECT inspector, round_date, status FROM submissions WHERE id=?", (sid,)).fetchone()
             if r:
-                insp[sid] = (r["inspector"], r["round_date"])
+                insp[sid] = (r["inspector"], r["round_date"], r["status"])
         fus = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups WHERE updated_at>=?", (since,))]
     for x in cms:
         if x.get("deleted"):
@@ -2508,7 +2508,7 @@ def api_notifications(name: str = "", days: int = Query(14, ge=1, le=60)):
         top = tops.get(x.get("parent")) if x.get("parent") else x
         sid = (top or {}).get("sid")
         it = ITEM_MAP.get(x["area_id"], {})
-        who, rd = insp.get(sid, ("", x.get("round") or ""))
+        who, rd, sst = insp.get(sid, ("", x.get("round") or "", ""))
         thread = [c for c in allc if c["id"] == (top or {}).get("id") or c.get("parent") == (top or {}).get("id")]
         reason = ""
         if not same(x["by"]):
@@ -2518,10 +2518,12 @@ def api_notifications(name: str = "", days: int = Query(14, ge=1, le=60)):
                 reason = "ถามในผลตรวจของคุณ" if x.get("question") else "แสดงความคิดเห็นในผลตรวจของคุณ"
             elif x.get("parent") and any(same(c["by"]) for c in thread if c["at"] < x["at"]):
                 reason = "ตอบกลับในกระทู้ที่คุณร่วม"
+            elif sst == "พบปัญหา":  # ความคิดเห็นในผลตรวจที่พบปัญหา → แจ้งทุกคน
+                reason = "ตอบกลับในผลตรวจที่พบปัญหา" if x.get("parent") else "ความคิดเห็นในผลตรวจที่พบปัญหา"
         ev.append({"id": x["id"], "type": "reply" if x.get("parent") else ("question" if x.get("question") else "comment"),
                    "at": x["at"], "by": x["by"], "text": x["text"][:160], "area_id": x["area_id"], "sid": sid, "round": rd,
                    "title": f'{it.get("no", "")} {it.get("name", x["area_id"])}'.strip(), "zone": it.get("zone", ""),
-                   "mine": bool(reason), "reason": reason})
+                   "mine": bool(reason), "reason": reason, "ng": sst == "พบปัญหา"})
     for f in fus:
         for n in (f.get("notes") or []) + [{"at": f.get("created_at"), "by": f.get("created_by"), "text": "เปิดเรื่องติดตาม", "kind": "open"}]:
             if not n.get("at") or n["at"] < since:
