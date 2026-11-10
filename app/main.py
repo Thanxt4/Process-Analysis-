@@ -2462,13 +2462,22 @@ async def api_comment_close(cid: str, request: Request):
 
 
 @app.delete("/api/comments/{cid}")
-def api_comment_delete(cid: str, pin: str = ""):
-    _check_edit_pin(pin)
+def api_comment_delete(cid: str, by: str = ""):
+    """ลบได้เฉพาะความคิดเห็นของตัวเอง (ชื่อตรงกับผู้เขียน) · ถ้ามีคนอื่นตอบไว้แล้ว เก็บกระทู้ไว้แต่ขึ้นว่าถูกลบ"""
+    me = " ".join(str(by or "").split()).lower()
     with db() as con:
-        r = con.execute("SELECT area_id FROM item_comments WHERE id=?", (cid,)).fetchone()
+        r = con.execute("SELECT area_id, data FROM item_comments WHERE id=?", (cid,)).fetchone()
         if not r:
             raise HTTPException(404, "ไม่พบความคิดเห็นนี้")
-        con.execute("DELETE FROM item_comments WHERE id=? OR parent=?", (cid, cid))
+        x = json.loads(r["data"])
+        if not me or " ".join(str(x.get("by") or "").split()).lower() != me:
+            raise HTTPException(403, "ลบได้เฉพาะความคิดเห็นของตัวเอง")
+        has_rep = con.execute("SELECT 1 FROM item_comments WHERE parent=?", (cid,)).fetchone()
+        if has_rep:
+            x.update({"text": "", "deleted": True, "deleted_at": _fu_ms(), "question": False})
+            con.execute("UPDATE item_comments SET data=? WHERE id=?", (json.dumps(x, ensure_ascii=False), cid))
+        else:
+            con.execute("DELETE FROM item_comments WHERE id=?", (cid,))
         items = _cm_rows(con, "WHERE area_id=?", (r["area_id"],))
     return {"ok": True, "threads": _cm_threads(items)}
 
@@ -2494,6 +2503,8 @@ def api_notifications(name: str = "", days: int = Query(14, ge=1, le=60)):
                 insp[sid] = (r["inspector"], r["round_date"])
         fus = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups WHERE updated_at>=?", (since,))]
     for x in cms:
+        if x.get("deleted"):
+            continue
         top = tops.get(x.get("parent")) if x.get("parent") else x
         sid = (top or {}).get("sid")
         it = ITEM_MAP.get(x["area_id"], {})

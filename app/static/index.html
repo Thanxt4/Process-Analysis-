@@ -881,6 +881,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .igmore{display:block;border:0;background:none;padding:2px 0;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
 .igl{padding:3px 0}.igl p{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-wrap}
 .igl.rep{margin-left:22px}
+.igl.del i{color:var(--muted);font-size:13.5px}
 .igl.flash{animation:flash 2s ease}@keyframes flash{0%,40%{background:#fef9c3}100%{background:transparent}}
 .igm{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:1px}
 .igm button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
@@ -3148,6 +3149,7 @@ setInterval(() => { if(!document.hidden && curTab() === "follow" && !FU.cur) loa
 /* ---------- ถาม-ตอบ / ความคิดเห็น ในแต่ละหัวข้อ Checklist ---------- */
 const CM = { sum: {}, open: [], threads: [], area: "", kind: store.get("pc_cmkind", "c") };
 const CM_IC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12Z"/></svg>`;
+const cmMine = x => { const a = (getMyName() || "").trim().replace(/\s+/g, " ").toLowerCase(); return !!a && a === String(x.by || "").trim().replace(/\s+/g, " ").toLowerCase(); };
 const cmAt = ms => { const d = new Date(ms); return `${d.getDate()} ${TH_M[d.getMonth()]} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`; };
 async function loadCmSummary(){
   try{ const r = await api("/api/comments/summary"); CM.sum = r.items || {}; CM.open = r.open || []; }catch{ return; }
@@ -3197,8 +3199,8 @@ function drawCm(loading){
   $("#cmWrap").innerHTML = head.replace("ถาม-ตอบ / ความคิดเห็น", "ความคิดเห็นทั่วไปของหัวข้อ (ก่อนอัปเดต)") + (L0.length ? L0.map(t => {
     const st = t.question ? (t.closed ? `<span class="cmk cl">ปิดแล้ว</span>` : t.replies.length ? `<span class="cmk ok">ตอบแล้ว</span>` : `<span class="cmk wait">รอตอบ</span>`) : "";
     return `<div class="cmth ${t.open ? "open" : ""}" data-cmt="${t.id}"><div class="cmh"><span class="cmk ${t.question ? "q" : "c"}">${t.question ? "คำถาม" : "ความคิดเห็น"}</span>${st}</div>${one(t)}
-      ${t.replies.map(r => `<div class="cmr">${one(r, true)}<div class="cma"><button type="button" class="del" data-cmdel="${r.id}">ลบ</button></div></div>`).join("")}
-      <div class="cma"><button type="button" data-cmrep="${t.id}">ตอบ</button>${t.question ? `<button type="button" data-cmclose="${t.id}" data-v="${t.closed ? 0 : 1}">${t.closed ? "เปิดคำถามอีกครั้ง" : "ปิดคำถาม"}</button>` : ""}<button type="button" class="del" data-cmdel="${t.id}">ลบ</button></div>
+      ${t.replies.map(r => `<div class="cmr">${one(r, true)}<div class="cma">${cmMine(r) ? `<button type="button" class="del" data-cmdel="${r.id}">ลบ</button>` : ""}</div></div>`).join("")}
+      <div class="cma"><button type="button" data-cmrep="${t.id}">ตอบ</button>${t.question ? `<button type="button" data-cmclose="${t.id}" data-v="${t.closed ? 0 : 1}">${t.closed ? "เปิดคำถามอีกครั้ง" : "ปิดคำถาม"}</button>` : ""}${cmMine(t) && !t.deleted ? `<button type="button" class="del" data-cmdel="${t.id}">ลบ</button>` : ""}</div>
       <div class="cmrep" id="cmrep-${t.id}"><textarea maxlength="1000" placeholder="พิมพ์คำตอบ…"></textarea><button type="button" class="btn sm" data-cmsend="${t.id}">ส่งคำตอบ</button></div></div>`; }).join("")
     : `<p class="note" style="margin:0 0 10px">ยังไม่มีความคิดเห็นในหัวข้อนี้ · ถามหรือฝากข้อมูลให้ทีมได้ด้านล่าง</p>`)
     + `<p class="note" style="margin:0">ความคิดเห็นใหม่ ให้พิมพ์ใต้ผลตรวจแต่ละรายการด้านบน</p>`;
@@ -3218,8 +3220,8 @@ async function cmAct(b){
   if(b.dataset.cmrep){ const box = $(`#cmrep-${b.dataset.cmrep}`); box.classList.toggle("on"); if(box.classList.contains("on")) box.querySelector("textarea").focus(); return; }
   if(b.dataset.cmsend){ const ta = $(`#cmrep-${b.dataset.cmsend} textarea`), t = ta.value.trim(); if(!t){ ta.focus(); return; } b.disabled = true; if(await cmPost({text: t, parent: b.dataset.cmsend})) toast("ส่งคำตอบแล้ว"); else b.disabled = false; return; }
   if(b.dataset.cmclose){ try{ const r = await api(`/api/comments/${b.dataset.cmclose}/close`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({closed: b.dataset.v === "1", by: getMyName()})}); CM.threads = r.threads; drawCm(); cmUpdateSum(); }catch(err){ toast(err.message, true); } return; }
-  if(b.dataset.cmdel){ if(!confirm("ลบข้อความนี้? (ถ้าเป็นข้อความหลัก คำตอบทั้งหมดจะถูกลบด้วย)")) return; const pin = prompt("ใส่รหัสเพื่อลบ"); if(!pin) return;
-    try{ const r = await api(`/api/comments/${b.dataset.cmdel}?pin=${encodeURIComponent(pin)}`, {method: "DELETE"}); CM.threads = r.threads; drawCm(); cmUpdateSum(); toast("ลบแล้ว"); }catch(err){ toast(err.message, true); } }
+  if(b.dataset.cmdel){ if(!confirm("ลบความคิดเห็นของคุณ?")) return;
+    try{ const r = await api(`/api/comments/${b.dataset.cmdel}?by=${encodeURIComponent(getMyName())}`, {method: "DELETE"}); CM.threads = r.threads; drawCm(); cmUpdateSum(); toast("ลบแล้ว"); }catch(err){ toast(err.message, true); } }
 }
 
 /* ---------- ความคิดเห็นใต้แต่ละผลตรวจ (แบบ Instagram): ปุ่ม 💬 · ความคิดเห็นล่าสุด · ช่องพิมพ์ ---------- */
@@ -3229,8 +3231,8 @@ function drawIg(){
   document.querySelectorAll("#prevWrap .igc[data-igsid]").forEach(box => {
     const sid = box.dataset.igsid, T = CM.threads.filter(t => t.sid === sid), n = T.reduce((a, t) => a + 1 + t.replies.length, 0);
     const wait = T.filter(t => t.open).length, all = IG.open.has(sid), show = all ? T : T.slice(-2), rp = IG.reply[sid];
-    const line = (x, top) => `<div class="igl ${top ? "" : "rep"}" data-cid="${x.id}"><p><b>${esc(x.by)}</b> ${top && x.question ? `<span class="cmk ${x.closed ? "cl" : x.parent || (T.find(t => t.id === x.id) || {}).replies?.length ? "ok" : "wait"}">${x.closed ? "ปิดแล้ว" : (T.find(t => t.id === x.id) || {}).replies?.length ? "ตอบแล้ว" : "คำถาม · รอตอบ"}</span> ` : ""}${esc(x.text)}</p>
-      <div class="igm"><span>${cmAt(x.at)}</span>${top ? `<button type="button" data-igrep="${x.id}" data-n="${esc(x.by)}">ตอบกลับ</button>` : ""}${top && x.question ? `<button type="button" data-cmclose="${x.id}" data-v="${x.closed ? 0 : 1}">${x.closed ? "เปิดคำถาม" : "ปิดคำถาม"}</button>` : ""}<button type="button" class="del" data-cmdel="${x.id}">ลบ</button></div></div>`;
+    const line = (x, top) => x.deleted ? `<div class="igl del" data-cid="${x.id}"><p><i>ความคิดเห็นนี้ถูกลบโดยผู้เขียน</i></p></div>` : `<div class="igl ${top ? "" : "rep"}" data-cid="${x.id}"><p><b>${esc(x.by)}</b> ${top && x.question ? `<span class="cmk ${x.closed ? "cl" : x.parent || (T.find(t => t.id === x.id) || {}).replies?.length ? "ok" : "wait"}">${x.closed ? "ปิดแล้ว" : (T.find(t => t.id === x.id) || {}).replies?.length ? "ตอบแล้ว" : "คำถาม · รอตอบ"}</span> ` : ""}${esc(x.text)}</p>
+      <div class="igm"><span>${cmAt(x.at)}</span>${top ? `<button type="button" data-igrep="${x.id}" data-n="${esc(x.by)}">ตอบกลับ</button>` : ""}${top && x.question ? `<button type="button" data-cmclose="${x.id}" data-v="${x.closed ? 0 : 1}">${x.closed ? "เปิดคำถาม" : "ปิดคำถาม"}</button>` : ""}${cmMine(x) ? `<button type="button" class="del" data-cmdel="${x.id}">ลบ</button>` : ""}</div></div>`;
     box.innerHTML = `<div class="igbar"><button type="button" class="igbtn ${wait ? "q" : ""}" data-igtog="${sid}">${CM_IC}${n ? `${n} ความคิดเห็น${wait ? ` · รอตอบ ${wait}` : ""}` : "แสดงความคิดเห็น"}</button></div>
       ${!all && T.length > 2 ? `<button type="button" class="igmore" data-igtog="${sid}">ดูความคิดเห็นทั้งหมด ${n} รายการ</button>` : ""}
       ${(all || T.length) ? show.map(t => line(t, true) + t.replies.map(r => line(r, false)).join("")).join("") : ""}
