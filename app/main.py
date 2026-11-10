@@ -2590,15 +2590,13 @@ def api_followups():
             thumbs[r["id"]] = media_info(f["filename"]) if f else None
     zdeck = {z["id"]: zone_deck(z) for z in AREAS["zones"]}
     issues = []
-    for r in rows:
-        if r["id"] in linked:
-            continue
+    for r in rows:  # แสดงทั้งที่ติดตามแล้วและยังไม่ติดตาม (linked = ติดตามแล้ว)
         it = ITEM_MAP.get(r["area_id"], {})
         issues.append({"sid": r["id"], "round": r["round_date"], "area_id": r["area_id"], "no": it.get("no", ""),
                        "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""), "zone_id": it.get("zone_id", ""),
                        "deck": zdeck.get(it.get("zone_id"), "pc"), "inspector": r["inspector"], "at": r["created_at"],
                        "note": r.get("note") or "", "cause": r.get("cause") or "", "action": r.get("action") or "",
-                       "thumb": thumbs.get(r["id"])})
+                       "thumb": thumbs.get(r["id"]), "linked": r["id"] in linked})
     return {"items": items, "issues": issues[:120], "issue_days": FU_ISSUE_DAYS, "status": FU_STATUS}
 
 

@@ -789,6 +789,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .fu-irow .t small{display:block;color:var(--muted);font-size:12.5px}
 .fu-irow .t p{margin:3px 0 0;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .fu-irow .btn{flex:none}
+.fu-irow .btn.fu-done{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
 .fu-more{display:block;width:100%;border:0;border-top:1px solid var(--line);background:#f8fafc;padding:10px;font-weight:700;color:var(--navy)}
 .crow .fubtn{flex:none;align-self:center;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer}
 .crow .fubtn:hover{border-color:var(--navy)}
@@ -3031,9 +3032,10 @@ function renderFollow(){
     : `<div class="card fu-empty">${q ? `ไม่พบเรื่องที่ค้นหา "${esc(FU.q.trim())}"` : FU.filter === "active" ? "ไม่มีเรื่องค้าง 👍 กด <b>เพิ่มเรื่อง</b> เพื่อเปิดเรื่องใหม่" : "ไม่มีเรื่องในหมวดนี้"}</div>`;
   // ปัญหาที่พบล่าสุด (ยังไม่ได้เปิดเรื่อง)
   const iss = FU.issues, show = FU.issAll ? iss : iss.slice(0, 8), open = store.get("pc_fuiss", "0") === "1";
-  $("#fuIssues").innerHTML = iss.length ? `<details class="card fu-iss" id="fuIssBox" ${open ? "open" : ""}><summary><b>ปัญหาที่พบ ${FU.days} วันล่าสุด ที่ยังไม่ได้เปิดเรื่องติดตาม</b><span class="ct">${iss.length}</span></summary>
+  const nWait = iss.filter(i => !fuOf(i.sid)).length;
+  $("#fuIssues").innerHTML = iss.length ? `<details class="card fu-iss" id="fuIssBox" ${open ? "open" : ""}><summary><b>ปัญหาที่พบ ${FU.days} วันล่าสุด</b><span class="ct" title="ยังไม่ได้ติดตาม / ทั้งหมด">ยังไม่ติดตาม ${nWait} / ${iss.length}</span></summary>
     ${show.map(i => `<div class="fu-irow">${i.thumb ? `<img src="${i.thumb.thumb}" loading="lazy" alt="">` : ""}<div class="t"><b>${esc(i.no)} ${esc(i.name)}</b><small>${esc(i.zone)} · ${thDate(i.round)} · ${esc(i.inspector)}</small>${i.note ? `<p>${esc(i.note)}</p>` : ""}</div>
-      <button type="button" class="btn sm ghost" data-fuiss="${i.sid}">＋ ติดตาม</button></div>`).join("")}
+      ${fuOf(i.sid) ? `<button type="button" class="btn sm ghost fu-done" data-fuissv="${i.sid}">✓ ติดตามแล้ว</button>` : `<button type="button" class="btn sm ghost" data-fuiss="${i.sid}">＋ ติดตาม</button>`}</div>`).join("")}
     ${iss.length > show.length ? `<button type="button" class="fu-more" id="fuIssMore">ดูทั้งหมด ${iss.length} รายการ ▾</button>` : ""}</details>` : "";
   const box = $("#fuIssBox"); if(box) box.ontoggle = () => store.set("pc_fuiss", box.open ? "1" : "0");
 }
@@ -3105,7 +3107,7 @@ function fuPut(item){  // อัปเดตรายการในเครื
   const i = FU.items.findIndex(x => x.id === item.id);
   item.src_info = item.src_info || (FU.cur && FU.cur.src_info) || (i >= 0 ? FU.items[i].src_info : null);
   if(i >= 0) FU.items[i] = item; else FU.items.unshift(item);
-  if(item.src && item.src.sid) FU.issues = FU.issues.filter(x => x.sid !== item.src.sid);
+
   fuBadge(); renderFollow();
 }
 $("#fuClose").onclick = fuClose;
@@ -3118,6 +3120,7 @@ $("#tab-follow").addEventListener("click", e => {
   const i = e.target.closest("[data-fuiss]"); if(i){ const s = FU.issues.find(y => y.sid === i.dataset.fuiss); if(!s || i.disabled) return;
     const y = scrollY; i.disabled = true; i.textContent = "กำลังเพิ่ม…";
     fuAddSub(fuFromSub(s)).catch(err => toast(err.message, true)).finally(() => { renderFollow(); scrollTo(0, y); }); return; }
+  const v = e.target.closest("[data-fuissv]"); if(v){ const x = fuOf(v.dataset.fuissv); if(x) fuOpen(x); return; }
   if(e.target.id === "fuIssMore"){ FU.issAll = true; renderFollow(); }
 });
 $("#fuBody").addEventListener("change", e => {
