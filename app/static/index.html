@@ -3189,8 +3189,7 @@ function cmUpdateSum(){
 function drawCm(loading){
   setTimeout(drawIg, 0);
   const T = CM.threads, n = T.reduce((a, t) => a + 1 + t.replies.length, 0), open = T.filter(t => t.open).length;
-  const j = $("#shCm"); j.hidden = true;  // ไม่แสดงปุ่มถาม-ตอบใต้ชื่อหัวข้อ (ดูความคิดเห็นใต้ผลตรวจแต่ละรายการแทน) j.className = "cmjump" + (open ? " q" : ""); j.innerHTML = CM_IC + `<span>${n}</span>`;
-  j.title = `ถาม-ตอบ ${n} ข้อความ${open ? ` · รอตอบ ${open}` : ""} (แตะเพื่อดู)`; j.setAttribute("aria-label", j.title);
+  const j = $("#shCm"); j.hidden = true;  // ไม่แสดงปุ่มถาม-ตอบใต้ชื่อหัวข้อ (ดูความคิดเห็นใต้ผลตรวจแต่ละรายการแทน)
   const head = `<h4>${CM_IC.replace("<svg", '<svg width="18" height="18"')}ถาม-ตอบ / ความคิดเห็น${n ? ` (${n})` : ""}</h4>`;
   if(loading){ $("#cmWrap").innerHTML = head + `<p class="note">กำลังโหลด…</p>`; return; }
   const one = (x, isRep) => `<div class="cmh"><b>${esc(x.by)}</b><span>${cmAt(x.at)}</span>${x.round && x.round !== CFG.current_round ? `<span>· รอบ ${thDate(x.round)}</span>` : ""}</div><p class="cmx">${esc(x.text)}</p>`;
