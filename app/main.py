@@ -687,6 +687,8 @@ def status_for(rd: date, deck: Optional[str] = None):
                 "issue": has_issue,
                 "last_inspector": last["inspector"] if last else None,
                 "last_time": last["created_at"] if last else None,
+                # ผลตรวจที่ใช้เปิดเรื่องติดตาม: ครั้งล่าสุดที่พบปัญหา (ถ้ามี) ไม่งั้นครั้งล่าสุด
+                "fu_sid": (next((x for x in reversed(ss) if x["status"] == "พบปัญหา"), last) or {}).get("id"),
                 "images": sum(len(x["images"]) for x in ss),
             })
             issues += has_issue

@@ -790,6 +790,9 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .fu-irow .t p{margin:3px 0 0;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .fu-irow .btn{flex:none}
 .fu-more{display:block;width:100%;border:0;border-top:1px solid var(--line);background:#f8fafc;padding:10px;font-weight:700;color:var(--navy)}
+.crow .fubtn{flex:none;align-self:center;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer}
+.crow .fubtn:hover{border-color:var(--navy)}
+.crow .fubtn.on{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
 .sub .h .fumk{border:1px solid #fca5a5;background:var(--red-soft);color:#991b1b;font-size:12.5px;font-weight:700;border-radius:8px;padding:3px 8px;cursor:pointer;white-space:nowrap}
 .subfull .sub .h .fumk{display:none}
 .fu-sheet{max-width:680px}
@@ -1528,12 +1531,12 @@ async function renderChecklist(){
       <div class="zbar"><i style="width:${z.total? z.done/z.total*100 : 0}%"></i></div>
       ${items.map(it => `<div class="crow ${it.checked?"":"pending"}" data-a="${it.id}"><span class="mark ${it.issue?"ng":it.checked?"ok":""}">${it.issue?"!":it.checked?"✓":""}</span>
         <span class="t">${it.extra?`<b style="color:var(--amber)">＋</b> หัวข้อเพิ่มเติม (${it.count} เรื่อง)`:`<span class="no">${it.no}</span> ${hl(it.name, ckQuery)}${procTag(it)}`}</span>
-        <span class="w">${it.checked?`${hl(it.last_inspector, ckQuery)}<br>${hm(it.last_time)} น.`:"ยังไม่ตรวจ"}</span></div>`).join("")}</div>`).join("");
+        <span class="w">${it.checked?`${hl(it.last_inspector, ckQuery)}<br>${hm(it.last_time)} น.`:"ยังไม่ตรวจ"}</span>${it.checked && it.fu_sid && !it.extra ? fuBtn(it.fu_sid) : ""}</div>`).join("")}</div>`).join("");
   const empty = ckQuery ? `ไม่พบหัวข้อที่ตรงกับ "${esc($("#ckSearch").value)}"` : filter==="issue" ? "ไม่มีรายการที่พบปัญหาในรอบนี้ ✓" : filter==="pending" ? "ตรวจครบทุกพื้นที่แล้ว ✓" : "ยังไม่มีพื้นที่ที่ตรวจ";
   $("#checkList").innerHTML = `<div class="roundlbl">รอบ ${thDate(viewRound)}${viewRound===CFG.current_round?" (ปัจจุบัน)":""} · ${data.done}/${data.total} ตรวจแล้ว${data.issues?` · พบปัญหา ${data.issues}`:""}</div>` + (html || `<div class="empty">${empty}</div>`);
 }
 $("#filterSeg").addEventListener("click", e => { const b=e.target.closest("button"); if(!b) return; filter=b.dataset.f; [...$("#filterSeg").children].forEach(x=>x.classList.toggle("on",x===b)); renderChecklist(); });
-$("#checkList").addEventListener("click", e => { const r=e.target.closest(".crow"); if(r) openSheet(r.dataset.a, viewRound); });
+$("#checkList").addEventListener("click", e => { const f = e.target.closest(".fubtn"); if(f){ e.stopPropagation(); fuQuick(f); return; } const r=e.target.closest(".crow"); if(r) openSheet(r.dataset.a, viewRound); });
 
 /* ---------- sheet ---------- */
 let lastCk = null;
@@ -2904,7 +2907,27 @@ async function loadFollowups(){
   catch(err){ if(curTab() === "follow") toast(err.message, true); return; }
   fuBadge(); if(curTab() === "follow") renderFollow();
 }
+const fuOf = sid => FU.items.find(x => (x.src || {}).sid === sid);
+const fuBtn = sid => { const x = fuOf(sid); return `<button type="button" class="fubtn ${x ? "on" : ""}" data-fusid="${esc(sid)}" title="${x ? "ดูในหน้า เรื่องที่ต้องติดตาม" : "เพิ่มหัวข้อนี้ไปที่ เรื่องที่ต้องติดตาม"}">${x ? "✓ ติดตามแล้ว" : "＋ ติดตาม"}</button>`; };
+function fuMarkBtns(){ document.querySelectorAll(".fubtn[data-fusid]").forEach(b => { const on = !!fuOf(b.dataset.fusid); if(b.classList.contains("on") !== on){ b.classList.toggle("on", on); b.textContent = on ? "✓ ติดตามแล้ว" : "＋ ติดตาม"; } }); }
+async function fuQuick(b){
+  const sid = b.dataset.fusid, had = fuOf(sid);
+  if(had){ document.querySelector('nav.tabs [data-tab="follow"]').click(); fuOpen(had); return; }
+  const by = getMyName(); if(!by){ toast("ตั้งชื่อผู้ใช้ก่อน", true); openNameBox(); return; }
+  const row = b.closest("[data-a]"), area = row ? row.dataset.a : "", it = findItem(area) || {};
+  b.disabled = true; b.textContent = "กำลังเพิ่ม…";
+  try{
+    const subs = await api(`/api/submissions?round=${viewRound}&area=${encodeURIComponent(area)}`), s = subs.find(x => x.id === sid) || {};
+    const pre = fuFromSub({sid, no: it.no || "", name: it.name || s.area_name || "", zone_id: s.zone_id || it.zone_id || "",
+      note: (s.pages || []).map(p => p.note).filter(Boolean).join("\n") || s.note || "", cause: s.cause, action: s.action});
+    const r = await api("/api/followups", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...pre, src_info: undefined, status: "open", by})});
+    r.item.src_info = null; fuPut(r.item); loadFollowups();
+    toast(`เพิ่ม "${it.no || ""} ${it.name || ""}" ไปที่ เรื่องที่ต้องติดตามแล้ว`);
+  }catch(err){ toast(err.message, true); }
+  finally{ b.disabled = false; const on = !!fuOf(sid); b.classList.toggle("on", on); b.textContent = on ? "✓ ติดตามแล้ว" : "＋ ติดตาม"; fuMarkBtns(); }
+}
 function fuBadge(){
+  fuMarkBtns();
   const act = FU.items.filter(x => x.status !== "done"), ov = act.filter(fuOver).length, b = $("#fuCount");
   b.hidden = !act.length; b.textContent = act.length; b.classList.toggle("ov", ov > 0);
   b.title = `ยังไม่เสร็จ ${act.length} เรื่อง${ov ? ` · เกินกำหนด ${ov} เรื่อง` : ""}`;
