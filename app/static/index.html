@@ -2984,10 +2984,6 @@ async function fuQuick(b){
     const r = await api("/api/followups", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...pre, src_info: undefined, status: "open", by})});
     r.item.src_info = null; fuPut(r.item); loadFollowups();
     toast(`เพิ่ม "${it.no || ""} ${it.name || ""}" ไปที่ เรื่องที่ต้องติดตามแล้ว`);
-    // ไปหน้า เรื่องที่ต้องติดตาม แล้วเปิดเรื่องที่เพิ่งเพิ่ม ให้ใส่ผู้รับผิดชอบ / กำหนดเสร็จ ต่อได้เลย
-    FU.filter = "active"; store.set("pc_fufilter", "active");
-    document.querySelector('nav.tabs [data-tab="follow"]').click(); scrollTo(0, 0);
-    fuOpen(FU.items.find(x => x.id === r.item.id) || r.item);
   }catch(err){ toast(err.message, true); }
   finally{ b.disabled = false; const on = !!fuOf(sid); b.classList.toggle("on", on); b.textContent = on ? "✓ ติดตามแล้ว" : "＋ ติดตาม"; fuMarkBtns(); }
 }
