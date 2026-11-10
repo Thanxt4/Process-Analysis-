@@ -840,7 +840,9 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .cmb{display:inline-flex;align-items:center;gap:3px;margin-left:6px;font-size:11.5px;font-weight:700;color:#475569;background:#f1f5f9;border-radius:99px;padding:1px 7px;vertical-align:middle;white-space:nowrap}
 .cmb svg{width:12px;height:12px}
 .cmb.q{background:#fee2e2;color:#b91c1c}
-.cmjump{display:inline-flex;align-items:center;gap:5px;margin-top:6px;border:1px solid var(--line);background:#fff;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer}
+#shTitle{display:inline}
+.cmjump{display:inline-flex;align-items:center;gap:3px;margin-left:8px;vertical-align:3px;white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:99px;padding:1px 8px;font-size:12.5px;font-weight:800;line-height:1.5;color:var(--navy);cursor:pointer}
+.cmjump svg{width:14px;height:14px}
 .cmjump.q{border-color:#fca5a5;background:#fef2f2;color:#b91c1c}
 .cmt{margin-top:18px;border-top:2px solid var(--line);padding-top:12px}
 .cmt h4{margin:0 0 8px;display:flex;align-items:center;gap:8px}
@@ -3187,7 +3189,8 @@ function cmUpdateSum(){
 function drawCm(loading){
   setTimeout(drawIg, 0);
   const T = CM.threads, n = T.reduce((a, t) => a + 1 + t.replies.length, 0), open = T.filter(t => t.open).length;
-  const j = $("#shCm"); j.hidden = loading || !n; j.className = "cmjump" + (open ? " q" : ""); j.innerHTML = CM_IC + `ถาม-ตอบ ${n}${open ? ` · รอตอบ ${open}` : ""}`;
+  const j = $("#shCm"); j.hidden = true;  // ไม่แสดงปุ่มถาม-ตอบใต้ชื่อหัวข้อ (ดูความคิดเห็นใต้ผลตรวจแต่ละรายการแทน) j.className = "cmjump" + (open ? " q" : ""); j.innerHTML = CM_IC + `<span>${n}</span>`;
+  j.title = `ถาม-ตอบ ${n} ข้อความ${open ? ` · รอตอบ ${open}` : ""} (แตะเพื่อดู)`; j.setAttribute("aria-label", j.title);
   const head = `<h4>${CM_IC.replace("<svg", '<svg width="18" height="18"')}ถาม-ตอบ / ความคิดเห็น${n ? ` (${n})` : ""}</h4>`;
   if(loading){ $("#cmWrap").innerHTML = head + `<p class="note">กำลังโหลด…</p>`; return; }
   const one = (x, isRep) => `<div class="cmh"><b>${esc(x.by)}</b><span>${cmAt(x.at)}</span>${x.round && x.round !== CFG.current_round ? `<span>· รอบ ${thDate(x.round)}</span>` : ""}</div><p class="cmx">${esc(x.text)}</p>`;
