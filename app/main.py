@@ -560,6 +560,11 @@ with db() as con:
             created_at INTEGER NOT NULL,
             last_seen INTEGER NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS admin_sessions(
+            token TEXT PRIMARY KEY,
+            created_at INTEGER NOT NULL,
+            last_seen INTEGER NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS item_comments(
             id TEXT PRIMARY KEY,
             area_id TEXT NOT NULL,
@@ -879,6 +884,9 @@ async def access_gate(request: Request, call_next):
 # ---------------------------------------------------------------- บัญชีผู้ใช้ (สมัครสมาชิก / เข้าสู่ระบบ ด้วยรหัสพนักงาน)
 DEPTS = ("QC", "PD", "TP")
 USER_COOKIE = "pc_user"
+ADMIN_COOKIE = "pc_uadmin"
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "Admin#12345")  # รหัส Admin สำหรับหน้าจัดการผู้ใช้ (/users.html)
+FOREVER = 10 * 365 * 24 * 3600  # เข้าสู่ระบบครั้งเดียว อยู่จนกว่าจะกดออกจากระบบ
 _EMP_RE = re.compile(r"^[A-Za-z0-9._-]{2,20}$")
 _login_fail = {}  # (ip, emp_id) → [เวลาที่ใส่รหัสผิด]
 
@@ -936,7 +944,7 @@ def _fail_check(request: Request, emp: str):
 
 
 # หน้าหลักต้องเข้าสู่ระบบก่อน · ยกเว้นหน้า Retort (มีรหัสของตัวเอง) และการเข้าสู่ระบบเอง
-_USER_FREE = ("/api/auth/", "/api/retort", "/api/login", "/api/admin/check")
+_USER_FREE = ("/api/auth/", "/api/retort", "/api/login", "/api/admin/check", "/api/uadmin/")
 
 
 @app.middleware("http")
@@ -953,7 +961,7 @@ def _set_session(resp, emp_id: str):
     ms = int(_time.time() * 1000)
     with db() as con:
         con.execute("INSERT INTO user_sessions(token, emp_id, created_at, last_seen) VALUES(?,?,?,?)", (_tok_hash(t), emp_id, ms, ms))
-    resp.set_cookie(USER_COOKIE, t, max_age=400 * 24 * 3600, httponly=True, samesite="lax")
+    resp.set_cookie(USER_COOKIE, t, max_age=FOREVER, httponly=True, samesite="lax")
 
 
 def _user_out(r) -> dict:
@@ -962,7 +970,12 @@ def _user_out(r) -> dict:
 
 @app.get("/api/auth/me")
 def api_auth_me(request: Request):
-    return {"user": _me(request), "depts": DEPTS}
+    u = _me(request)
+    resp = JSONResponse({"user": u, "depts": DEPTS})
+    t = request.cookies.get(USER_COOKIE)
+    if u and t:  # ต่ออายุ cookie ทุกครั้งที่เปิดแอป → ไม่หลุดเอง
+        resp.set_cookie(USER_COOKIE, t, max_age=FOREVER, httponly=True, samesite="lax")
+    return resp
 
 
 @app.post("/api/auth/register")
@@ -997,9 +1010,11 @@ async def api_auth_login(request: Request):
     key = _fail_check(request, emp)
     with db() as con:
         r = con.execute("SELECT * FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone()
-    if not r or not r["active"] or not await run_in_threadpool(_pw_ok, pw, r["pw"]):
+    if not r or not await run_in_threadpool(_pw_ok, pw, r["pw"]):
         _login_fail.setdefault(key, []).append(_time.time())
         raise HTTPException(401, "รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง")
+    if not r["active"]:  # รหัสถูกแล้วจึงบอกว่าถูกระงับ (ไม่เผยว่ามีบัญชีนี้)
+        raise HTTPException(403, "บัญชีนี้ถูกระงับ · ติดต่อผู้ดูแลระบบ")
     _login_fail.pop(key, None)
     resp = JSONResponse({"ok": True, "user": _user_out(r)})
     _set_session(resp, r["emp_id"])
@@ -1036,6 +1051,137 @@ async def api_auth_reset(request: Request):
         con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
     for k in [k for k in _login_fail if k[1] in (r["emp_id"].lower(), "reset:" + r["emp_id"].lower())]:
         _login_fail.pop(k, None)  # ตั้งรหัสใหม่แล้ว ปลดล็อกการใส่รหัสผิด
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------- หน้าจัดการผู้ใช้ (Admin)
+def _is_admin(request: Request) -> bool:
+    t = request.cookies.get(ADMIN_COOKIE) or ""
+    if not t:
+        return False
+    with db() as con:
+        r = con.execute("SELECT last_seen FROM admin_sessions WHERE token=?", (_tok_hash("adm:" + t),)).fetchone()
+        if r and int(_time.time() * 1000) - r["last_seen"] > 3600_000:
+            con.execute("UPDATE admin_sessions SET last_seen=? WHERE token=?", (int(_time.time() * 1000), _tok_hash("adm:" + t)))
+    return bool(r)
+
+
+def _need_admin(request: Request):
+    if not _is_admin(request):
+        raise HTTPException(401, "ADMIN_REQUIRED")
+
+
+@app.get("/api/uadmin/me")
+def api_uadmin_me(request: Request):
+    ok = _is_admin(request)
+    resp = JSONResponse({"admin": ok, "depts": DEPTS})
+    if ok:
+        resp.set_cookie(ADMIN_COOKIE, request.cookies.get(ADMIN_COOKIE), max_age=FOREVER, httponly=True, samesite="lax")
+    return resp
+
+
+@app.post("/api/uadmin/login")
+async def api_uadmin_login(request: Request):
+    d = await request.json()
+    key = _fail_check(request, "__admin__")
+    if not secrets.compare_digest(str(d.get("password") or ""), ADMIN_PASS):
+        _login_fail.setdefault(key, []).append(_time.time())
+        raise HTTPException(401, "รหัส Admin ไม่ถูกต้อง")
+    _login_fail.pop(key, None)
+    t = secrets.token_urlsafe(32)
+    ms = int(_time.time() * 1000)
+    with db() as con:
+        con.execute("INSERT INTO admin_sessions(token, created_at, last_seen) VALUES(?,?,?)", (_tok_hash("adm:" + t), ms, ms))
+    resp = JSONResponse({"ok": True})
+    resp.set_cookie(ADMIN_COOKIE, t, max_age=FOREVER, httponly=True, samesite="lax")
+    return resp
+
+
+@app.post("/api/uadmin/logout")
+def api_uadmin_logout(request: Request):
+    t = request.cookies.get(ADMIN_COOKIE) or ""
+    if t:
+        with db() as con:
+            con.execute("DELETE FROM admin_sessions WHERE token=?", (_tok_hash("adm:" + t),))
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie(ADMIN_COOKIE, samesite="lax")
+    return resp
+
+
+@app.get("/api/uadmin/users")
+def api_uadmin_users(request: Request):
+    _need_admin(request)
+    with db() as con:
+        rows = con.execute("""SELECT u.emp_id, u.name, u.dept, u.active, u.created_at,
+                                     (SELECT MAX(last_seen) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS last_seen,
+                                     (SELECT COUNT(*) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS devices,
+                                     (SELECT COUNT(*) FROM submissions b WHERE b.inspector=u.name) AS subs
+                              FROM users u ORDER BY u.created_at DESC""").fetchall()
+    return {"users": [dict(r) for r in rows], "depts": DEPTS}
+
+
+def _uadmin_user(con, emp: str):
+    r = con.execute("SELECT * FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone()
+    if not r:
+        raise HTTPException(404, "ไม่พบผู้ใช้นี้")
+    return r
+
+
+@app.post("/api/uadmin/users")
+async def api_uadmin_create(request: Request):
+    _need_admin(request)
+    d = await request.json()
+    name, emp = " ".join(str(d.get("name") or "").split())[:60], str(d.get("emp_id") or "").strip()
+    dept, pw = str(d.get("dept") or "").upper(), str(d.get("password") or "")
+    if not name or not _EMP_RE.match(emp) or dept not in DEPTS or len(pw) < 6:
+        raise HTTPException(400, "กรอกชื่อ รหัสพนักงาน (2–20 ตัว) แผนก และรหัสผ่านอย่างน้อย 6 ตัว")
+    with db() as con:
+        if con.execute("SELECT 1 FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone():
+            raise HTTPException(409, "รหัสพนักงานนี้มีอยู่แล้ว")
+        con.execute("INSERT INTO users(emp_id, name, dept, pw, created_at) VALUES(?,?,?,?,?)",
+                    (emp, name, dept, await run_in_threadpool(_pw_hash, pw), int(_time.time() * 1000)))
+    return {"ok": True}
+
+
+@app.post("/api/uadmin/users/{emp}")
+async def api_uadmin_update(emp: str, request: Request):
+    """แก้ชื่อ / แผนก / เปิด-ระงับ / ตั้งรหัสผ่านใหม่ / ออกจากระบบทุกเครื่อง"""
+    _need_admin(request)
+    d = await request.json()
+    with db() as con:
+        r = _uadmin_user(con, emp)
+        if "name" in d:
+            name = " ".join(str(d.get("name") or "").split())[:60]
+            if not name:
+                raise HTTPException(400, "กรอกชื่อ")
+            con.execute("UPDATE users SET name=? WHERE emp_id=?", (name, r["emp_id"]))
+        if "dept" in d:
+            if str(d["dept"]).upper() not in DEPTS:
+                raise HTTPException(400, "แผนกไม่ถูกต้อง")
+            con.execute("UPDATE users SET dept=? WHERE emp_id=?", (str(d["dept"]).upper(), r["emp_id"]))
+        if "active" in d:
+            con.execute("UPDATE users SET active=? WHERE emp_id=?", (1 if d["active"] else 0, r["emp_id"]))
+            if not d["active"]:
+                con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+        if d.get("password"):
+            if len(str(d["password"])) < 6:
+                raise HTTPException(400, "รหัสผ่านอย่างน้อย 6 ตัว")
+            con.execute("UPDATE users SET pw=? WHERE emp_id=?", (await run_in_threadpool(_pw_hash, str(d["password"])), r["emp_id"]))
+            con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+        if d.get("logout"):
+            con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+    for k in [k for k in _login_fail if k[1] == r["emp_id"].lower()]:
+        _login_fail.pop(k, None)
+    return {"ok": True}
+
+
+@app.delete("/api/uadmin/users/{emp}")
+def api_uadmin_delete(emp: str, request: Request):
+    _need_admin(request)
+    with db() as con:
+        r = _uadmin_user(con, emp)
+        con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+        con.execute("DELETE FROM users WHERE emp_id=?", (r["emp_id"],))
     return {"ok": True}
 
 

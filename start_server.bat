@@ -11,6 +11,8 @@ set "ADMIN_PIN="
 REM PIN before generating slides / PIN for editing checklist items
 set "SLIDE_PIN=0000"
 set "EDIT_PIN=2780"
+REM Admin password for the user management page (/users.html)
+set "ADMIN_PASS=Admin#12345"
 REM Folder for old photos moved by "archive" button. Empty = data\archive_uploads
 REM Example (another drive): set "ARCHIVE_DIR=D:\pc-archive"
 set "ARCHIVE_DIR="
