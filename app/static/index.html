@@ -952,6 +952,21 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .srhint{color:var(--muted);font-size:14px;padding:18px 4px;text-align:center}
 .srrec{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .srrec button{border:1px solid var(--line);background:#f8fafc;border-radius:99px;padding:4px 10px;font-size:13px;cursor:pointer}
+
+/* ---- เข้าสู่ระบบ / สมัครสมาชิก ---- */
+.auth{position:fixed;inset:0;z-index:120;background:radial-gradient(800px 420px at 50% -60px,#2c4a72 0%,rgba(44,74,114,0) 70%),linear-gradient(180deg,#14213a,#0f1a2e);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(28px,6vh) 16px 32px}
+.auth[hidden]{display:none}
+.authbox{width:100%;max-width:400px;background:#fff;border-radius:20px;padding:22px 20px 18px;box-shadow:0 24px 60px -20px rgba(0,0,0,.6)}
+.authbrand{text-align:center;margin-bottom:14px}.authbrand small{color:var(--amber);font-weight:800;letter-spacing:.04em;font-size:12px}.authbrand h2{margin:2px 0 0;font-size:21px;color:var(--navy)}
+.authtabs{display:flex;margin-bottom:12px}.authtabs button{flex:1;padding:9px 6px;font-size:15px}
+.alab{display:block;font-weight:700;font-size:14px;margin:10px 0 5px;color:var(--navy)}.alab span{font-weight:400;color:var(--muted);font-size:12.5px}
+.authbox input,.authbox select{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:11px 12px;font:inherit;font-size:16px;background:#fff;min-height:46px}
+.authbox input:focus,.authbox select:focus{outline:none;border-color:var(--navy)}
+.aerr{color:var(--red);font-size:13.5px;min-height:18px;margin:8px 0 0}
+.authbox .submit{width:100%;margin-top:6px}
+.alink{display:block;margin:12px auto 0;border:0;background:none;color:var(--navy);font-weight:700;font-size:13.5px;cursor:pointer;text-decoration:underline}
+.acinfo{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:15px}.acinfo span{color:var(--muted)}
+#inspector[readonly]{background:#f8fafc;color:var(--navy);font-weight:700}
 </style>
 </head>
 <body>
@@ -959,7 +974,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
   <div class="wrap">
     <div class="hrow">
       <div class="brand"><small id="appTitle">LINE QC / PROCESS CONTROL</small><h1>ฟอร์มตรวจพื้นที่หน้างาน</h1>
-        <span class="merow"><button class="me" id="meBtn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> <span id="meName">ตั้งชื่อผู้ตรวจ</span> <em>เปลี่ยน</em></button><button class="bell" id="srchBtn" type="button" aria-label="ค้นหา" title="ค้นหาทุกอย่าง"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><button class="bell" id="bellBtn" type="button" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button></span></div>
+        <span class="merow"><button class="me" id="meBtn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> <span id="meName">ตั้งชื่อผู้ตรวจ</span> <em id="meDept">เปลี่ยน</em></button><button class="bell" id="srchBtn" type="button" aria-label="ค้นหา" title="ค้นหาทุกอย่าง"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><button class="bell" id="bellBtn" type="button" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button></span></div>
       <div class="hright">      <div class="clock"><b id="roundLbl">–</b>ตัดรอบใน <span class="cd" id="countdown">--:--:--</span><br><button class="install" id="installBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v7m0 0-3-3m3 3 3-3"/></svg> ติดตั้งแอป</button></div></div>
     </div>
     <div class="overall"><span>ตรวจแล้ว <b id="ovNum">0/0</b></span><div class="bar"><i id="ovBar" style="width:0"></i></div><span id="ovIssue"></span></div>
@@ -1200,6 +1215,42 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 
 <div class="gate" id="gate"><form id="gateForm"><h3>เข้าสู่ระบบ</h3><p>ใส่รหัสเข้าใช้งานของทีม (ถามหัวหน้างาน)</p>
   <input type="text" id="gateCode" inputmode="numeric" autocomplete="off" placeholder="รหัส"><button class="btn" type="submit">เข้าใช้งาน</button></form></div>
+<!-- บัญชีผู้ใช้: เข้าสู่ระบบ / สมัครสมาชิก -->
+<div class="auth" id="auth" hidden><div class="authbox">
+  <div class="authbrand"><small>LINE QC / PROCESS CONTROL</small><h2>ฟอร์มตรวจพื้นที่หน้างาน</h2></div>
+  <div class="seg authtabs" id="authTabs"><button type="button" data-at="login" class="on">เข้าสู่ระบบ</button><button type="button" data-at="reg">สมัครสมาชิก</button></div>
+  <form id="loginForm" autocomplete="on">
+    <label class="alab" for="lgEmp">รหัสพนักงาน</label><input type="text" id="lgEmp" autocomplete="username" autocapitalize="off" required>
+    <label class="alab" for="lgPw">รหัสผ่าน</label><input type="password" id="lgPw" autocomplete="current-password" required>
+    <p class="aerr" id="lgErr"></p>
+    <button class="btn submit" type="submit" id="lgBtn">เข้าสู่ระบบ</button>
+    <button type="button" class="alink" id="lgForgot">ลืมรหัสผ่าน?</button>
+  </form>
+  <form id="regForm" hidden autocomplete="on">
+    <label class="alab" for="rgName">ชื่อ <span>(ใช้แสดงเป็นชื่อผู้ตรวจ)</span></label><input type="text" id="rgName" autocomplete="name" maxlength="60" required placeholder="เช่น Thanat">
+    <label class="alab" for="rgEmp">รหัสพนักงาน</label><input type="text" id="rgEmp" autocomplete="username" autocapitalize="off" maxlength="20" required>
+    <label class="alab" for="rgDept">แผนก</label><select id="rgDept" required><option value="">— เลือกแผนก —</option><option>QC</option><option>PD</option><option>TP</option></select>
+    <label class="alab" for="rgPw">รหัสผ่าน <span>(อย่างน้อย 6 ตัว)</span></label><input type="password" id="rgPw" autocomplete="new-password" minlength="6" required>
+    <label class="alab" for="rgPw2">ยืนยันรหัสผ่าน</label><input type="password" id="rgPw2" autocomplete="new-password" minlength="6" required>
+    <p class="aerr" id="rgErr"></p>
+    <button class="btn submit" type="submit" id="rgBtn">สมัครสมาชิก</button>
+  </form>
+  <form id="rsForm" hidden>
+    <p class="note" style="margin:0 0 6px">ให้หัวหน้าใส่รหัสหัวหน้า เพื่อตั้งรหัสผ่านใหม่ให้</p>
+    <label class="alab" for="rsEmp">รหัสพนักงาน</label><input type="text" id="rsEmp" autocapitalize="off" required>
+    <label class="alab" for="rsPw">รหัสผ่านใหม่ <span>(อย่างน้อย 6 ตัว)</span></label><input type="password" id="rsPw" autocomplete="new-password" minlength="6" required>
+    <label class="alab" for="rsPin">รหัสหัวหน้า</label><input type="password" id="rsPin" inputmode="numeric" required>
+    <p class="aerr" id="rsErr"></p>
+    <button class="btn submit" type="submit">ตั้งรหัสผ่านใหม่</button>
+    <button type="button" class="alink" id="rsBack">กลับไปหน้าเข้าสู่ระบบ</button>
+  </form>
+</div></div>
+<!-- บัญชีของฉัน -->
+<div class="sheet-bg" id="acctBg"><div class="sheet" role="dialog" aria-modal="true" style="max-width:420px">
+  <div class="top"><div class="t"><small>บัญชีของฉัน</small><h2 id="acName"></h2></div><button class="x" id="acX" aria-label="ปิด">×</button></div>
+  <div class="acinfo" id="acInfo"></div>
+  <button class="btn ghost" id="acLogout" type="button" style="width:100%;margin-top:14px;color:var(--red)">ออกจากระบบ</button>
+</div></div>
 <!-- ชื่อผู้ตรวจของเครื่องนี้ -->
 <div class="sheet-bg" id="nameBg">
   <div class="sheet" role="dialog" aria-modal="true" style="max-width:460px">
@@ -1340,7 +1391,8 @@ function upload(url, method, fd, onProg){
     x.send(fd);
   });
 }
-async function api(url, opt){ let r = await fetch(url, opt); if(r.status===401){ await askAccess(); r = await fetch(url, opt); } if(!r.ok){ let m=r.statusText; try{ m=(await r.json()).detail||m }catch{} throw new Error(m) } return r.json(); }
+async function api(url, opt){ let r = await fetch(url, opt);
+  if(r.status===401){ let d = ""; try{ d = (await r.clone().json()).detail; }catch{} if(d === "LOGIN_REQUIRED") await showAuth(); else await askAccess(); r = await fetch(url, opt); } if(!r.ok){ let m=r.statusText; try{ m=(await r.json()).detail||m }catch{} throw new Error(m) } return r.json(); }
 
 async function loadConfig(pre){
   CFG = pre || await api("/api/config");
@@ -2730,6 +2782,7 @@ async function loadNames(){
   $("#inspList").innerHTML = knownNames.map(n=>`<option value="${esc(n)}">`).join("");
 }
 function openNameBox(){
+  if(ME) return openAcct();  // มีบัญชีแล้ว: ชื่อมาจากบัญชี
   const cur = getMyName();
   $("#nameInput").value = cur;
   $("#nameChips").innerHTML = knownNames.slice(0,20).map(n=>`<button type="button" class="${n===cur?"on":""}">${esc(n)}</button>`).join("");
@@ -2737,7 +2790,7 @@ function openNameBox(){
   setTimeout(()=>$("#nameInput").focus(), 50);
 }
 function closeNameBox(){ $("#nameBg").classList.remove("on"); document.body.style.overflow=""; }
-$("#meBtn").onclick = openNameBox;
+$("#meBtn").onclick = () => openAcct();
 $("#nameClose").onclick = closeNameBox;
 $("#nameChips").addEventListener("click", e => { const b=e.target.closest("button"); if(!b) return; $("#nameInput").value=b.textContent; [...$("#nameChips").children].forEach(x=>x.classList.toggle("on",x===b)); });
 $("#nameSave").onclick = () => { const n=$("#nameInput").value.trim(); if(!n){ toast("กรุณาใส่ชื่อ", true); return; } setMyName(n); closeNameBox(); toast("เครื่องนี้จะจำชื่อ "+n+" ไว้ ✓"); };
@@ -3485,6 +3538,55 @@ function dashFilter(){
 { let t = 0, t2 = 0; $("#dashSearch").addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => { const was = !!dashQ; dashQ = norm(e.target.value); if(was !== !!dashQ || dashQ) renderHot(); dashFilter(); }, 200); });
   new MutationObserver(() => { clearTimeout(t2); t2 = setTimeout(() => { if(dashQ) dashFilter(); }, 40); }).observe($("#dashBox"), {childList: true, subtree: true}); }
 
+/* ---------- บัญชีผู้ใช้: ต้องเข้าสู่ระบบก่อนใช้งาน · ชื่อผู้ตรวจ = ชื่อในบัญชี ---------- */
+let ME = null, authWait = null;
+function setMe(u){
+  ME = u;
+  if(u){ setMyName(u.name); $("#meName").textContent = u.name; $("#meDept").textContent = u.dept; $("#inspector").value = u.name; $("#inspector").readOnly = true; $("#inspector").title = "ชื่อจากบัญชีที่เข้าสู่ระบบ"; }
+}
+function authTab(t){
+  $("#authTabs").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.at === t));
+  $("#loginForm").hidden = t !== "login"; $("#regForm").hidden = t !== "reg"; $("#rsForm").hidden = t !== "reset"; $("#authTabs").hidden = t === "reset";
+  setTimeout(() => { const f = {login: "#lgEmp", reg: "#rgName", reset: "#rsEmp"}[t]; const el = $(f); if(el && !el.value) el.focus(); }, 30);
+}
+function showAuth(){
+  if(!authWait) authWait = new Promise(res => {
+    $("#auth").hidden = false; document.body.style.overflow = "hidden"; authTab(store.get("pc_hasacct", "") ? "login" : "reg");
+    const done = u => { setMe(u); store.set("pc_hasacct", "1"); $("#auth").hidden = true; document.body.style.overflow = ""; authWait = null; res(u); toast(`ยินดีต้อนรับ ${u.name}`); };
+    const post = async (url, body) => { const r = await fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)}); const j = await r.json().catch(() => ({})); if(!r.ok) throw new Error(j.detail || "ไม่สำเร็จ"); return j; };
+    $("#loginForm").onsubmit = async e => { e.preventDefault(); const b = $("#lgBtn"); b.disabled = true; $("#lgErr").textContent = "";
+      try{ const j = await post("/api/auth/login", {emp_id: $("#lgEmp").value.trim(), password: $("#lgPw").value}); $("#lgPw").value = ""; done(j.user); }
+      catch(err){ $("#lgErr").textContent = err.message; $("#lgPw").select(); } finally{ b.disabled = false; } };
+    $("#regForm").onsubmit = async e => { e.preventDefault(); $("#rgErr").textContent = "";
+      if($("#rgPw").value !== $("#rgPw2").value){ $("#rgErr").textContent = "รหัสผ่านทั้งสองช่องไม่ตรงกัน"; $("#rgPw2").focus(); return; }
+      const b = $("#rgBtn"); b.disabled = true;
+      try{ const j = await post("/api/auth/register", {name: $("#rgName").value.trim(), emp_id: $("#rgEmp").value.trim(), dept: $("#rgDept").value, password: $("#rgPw").value}); $("#rgPw").value = $("#rgPw2").value = ""; done(j.user); }
+      catch(err){ $("#rgErr").textContent = err.message; } finally{ b.disabled = false; } };
+    $("#rsForm").onsubmit = async e => { e.preventDefault(); $("#rsErr").textContent = "";
+      try{ await post("/api/auth/reset", {emp_id: $("#rsEmp").value.trim(), password: $("#rsPw").value, pin: $("#rsPin").value}); $("#lgEmp").value = $("#rsEmp").value.trim(); $("#rsPw").value = $("#rsPin").value = ""; authTab("login"); toast("ตั้งรหัสผ่านใหม่แล้ว · เข้าสู่ระบบได้เลย"); }
+      catch(err){ $("#rsErr").textContent = err.message; } };
+  });
+  return authWait;
+}
+$("#authTabs").addEventListener("click", e => { const b = e.target.closest("[data-at]"); if(b) authTab(b.dataset.at); });
+$("#lgForgot").onclick = () => { $("#rsEmp").value = $("#lgEmp").value.trim(); authTab("reset"); };
+$("#rsBack").onclick = () => authTab("login");
+async function ensureLogin(){
+  try{ const r = await fetch("/api/auth/me"); const j = await r.json(); if(j.user){ setMe(j.user); return j.user; } }catch{}
+  return showAuth();
+}
+// ปุ่มชื่อ = บัญชีของฉัน (เปลี่ยนชื่อเองไม่ได้แล้ว)
+function openAcct(){
+  if(!ME) return showAuth();
+  $("#acName").textContent = ME.name;
+  $("#acInfo").innerHTML = `<span>รหัสพนักงาน</span><b>${esc(ME.emp_id)}</b><span>แผนก</span><b>${esc(ME.dept)}</b>`;
+  $("#acctBg").classList.add("on"); document.body.style.overflow = "hidden";
+}
+function closeAcct(){ $("#acctBg").classList.remove("on"); document.body.style.overflow = ""; }
+$("#acX").onclick = closeAcct;
+$("#acctBg").addEventListener("click", e => { if(e.target.id === "acctBg") closeAcct(); });
+$("#acLogout").onclick = async () => { if(!confirm("ออกจากระบบ?")) return; try{ await fetch("/api/auth/logout", {method: "POST"}); }catch{} location.reload(); };
+
 /* countdown + round rollover */
 function tick(){
   if(!CFG) return;
@@ -3511,7 +3613,7 @@ async function refreshAll(){
   }catch(err){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้", true); }
   finally{ busy=false; }
 }
-refreshAll();
+ensureLogin().then(refreshAll);  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล
 
 /* PWA: ติดตั้งเป็นแอปบนมือถือ */
 if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});

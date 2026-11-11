@@ -546,6 +546,20 @@ with db() as con:
             seq INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_img_sub ON images(submission_id);
+        CREATE TABLE IF NOT EXISTS users(
+            emp_id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            dept TEXT NOT NULL,
+            pw TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            active INTEGER NOT NULL DEFAULT 1
+        );
+        CREATE TABLE IF NOT EXISTS user_sessions(
+            token TEXT PRIMARY KEY,
+            emp_id TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            last_seen INTEGER NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS item_comments(
             id TEXT PRIMARY KEY,
             area_id TEXT NOT NULL,
@@ -862,6 +876,169 @@ async def access_gate(request: Request, call_next):
     return await call_next(request)
 
 
+# ---------------------------------------------------------------- บัญชีผู้ใช้ (สมัครสมาชิก / เข้าสู่ระบบ ด้วยรหัสพนักงาน)
+DEPTS = ("QC", "PD", "TP")
+USER_COOKIE = "pc_user"
+_EMP_RE = re.compile(r"^[A-Za-z0-9._-]{2,20}$")
+_login_fail = {}  # (ip, emp_id) → [เวลาที่ใส่รหัสผิด]
+
+
+def _pw_hash(pw: str, salt: Optional[bytes] = None) -> str:
+    salt = salt or secrets.token_bytes(16)
+    h = hashlib.pbkdf2_hmac("sha256", pw.encode("utf-8"), salt, 200_000)
+    return f"pbkdf2${salt.hex()}${h.hex()}"
+
+
+def _pw_ok(pw: str, stored: str) -> bool:
+    try:
+        _, salt, h = stored.split("$")
+        return secrets.compare_digest(_pw_hash(pw, bytes.fromhex(salt)).split("$")[2], h)
+    except Exception:
+        return False
+
+
+def _tok_hash(t: str) -> str:
+    return hashlib.sha256(("sess:" + t).encode()).hexdigest()
+
+
+def _me(request: Request):
+    """ผู้ใช้ที่เข้าสู่ระบบอยู่ (จาก cookie) หรือ None"""
+    if hasattr(request.state, "user"):
+        return request.state.user
+    t = request.cookies.get(USER_COOKIE) or ""
+    u = None
+    if t:
+        with db() as con:
+            r = con.execute("SELECT u.emp_id, u.name, u.dept, u.active, s.last_seen FROM user_sessions s JOIN users u ON u.emp_id=s.emp_id "
+                            "WHERE s.token=?", (_tok_hash(t),)).fetchone()
+            if r and r["active"]:
+                u = {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"]}
+                nowms = int(_time.time() * 1000)
+                if nowms - r["last_seen"] > 3600_000:
+                    con.execute("UPDATE user_sessions SET last_seen=? WHERE token=?", (nowms, _tok_hash(t)))
+    request.state.user = u
+    return u
+
+
+def _me_name(request: Request, fallback: str = "") -> str:
+    u = _me(request)
+    return u["name"] if u else fallback
+
+
+def _fail_check(request: Request, emp: str):
+    key = (request.client.host if request.client else "", emp.lower())
+    now_s = _time.time()
+    L = [t for t in _login_fail.get(key, []) if now_s - t < 600]
+    _login_fail[key] = L
+    if len(L) >= 5:
+        raise HTTPException(429, "ใส่รหัสผิดหลายครั้ง ลองใหม่อีก 10 นาที")
+    return key
+
+
+# หน้าหลักต้องเข้าสู่ระบบก่อน · ยกเว้นหน้า Retort (มีรหัสของตัวเอง) และการเข้าสู่ระบบเอง
+_USER_FREE = ("/api/auth/", "/api/retort", "/api/login", "/api/admin/check")
+
+
+@app.middleware("http")
+async def user_gate(request: Request, call_next):
+    path = request.url.path
+    if (path.startswith(("/api/", "/uploads/", "/t/")) and not path.startswith(_USER_FREE)
+            and not await run_in_threadpool(_me, request)):
+        return JSONResponse({"detail": "LOGIN_REQUIRED"}, status_code=401)
+    return await call_next(request)
+
+
+def _set_session(resp, emp_id: str):
+    t = secrets.token_urlsafe(32)
+    ms = int(_time.time() * 1000)
+    with db() as con:
+        con.execute("INSERT INTO user_sessions(token, emp_id, created_at, last_seen) VALUES(?,?,?,?)", (_tok_hash(t), emp_id, ms, ms))
+    resp.set_cookie(USER_COOKIE, t, max_age=400 * 24 * 3600, httponly=True, samesite="lax")
+
+
+def _user_out(r) -> dict:
+    return {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"]}
+
+
+@app.get("/api/auth/me")
+def api_auth_me(request: Request):
+    return {"user": _me(request), "depts": DEPTS}
+
+
+@app.post("/api/auth/register")
+async def api_auth_register(request: Request):
+    d = await request.json()
+    name = " ".join(str(d.get("name") or "").split())[:60]
+    emp = str(d.get("emp_id") or "").strip()
+    dept = str(d.get("dept") or "").strip().upper()
+    pw = str(d.get("password") or "")
+    if not name:
+        raise HTTPException(400, "กรอกชื่อ")
+    if not _EMP_RE.match(emp):
+        raise HTTPException(400, "รหัสพนักงานใช้ตัวอักษร/ตัวเลข 2–20 ตัว")
+    if dept not in DEPTS:
+        raise HTTPException(400, "เลือกแผนก")
+    if len(pw) < 6:
+        raise HTTPException(400, "รหัสผ่านอย่างน้อย 6 ตัว")
+    with db() as con:
+        if con.execute("SELECT 1 FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone():
+            raise HTTPException(409, "รหัสพนักงานนี้สมัครไว้แล้ว · ไปที่ เข้าสู่ระบบ")
+        con.execute("INSERT INTO users(emp_id, name, dept, pw, created_at) VALUES(?,?,?,?,?)",
+                    (emp, name, dept, await run_in_threadpool(_pw_hash, pw), int(_time.time() * 1000)))
+    resp = JSONResponse({"ok": True, "user": {"emp_id": emp, "name": name, "dept": dept}})
+    _set_session(resp, emp)
+    return resp
+
+
+@app.post("/api/auth/login")
+async def api_auth_login(request: Request):
+    d = await request.json()
+    emp, pw = str(d.get("emp_id") or "").strip(), str(d.get("password") or "")
+    key = _fail_check(request, emp)
+    with db() as con:
+        r = con.execute("SELECT * FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone()
+    if not r or not r["active"] or not await run_in_threadpool(_pw_ok, pw, r["pw"]):
+        _login_fail.setdefault(key, []).append(_time.time())
+        raise HTTPException(401, "รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง")
+    _login_fail.pop(key, None)
+    resp = JSONResponse({"ok": True, "user": _user_out(r)})
+    _set_session(resp, r["emp_id"])
+    return resp
+
+
+@app.post("/api/auth/logout")
+def api_auth_logout(request: Request):
+    t = request.cookies.get(USER_COOKIE) or ""
+    if t:
+        with db() as con:
+            con.execute("DELETE FROM user_sessions WHERE token=?", (_tok_hash(t),))
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie(USER_COOKIE, samesite="lax")
+    return resp
+
+
+@app.post("/api/auth/reset")
+async def api_auth_reset(request: Request):
+    """ลืมรหัสผ่าน: หัวหน้าใส่รหัสแก้ไข (EDIT_PIN) เพื่อตั้งรหัสผ่านใหม่ให้ · ออกจากระบบทุกเครื่องของคนนั้น"""
+    d = await request.json()
+    emp, pw = str(d.get("emp_id") or "").strip(), str(d.get("password") or "")
+    key = _fail_check(request, "reset:" + emp)
+    if str(d.get("pin") or "") != EDIT_PIN:
+        _login_fail.setdefault(key, []).append(_time.time())
+        raise HTTPException(403, "รหัสหัวหน้าไม่ถูกต้อง")
+    if len(pw) < 6:
+        raise HTTPException(400, "รหัสผ่านอย่างน้อย 6 ตัว")
+    with db() as con:
+        r = con.execute("SELECT emp_id FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบรหัสพนักงานนี้")
+        con.execute("UPDATE users SET pw=? WHERE emp_id=?", (await run_in_threadpool(_pw_hash, pw), r["emp_id"]))
+        con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+    for k in [k for k in _login_fail if k[1] in (r["emp_id"].lower(), "reset:" + r["emp_id"].lower())]:
+        _login_fail.pop(k, None)  # ตั้งรหัสใหม่แล้ว ปลดล็อกการใส่รหัสผิด
+    return {"ok": True}
+
+
 @app.post("/api/login")
 async def api_login(request: Request):
     form = await request.form()
@@ -1006,7 +1183,7 @@ async def api_create(request: Request):
     + status, topic, remark (หมายเหตุ), action (การแก้ไขเมื่อพบปัญหา)"""
     form = await request.form()
     area_id = str(form.get("area_id") or "")
-    inspector = str(form.get("inspector") or "").strip()[:60]
+    inspector = _me_name(request, str(form.get("inspector") or "").strip()[:60])
     status = str(form.get("status") or "ปกติ")
     topic = _clean(str(form.get("topic") or ""))[:120]
     remark = _clean(str(form.get("remark") or ""))[:1000]
@@ -1086,7 +1263,7 @@ async def api_update(sid: str, request: Request):
     if status not in STATUSES:
         status = row["status"]
     topic = _clean(str(form.get("topic") if form.get("topic") is not None else (row["topic"] or "")))[:120]
-    inspector = str(form.get("inspector") or row["inspector"]).strip()[:60] or row["inspector"]
+    inspector = row["inspector"] if _me(request) else (str(form.get("inspector") or row["inspector"]).strip()[:60] or row["inspector"])  # แก้ไขแล้วผู้ตรวจคงเดิม
     try:
         page_count = int(form.get("page_count") or 0)
     except ValueError:
@@ -2450,7 +2627,7 @@ async def api_comment_add(request: Request):
     if aid not in ITEM_MAP:
         raise HTTPException(404, "ไม่พบหัวข้อนี้")
     text = _fu_txt(data.get("text"), 1000)
-    by = _fu_txt(data.get("by"), 60)
+    by = _me_name(request, _fu_txt(data.get("by"), 60))
     if not by:
         raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
     if not text:
@@ -2485,16 +2662,16 @@ async def api_comment_close(cid: str, request: Request):
             raise HTTPException(404, "ไม่พบความคิดเห็นนี้")
         x = json.loads(r["data"])
         x["closed"] = bool(data.get("closed"))
-        x["closed_by"] = _fu_txt(data.get("by"), 60)
+        x["closed_by"] = _me_name(request, _fu_txt(data.get("by"), 60))
         con.execute("UPDATE item_comments SET data=? WHERE id=?", (json.dumps(x, ensure_ascii=False), cid))
         items = _cm_rows(con, "WHERE area_id=?", (r["area_id"],))
     return {"ok": True, "threads": _cm_threads(items)}
 
 
 @app.delete("/api/comments/{cid}")
-def api_comment_delete(cid: str, by: str = ""):
+def api_comment_delete(cid: str, request: Request, by: str = ""):
     """ลบได้เฉพาะความคิดเห็นของตัวเอง (ชื่อตรงกับผู้เขียน) · ถ้ามีคนอื่นตอบไว้แล้ว เก็บกระทู้ไว้แต่ขึ้นว่าถูกลบ"""
-    me = " ".join(str(by or "").split()).lower()
+    me = " ".join(str(_me_name(request, by) or "").split()).lower()
     with db() as con:
         r = con.execute("SELECT area_id, data FROM item_comments WHERE id=?", (cid,)).fetchone()
         if not r:
@@ -2570,10 +2747,10 @@ def api_search(q: str = "", days: int = Query(90, ge=1, le=400)):
 
 # ---------------------------------------------------------------- การแจ้งเตือน (กระดิ่งมุมขวาบน)
 @app.get("/api/notifications")
-def api_notifications(name: str = "", days: int = Query(14, ge=1, le=60)):
+def api_notifications(request: Request, name: str = "", days: int = Query(14, ge=1, le=60)):
     """ความเคลื่อนไหวล่าสุด: ความคิดเห็น/คำถาม/คำตอบ และเรื่องที่ต้องติดตาม
     mine = เกี่ยวกับชื่อนี้ (คอมเม้นผลตรวจของฉัน · ตอบคำถาม/กระทู้ที่ฉันร่วม · เรื่องที่ฉันเปิดหรือรับผิดชอบ)"""
-    me = " ".join(str(name or "").split()).lower()
+    me = " ".join(str(_me_name(request, name) or "").split()).lower()
     since = _fu_ms() - days * 86400 * 1000
     same = lambda x: me and " ".join(str(x or "").split()).lower() == me
     ev = []
@@ -2690,7 +2867,7 @@ def api_followups():
 async def api_followup_save(request: Request):
     """เพิ่มเรื่องใหม่ (ไม่มี id) หรือแก้ไขเรื่องเดิม · เปลี่ยนสถานะจะบันทึกลงประวัติให้อัตโนมัติ"""
     data = await request.json()
-    by = _fu_txt(data.get("by"), 60)
+    by = _me_name(request, _fu_txt(data.get("by"), 60))
     if not by:
         raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
     title = _fu_txt(data.get("title"), 200)
@@ -2750,7 +2927,7 @@ async def api_followup_save(request: Request):
 async def api_followup_note(fid: str, request: Request):
     """บันทึกความคืบหน้า"""
     data = await request.json()
-    by, text = _fu_txt(data.get("by"), 60), _fu_txt(data.get("text"), 1000)
+    by, text = _me_name(request, _fu_txt(data.get("by"), 60)), _fu_txt(data.get("text"), 1000)
     if not by:
         raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
     if not text:
