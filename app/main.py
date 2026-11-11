@@ -599,7 +599,7 @@ with db() as con:
         con.execute("ALTER TABLE submissions ADD COLUMN late INTEGER NOT NULL DEFAULT 0")
     if "qty" not in cols:  # จำนวนที่นับ เช่น วัตถุดิบ Delay แยกห้อง (JSON)
         con.execute("ALTER TABLE submissions ADD COLUMN qty TEXT")
-    for c in ("remark", "action", "cause"):  # หมายเหตุ / การแก้ไข / สาเหตุ (เมื่อพบปัญหา)
+    for c in ("remark", "action", "cause", "resp", "resp_by", "resp_at"):  # หมายเหตุ / การแก้ไข / สาเหตุ / ฝ่ายที่ตอบ (QC/PD) และผู้ตอบ
         if c not in cols:
             con.execute(f"ALTER TABLE submissions ADD COLUMN {c} TEXT")
     cols = {r[1] for r in con.execute("PRAGMA table_info(images)")}
@@ -1345,8 +1345,11 @@ async def api_create(request: Request):
         raise HTTPException(400, f"กรุณากรอกจำนวน{qcfg.get('label', '')}")
     if not inspector:
         raise HTTPException(400, "กรุณาใส่ชื่อผู้ตรวจ")
-    if status != "พบปัญหา":
-        action = cause = ""
+    resp = str(form.get("resp") or "QC").upper() if status == "พบปัญหา" else ""
+    if resp not in RESP_DEPTS:
+        resp = "QC" if status == "พบปัญหา" else ""
+    if status != "พบปัญหา" or resp != "QC":
+        action = cause = ""  # ให้ฝ่ายอื่นตอบ: สาเหตุ/การแก้ไขรอฝ่ายนั้นมากรอก
 
     try:
         page_count = int(form.get("page_count") or 0)
@@ -1378,18 +1381,19 @@ async def api_create(request: Request):
 
     with db() as con:
         con.execute(
-            "INSERT INTO submissions(id, round_date, area_id, inspector, status, note, created_at, pages, topic, remark, action, late, cause, qty) "
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO submissions(id, round_date, area_id, inspector, status, note, created_at, pages, topic, remark, action, late, cause, qty, resp) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (sid, rd.isoformat(), area_id, inspector, status, "\n\n".join(x for x in pages if x),
              n.isoformat(timespec="seconds"), json.dumps(pages, ensure_ascii=False), topic, remark, action, late, cause,
-             json.dumps(qty, ensure_ascii=False) if qty else None),
+             json.dumps(qty, ensure_ascii=False) if qty else None, resp),
         )
         con.executemany(
             "INSERT INTO images(submission_id, filename, seq, page) VALUES(?,?,?,?)",
             [(sid, fn, seq, pg) for pg, seq, fn in saved],
         )
+        fid = _fu_for_resp(con, sid) if resp and resp != "QC" else None
     regen_if_closed(rd)
-    return {"ok": True, "id": sid, "round": rd.isoformat(), "pages": len(pages), "late": bool(late)}
+    return {"ok": True, "id": sid, "round": rd.isoformat(), "pages": len(pages), "late": bool(late), "resp": resp, "fu": fid}
 
 
 @app.put("/api/submissions/{sid}")
@@ -1420,6 +1424,11 @@ async def api_update(sid: str, request: Request):
     remark = _clean(str(form.get("remark") if form.get("remark") is not None else (row["remark"] or "")))[:1000]
     action = _clean(str(form.get("action") if form.get("action") is not None else (row["action"] or "")))[:2000]
     cause = _clean(str(form.get("cause") if form.get("cause") is not None else (row["cause"] or "")))[:2000]
+    resp = str(form.get("resp") or row["resp"] or "QC").upper() if status == "พบปัญหา" else ""
+    if resp and resp not in RESP_DEPTS:
+        resp = "QC"
+    if resp and resp != "QC" and resp != (row["resp"] or "QC"):
+        action = cause = ""  # เพิ่งเปลี่ยนเป็นให้ฝ่ายอื่นตอบ
     if status != "พบปัญหา":
         action = cause = ""
     qcfg = ITEM_MAP.get(row["area_id"], {}).get("qty")
@@ -1452,9 +1461,11 @@ async def api_update(sid: str, request: Request):
         pages = [""]
 
     with db() as con:
-        con.execute("UPDATE submissions SET status=?, topic=?, inspector=?, note=?, pages=?, edited_at=?, remark=?, action=?, cause=?, qty=? WHERE id=?",
+        con.execute("UPDATE submissions SET status=?, topic=?, inspector=?, note=?, pages=?, edited_at=?, remark=?, action=?, cause=?, qty=?, resp=? WHERE id=?",
                     (status, topic, inspector, "\n\n".join(x for x in pages if x),
-                     json.dumps(pages, ensure_ascii=False), now().isoformat(timespec="seconds"), remark, action, cause, qty_s, sid))
+                     json.dumps(pages, ensure_ascii=False), now().isoformat(timespec="seconds"), remark, action, cause, qty_s, resp, sid))
+        if resp and resp != "QC":
+            _fu_for_resp(con, sid)
         con.execute("DELETE FROM images WHERE submission_id=?", (sid,))
         con.executemany("INSERT INTO images(submission_id, filename, seq, page) VALUES(?,?,?,?)",
                         [(sid, fn, seq, pg) for pg, seq, fn in saved])
@@ -1463,6 +1474,44 @@ async def api_update(sid: str, request: Request):
         _remove_media(fn)
     regen_if_closed(rd)
     return {"ok": True, "id": sid}
+
+
+RESP_DEPTS = ("QC", "PD")  # ฝ่ายที่ตอบสาเหตุ/การแก้ไขเมื่อพบปัญหา
+
+
+@app.post("/api/submissions/{sid}/answer")
+async def api_answer(sid: str, request: Request):
+    """ฝ่ายที่ถูกขอให้ตอบ (เช่น PD) กรอกสาเหตุและการแก้ไข → บันทึกลงผลตรวจ + ความคืบหน้าในเรื่องที่ต้องติดตาม"""
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    d = await request.json()
+    cause, action = _clean(str(d.get("cause") or ""))[:2000], _clean(str(d.get("action") or ""))[:2000]
+    if not cause or not action:
+        raise HTTPException(400, "กรอกทั้งสาเหตุและการแก้ไข")
+    with db() as con:
+        row = con.execute("SELECT * FROM submissions WHERE id=?", (sid,)).fetchone()
+        if not row:
+            raise HTTPException(404, "ไม่พบผลตรวจนี้")
+        resp = row["resp"] or "QC"
+        if row["status"] != "พบปัญหา" or resp == "QC":
+            raise HTTPException(400, "ผลตรวจนี้ไม่ได้ขอให้ฝ่ายอื่นตอบ")
+        if u["dept"] != resp:
+            raise HTTPException(403, f"เฉพาะแผนก {resp} ตอบได้")
+        ts = now().isoformat(timespec="seconds")
+        con.execute("UPDATE submissions SET cause=?, action=?, resp_by=?, resp_at=? WHERE id=?", (cause, action, u["name"], ts, sid))
+        fid = _fu_for_resp(con, sid)
+        r = con.execute("SELECT data FROM followups WHERE id=?", (fid,)).fetchone()
+        x = json.loads(r["data"])
+        ms = _fu_ms()
+        x.setdefault("notes", []).append({"at": ms, "by": u["name"], "kind": "answer",
+                                          "text": f"{resp} ตอบ · สาเหตุ: {cause} · การแก้ไข: {action}"[:1000]})
+        if x.get("status") == "open":
+            x["status"] = "doing"
+        x["updated_at"], x["updated_by"] = ms, u["name"]
+        con.execute("UPDATE followups SET data=?, status=?, updated_at=? WHERE id=?", (json.dumps(x, ensure_ascii=False), x["status"], ms, fid))
+    regen_if_closed(date.fromisoformat(row["round_date"]))
+    return {"ok": True, "cause": cause, "action": action, "resp_by": u["name"], "resp_at": ts, "fu": fid}
 
 
 @app.delete("/api/submissions/{sid}")
@@ -2897,6 +2946,7 @@ def api_notifications(request: Request, name: str = "", days: int = Query(14, ge
     """ความเคลื่อนไหวล่าสุด: ความคิดเห็น/คำถาม/คำตอบ และเรื่องที่ต้องติดตาม
     mine = เกี่ยวกับชื่อนี้ (คอมเม้นผลตรวจของฉัน · ตอบคำถาม/กระทู้ที่ฉันร่วม · เรื่องที่ฉันเปิดหรือรับผิดชอบ)"""
     me = " ".join(str(_me_name(request, name) or "").split()).lower()
+    my_dept = (_me(request) or {}).get("dept", "")
     since = _fu_ms() - days * 86400 * 1000
     same = lambda x: me and " ".join(str(x or "").split()).lower() == me
     ev = []
@@ -2939,12 +2989,17 @@ def api_notifications(request: Request, name: str = "", days: int = Query(14, ge
                 continue
             reason = ""
             if not same(n.get("by")):
-                if same(f.get("owner")):
+                if n.get("kind") == "open" and f.get("dept") and f["dept"] == my_dept:
+                    reason = f'{f["dept"]} ต้องตอบสาเหตุและการแก้ไข'
+                elif n.get("kind") == "answer" and same(f.get("created_by")):
+                    reason = "ตอบสาเหตุและการแก้ไขในผลตรวจของคุณ"
+                elif same(f.get("owner")):
                     reason = "มอบหมายให้คุณรับผิดชอบ" if n.get("kind") == "open" else "อัปเดตเรื่องที่คุณรับผิดชอบ"
                 elif same(f.get("created_by")):
                     reason = "อัปเดตเรื่องที่คุณเปิดไว้"
             ev.append({"id": f'{f["id"]}:{n["at"]}', "type": "followup", "fid": f["id"], "at": n["at"], "by": n.get("by") or "",
-                       "text": n.get("text", "")[:160], "title": f.get("title", ""), "zone": f.get("zone", ""), "mine": bool(reason), "reason": reason})
+                       "text": ("พบปัญหา · ขอให้ " + f["dept"] + " ตอบสาเหตุและการแก้ไข" if n.get("kind") == "open" and f.get("dept") else n.get("text", ""))[:160],
+                       "title": f.get("title", ""), "zone": f.get("zone", ""), "mine": bool(reason), "reason": reason})
     ev.sort(key=lambda e: -e["at"])
     return {"items": ev[:150], "now": _fu_ms()}
 
@@ -2978,7 +3033,30 @@ def _fu_sub_info(con, sid: str):
             "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""), "zone_id": it.get("zone_id", ""),
             "inspector": r["inspector"], "at": r["created_at"], "note": r.get("note") or "",
             "cause": r.get("cause") or "", "action": r.get("action") or "",
+            "resp": r.get("resp") or "", "resp_by": r.get("resp_by") or "", "resp_at": r.get("resp_at") or "",
             "media": [media_info(f) for f in imgs]}
+
+
+def _fu_for_resp(con, sid: str) -> str:
+    """ผลตรวจที่ให้ฝ่ายอื่นตอบ → เปิดเรื่องที่ต้องติดตามให้อัตโนมัติ (ถ้ายังไม่มี) · คืน id ของเรื่อง"""
+    for r in con.execute("SELECT id, data FROM followups"):
+        if (json.loads(r["data"]).get("src") or {}).get("sid") == sid:
+            return r["id"]
+    s = dict(con.execute("SELECT * FROM submissions WHERE id=?", (sid,)).fetchone())
+    it = ITEM_MAP.get(s["area_id"], {})
+    zone = next((z for z in AREAS["zones"] if z["id"] == it.get("zone_id")), None)
+    dept, ts = s.get("resp") or "PD", _fu_ms()
+    title = f'{it.get("no", "")} {it.get("name", s["area_id"])}'.strip() + (f' · {s["topic"]}' if s.get("topic") else "")
+    x = {"id": "f" + uuid.uuid4().hex[:10], "created_by": s["inspector"], "created_at": ts, "notes": [],
+         "title": title[:200], "detail": _fu_txt(s.get("note"), 3000), "zone_id": zone["id"] if zone else "",
+         "zone": zone["name"] if zone else "", "owner": DEPT_NAMES.get(dept, dept), "due": "", "urgent": False, "photos": [],
+         "src": {"sid": sid}, "dept": dept, "auto": True, "status": "open", "updated_at": ts, "updated_by": s["inspector"]}
+    con.execute("INSERT INTO followups(id, data, status, created_at, updated_at) VALUES(?,?,?,?,?)",
+                (x["id"], json.dumps(x, ensure_ascii=False), "open", ts, ts))
+    return x["id"]
+
+
+DEPT_NAMES = {"PD": "PD (Production)", "QC": "QC", "TP": "TP"}
 
 
 @app.get("/api/followups")
@@ -3005,7 +3083,7 @@ def api_followups():
                        "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""), "zone_id": it.get("zone_id", ""),
                        "deck": zdeck.get(it.get("zone_id"), "pc"), "inspector": r["inspector"], "at": r["created_at"],
                        "note": r.get("note") or "", "cause": r.get("cause") or "", "action": r.get("action") or "",
-                       "thumb": thumbs.get(r["id"]), "linked": r["id"] in linked})
+                       "resp": r.get("resp") or "", "thumb": thumbs.get(r["id"]), "linked": r["id"] in linked})
     return {"items": items, "issues": issues[:120], "issue_days": FU_ISSUE_DAYS, "status": FU_STATUS}
 
 

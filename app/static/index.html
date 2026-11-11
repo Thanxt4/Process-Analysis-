@@ -685,6 +685,17 @@ details.hmz .hm-wrap{border:0;border-radius:0}
 .er .acts button.qtyt.on{background:#dbeafe}
 .actionbox{background:var(--red-soft);border:1px solid #fca5a5;border-radius:12px;padding:2px 12px 12px;margin-top:10px}
 .actionbox .f{color:#991b1b}
+.respseg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.respseg button{border:1.5px solid #fca5a5;background:#fff;border-radius:12px;padding:10px 8px;font:inherit;font-weight:700;color:#991b1b;cursor:pointer;text-align:center;line-height:1.25}
+.respseg button small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.respseg button.on{background:#991b1b;border-color:#991b1b;color:#fff}.respseg button.on small{color:#fecaca}
+.resphint{margin:10px 0 0;font-size:13.5px;color:#7f1d1d;background:#fff;border-radius:10px;padding:9px 11px;border:1px dashed #fca5a5}
+.pdwait{display:inline-block;font-size:12px;font-weight:800;border-radius:99px;padding:2px 9px;background:#fef3c7;color:#92400e;margin-left:6px;vertical-align:1px}
+.pdwait.ok{background:#dcfce7;color:#166534}
+.pdans{margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:10px 12px}
+.pdans b.t{display:block;color:#92400e;font-size:14px;margin-bottom:4px}
+.pdans textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:15px;min-height:52px;margin-top:6px;background:#fff}
+.pdans .btn{margin-top:8px;width:100%}
 .pick3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .pick3 .btn{padding:11px 6px;font-size:14px}
 .thumbs .vbadge{position:absolute;left:4px;bottom:4px;background:rgba(15,23,42,.75);color:#fff;border-radius:6px;font-size:11px;font-weight:700;padding:1px 6px;pointer-events:none}
@@ -1240,10 +1251,15 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
       <div id="pagesWrap"></div>
       <button type="button" class="btn ghost addpage" id="addPage">＋ เพิ่มสไลด์</button>
       <div id="actionWrap" class="actionbox" style="margin-top:14px" hidden>
+        <label class="f">ใครตอบสาเหตุและการแก้ไข</label>
+        <div class="respseg" id="respSeg"><button type="button" data-r="QC" class="on">QC ตอบเอง<small>กรอกสาเหตุ/การแก้ไขตอนนี้</small></button><button type="button" data-r="PD">ให้ PD ตอบ<small>ส่งให้ Production</small></button></div>
+        <div id="qcAns">
         <label class="f" for="cause">สาเหตุของปัญหา</label>
         <textarea id="cause" rows="2" placeholder="เกิดจากอะไร เช่น พนักงานไม่ทำตามขั้นตอน, อุปกรณ์ชำรุด"></textarea>
         <label class="f" for="action">การแก้ไข</label>
         <textarea id="action" rows="2" placeholder="แก้ไขอย่างไร / แจ้งใคร / ผลหลังแก้ไข"></textarea>
+        </div>
+        <p class="resphint" id="pdHint" hidden>PD จะเป็นผู้กรอกสาเหตุและการแก้ไข · ระบบจะเพิ่มเรื่องนี้ใน <b>เรื่องที่ต้องติดตาม</b> และแจ้งเตือนทุกคนในแผนก PD ให้อัตโนมัติ</p>
       </div>
       <div class="status nastat" id="naSeg"><button type="button" class="na" data-s="ไม่มีกิจกรรม">– ไม่มีกิจกรรม</button></div>
       <small class="nahint">เลือกเมื่อไปตรวจแล้วแต่จุดนั้นไม่มีกิจกรรม · ไม่นำไปคิดในกราฟและการวิเคราะห์</small>
@@ -1766,6 +1782,36 @@ function closeSheet(){ $("#sheetBg").classList.remove("on"); document.body.style
 $("#shClose").onclick = closeSheet;
 $("#sheetBg").addEventListener("click", e => { if(e.target.id==="sheetBg") closeSheet(); });
 
+/* ผลตรวจที่พบปัญหา: สาเหตุ/การแก้ไข · ถ้าให้ PD ตอบ = แสดงสถานะรอตอบ + ช่องตอบสำหรับคนแผนก PD */
+function respBlock(s, ctx){
+  if(s.status !== "พบปัญหา" && !s.cause && !s.action) return "";
+  const r = s.resp || "QC", ext = r !== "QC";
+  const by = ext && s.resp_by ? ` <span class="note" style="font-weight:400">(${esc(r)} · ${esc(s.resp_by)}${s.resp_at ? " " + thDate(s.resp_at) + " " + hm(s.resp_at) + " น." : ""})</span>` : "";
+  let h = (s.cause ? `<p class="extra-l act"><b>สาเหตุ${by}:</b> ${esc(s.cause)}</p>` : "") + (s.action ? `<p class="extra-l act"><b>การแก้ไข:</b> ${esc(s.action)}</p>` : "");
+  if(ext && !s.cause && !s.action){
+    const sid = s.id || s.sid;
+    h += ME && ME.dept === r
+      ? `<div class="pdans" data-pdbox="${sid}"><b class="t">รอ ${esc(r)} ตอบ · กรอกสาเหตุและการแก้ไข</b>
+          <textarea data-pdc placeholder="สาเหตุของปัญหา"></textarea><textarea data-pda placeholder="การแก้ไข / ผลหลังแก้ไข"></textarea>
+          <button type="button" class="btn" data-pdsend="${sid}">ส่งคำตอบ (${esc(r)})</button></div>`
+      : `<p class="extra-l"><span class="pdwait" style="margin:0">รอ ${esc(r)} ตอบสาเหตุและการแก้ไข</span></p>`;
+  }
+  return h;
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-pdsend]"); if(!b) return;
+  const box = b.closest("[data-pdbox]"), cause = box.querySelector("[data-pdc]").value.trim(), action = box.querySelector("[data-pda]").value.trim();
+  if(!cause || !action){ toast("กรอกทั้งสาเหตุและการแก้ไข", true); (cause ? box.querySelector("[data-pda]") : box.querySelector("[data-pdc]")).focus(); return; }
+  b.disabled = true; b.textContent = "กำลังส่ง…";
+  try{
+    const r = await api(`/api/submissions/${b.dataset.pdsend}/answer`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({cause, action})});
+    toast("ส่งคำตอบแล้ว ✓");
+    if(FU.cur && FU.cur.src_info && FU.cur.src_info.sid === b.dataset.pdsend){ Object.assign(FU.cur.src_info, r); }
+    await loadFollowups();
+    if(FU.cur && FU.cur.id){ const x = FU.items.find(y => y.id === FU.cur.id); if(x){ FU.cur = JSON.parse(JSON.stringify(x)); fuRenderSheet(); } }
+    if(sheetItem && $("#sheetBg").classList.contains("on")) renderPrev();
+  }catch(err){ toast(err.message, true); b.disabled = false; b.textContent = "ส่งคำตอบ"; }
+});
 let editingId = null, prevSubs = {};
 async function renderPrev(){
   const subs = await api(`/api/submissions?round=${sheetItem.round}&area=${sheetItem.id}`);
@@ -1773,14 +1819,13 @@ async function renderPrev(){
   setTimeout(drawIg, 0);
   const editable = canEdit(sheetItem.round);
   $("#prevWrap").innerHTML = subs.length ? `<h4>ผลการตรวจในรอบ${sheetItem.round===CFG.current_round?"นี้":" "+thDate(sheetItem.round)} (${subs.length})</h4>` + subs.map(s => `
-    <div class="sub ${s.id===editingId?"being-edited":""}"><div class="h"><span class="pill ${s.status==="พบปัญหา"?"ng":s.status===NO_ACT?"na":"ok"}">${esc(s.status)}</span><b>${s.topic?esc(s.topic)+" · ":""}${esc(s.inspector)}</b>
+    <div class="sub ${s.id===editingId?"being-edited":""}"><div class="h"><span class="pill ${s.status==="พบปัญหา"?"ng":s.status===NO_ACT?"na":"ok"}">${esc(s.status)}</span><b>${s.topic?esc(s.topic)+" · ":""}${esc(s.inspector)}</b>${s.status==="พบปัญหา"&&s.resp&&s.resp!=="QC"?`<span class="pdwait ${s.cause?"ok":""}">${s.cause?esc(s.resp)+" ตอบแล้ว":"รอ "+esc(s.resp)+" ตอบ"}</span>`:""}
       <span class="note">${thDate(s.created_at)} ${hm(s.created_at)} น.${s.late?`<span class="tag-late">ส่งย้อนหลัง</span>`:""}${s.edited_at?`<span class="tag-ed" title="แก้ไขล่าสุด ${hm(s.edited_at)} น.">แก้ไขแล้ว</span>`:""}</span><button class="zoom" data-id="${s.id}" title="ขยายเต็มหน้าจอ" aria-label="ขยายเต็มหน้าจอ"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>ขยาย</button>${s.status==="พบปัญหา"?`<button class="fumk" data-id="${s.id}" title="เปิดเรื่องที่ต้องติดตามจากผลตรวจนี้">${FU.items.some(x => (x.src||{}).sid === s.id) ? "✓ ติดตามแล้ว" : "＋ ติดตาม"}</button>`:""}${editable?`<button class="edit" data-id="${s.id}">แก้ไข</button><button class="del" data-id="${s.id}">ลบ</button>`:""}</div>
       ${s.pages.map((p,i)=>`${s.pages.length>1?`<div class="pl">สไลด์ ${i+1}</div>`:""}
         ${p.note?`<p>${esc(p.note)}</p>`:""}
         ${(p.media||[]).length?`<div class="thumbs">${p.media.map(m=>`<div><img src="${m.thumb||m.poster}" data-full="${m.poster}" loading="lazy" decoding="async" alt="" ${m.kind==="video"?`data-video="${m.url}"`:""}>${m.kind==="video"?`<span class="vbadge"><svg class="ic" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l15 8-15 8z"/></svg> วิดีโอ</span>`:""}</div>`).join("")}</div>`:""}`).join("")}
       ${qtyLine(s)}
-      ${s.cause?`<p class="extra-l act"><b>สาเหตุ:</b> ${esc(s.cause)}</p>`:""}
-      ${s.action?`<p class="extra-l act"><b>การแก้ไข:</b> ${esc(s.action)}</p>`:""}
+      ${respBlock(s)}
       ${s.remark?`<p class="extra-l"><b>หมายเหตุ:</b> ${esc(s.remark)}</p>`:""}<div class="igc" data-igsid="${s.id}"></div></div>`).join("")
     : (editable ? "" : `<div class="empty">ไม่มีการตรวจพื้นที่นี้ในรอบนั้น</div>`);
 }
@@ -1792,7 +1837,7 @@ function startEdit(id){
   $("#topic").value = sb.topic || "";
   $("#inspector").value = sb.inspector;
   pages = sb.pages.map(p => ({note: p.note || "", files: (p.media || []).map(m => ({existing: m.file, url: m.thumb||m.poster, full: m.poster, kind: m.kind, vurl: m.url}))}));
-  $("#remark").value = sb.remark || ""; $("#action").value = sb.action || ""; $("#cause").value = sb.cause || "";
+  $("#remark").value = sb.remark || ""; $("#action").value = sb.action || ""; $("#cause").value = sb.cause || ""; setResp(sb.resp || "QC");
   renderQty(sb.qty);
   if(!pages.length) pages = [{note:"", files:[]}];
   renderPages();
@@ -1868,7 +1913,7 @@ $("#prevWrap").addEventListener("click", async e => {
 
 function resetForm(){
   pages.forEach(p => p.files.forEach(f => { if(!f.existing){ URL.revokeObjectURL(f.url); if(f.vurl) URL.revokeObjectURL(f.vurl); } }));
-  pages = [{note:"", files:[]}]; setStatus("ปกติ"); renderPages(); renderQty(null); $("#topic").value = ""; $("#remark").value = ""; $("#action").value = ""; $("#cause").value = "";
+  pages = [{note:"", files:[]}]; setStatus("ปกติ"); renderPages(); renderQty(null); $("#topic").value = ""; $("#remark").value = ""; $("#action").value = ""; $("#cause").value = ""; setResp("QC");
   if(editingId){ editingId = null; $("#inspector").value = getMyName(); }
   $("#editingBar").hidden = true; $("#submitBtn").textContent = "บันทึกผลการตรวจ";
 }
@@ -1902,6 +1947,10 @@ const qtyLine = s => { if(!s.qty || s.qty.total == null) return ""; const u = (s
   const parts = Object.entries(s.qty.rooms || {}).map(([k, v]) => `${esc(k)} <b>${v}</b>`);
   return `<p class="qty-l"><b>${esc((s.qty_cfg && s.qty_cfg.label) || "จำนวน")}:</b> ${parts.length ? parts.join(" · ") + " · " : ""}รวม <b>${s.qty.total}</b> ${esc(u)}</p>`; };
 const NO_ACT = "ไม่มีกิจกรรม";  // ไม่มีกิจกรรม: ไม่ต้องนับจำนวน และไม่นับในกราฟ/การวิเคราะห์
+let sheetResp = "QC";
+function setResp(r){ sheetResp = r === "PD" ? "PD" : "QC"; document.querySelectorAll("#respSeg button").forEach(b => b.classList.toggle("on", b.dataset.r === sheetResp));
+  $("#qcAns").hidden = sheetResp !== "QC"; $("#pdHint").hidden = sheetResp === "QC"; }
+$("#respSeg").addEventListener("click", e => { const b = e.target.closest("[data-r]"); if(b) setResp(b.dataset.r); });
 function setStatus(s){ sheetStatus=s; document.querySelectorAll("#statusSeg button, #naSeg button").forEach(b=>b.classList.toggle("on", b.dataset.s===s));
   $("#actionWrap").hidden = s !== "พบปัญหา";
   $("#qtyWrap").hidden = s === NO_ACT || !(sheetItem && sheetItem.qty); }
@@ -2058,8 +2107,10 @@ $("#entryForm").addEventListener("submit", async e => {
   fd.append("status", sheetStatus);
   if(sheetItem.round !== CFG.current_round) fd.append("round", sheetItem.round);  // ส่งย้อนหลัง
   fd.append("remark", $("#remark").value);
-  fd.append("action", sheetStatus === "พบปัญหา" ? $("#action").value : "");
-  fd.append("cause", sheetStatus === "พบปัญหา" ? $("#cause").value : "");
+  if(sheetStatus === "พบปัญหา") fd.append("resp", sheetResp);
+  if(sheetStatus !== "พบปัญหา" || sheetResp === "QC"){  // ให้ PD ตอบ: ไม่ส่งสาเหตุ/การแก้ไข (คงคำตอบของ PD ไว้)
+    fd.append("action", sheetStatus === "พบปัญหา" ? $("#action").value : "");
+    fd.append("cause", sheetStatus === "พบปัญหา" ? $("#cause").value : ""); }
   const qv = sheetStatus === NO_ACT ? null : readQty();
   if(qv === false){ toast(`กรุณากรอกจำนวน${(sheetItem.qty.rooms || []).length ? "ให้ครบทุกห้อง (ไม่มีใส่ 0)" : ""}`, true); $("#qtyWrap").scrollIntoView({behavior:"smooth", block:"center"}); return; }
   if(qv) fd.append("qty", JSON.stringify(qv));
@@ -2087,14 +2138,15 @@ $("#entryForm").addEventListener("submit", async e => {
   try{
     if(wasEditing){
       await upload(`/api/submissions/${wasEditing}`, "PUT", fd, prog);
-      toast("แก้ไขเรียบร้อย ✓");
+      toast("แก้ไขเรียบร้อย ✓"); if(sheetStatus === "พบปัญหา" && sheetResp !== "QC") loadFollowups();
       resetForm();
       await Promise.all([formRound && formRound !== CFG.current_round ? api("/api/status?round="+formRound).then(r => FSTATUS = r) : null,
         loadStatus(), renderPrev()]);
       return;
     }
     const r = await upload("/api/submissions", "POST", fd, prog);
-    if(r.late) toast(`บันทึกย้อนหลังของรอบ ${thDate(r.round)} แล้ว ✓`);
+    if(r.fu){ toast("บันทึกแล้ว · ส่งให้ PD ตอบ และเพิ่มในเรื่องที่ต้องติดตามแล้ว ✓"); loadFollowups(); }
+    else if(r.late) toast(`บันทึกย้อนหลังของรอบ ${thDate(r.round)} แล้ว ✓`);
     else if(r.round !== CFG.current_round){ await loadConfig(); toast("บันทึกแล้ว (เข้ารอบใหม่หลังตัดรอบ "+CFG.cutoff+" น.)"); }
     else toast("บันทึกผลการตรวจแล้ว ✓");
     resetForm(); btn.textContent = "บันทึกแล้ว ✓ กำลังอัปเดตรายการ…"; btn.style.background = "";
@@ -2849,7 +2901,7 @@ $("#nameChips").addEventListener("click", e => { const b=e.target.closest("butto
 $("#nameSave").onclick = () => { const n=$("#nameInput").value.trim(); if(!n){ toast("กรุณาใส่ชื่อ", true); return; } setMyName(n); closeNameBox(); toast("เครื่องนี้จะจำชื่อ "+n+" ไว้ ✓"); };
 $("#nameInput").addEventListener("keydown", e => { if(e.key==="Enter") $("#nameSave").click(); });
 $("#inspector").addEventListener("change", e => { if(e.target.value.trim()) setMyName(e.target.value); });
-(async()=>{ await loadNames(); if(!getMyName()) setTimeout(openNameBox, 600); })();
+loadNames();  // ชื่อผู้ตรวจมาจากบัญชีที่เข้าสู่ระบบ (ไม่ต้องเด้งหน้าตั้งชื่อ)
 
 /* ---------- แก้ไขหัวข้อ Checklist (รหัส) ---------- */
 let editPin = "", editZones = [];
@@ -3199,7 +3251,7 @@ function renderFollow(){
     const ov = fuOver(x), dn = x.due ? fuDays(x.due) : null;
     const last = [...(x.notes || [])].reverse().find(m => m.kind !== "status");
     return `<button type="button" class="fu-card st-${x.status} ${ov ? "over" : ""}" data-fu="${x.id}">
-      <div class="fu-l1"><span class="fu-st st-${x.status}">${FU_ST[x.status]}</span>${x.urgent && x.status !== "done" ? `<span class="fu-urg">ด่วน</span>` : ""}${x.zone ? `<span class="fu-zone">${esc(x.zone)}</span>` : ""}</div>
+      <div class="fu-l1"><span class="fu-st st-${x.status}">${FU_ST[x.status]}</span>${x.urgent && x.status !== "done" ? `<span class="fu-urg">ด่วน</span>` : ""}${x.zone ? `<span class="fu-zone">${esc(x.zone)}</span>` : ""}${x.dept && x.src_info && x.status !== "done" ? `<span class="pdwait ${x.src_info.cause ? "ok" : ""}">${x.src_info.cause ? esc(x.dept) + " ตอบแล้ว" : "รอ " + esc(x.dept) + " ตอบ"}</span>` : ""}</div>
       <b class="fu-t">${esc(x.title)}</b>
       <div class="fu-meta">${x.owner ? `<span>ผู้รับผิดชอบ <b>${esc(x.owner)}</b></span>` : ""}${x.due ? `<span class="fu-due ${ov ? "over" : dn !== null && dn <= 2 && x.status !== "done" ? "soon" : ""}">กำหนด ${fuDueTxt(x)}</span>` : ""}${(x.photos || []).length ? `<span>รูป ${x.photos.length}</span>` : ""}${x.status === "done" && x.done_at ? `<span>ปิดเรื่อง ${fuAt(x.done_at)} · ${esc(x.done_by || "")}</span>` : ""}</div>
       ${last ? `<div class="fu-last">${esc(last.text)} <i>· ${esc(last.by)} ${fuAt(last.at)}</i></div>` : ""}</button>`; }).join("")
@@ -3243,7 +3295,7 @@ function fuRenderSheet(){
   const notes = old ? [{at: c.created_at, by: c.created_by, text: "เปิดเรื่อง", kind: "open"}, ...(c.notes || [])] : [];
   $("#fuBody").innerHTML = `
     ${si ? `<div class="fu-src"><b>มาจากผลตรวจที่พบปัญหา</b> · ${esc(si.no)} ${esc(si.name)}<br><span class="note">${esc(si.zone)} · ${thDate(si.round)} · ตรวจโดย ${esc(si.inspector)}</span>
-      ${si.note ? `<p>${esc(si.note)}</p>` : ""}${(si.media || []).length ? `<div class="thumbs">${si.media.map(m => `<div><img src="${m.thumb}" data-full="${m.poster}" loading="lazy" alt="" ${m.kind === "video" ? `data-video="${m.url}"` : ""}></div>`).join("")}</div>` : ""}</div>` : ""}
+      ${si.note ? `<p>${esc(si.note)}</p>` : ""}${si.resp && si.resp !== "QC" ? `<div class="sub" style="border:0;padding:0;margin:0;background:none">${respBlock({...si, status: "พบปัญหา"})}</div>` : ""}${(si.media || []).length ? `<div class="thumbs">${si.media.map(m => `<div><img src="${m.thumb}" data-full="${m.poster}" loading="lazy" alt="" ${m.kind === "video" ? `data-video="${m.url}"` : ""}></div>`).join("")}</div>` : ""}</div>` : ""}
     <label class="fu-lab" for="fuT">เรื่องที่ต้องติดตาม <i>*</i></label><input type="text" id="fuT" maxlength="200" value="${esc(c.title)}" placeholder="เช่น ฝ้าเหนือไลน์บรรจุมีคราบรา ต้องทำความสะอาด">
     <label class="fu-lab" for="fuD">รายละเอียด</label><textarea id="fuD" maxlength="3000" placeholder="สิ่งที่พบ / สิ่งที่ต้องทำ">${esc(c.detail)}</textarea>
     <div class="fu-2">
