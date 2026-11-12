@@ -934,6 +934,116 @@ table.xls{border-collapse:separate;border-spacing:0;width:max-content;min-width:
 .lgrp:first-of-type{margin-top:4px}.lgrp b{color:var(--navy)}.lgrp span{font-size:12.5px;color:var(--mute)}
 .lf-bot .seg button{white-space:nowrap;min-width:0}
 @media(max-width:560px){.lf-l{width:auto}.lf-row{flex-direction:column;align-items:stretch;gap:6px}.lf-grid{grid-template-columns:1fr 1fr}.lf-bot .seg{flex:1 1 100%;max-width:none}.lf-bot .seg button{font-size:13.5px;padding:4px 6px}.lf-bot #fReset{margin-left:auto}}
+/* ---------- Retort Survey (ดีไซน์ใหม่) ---------- */
+.svx{max-width:980px;margin:0 auto}
+.svx-hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:20px 22px;border-radius:22px;background:linear-gradient(135deg,var(--navy),#2c4a72);color:#fff;box-shadow:0 10px 26px rgba(27,42,65,.22);margin-bottom:18px;position:relative;overflow:hidden}
+.svx-hero::after{content:"";position:absolute;right:-60px;top:-70px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.28),rgba(245,158,11,0) 70%);pointer-events:none}
+.svx-hero .ic{width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.12);color:var(--amber);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.svx-hero .ic svg.i{width:26px;height:26px}
+.svx-hero .t{flex:1;min-width:200px}
+.svx-hero h2{font-size:22px;font-weight:700;margin:0;color:#fff}
+.svx-hero p{margin:2px 0 0;font-size:14px;color:#b8c7da}
+.svx-new{position:relative;z-index:1;border:0;background:var(--amber);color:var(--navy);font-weight:700;font-size:16px;min-height:50px;padding:10px 20px;border-radius:14px;box-shadow:0 6px 16px rgba(245,158,11,.35)}
+@media(max-width:560px){.svx-new{width:100%}.svx-hero{padding:18px}}
+.svx-sub{display:flex;align-items:center;gap:6px;margin:0 4px 10px;font-size:15px;font-weight:700;color:var(--ink2)}
+.svx-sub em{font-style:normal;font-size:12px;color:var(--mute);background:#e2e8f0;border-radius:99px;padding:1px 9px}
+.svx-list{display:grid;gap:10px}
+@media(min-width:860px){.svx-list{grid-template-columns:1fr 1fr}}
+.svx-card{display:flex;align-items:center;gap:14px;width:100%;text-align:left;justify-content:flex-start;padding:14px;border-radius:18px;background:#fff;border:1px solid var(--line);box-shadow:0 1px 2px rgba(15,23,42,.05);font-weight:400;transition:transform .12s,border-color .15s,box-shadow .15s}
+@media(hover:hover){.svx-card:hover{transform:translateY(-2px);border-color:var(--navy);box-shadow:0 8px 20px rgba(15,23,42,.08)}}
+.svx-card>svg.i{color:#cbd5e1;flex:0 0 auto}
+.svx-cal{flex:0 0 auto;width:62px;height:66px;border-radius:15px;background:#fef3c7;color:#92400e;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.svx-cal b{font-size:26px;font-weight:800;color:var(--navy)}
+.svx-cal small{font-size:11.5px;font-weight:600}
+.svx-cb{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.svx-cb>b{font-size:16px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svx-tags{display:flex;flex-wrap:wrap;gap:5px}
+.svx-tags span{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--ink2);background:#f1f5f9;border-radius:8px;padding:2px 8px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.svx-tags svg.i{width:13px;height:13px;color:var(--mute)}
+.svx-prog{display:flex;align-items:center;gap:8px}
+.svx-prog em{font-style:normal;font-size:12px;font-weight:700;color:var(--mute);min-width:34px;text-align:right}
+.svx-prog em.ok{color:var(--ok)}
+.svx-by{font-size:12px;color:var(--mute)}
+.svx-bar{flex:1;display:block;height:7px;border-radius:99px;background:#e9eef5;overflow:hidden;min-width:60px}
+.svx-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--amber),#fbbf24);transition:width .25s}
+.svx-empty{text-align:center;padding:40px 20px;border-radius:20px;border:2px dashed #d5deea;background:#fff}
+.svx-empty .ic{width:60px;height:60px;border-radius:18px;background:#fef3c7;color:#92400e;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px}
+.svx-empty .ic svg.i{width:28px;height:28px}
+.svx-empty b{display:block;font-size:18px;color:var(--navy)}.svx-empty p{margin:4px 0 0;color:var(--mute);font-size:14.5px}
+.svx-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.svx-top .ghost svg.i{transform:rotate(90deg)}
+.svx-state{font-size:13px;font-weight:700;padding:4px 12px;border-radius:99px;background:#dcfce7;color:var(--ok)}
+.svx-state.dirty{background:#fef3c7;color:#b45309}.svx-state.new{background:#e0f2fe;color:#0369a1}
+.svx-card2{padding:18px}
+.svx-h{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.svx-h .n{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:0 0 auto}
+.svx-h h3{flex:1;font-size:17px;font-weight:700;color:var(--navy);margin:0}
+.svx-h .ghost{color:var(--mute)}
+.svx-types{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.svx-types button{min-height:40px;padding:6px 14px;border-radius:99px;font-size:13.5px;font-weight:600;background:#fff;color:var(--ink2)}
+.svx-types button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.svx-meta{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
+@media(max-width:560px){.svx-meta{grid-template-columns:1fr 1fr}.svx-meta label:first-child{grid-column:1/-1}}
+.svx-card2 .lab{font-size:13px;font-weight:600;color:var(--ink2)}
+.svx-plants{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.svx-plants button{flex:1 0 90px;flex-direction:column;gap:0;min-height:58px;border-radius:14px;font-size:18px;font-weight:700;color:var(--navy);line-height:1.2}
+.svx-plants button small{font-size:11.5px;font-weight:500;color:var(--mute)}
+.svx-plants button.on{background:var(--navy);border-color:var(--navy);color:#fff}.svx-plants button.on small{color:#cbd5e1}
+.svx-rg{padding:10px 0;border-top:1px solid #f1f5f9}
+.svx-rg .h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.svx-rg .h b{font-size:14px;color:var(--ink2)}
+.svx-rets{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:7px}
+.svx-rets button{min-height:44px;border-radius:12px;font-size:15px;font-weight:700;color:var(--navy);gap:4px;padding:4px}
+.svx-rets button svg.i{width:15px;height:15px;stroke-width:2.8}
+.svx-rets button.on{background:#fffbeb;border-color:var(--amber);color:#92400e;box-shadow:0 0 0 2px rgba(245,158,11,.18)}
+.svx-sel{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;background:#f8fafc}
+.svx-sel>b{font-size:30px;font-weight:800;color:var(--navy);line-height:1}
+.svx-sel span{display:flex;flex-direction:column;font-weight:600;color:var(--ink2)}
+.svx-sel small{font-weight:400;color:var(--mute);font-size:13px}
+.svx-mode{flex:0 0 auto}.svx-mode button{min-height:36px;padding:4px 14px;font-size:14px;white-space:nowrap}
+.svx-all{display:flex;align-items:center;gap:10px;margin:-2px 0 12px;font-size:13px;color:var(--mute)}
+.svx-all b{color:var(--navy)}
+.svx-tabs{display:flex;gap:7px;overflow-x:auto;padding:2px 2px 10px;scroll-margin-top:90px;scrollbar-width:thin}
+.svx-tabs button{flex:0 0 auto;flex-direction:column;gap:0;min-width:74px;min-height:56px;padding:6px 10px;border-radius:14px;line-height:1.2;position:relative;overflow:hidden;background:#fff}
+.svx-tabs button::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:calc(var(--p) * 1%);background:var(--amber)}
+.svx-tabs button b{font-size:15.5px;font-weight:700;color:var(--navy)}
+.svx-tabs button small{font-size:11.5px;color:var(--mute);font-weight:600}
+.svx-tabs button.full::after{background:var(--ok)}.svx-tabs button.full small{color:var(--ok)}
+.svx-tabs button.on{background:var(--navy);border-color:var(--navy)}.svx-tabs button.on b{color:#fff}.svx-tabs button.on small{color:#cbd5e1}
+.svx-one{border-radius:16px;background:#f8fafc;padding:14px}
+.svx-oh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.svx-oh small{font-size:12px;color:var(--mute)}
+.svx-oh h3{font-size:26px;font-weight:800;color:var(--navy);margin:0;line-height:1.1}
+.svx-op{display:flex;align-items:center;gap:8px;min-width:180px;flex:0 1 260px}
+.svx-op em{font-style:normal;font-size:12.5px;font-weight:600;color:var(--mute);white-space:nowrap}
+.svx-copy{width:100%;justify-content:flex-start;text-align:left;gap:12px;margin-bottom:12px;padding:12px 14px;border-radius:14px;border:1.5px dashed var(--amber);background:#fffbeb;color:#92400e}
+.svx-copy span{display:flex;flex-direction:column;line-height:1.3}.svx-copy small{font-size:12.5px;opacity:.85}
+.svx-grp{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:12px}
+.svx-grp .gh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.svx-grp .gi{width:30px;height:30px;border-radius:9px;background:#fef3c7;color:#92400e;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.svx-grp .gi svg.i{width:16px;height:16px}
+.svx-grp .gh b{flex:1;font-size:15px;color:var(--navy)}
+.svx-grp .gh small{font-size:12px;font-weight:700;color:var(--mute);background:#f1f5f9;border-radius:99px;padding:2px 9px}
+.svx-fields{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:560px){.svx-fields{grid-template-columns:1fr 1fr}}
+@media(min-width:900px){.svx-fields{grid-template-columns:1fr 1fr 1fr}}
+.svx-fields .lab{font-size:12.5px;font-weight:600;color:var(--mute);margin-bottom:4px}
+.svx-fields input{min-height:46px;font-size:16px;background:#fff}
+.svx-fields input.has{border-color:#bbf7d0;background:#f0fdf4}
+.svx-nav{display:flex;gap:10px;margin-top:14px}
+.svx-nav button{flex:1;min-height:52px;border-radius:14px}
+.svx-nav button:first-child svg.i{transform:rotate(90deg)}
+.svx-tt{margin:16px 0 8px;font-size:15px;font-weight:700;color:var(--navy)}
+.svx-tt:first-of-type{margin-top:4px}
+.svx-t{border-radius:12px;overflow:hidden}
+.svx-t tr.gh td{background:#fffbeb;color:#92400e;font-weight:700;font-size:13px;padding:6px 10px;text-align:left}
+.svx-t tr.gh svg.i{width:15px;height:15px;margin-right:6px}
+.svx-t input.has{background:#f0fdf4}
+.svx-tools{display:flex;gap:6px;flex-wrap:wrap;margin:-2px 0 6px}
+.svx-tools .ghost{color:var(--ink2);background:#fff;border:1px solid var(--line)}
+.svx-savebar{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:4;padding:12px 0 6px;background:linear-gradient(to top,var(--bg) 65%,rgba(241,245,249,0))}
+.svx-savebar .savebig{margin-top:0;box-shadow:0 8px 22px rgba(27,42,65,.3)}
+@media(min-width:700px){.svx-savebar{bottom:0;padding-bottom:14px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1285,7 +1395,7 @@ function getName() { try { const v = localStorage.getItem("pc_inspector"); if (v
 function setName(n) { n = (n || "").trim().slice(0, 60); try { localStorage.setItem("pc_inspector", n); } catch {} document.cookie = `pc_name=${encodeURIComponent(n)}; max-age=${60*60*24*400}; path=/; samesite=lax`; }
 const S = {
   user: getName(),
-  view: lsGet("rt_view", ""), viewAuto: !lsGet("rt_view", ""),
+  view: "log", viewAuto: false,  // เปิดหน้านี้ใหม่ทุกครั้ง เริ่มที่แท็บ บันทึก เสมอ (ถ้าแท็บบันทึกถูกซ่อน ใช้แท็บหน้าแรกจากการตั้งค่า)
   items: {}, config: migrate(null)[0],
   pin: "", canAdmin: lsGet("rt_role", "") === "sup", loaded: false, role: lsGet("rt_role", ""),
   draft: null, editingId: null,
@@ -1391,7 +1501,7 @@ function showLock(on) { $("#lock").classList.toggle("hide", !on); if (on) setTim
 $("#lockForm").onsubmit = async e => {
   e.preventDefault(); const pin = $("#lockPin").value.trim(); if (!pin) return;
   const btn = $("#lockForm [type=submit]"); if (btn.disabled) return; btn.disabled = true; btn.textContent = "กำลังเข้าสู่ระบบ…"; $("#lockErr").textContent = "";
-  try { const r = await jpost("/api/retort/login", { pin }); authEpoch++; $("#lockPin").value = ""; setRole(r.role); S.viewAuto = true; S.view = "";
+  try { const r = await jpost("/api/retort/login", { pin }); authEpoch++; $("#lockPin").value = ""; setRole(r.role); S.viewAuto = false; S.view = "log";
     await loadCache();  // ข้อมูลที่จำไว้ในเครื่อง → แสดงได้ทันที
     showLock(false); render(); toast(`เข้าสู่ระบบแล้ว · ${r.role_name || ""}`); syncAll(!lastSync); }
   catch (err) { $("#lockErr").textContent = err.message || "รหัสไม่ถูกต้อง"; $("#lockPin").select(); }
@@ -1435,6 +1545,8 @@ function markAnim(k) { $("#main").classList.toggle("anim", k !== animKey); animK
 $("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
 $("#userBtn").onclick = () => askName(false);
 document.addEventListener("pointerdown", () => { S.viewAuto = false; }, true);
+// กลับเข้าหน้านี้จากปุ่มย้อนกลับ (เบราว์เซอร์คืนหน้าเดิมจากแคช) ก็ให้กลับมาที่แท็บ บันทึก เหมือนเปิดใหม่
+addEventListener("pageshow", e => { if (e.persisted && S.view !== "log") { S.view = "log"; S.justSaved = null; render(); window.scrollTo(0, 0); } });
 
 /* ---------- log form ---------- */
 function newDraft() {
@@ -2204,96 +2316,132 @@ const svFilled = c => Object.keys(c.v || {}).length;
 function svNew() { SV.cur = { id: "", ref: "", date: todayISO(), rev: "", type: "WATER SPRAY RETORT", plant: plantsList()[0] || "PF1", note: "", cols: [] }; SV.dirty = false; SV.ri = 0; SV.pick = true; viewSurvey(); scrollTo(0, 0); }
 function svOpen(id) { const x = SV.items.find(y => y.id === id); if (!x) return; SV.cur = JSON.parse(JSON.stringify(x)); SV.dirty = false; SV.ri = 0; SV.pick = false; viewSurvey(); scrollTo(0, 0); }
 function svPrev(retort, skipId) { return SV.items.filter(x => x.id !== skipId).sort((a, b) => (b.date || "").localeCompare(a.date || "") || b.updatedAt - a.updatedAt).map(x => (x.cols || []).find(c => c.retort === retort && svFilled(c))).find(Boolean); }
+/* หัวข้อย่อยของแต่ละกลุ่มในตาราง (ใช้แสดงบนจอ · แบบฟอร์มที่พิมพ์ยังเหมือนเดิม) */
+const SV_GNAME = [[["ระบบสตีม", "Steam", "gauge"], ["ระบบน้ำ / สเปรย์", "Water", "drop"], ["ท่อ", "Pipes", "tool"]],
+  [["ปั๊มหมุนเวียน · Flow meter", "Pump & flow", "gauge"], ["เครื่องมือวัด · สอบเทียบ", "Instruments", "thermo"]]];
+const SV_TYPES = ["WATER SPRAY RETORT", "WATER IMMERSION RETORT", "STEAM RETORT", "STEAM AIR RETORT"];
+const svPct = (n, t) => !t || !n ? 0 : Math.max(1, Math.min(100, Math.floor(n / t * 100)));  // กรอกแล้วอย่างน้อย 1 ช่อง = ไม่ขึ้น 0%
+const svBar = p => `<span class="svx-bar"><i style="width:${p}%"></i></span>`;
 function viewSurvey() {
   if (!SV.loaded) { $("#main").innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; svLoad(); return; }
   const m = $("#main");
   if (!SV.cur) {
     const L = SV.items.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "") || b.updatedAt - a.updatedAt);
-    m.innerHTML = `<div class="card">${sec("tool", "Retort Survey Filling Form", "ข้อมูลอุปกรณ์ของหม้อแต่ละใบ · ช่องหัวคอลัมน์ = เลขหม้อ", `<button class="sm pri" id="svNew">${I("plus")}สร้าง Survey ใหม่</button>`)}
-      ${L.length ? `<div class="isolist">${L.map(x => { const rs = (x.cols || []).map(c => c.retort).filter(Boolean), full = (x.cols || []).reduce((a, c) => a + svFilled(c), 0);
-        return `<button class="svrow" data-svopen="${x.id}"><div class="b"><b>${x.date ? dmy(x.date) : "ไม่ระบุวันที่"}${x.ref ? ` · Ref ${esc(x.ref)}` : ""}${x.rev ? ` · Rev.${esc(x.rev)}` : ""}</b>
-          <span class="sub">${esc(x.type || "")}${x.plant ? ` · ${esc(x.plant)}` : ""} · ${rs.length} หม้อ${rs.length ? ` (${esc(retRangeText(rs.slice().sort(byRetort)))})` : ""}</span>
-          <span class="sub">กรอกแล้ว ${full}/${rs.length * SV_FIELDS.length} ช่อง · ${esc(x.by || x.createdBy || "")} · ${new Date(x.updatedAt).toLocaleDateString("th-TH")}</span></div>${I("right")}</button>`; }).join("")}</div>`
-        : `<p class="sub" style="margin:6px 0 0">ยังไม่มี Survey · กด <b>สร้าง Survey ใหม่</b> แล้วเลือกหม้อ ระบบจะสร้างตารางแบบฟอร์มให้กรอก</p>`}</div>`;
+    const card = x => { const rs = (x.cols || []).map(c => c.retort).filter(Boolean).sort(byRetort), full = (x.cols || []).reduce((a, c) => a + svFilled(c), 0), tot = rs.length * SV_FIELDS.length, p = svPct(full, tot);
+      const dt = x.date ? new Date(x.date + "T00:00:00") : null;
+      return `<button class="svx-card" data-svopen="${x.id}">
+        <span class="svx-cal">${dt ? `<b>${dt.getDate()}</b><small>${dt.toLocaleDateString("th-TH", { month: "short" })} ${String(dt.getFullYear() + 543).slice(2)}</small>` : `<b>–</b><small>ไม่ระบุ</small>`}</span>
+        <span class="svx-cb"><b>${esc(x.type || "Retort Survey")}</b>
+          <span class="svx-tags">${x.plant ? `<span>${I("factory")}${esc(x.plant)}</span>` : ""}<span>${I("grid")}${rs.length} หม้อ${rs.length ? ` · ${esc(retRangeText(rs))}` : ""}</span>${x.ref ? `<span>Ref ${esc(x.ref)}</span>` : ""}${x.rev ? `<span>Rev.${esc(x.rev)}</span>` : ""}</span>
+          <span class="svx-prog">${svBar(p)}<em class="${p >= 100 ? "ok" : ""}">${p >= 100 ? "ครบ" : p + "%"}</em></span>
+          <small class="svx-by">${esc(x.by || x.createdBy || "")}${x.updatedAt ? ` · แก้ไข ${new Date(x.updatedAt).toLocaleDateString("th-TH")}` : ""}</small></span>${I("right")}</button>`; };
+    m.innerHTML = `<div class="svx">
+      <div class="svx-hero"><span class="ic">${I("tool")}</span><div class="t"><h2>Retort Survey</h2><p>ข้อมูลอุปกรณ์ของหม้อแต่ละใบ · กรอกทีละหม้อ แล้วพิมพ์เป็นแบบฟอร์มได้</p></div>
+        <button class="svx-new" id="svNew">${I("plus")}สร้าง Survey ใหม่</button></div>
+      ${L.length ? `<div class="svx-sub">Survey ทั้งหมด <em>${L.length}</em></div><div class="svx-list">${L.map(card).join("")}</div>`
+        : `<div class="svx-empty"><span class="ic">${I("list")}</span><b>ยังไม่มี Survey</b><p>กด <b>สร้าง Survey ใหม่</b> → เลือกหม้อ → กรอกข้อมูลทีละหม้อ</p></div>`}</div>`;
     m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
       if (b.id === "svNew") needEditPin("สร้าง Survey", svNew); else if (b.dataset.svopen) svOpen(b.dataset.svopen); };
     m.oninput = m.onchange = null; return;
   }
-  const c = SV.cur, mode = svMode(), cols = c.cols;
+  const c = SV.cur, mode = svMode(), cols = c.cols, NF = SV_FIELDS.length;
   if (SV.ri >= cols.length) SV.ri = Math.max(0, cols.length - 1);
-  const inp = (ci, k) => { const v = (cols[ci].v || {})[k] || ""; return `<input class="svin" data-c="${ci}" data-k="${k}" value="${esc(v)}">`; };
-  const picker = () => { const rl = plantRetorts(c.plant), have = new Set(cols.filter(x => x.plant === c.plant || !x.plant).map(x => x.retort));
-    return `<div class="svpick"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>เลือกหม้อ</b><select id="svPlant" style="width:auto">${plantsList().map(pl => `<option ${pl === c.plant ? "selected" : ""}>${esc(pl)}</option>`).join("")}</select>
-      <span class="sub">แตะเพื่อเพิ่ม/เอาออก (${SV_PER_PAGE} หม้อต่อ 1 หน้ากระดาษ)</span></div>
-      ${retGroups(rl).map(([g, L]) => `<div class="svg"><button class="ghost sm" data-svgrp="${esc(g)}">${esc(g)} ทั้งกลุ่ม</button>${L.map(r => `<button class="chip ${have.has(r) ? "on" : ""}" data-svret="${esc(r)}">${esc(r)}</button>`).join("")}</div>`).join("")}</div>`; };
+  const filledAll = cols.reduce((a, x) => a + svFilled(x), 0), pAll = svPct(filledAll, cols.length * NF);
+  const inp = (ci, k, ph = "") => { const v = (cols[ci].v || {})[k] || ""; return `<input class="svin ${v ? "has" : ""}" data-c="${ci}" data-k="${k}" value="${esc(v)}" placeholder="${esc(ph)}" autocomplete="off">`; };
+  const picking = SV.pick || !cols.length;
+  const picker = () => { const rl = plantRetorts(c.plant), have = new Set(cols.map(x => x.retort));
+    return `<div class="svx-plants">${plantsList().map(pl => `<button class="${pl === c.plant ? "on" : ""}" data-svplant="${esc(pl)}">${esc(pl)}<small>${plantRetorts(pl).length} หม้อ</small></button>`).join("")}</div>
+      ${retGroups(rl).map(([g, R]) => { const all = R.every(r => have.has(r));
+        return `<div class="svx-rg"><div class="h"><b>${esc(g)}</b><button class="ghost sm" data-svgrp="${esc(g)}">${all ? "เอาออกทั้งกลุ่ม" : "เลือกทั้งกลุ่ม"}</button></div>
+          <div class="svx-rets">${R.map(r => `<button class="${have.has(r) ? "on" : ""}" data-svret="${esc(r)}">${have.has(r) ? I("check") : ""}${esc(r)}</button>`).join("")}</div></div>`; }).join("") || `<p class="sub">ยังไม่มีหม้อในพื้นที่นี้</p>`}
+      ${cols.length ? `<button class="soft blk" id="svPickDone" style="margin-top:12px">${I("check")}เสร็จ · เลือกแล้ว ${cols.length} หม้อ</button>` : ""}`; };
   let body = "";
-  if (!cols.length) body = `<p class="sub" style="margin:10px 0">เลือกหม้อด้านบนก่อน แล้วตารางจะขึ้นให้กรอก</p>`;
+  if (!cols.length) body = "";
   else if (mode === "grid") {
-    body = SV_TABLES.map(t => `<h3 class="svth">Table # ${t.no} · ${esc(c.type || "")}</h3><div class="tscroll svscroll"><table class="svt"><thead>
-      <tr><th class="lab">${esc(t.head)}</th>${cols.map((x, ci) => `<th>${esc(x.retort)}</th>`).join("")}</tr>
-      <tr><th class="lab sub2">หมายเหตุหัวคอลัมน์</th>${cols.map((x, ci) => `<th><input class="svnote" data-cn="${ci}" value="${esc(x.note || "")}" placeholder="หมายเหตุ"></th>`).join("")}</tr></thead><tbody>
-      ${t.groups.map((g, gi) => (gi ? `<tr class="gap"><td colspan="${cols.length + 1}"></td></tr>` : "") + g.map(([k, l]) => `<tr><th class="lab">${esc(l)}</th>${cols.map((x, ci) => `<td>${inp(ci, k)}</td>`).join("")}</tr>`).join("")).join("")}
+    body = SV_TABLES.map((t, ti) => `<div class="svx-tt">Table ${t.no} · ${esc(t.head)}</div><div class="tscroll svscroll"><table class="svt svx-t"><thead>
+      <tr><th class="lab">รายการ</th>${cols.map(x => `<th>${esc(x.retort)}</th>`).join("")}</tr>
+      <tr><th class="lab sub2">หมายเหตุหัวคอลัมน์</th>${cols.map((x, ci) => `<th><input class="svnote" data-cn="${ci}" value="${esc(x.note || "")}" placeholder="–"></th>`).join("")}</tr></thead><tbody>
+      ${t.groups.map((g, gi) => `<tr class="gh"><td colspan="${cols.length + 1}">${I(SV_GNAME[ti][gi][2])}${esc(SV_GNAME[ti][gi][0])}</td></tr>` + g.map(([k, l]) => `<tr><th class="lab">${esc(l.trim())}</th>${cols.map((x, ci) => `<td>${inp(ci, k)}</td>`).join("")}</tr>`).join("")).join("")}
       </tbody></table></div>`).join("");
   } else {
-    const ci = SV.ri, x = cols[ci], prev = svPrev(x.retort, c.id);
-    body = `<div class="svtabs">${cols.map((y, i) => `<button class="chip ${i === ci ? "on" : ""}" data-svri="${i}">${esc(y.retort)}<em>${svFilled(y)}/${SV_FIELDS.length}</em></button>`).join("")}</div>
-      <div class="svone"><div class="row sp"><h3 style="margin:0">หม้อ ${esc(x.retort)}</h3>${prev && !svFilled(x) ? `<button class="ghost sm" data-svcp1="${ci}">คัดลอกจาก Survey ก่อนหน้า</button>` : ""}</div>
-      <label class="f"><span class="lab">หมายเหตุหัวคอลัมน์</span><input class="svnote" data-cn="${ci}" value="${esc(x.note || "")}"></label>
-      ${SV_TABLES.map(t => `<h4 class="svth">Table # ${t.no} · ${esc(t.head)}</h4>${t.groups.map(g => `<div class="svgrp">${g.map(([k, l]) => `<label class="f"><span class="lab">${esc(l.trim())}</span>${inp(ci, k)}</label>`).join("")}</div>`).join("")}`).join("")}
-      <div class="row" style="margin-top:12px"><button class="blk" data-svri="${Math.max(0, ci - 1)}" ${ci ? "" : "disabled"}>${I("down")}หม้อก่อนหน้า</button><button class="blk" data-svri="${Math.min(cols.length - 1, ci + 1)}" ${ci < cols.length - 1 ? "" : "disabled"}>หม้อถัดไป${I("right")}</button></div></div>`;
+    const ci = SV.ri, x = cols[ci], prev = svPrev(x.retort, c.id), nx = svFilled(x), px = svPct(nx, NF);
+    body = `<div class="svx-tabs">${cols.map((y, i) => { const p = svPct(svFilled(y), NF);
+        return `<button class="${i === ci ? "on" : ""} ${p >= 100 ? "full" : ""}" data-svri="${i}" style="--p:${p}"><b>${esc(y.retort)}</b><small>${p >= 100 ? "ครบ" : p + "%"}</small></button>`; }).join("")}</div>
+      <div class="svx-one svone">
+        <div class="svx-oh"><div><small>หม้อ ${ci + 1} / ${cols.length}</small><h3>${esc(x.retort)}</h3></div>
+          <div class="svx-op">${svBar(px)}<em>${nx}/${NF} ช่อง</em></div></div>
+        ${prev && !nx ? `<button class="svx-copy" data-svcp1="${ci}">${I("download")}<span><b>คัดลอกค่าจาก Survey ก่อนหน้า</b><small>หม้อนี้เคยกรอกไว้แล้ว · คัดลอกมาแล้วแก้เฉพาะที่เปลี่ยน</small></span></button>` : ""}
+        <label class="f"><span class="lab">หมายเหตุหัวคอลัมน์</span><input class="svnote" data-cn="${ci}" value="${esc(x.note || "")}" placeholder="เช่น หม้อใหม่ / เปลี่ยนปั๊ม"></label>
+        ${SV_TABLES.map((t, ti) => t.groups.map((g, gi) => { const G = SV_GNAME[ti][gi], n = g.filter(([k]) => (x.v || {})[k]).length;
+          return `<div class="svx-grp"><div class="gh"><span class="gi">${I(G[2])}</span><b>${esc(G[0])}</b><small>${n}/${g.length}</small></div>
+            <div class="svx-fields">${g.map(([k, l]) => `<label class="f"><span class="lab">${esc(l.trim().replace(/^- /, "↳ "))}</span>${inp(ci, k)}</label>`).join("")}</div></div>`; }).join("")).join("")}
+        <div class="svx-nav"><button data-svri="${Math.max(0, ci - 1)}" ${ci ? "" : "disabled"}>${I("down")}${ci ? esc(cols[ci - 1].retort) : "ก่อนหน้า"}</button>
+          <button class="pri" data-svri="${Math.min(cols.length - 1, ci + 1)}" ${ci < cols.length - 1 ? "" : "disabled"}>${ci < cols.length - 1 ? `หม้อถัดไป ${esc(cols[ci + 1].retort)}` : "หม้อสุดท้าย"}${I("right")}</button></div></div>`;
   }
   const hasPrev = cols.some(x => !svFilled(x) && svPrev(x.retort, c.id));
-  m.innerHTML = `<div class="card svhead">
-    <div class="row sp" style="flex-wrap:wrap;gap:8px"><button class="ghost sm" id="svBack">${I("down")}รายการ Survey</button>
-      <span class="svstate ${SV.dirty ? "dirty" : ""}">${SV.dirty ? "ยังไม่บันทึก" : c.id ? "บันทึกแล้ว" : "Survey ใหม่"}</span></div>
-    <h2 style="margin:10px 0 6px">Retort Survey Filling Form</h2>
-    <div class="svmeta"><label class="f"><span class="lab">Ref #</span><input id="svRef" value="${esc(c.ref)}"></label>
-      <label class="f"><span class="lab">Survey Date</span><input type="date" id="svDate" value="${esc(c.date)}"></label>
-      <label class="f"><span class="lab">Revision</span><input id="svRev" value="${esc(c.rev)}"></label>
-      <label class="f"><span class="lab">ชนิดหม้อ</span><input id="svType" value="${esc(c.type)}" list="svTypes"><datalist id="svTypes"><option value="WATER SPRAY RETORT"><option value="WATER IMMERSION RETORT"><option value="STEAM RETORT"><option value="STEAM AIR RETORT"></datalist></label></div>
-    ${SV.pick || !cols.length ? picker() : `<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px"><span class="sub">${cols.length} หม้อ: ${esc(retRangeText(cols.map(x => x.retort).sort(byRetort)))}</span><button class="ghost sm" id="svPickOpen">${I("pen")}เพิ่ม/ลบหม้อ</button></div>`}
-    <div class="row svact" style="gap:8px;flex-wrap:wrap;margin-top:10px">
-      <div class="seg dseg"><button class="${mode === "grid" ? "on" : ""}" data-svmode="grid">ตาราง</button><button class="${mode === "one" ? "on" : ""}" data-svmode="one">ทีละหม้อ</button></div>
-      ${hasPrev ? `<button class="ghost sm" id="svCopy">คัดลอกค่าจาก Survey ก่อนหน้า</button>` : ""}
-      <button class="ghost sm" id="svPrint" ${cols.length ? "" : "disabled"}>${I("printer")}พิมพ์ / PDF</button>
-      <button class="ghost sm" id="svCsv" ${cols.length ? "" : "disabled"}>${I("download")}CSV</button>
-      ${c.id ? `<button class="ghost sm" id="svDel" style="color:var(--bad)">${I("trash")}ลบ</button>` : ""}
-      <button class="pri sm" id="svSave" style="margin-left:auto">${I("check")}บันทึก</button></div></div>
-    <div class="card">${body}</div>
-    ${cols.length ? `<button class="pri blk savebig" id="svSave2">${I("check")}บันทึก Survey</button>` : ""}`;
-  const dirty = () => { if (!SV.dirty) { SV.dirty = true; const st = m.querySelector(".svstate"); if (st) { st.textContent = "ยังไม่บันทึก"; st.classList.add("dirty"); } } };
+  const types = SV_TYPES.includes(c.type) || !c.type ? SV_TYPES : [...SV_TYPES, c.type];
+  m.innerHTML = `<div class="svx svx-ed">
+    <div class="svx-top"><button class="ghost sm" id="svBack">${I("down")}รายการ Survey</button>
+      <span class="svx-state svstate ${SV.dirty ? "dirty" : c.id ? "" : "new"}">${SV.dirty ? "ยังไม่บันทึก" : c.id ? "บันทึกแล้ว" : "Survey ใหม่"}</span></div>
+    <div class="card svx-card2"><div class="svx-h"><span class="n">1</span><h3>ข้อมูลแบบฟอร์ม</h3></div>
+      <div class="svx-types">${types.map(tp => `<button class="${c.type === tp ? "on" : ""}" data-svtype="${esc(tp)}">${esc(tp.replace(/ RETORT$/, ""))}</button>`).join("")}</div>
+      <div class="svx-meta"><label class="f"><span class="lab">วันที่สำรวจ</span><input type="date" id="svDate" value="${esc(c.date)}"></label>
+        <label class="f"><span class="lab">Ref #</span><input id="svRef" value="${esc(c.ref)}" placeholder="–"></label>
+        <label class="f"><span class="lab">Revision</span><input id="svRev" value="${esc(c.rev)}" placeholder="–"></label></div></div>
+    <div class="card svx-card2"><div class="svx-h"><span class="n">2</span><h3>หม้อที่สำรวจ</h3>${!picking ? `<button class="ghost sm" id="svPickOpen">${I("pen")}เพิ่ม/ลบ</button>` : ""}</div>
+      ${picking ? picker() : `<div class="svx-sel"><b>${cols.length}</b><span>หม้อ · ${esc(c.plant || "")}<small>${esc(retRangeText(cols.map(x => x.retort).sort(byRetort)))}</small></span></div>`}</div>
+    ${cols.length ? `<div class="card svx-card2"><div class="svx-h"><span class="n">3</span><h3>กรอกข้อมูล</h3>
+        <div class="seg svx-mode"><button class="${mode === "one" ? "on" : ""}" data-svmode="one">ทีละหม้อ</button><button class="${mode === "grid" ? "on" : ""}" data-svmode="grid">ตาราง</button></div></div>
+      <div class="svx-all">${svBar(pAll)}<span>รวม <b>${pAll}%</b> · ${filledAll}/${cols.length * NF} ช่อง</span></div>
+      ${hasPrev ? `<button class="ghost sm" id="svCopy" style="margin:-4px 0 8px">${I("download")}คัดลอกค่าจาก Survey ก่อนหน้า (หม้อที่ยังว่าง)</button>` : ""}
+      ${body}</div>
+    <div class="svx-tools"><button class="ghost sm" id="svPrint">${I("printer")}พิมพ์ / PDF</button><button class="ghost sm" id="svCsv">${I("download")}ไฟล์ CSV</button>
+      ${c.id ? `<button class="ghost sm" id="svDel" style="color:var(--bad);margin-left:auto">${I("trash")}ลบ Survey</button>` : ""}</div>` : ""}
+    ${cols.length ? `<div class="svx-savebar"><button class="pri blk savebig" id="svSave">${I("check")}บันทึก Survey</button></div>` : ""}</div>`;
+  const dirty = () => { if (!SV.dirty) { SV.dirty = true; const st = m.querySelector(".svstate"); if (st) { st.textContent = "ยังไม่บันทึก"; st.className = "svx-state svstate dirty"; } } };
+  // อัปเดตตัวเลขความคืบหน้าในที่ (ไม่วาดหน้าใหม่ระหว่างพิมพ์ เคอร์เซอร์จะได้ไม่หลุด)
+  const setBar = (el, p) => { const i = el && el.querySelector(".svx-bar i"); if (i) i.style.width = p + "%"; };
+  const prog = ci => { const x = cols[ci], n = svFilled(x), p = svPct(n, NF), tot = cols.reduce((a, y) => a + svFilled(y), 0), pa = svPct(tot, cols.length * NF);
+    const all = m.querySelector(".svx-all"); if (all) { setBar(all, pa); all.querySelector("span").innerHTML = `รวม <b>${pa}%</b> · ${tot}/${cols.length * NF} ช่อง`; }
+    const tab = m.querySelector(`.svx-tabs [data-svri="${ci}"]`); if (tab) { tab.style.setProperty("--p", p); tab.classList.toggle("full", p >= 100); tab.querySelector("small").textContent = p >= 100 ? "ครบ" : p + "%"; }
+    const op = m.querySelector(".svx-op"); if (op && ci === SV.ri && mode === "one") { setBar(op, p); op.querySelector("em").textContent = `${n}/${NF} ช่อง`; }
+    if (mode === "one") m.querySelectorAll(".svx-grp").forEach(g => { const ks = [...g.querySelectorAll("[data-k]")]; g.querySelector(".gh small").textContent = `${ks.filter(i => i.value.trim()).length}/${ks.length}`; }); };
+  const redo = () => { const y = scrollY; viewSurvey(); scrollTo(0, y); };
   m.oninput = e => { const t = e.target;
-    if (t.dataset.k) { const col = cols[+t.dataset.c]; col.v = col.v || {}; const v = t.value.trim(); if (v) col.v[t.dataset.k] = t.value; else delete col.v[t.dataset.k]; dirty(); }
+    if (t.dataset.k) { const col = cols[+t.dataset.c]; col.v = col.v || {}; const v = t.value.trim(); if (v) col.v[t.dataset.k] = t.value; else delete col.v[t.dataset.k]; t.classList.toggle("has", !!v); dirty(); prog(+t.dataset.c); }
     else if (t.dataset.cn != null) { cols[+t.dataset.cn].note = t.value; dirty(); }
-    else if (["svRef", "svRev", "svType", "svDate"].includes(t.id)) { c[{ svRef: "ref", svRev: "rev", svType: "type", svDate: "date" }[t.id]] = t.value; dirty(); } };
-  m.onchange = e => { if (e.target.id === "svPlant") { c.plant = e.target.value; viewSurvey(); } };
+    else if (["svRef", "svRev", "svDate"].includes(t.id)) { c[{ svRef: "ref", svRev: "rev", svDate: "date" }[t.id]] = t.value; dirty(); } };
+  m.onchange = null;
   m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (b.id === "svBack") { if (SV.dirty && !confirm("ยังไม่ได้บันทึก ออกจากหน้านี้?")) return; SV.cur = null; SV.dirty = false; viewSurvey(); scrollTo(0, 0); }
-    else if (b.id === "svPickOpen") { SV.pick = true; viewSurvey(); }
+    else if (b.id === "svPickOpen") { SV.pick = true; redo(); }
+    else if (b.id === "svPickDone") { SV.pick = false; redo(); }
+    else if (ds.svtype) { c.type = ds.svtype; dirty(); m.querySelectorAll("[data-svtype]").forEach(x => x.classList.toggle("on", x === b)); }
+    else if (ds.svplant) { c.plant = ds.svplant; redo(); }
     else if (ds.svret) { const i = cols.findIndex(x => x.retort === ds.svret);
       if (i >= 0) { if (svFilled(cols[i]) && !confirm(`เอาหม้อ ${ds.svret} ออก? ค่าที่กรอกของหม้อนี้จะหายไป`)) return; cols.splice(i, 1); }
       else { cols.push({ retort: ds.svret, plant: c.plant, note: "", v: {} }); cols.sort((a, b2) => byRetort(a.retort, b2.retort)); }
-      SV.dirty = true; const y = scrollY; viewSurvey(); scrollTo(0, y); }
+      SV.dirty = true; redo(); }
     else if (ds.svgrp) { const L = plantRetorts(c.plant).filter(r => retPre(r) === ds.svgrp), all = L.every(r => cols.some(x => x.retort === r));
       if (all) { if (L.some(r => svFilled(cols.find(x => x.retort === r))) && !confirm(`เอาหม้อกลุ่ม ${ds.svgrp} ออกทั้งหมด?`)) return; c.cols = cols.filter(x => !L.includes(x.retort)); }
       else L.forEach(r => { if (!cols.some(x => x.retort === r)) cols.push({ retort: r, plant: c.plant, note: "", v: {} }); });
-      c.cols.sort((a, b2) => byRetort(a.retort, b2.retort)); SV.dirty = true; const y = scrollY; viewSurvey(); scrollTo(0, y); }
-    else if (ds.svmode) { SV.mode = ds.svmode; SV.pick = false; viewSurvey(); }
-    else if (ds.svri != null) { SV.ri = +ds.svri; viewSurvey(); const o = m.querySelector(".svone"); if (o) o.scrollIntoView({ block: "start" }); }
+      c.cols.sort((a, b2) => byRetort(a.retort, b2.retort)); SV.dirty = true; redo(); }
+    else if (ds.svmode) { SV.mode = ds.svmode; SV.pick = false; redo(); }
+    else if (ds.svri != null) { SV.ri = +ds.svri; viewSurvey(); const o = m.querySelector(".svx-tabs"); if (o) { o.scrollIntoView({ block: "start", behavior: "smooth" }); const on = o.querySelector(".on"); if (on) on.scrollIntoView({ inline: "center", block: "nearest" }); } }
     else if (ds.svcp1 != null || b.id === "svCopy") { let n = 0;
       (ds.svcp1 != null ? [cols[+ds.svcp1]] : cols).forEach(x => { if (svFilled(x)) return; const p = svPrev(x.retort, c.id); if (p) { x.v = { ...p.v }; x.note = x.note || p.note || ""; n++; } });
-      SV.dirty = true; toast(n ? `คัดลอกค่า ${n} หม้อจาก Survey ก่อนหน้าแล้ว · ตรวจ/แก้ก่อนบันทึก` : "ไม่มีค่าให้คัดลอก"); const y = scrollY; viewSurvey(); scrollTo(0, y); }
+      SV.dirty = true; toast(n ? `คัดลอกค่า ${n} หม้อจาก Survey ก่อนหน้าแล้ว · ตรวจ/แก้ก่อนบันทึก` : "ไม่มีค่าให้คัดลอก"); redo(); }
     else if (b.id === "svPrint") svPrint(c);
     else if (b.id === "svCsv") svCsv(c);
     else if (b.id === "svDel") needEditPin("ลบ Survey", () => confirmBox("ลบ Survey นี้? (ต้องใส่รหัส)", async () => {
       const pin = S.pin || prompt("ใส่รหัสเพื่อลบ Survey"); if (!pin) return;
       try { await api(`/api/retort/surveys/${c.id}?pin=${encodeURIComponent(pin)}`, { method: "DELETE" }); SV.items = SV.items.filter(x => x.id !== c.id); SV.cur = null; SV.dirty = false; toast("ลบ Survey แล้ว"); viewSurvey(); }
       catch (err) { toast(err.message); } }));
-    else if (b.id === "svSave" || b.id === "svSave2") needEditPin("บันทึก Survey", async () => {
+    else if (b.id === "svSave") needEditPin("บันทึก Survey", async () => {
       b.disabled = true;
       try { const r = await jpost("/api/retort/surveys", { survey: c, by: S.user, pin: S.pin || undefined });
         SV.cur = JSON.parse(JSON.stringify(r.survey)); const i = SV.items.findIndex(x => x.id === r.survey.id); if (i >= 0) SV.items[i] = r.survey; else SV.items.unshift(r.survey);
-        SV.dirty = false; SV.pick = false; toast("บันทึก Survey แล้ว"); const y = scrollY; viewSurvey(); scrollTo(0, y); }
+        SV.dirty = false; SV.pick = false; toast("บันทึก Survey แล้ว"); redo(); }
       catch (err) { b.disabled = false; toast("บันทึกไม่สำเร็จ: " + err.message); if (err.status === 401) showLock(true); } }); };
 }
 function svCsv(c) {
