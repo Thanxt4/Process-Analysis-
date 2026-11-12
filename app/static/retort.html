@@ -1056,6 +1056,27 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .svx-gridwrap.full .svt td{padding:1px}
 .svx-gridwrap.full .svt input{min-height:28px;font-size:12.5px;padding:2px 3px}
 .svx-gridwrap.full .svx-tt{margin:12px 0 6px}
+/* ตาราง Survey: สีเข้ม คอนทราสต์สูง อ่านง่าย */
+.svx-t{border:1.5px solid var(--navy)}
+.svx-t th,.svx-t td{border-color:#b6c3d6!important}
+.svx-t thead tr:first-child th{background:var(--navy)!important;color:#fff!important;font-weight:700;letter-spacing:.02em;border-color:#3b5577!important}
+.svx-t thead tr:first-child th.lab{background:#0f1a2e!important;color:#fde68a!important}
+.svx-t thead tr:nth-child(2) th{background:#dbe3ee!important;color:var(--ink2)!important}
+.svx-t thead tr:nth-child(2) th input{color:var(--ink)}
+.svx-t tbody th.lab{background:#e8eef6!important;color:#0f1a2e!important;font-weight:600}
+.svx-t tr.gh td{background:#f59e0b!important;color:#1b2a41!important;font-weight:800;border-color:#d97706!important}
+.svx-t tr.gh svg.i{color:#1b2a41}
+.svx-t td{background:#fff}
+.svx-t tbody tr:hover td{background:#f8fafc}
+.svx-t input{color:#0f1a2e;font-weight:600}
+.svx-t input.has{background:#dcfce7!important;color:#14532d}
+.svx-t input:focus{background:#fffbeb!important;border-color:var(--amber)!important;box-shadow:0 0 0 2px rgba(245,158,11,.35)}
+.svx-gridwrap.full{background:#e8eef6}
+.svx-gridwrap.full .svx-fbar{background:var(--navy);margin:0 -14px 8px;padding:12px 14px;border-bottom:3px solid var(--amber)}
+.svx-gridwrap.full .svx-fbar .t b{color:#fff}.svx-gridwrap.full .svx-fbar .t small{color:#b8c7da}
+.svx-gridwrap.full .svx-fbar #svSaveF{background:var(--amber);border-color:var(--amber);color:var(--navy)}
+.svx-gridwrap.full .svx-fbar #svFull{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff}
+.svx-gridwrap.full .svx-tt{color:var(--navy);font-size:16px}
 .svx-savebar{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:4;padding:12px 0 6px;background:linear-gradient(to top,var(--bg) 65%,rgba(241,245,249,0))}
 .svx-savebar .savebig{margin-top:0;box-shadow:0 8px 22px rgba(27,42,65,.3)}
 @media(min-width:700px){.svx-savebar{bottom:0;padding-bottom:14px}}
