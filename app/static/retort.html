@@ -718,7 +718,7 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 .tabrow .ti{width:38px;height:38px;border-radius:11px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:var(--navy);flex:0 0 auto}
 .tabrow input[type=text]{min-height:42px;font-size:15px;padding:8px 10px;flex:1;min-width:0}
 .tabrow .mv{width:38px;min-height:38px;padding:0;flex:0 0 auto}.tabrow .mv:disabled{opacity:.3}
-.grow5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.grow5{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .grow5 input{min-height:44px;font-size:14.5px;padding:8px 6px;text-align:center}
 .grprow{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(0,190px);gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9}
 .grprow .gic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--gc)}
@@ -773,6 +773,116 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 .lgrp:first-of-type{margin-top:4px}.lgrp b{color:var(--navy)}.lgrp span{font-size:12.5px;color:var(--mute)}
 .lf-bot .seg button{white-space:nowrap;min-width:0}
 @media(max-width:560px){.lf-l{width:auto}.lf-row{flex-direction:column;align-items:stretch;gap:6px}.lf-grid{grid-template-columns:1fr 1fr}.lf-bot .seg{flex:1 1 100%;max-width:none}.lf-bot .seg button{font-size:13.5px;padding:4px 6px}.lf-bot #fReset{margin-left:auto}}
+/* ---------- ฟอร์มบันทึก 3 ขั้น: เลือกหม้อ → ปัญหา → รายละเอียด ---------- */
+.wz-steps{display:flex;align-items:center;gap:6px;margin:2px 0 12px}
+.wz-st{flex:0 0 auto;min-height:38px;padding:4px 13px 4px 4px;border-radius:99px;border:0;background:#fff;color:var(--mute);font-size:14px;font-weight:600;gap:7px;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+.wz-st:disabled{opacity:1;cursor:default}
+.wz-st .no{width:30px;height:30px;border-radius:50%;background:#e2e8f0;color:var(--ink2);display:flex;align-items:center;justify-content:center;font-size:13.5px}
+.wz-st .no svg.i{width:15px;height:15px;stroke-width:2.8}
+.wz-st.on{background:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(27,42,65,.25)}
+.wz-st.on .no{background:var(--amber);color:var(--navy)}
+.wz-st.done{color:var(--ok);background:#f0fdf4}
+.wz-st.done .no{background:var(--ok);color:#fff}
+.wz-ln{flex:1;min-width:6px;height:3px;border-radius:3px;background:#dbe2ea}
+.wz-ln.done{background:var(--ok)}
+@media(max-width:400px){.wz-st.done .tx{display:none}.wz-st.done{padding:4px}}
+.wz-ctx{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.wz-time,.wz-pill{min-height:44px;padding:6px 10px 6px 12px;border-radius:14px;background:#fff;border:1px solid var(--line);gap:9px;font-weight:500;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.wz-time>svg.i:first-child,.wz-pill>svg.i{color:var(--mute)}
+.wz-time .tt{display:flex;align-items:baseline;gap:6px}
+.wz-time .tt b{font-size:16px;font-weight:700;color:var(--navy)}
+.wz-time .tt small{font-size:13px;color:var(--mute)}
+.wz-time>svg.i:last-child{width:15px;height:15px;color:#94a3b8}
+.wz-time.on{border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,65,.1)}
+.wz-shift{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:#fef3c7;color:#92400e}
+.wz-shift.NS{background:var(--navy);color:#fde68a}
+.wz-pill{font-size:14.5px;color:var(--ink2);gap:6px}.wz-pill b{color:var(--navy)}
+.wz-timeed{margin-top:-4px}
+.wz-q{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 2px 12px}
+.wz-q h2{font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-.01em;margin:0}
+.wz-q h3{font-size:16px;font-weight:700;color:var(--ink2)}
+.wz-q.sm{margin-top:0}
+.wz-plants{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px 10px;scrollbar-width:none}
+.wz-plants::-webkit-scrollbar{display:none}
+.wz-plant{position:relative;flex:1 0 96px;min-height:66px;flex-direction:column;gap:0;border-radius:16px;background:#fff;border:1.5px solid var(--line);font-size:20px;font-weight:700;color:var(--navy);line-height:1.2;transition:background .15s,box-shadow .15s}
+.wz-plant small{font-size:12px;font-weight:500;color:var(--mute)}
+.wz-plant.on{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 6px 16px rgba(27,42,65,.25)}
+.wz-plant.on small{color:#cbd5e1}
+.wz-plant .dot{position:absolute;top:6px;right:8px;min-width:20px;height:20px;border-radius:99px;background:var(--bad);color:#fff;font-size:11.5px;font-weight:700;font-style:normal;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.wz-plant.add{flex:0 0 64px;border-style:dashed;border-color:#c5d0de;color:var(--mute);font-size:14px;background:transparent}
+.wz-plant.add svg.i{width:18px;height:18px}
+.wz-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 2px 10px;font-size:15px;font-weight:600;color:var(--ink2)}
+.wz-sub em{font-style:normal;font-size:12px;font-weight:700;color:var(--mute);background:#e2e8f0;border-radius:99px;padding:1px 8px;margin-left:4px}
+.wz-sub .ghost{color:var(--mute)}
+.wz-rets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+@media(min-width:520px){.wz-rets{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.wz-ret{flex-direction:column;gap:3px;min-height:80px;padding:8px 4px;border-radius:18px;background:#fff;border:1.5px solid var(--line);box-shadow:0 1px 2px rgba(15,23,42,.05);transition:transform .12s,border-color .15s,box-shadow .15s}
+.wz-ret b{font-size:21px;font-weight:700;color:var(--navy);letter-spacing:.01em;line-height:1.15}
+.wz-ret small{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mute);white-space:nowrap}
+.wz-ret small::before{content:"";width:7px;height:7px;border-radius:50%;background:#34d399;flex:0 0 auto}
+.wz-ret.hot{border-color:#fecaca;background:#fff7f7}
+.wz-ret.hot small{color:var(--bad);font-weight:600}.wz-ret.hot small::before{background:var(--bad)}
+.wz-ret.on{border-color:var(--amber);background:#fffbeb;box-shadow:0 0 0 3px rgba(245,158,11,.22)}
+.wz-cats{display:grid;gap:8px}
+@media(min-width:700px){.wz-cats{grid-template-columns:1fr 1fr}}
+.wz-cat{justify-content:flex-start;text-align:left;gap:12px;min-height:68px;padding:10px 12px;border-radius:18px;background:#fff;border:1.5px solid var(--line);font-weight:400;box-shadow:0 1px 2px rgba(15,23,42,.05);transition:transform .12s,border-color .15s}
+.wz-cat .gic{width:44px;height:44px;border-radius:13px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:var(--gc);background:color-mix(in srgb,var(--gc) 13%,#fff)}
+.wz-cat .gic svg.i{width:22px;height:22px}
+.wz-cat .nm{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.wz-cat .nm b{font-size:16.5px;font-weight:600;color:var(--ink)}
+.wz-cat .nm small{font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wz-cat .wk{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--bad);background:var(--badbg);border-radius:99px;padding:2px 9px;white-space:nowrap}
+.wz-cat>svg.i{color:#cbd5e1}
+.wz-cat.on{border-color:var(--gc);box-shadow:inset 4px 0 0 var(--gc)}
+@media(hover:hover){.wz-ret:hover,.wz-cat:hover{transform:translateY(-1px);border-color:var(--navy)}.wz-plant:not(.on):hover{border-color:var(--navy)}}
+.wz .addbar{position:static;box-shadow:none;margin-bottom:10px}
+.wz-hero{display:grid;grid-template-columns:auto minmax(0,1fr);border-radius:20px;overflow:hidden;background:linear-gradient(135deg,var(--navy),#2c4a72);color:#fff;margin-bottom:12px;box-shadow:0 8px 22px rgba(27,42,65,.22)}
+.wz-hero button{border:0;background:transparent;color:inherit;border-radius:0;min-height:0;text-align:left}
+.wz-hero-r{flex-direction:column;align-items:flex-start!important;justify-content:center!important;gap:0!important;padding:12px 18px!important;border-right:1px solid rgba(255,255,255,.14)!important}
+.wz-hero-r small{font-size:12px;color:#b8c7da}
+.wz-hero-r b{font-size:26px;font-weight:700;letter-spacing:.01em;line-height:1.1}
+.wz-hero-c{justify-content:flex-start!important;gap:12px!important;padding:12px 14px!important}
+.wz-hero-c .gic{width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.13);color:#fde68a;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.wz-hero-c .t{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.wz-hero-c small{font-size:12px;color:#b8c7da}
+.wz-hero-c b{font-size:16.5px;font-weight:600}
+.wz-hero-c>svg.i:last-child{color:#94a3b8;width:16px;height:16px}
+.wz-card{padding:16px}
+.wz-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.wz-h .n,.wz-more summary .n{width:34px;height:34px;border-radius:11px;background:#fef3c7;color:#92400e;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.wz-h .n svg.i,.wz-more summary .n svg.i{width:18px;height:18px}
+.wz-h h3,.wz-more summary h3{flex:1;font-size:16.5px;font-weight:700;color:var(--navy)}
+.wz-h h3 .req{color:var(--bad)}
+.wz-h>small{font-size:12.5px;color:var(--mute);text-align:right}
+.wz-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.wz-chips .chip{min-height:40px;padding:6px 14px;border-radius:99px;font-size:14.5px;background:#fff;transition:background .15s,border-color .15s}
+.wz-chips .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.wz-cadd{margin-top:6px;color:var(--acc2);font-weight:600}
+.wz-sublab{display:block;font-size:13.5px;font-weight:600;color:var(--ink2);margin:14px 0 6px 2px}
+.wz-impact button{gap:6px}.wz-impact button svg.i{width:16px;height:16px}
+.wz-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.wz-photos .ph{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:#e2e8f0}
+.wz-photos .ph img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.wz-photos .phx{position:absolute;top:5px;right:5px;width:28px;height:28px;min-height:0;padding:0;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff}
+.wz-photos .phx svg.i{width:15px;height:15px}
+.wz-cam,.wz-gal{aspect-ratio:1;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:13.5px;font-weight:600;transition:transform .12s}
+.wz-cam:active,.wz-gal:active{transform:scale(.96)}
+.wz-cam{background:linear-gradient(135deg,var(--navy),#2c4a72);color:#fff;box-shadow:0 4px 12px rgba(27,42,65,.22)}
+.wz-cam svg.i{width:28px;height:28px;color:var(--amber)}
+.wz-gal{border:1.5px dashed #b6c3d6;color:var(--ink2);background:var(--field)}
+.wz-gal svg.i{width:24px;height:24px;color:var(--mute)}
+.wz-more{padding:0}
+.wz-more summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;border-radius:var(--r)}
+.wz-more summary::-webkit-details-marker{display:none}
+.wz-more summary .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.wz-more summary small{font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wz-more summary>svg.i{color:var(--mute);transition:transform .2s}
+.wz-more[open] summary>svg.i{transform:rotate(180deg)}
+.wz-more .body{padding:0 16px 16px}
+.wz-card .lab{font-size:13.5px;font-weight:600;color:var(--ink2)}
+.wz-savebar{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:4;padding:12px 0 6px;margin-top:4px;background:linear-gradient(to top,var(--bg) 65%,rgba(241,245,249,0))}
+.wz-savebar .savebig{margin-top:0;box-shadow:0 8px 22px rgba(27,42,65,.3)}
+@media(min-width:700px){.wz-savebar{bottom:0;padding-bottom:14px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -900,7 +1010,7 @@ const UI_DEFAULT = {
     { k: "progs", label: "โปรแกรม", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
   defaultTab: "log",
   dsStart: "07:00", dsEnd: "17:30",
-  steps: ["เวลา", "พื้นที่", "หม้อ", "ปัญหา", "สาเหตุ"],
+  steps: ["เลือกหม้อ", "ปัญหา", "รายละเอียด"],
   form: { photo: true, action: true, impact: true, program: true, more: true, todaybar: true, recent: true, maxPhotos: 8 },
   dash: { insight: true, trend: true, groups: true, hours: true, heat: true, more: true, days: 14 },
   groups: {}, aiQuick: null
@@ -919,13 +1029,14 @@ function uiCfg(raw) {
   tabs = tabs.map(t => { const d = D.tabs.find(x => x.k === t.k); return { k: t.k, label: str(t.label, d.label, 20), show: t.k === "ui" || bool(t.show, true) }; });
   let dsStart = hm(c.dsStart, D.dsStart), dsEnd = hm(c.dsEnd, D.dsEnd); if (hmMin(dsStart) >= hmMin(dsEnd)) { dsStart = D.dsStart; dsEnd = D.dsEnd; }
   const f = c.form || {}, ds = c.dash || {}, groups = {};
+  const wsteps = D.steps.map((s, i) => str((c.wsteps || [])[i], s, 16));  // ชื่อขั้นตอนฟอร์มบันทึก 3 ขั้น (ค่าเดิม c.steps เป็นแบบ 5 ขั้น ไม่ใช้แล้ว)
   Object.keys(GROUPS_DEFAULT).forEach(g => { const o = (c.groups || {})[g] || {}, d = GROUPS_DEFAULT[g];
     groups[g] = { name: str(o.name, d.name, 40), color: hex(o.color, d.color), icon: GROUP_ICONS.includes(o.icon) ? o.icon : d.icon }; });
   return {
     brand: str(c.brand, D.brand, 60), title: str(c.title, D.title, 60), subtitle: str(c.subtitle, D.subtitle, 80), stamp: str(c.stamp, D.stamp, 60),
     navy: hex(c.navy, D.navy), amber: hex(c.amber, D.amber), scale: Math.min(130, Math.max(85, parseInt(c.scale, 10) || 100)),
     tabs, defaultTab: tabs.some(t => t.k === c.defaultTab && t.show) ? c.defaultTab : tabs.find(t => t.show).k,
-    dsStart, dsEnd, steps: D.steps.map((s, i) => str((c.steps || [])[i], s, 16)),
+    dsStart, dsEnd, steps: wsteps, wsteps,
     form: Object.fromEntries(Object.entries(D.form).map(([k, v]) => [k, k === "maxPhotos" ? Math.min(8, Math.max(1, parseInt(f[k], 10) || v)) : bool(f[k], v)])),
     dash: Object.fromEntries(Object.entries(D.dash).map(([k, v]) => [k, k === "days" ? ([7, 14, 30, 90].includes(+ds[k]) ? +ds[k] : v) : bool(ds[k], v)])),
     groups, aiQuick: Array.isArray(c.aiQuick) ? c.aiQuick.map(q => str(q, "", 200)).filter(Boolean).slice(0, 12) : null
@@ -1085,7 +1196,7 @@ function getName() { try { const v = localStorage.getItem("pc_inspector"); if (v
 function setName(n) { n = (n || "").trim().slice(0, 60); try { localStorage.setItem("pc_inspector", n); } catch {} document.cookie = `pc_name=${encodeURIComponent(n)}; max-age=${60*60*24*400}; path=/; samesite=lax`; }
 const S = {
   user: getName(),
-  view: lsGet("rt_view", ""), viewAuto: !lsGet("rt_view", ""),
+  view: "log", viewAuto: false,  // เปิดหน้านี้ใหม่ทุกครั้ง เริ่มที่แท็บ บันทึก เสมอ (ถ้าแท็บบันทึกถูกซ่อน ใช้แท็บหน้าแรกจากการตั้งค่า)
   items: {}, config: migrate(null)[0],
   pin: "", canAdmin: false, loaded: false,
   draft: null, editingId: null,
@@ -1179,6 +1290,8 @@ let animKey = "";
 function markAnim(k) { $("#main").classList.toggle("anim", k !== animKey); animKey = k; }
 $("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
 $("#userBtn").onclick = () => askName(false);
+// กลับเข้าหน้านี้จากปุ่มย้อนกลับ (เบราว์เซอร์คืนหน้าเดิมจากแคช) ก็ให้กลับมาที่แท็บ บันทึก เหมือนเปิดใหม่
+addEventListener("pageshow", e => { if (e.persisted && S.view !== "log") { S.view = "log"; S.justSaved = null; render(); window.scrollTo(0, 0); } });
 document.addEventListener("pointerdown", () => { S.viewAuto = false; }, true);
 
 /* ---------- log form ---------- */
@@ -1192,18 +1305,23 @@ function retortList() {
   return [...new Set([...fromCfg, ...Object.keys(seen)])].sort(byRetort).slice(0, 40);
 }
 function stepHead(d) {
-  const cat = catById(d.category); const st = S.step;
-  const vals = [`${d.time} ${d.shift}`, d.plant, d.retort, cat ? cat.name : "", ""];
-  return `<div class="steps">${U.steps.map((l, i) => { const k = i + 1; const v = vals[i]; const cls = k === st ? "on" : k < st ? "done" : "";
-    return `<button class="st ${cls}" ${k < st ? `data-step="${k}"` : "disabled"}><span class="no">${k < st ? I("check") : k}</span><span class="tx"><small>${l}</small>${k < st && v ? `<b>${esc(v)}</b>` : ""}</span></button>`; }).join("")}</div>
-    <div class="stepbar" aria-hidden="true"><i style="width:${Math.round(st / U.steps.length * 100)}%"></i></div>`;
+  const st = S.step, n = U.steps.length;
+  return `<div class="wz-steps">${U.steps.map((l, i) => { const k = i + 1, cls = k === st ? "on" : k < st ? "done" : "";
+    return `<button class="wz-st ${cls}" ${k < st ? `data-step="${k}"` : "disabled"}><span class="no">${k < st ? I("check") : k}</span><span class="tx">${esc(l)}</span></button>${k < n ? `<span class="wz-ln ${k < st ? "done" : ""}"></span>` : ""}`; }).join("")}</div>`;
+}
+/* แถบเวลา: เวลา/กะ ใส่ให้อัตโนมัติ แตะเพื่อแก้ (ไม่ต้องมีหน้าแยก) */
+function ctxBar(d) {
+  return `<div class="wz-ctx">
+    <button class="wz-time ${S.timeEdit ? "on" : ""}" id="timeTog" aria-expanded="${S.timeEdit ? "true" : "false"}">${I("clock")}<span class="tt"><b id="tcTime">${esc(d.time)} น.</b><small id="tcDate">${dmy(d.date)}</small></span><span class="wz-shift ${d.shift}" id="shiftBig">กะ ${d.shift}</span>${I(S.timeEdit ? "up" : "pen")}</button>
+    ${S.step === 2 && d.retort ? `<button class="wz-pill" data-step="1">${I("factory")}${esc(d.plant)} · <b>${esc(d.retort)}</b></button>` : ""}</div>
+    ${S.timeEdit ? `<div class="card wz-timeed"><div class="grid">
+        <label class="f"><span class="lab">วันที่</span><input type="date" data-k="date" value="${d.date}"></label>
+        <label class="f"><span class="lab">เวลา</span><input type="time" data-k="time" value="${d.time}"></label></div>
+      <div class="row sp" style="margin-top:10px;flex-wrap:wrap"><small class="hint" style="margin:0">กะคำนวณจากเวลาอัตโนมัติ · ${shiftHint()}</small><button class="ghost sm" id="nowBtn">${I("clock")}ใช้เวลาปัจจุบัน</button></div>
+      <button class="soft blk" id="timeDone" style="margin-top:10px">${I("check")}เสร็จ</button></div>` : ""}`;
 }
 const photoUrl = f => "/api/retort/photo/" + encodeURIComponent(f);
 const thumbUrl = f => photoUrl(f) + "?w=1";  // รูปย่อ (เร็วกว่ารูปเต็มหลายเท่า) · กดดูรูปใหญ่ยังเป็นรูปเต็ม
-function catHead(d, changeStep) {
-  const cat = catById(d.category); if (!cat) return ""; const G = grpOf(cat);
-  return `<div class="catsel" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><div><small>${dmy(d.date)} ${esc(d.time)} กะ ${d.shift} · ${esc(d.plant)} · ${esc(d.retort)}</small><b>${esc(cat.name)}</b></div><button class="ghost sm" ${changeStep}>เปลี่ยน</button></div>`;
-}
 /* ---------- เพิ่ม/ลบ พื้นที่ · หม้อ · หัวข้อปัญหา (ลบต้องใส่รหัสผ่านผู้ดูแล) ---------- */
 const MG_LABEL = { plant: "พื้นที่ (Plant)", retort: "หม้อ", category: "หัวข้อปัญหา" };
 const qHead = (title, kind) => `<div class="qrow"><h2 class="q">${title}</h2><button class="ghost sm mgbtn ${S.mg === kind ? "on" : ""}" data-mg="${S.mg === kind ? "" : kind}">${I(S.mg === kind ? "check" : "pen")}${S.mg === kind ? "เสร็จ" : "เพิ่ม/ลบ"}</button></div>`;
@@ -1252,17 +1370,16 @@ function askDelete(kind, key, after) {
   });
 }
 function viewLog() {
-  if (!S.draft) { S.draft = newDraft(); S.step = 1; S.more = false; S.catPick = true; }
+  if (!S.draft) { S.draft = newDraft(); S.step = 1; S.more = false; S.timeEdit = false; S.mg = ""; }
   if (S.justSaved) return viewSaved();
   const d = S.draft; d.photos = d.photos || [];
-  if (S.step === 4 && !S.catPick && catById(d.category) && !U.form.photo) S.step = 5;  // ปิดขั้นถ่ายรูปไว้ในแท็บ ปรับแต่ง
   const cats = S.config.categories.filter(c => c.active || c.id === d.category); const cat = catById(d.category);
+  if (S.step >= 3 && !cat) S.step = d.retort ? 2 : 1;
+  if (S.step === 2 && !d.retort) S.step = 1;
   const editing = !!S.editingId;
   let h = editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไขรายการที่บันทึกไว้ <button class="ghost sm" id="cancelEdit">ยกเลิก</button></div></div>` : "";
-  h += stepHead(d);
+  h += stepHead(d) + ctxBar(d);
   const all = Object.values(S.items), t0 = todayISO(), w0 = addDays(t0, -6);
-  const stat = f => { const L = all.filter(f); return { today: L.filter(x => x.date === t0).length, week: L.filter(x => x.date >= w0 && x.date <= t0).length }; };
-  const badge = st => `<span class="zbadge ${st.today ? "ng" : "ok"}">${st.today ? `วันนี้พบปัญหา ${st.today} ครั้ง` : "วันนี้ยังไม่มีปัญหา ✓"}</span><span class="zsub2">7 วัน ${st.week} ครั้ง</span>`;
   const last = lsGet("rt_last", {}) || {};
   const wide = matchMedia("(min-width:1000px)").matches;
   if (S.step === 1 && !wide && !editing && all.length && U.form.todaybar) {
@@ -1270,71 +1387,81 @@ function viewLog() {
     h += `<div class="todaybar"><div class="${nT ? "bad" : "ok"}"><b>${nT}</b><span>ปัญหาวันนี้</span></div><div><b>${nW}</b><span>7 วันล่าสุด</span></div><div class="${nA ? "warn" : "ok"}"><b>${nA}</b><span>รออนุมัติ</span></div></div>`;
   }
   if (S.step === 1) {
-    h += `<h2 class="q">เวลาบันทึก</h2>
-      <div class="card timecard">
-        <div class="tc-top"><div><div class="tc-date">${thDate(d.date)}</div><div class="tc-time" id="tcTime">${esc(d.time)} น.</div></div>
-          <div class="shiftbig ${d.shift}" id="shiftBig"><small>กะ</small><b>${d.shift}</b></div></div>
-        <div class="grid" style="margin-top:14px">
-          <label class="f"><span class="lab">วันที่</span><input type="date" data-k="date" value="${d.date}"></label>
-          <label class="f"><span class="lab">เวลา</span><input type="time" data-k="time" value="${d.time}"></label></div>
-        <div class="row sp" style="margin-top:10px;flex-wrap:wrap"><small class="hint" style="margin:0">กะคำนวณจากเวลาอัตโนมัติ · ${shiftHint()}</small><button class="ghost sm" id="nowBtn">${I("clock")}ใช้เวลาปัจจุบัน</button></div>
-      </div>
-      <button class="pri blk savebig" id="timeOk">ถัดไป${I("right")}</button>`;
+    const pls = plantsList();
+    if (!d.plant && pls.length) d.plant = pls.includes(last.plant) ? last.plant : pls[0];
+    const plants = pls.includes(d.plant) || !d.plant ? pls : [...pls, d.plant];
+    const nToday = f => all.filter(x => x.date === t0 && f(x)).length, nWeek = f => all.filter(x => x.date >= w0 && x.date <= t0 && f(x)).length;
+    h += `<div class="wz-q"><h2>เลือกพื้นที่และหม้อ</h2></div>`;
+    if (S.mg === "plant" || S.mg === "retort") {
+      h += `<div class="wz-q sm"><h3>${S.mg === "plant" ? "เพิ่ม/ลบ พื้นที่" : `เพิ่ม/ลบ หม้อใน ${esc(d.plant)}`}</h3><button class="ghost sm mgbtn on" data-mg="">${I("check")}เสร็จ</button></div>` + mgPanel(S.mg, d);
+    } else {
+      const rl = plantRetorts(d.plant);
+      h += `<div class="wz-plants" role="tablist">${plants.map(pl => { const n = nToday(x => x.plant === pl);
+          return `<button class="wz-plant ${d.plant === pl ? "on" : ""}" data-plant="${esc(pl)}" role="tab" aria-selected="${d.plant === pl}">${esc(pl)}<small>${plantRetorts(pl).length} หม้อ</small>${n ? `<i class="dot" title="วันนี้พบปัญหา ${n} ครั้ง">${n}</i>` : ""}</button>`; }).join("")}
+          <button class="wz-plant add" data-mg="plant" aria-label="เพิ่ม/ลบ พื้นที่">${I("pen")}<small>แก้ไข</small></button></div>
+        <div class="wz-sec">
+          <div class="wz-sub"><span>หม้อใน ${esc(d.plant)} <em>${rl.length}</em></span><button class="ghost sm" data-mg="retort">${I("pen")}เพิ่ม/ลบ</button></div>
+          ${rl.length > 8 ? pickBar("retort", `ค้นหาหม้อ หรือพิมพ์ชื่อใหม่ เช่น ${d.plant === "PF2" ? "RC22" : "RP22"}`) : ""}
+          <div class="wz-rets">${rl.map(r => { const nt = nToday(x => x.retort === r), nw = nWeek(x => x.retort === r);
+            return `<button class="wz-ret ${d.retort === r ? "on" : ""} ${nt ? "hot" : ""}" data-retort="${esc(r)}" data-s="${esc(r.toLowerCase())}"><b>${esc(r)}</b><small>${nt ? `วันนี้ ${nt} ครั้ง` : nw ? `7 วัน ${nw} ครั้ง` : "ปกติ"}</small></button>`; }).join("")}</div>
+          ${rl.length ? "" : `<p class="sub">ยังไม่มีหม้อในพื้นที่นี้ · กด เพิ่ม/ลบ เพื่อเพิ่มหม้อ</p>`}
+        </div>`;
+    }
   } else if (S.step === 2) {
-    h += qHead(`เลือกพื้นที่`, "plant") + (S.mg === "plant" ? mgPanel("plant", d) : `${pickBar("plant", "ค้นหาพื้นที่ · พิมพ์ชื่อใหม่แล้วกด เพิ่ม เช่น PF3")}<div class="zcards two">${plantsList().map(pl => { const rs = plantRetorts(pl);
-      return `<button class="zc big2 ${d.plant === pl ? "on" : ""}" data-plant="${esc(pl)}" data-s="${esc(pl.toLowerCase())}"><b>${esc(pl)}<span class="gtag">${rs.length} หม้อ</span></b>
-        <span class="zrow">${badge(stat(x => x.plant === pl))}${last.plant === pl ? `<span class="zsub2">· ล่าสุด</span>` : ""}</span>${I("right")}</button>`; }).join("")}</div>`);
-  } else if (S.step === 3) {
-    const rl = plantRetorts(d.plant);
-    h += qHead(`${esc(d.plant)} · เลือกหม้อ <span class="sub" style="font-weight:400">${rl.length} หม้อ</span>`, "retort") + (S.mg === "retort" ? mgPanel("retort", d) : `
-      ${pickBar("retort", `ค้นหาหม้อ · พิมพ์หม้อใหม่แล้วกด เพิ่ม เช่น ${d.plant === "PF2" ? "RC22" : "RP22"}`)}
-      <div class="zcards">${rl.map(r => { const n = progsFor(r).length;
-      return `<button class="zc ${d.retort === r ? "on" : ""}" data-retort="${esc(r)}" data-s="${esc(r.toLowerCase())}"><b>${esc(r)}</b><span class="zs">${n ? `${n} โปรแกรม` : "ยังไม่มีตารางโปรแกรม"}</span><span class="zrow">${badge(stat(x => x.retort === r))}</span>${I("right")}</button>`; }).join("")}</div>`);
-  } else if (S.step === 4 && (S.catPick || !cat)) {
     const wk = {}; all.filter(x => x.date >= w0 && x.date <= t0 && x.retort === d.retort).forEach(x => wk[x.category] = (wk[x.category] || 0) + 1);
-    h += qHead(`${esc(d.retort)} · เกิดปัญหาอะไร? <span class="sub" style="font-weight:400">${cats.length} หัวข้อ</span>`, "category") + (S.mg === "category" ? mgPanel("category", d) : `
-      ${pickBar("category", "ค้นหาปัญหา เช่น cooling, กราฟ, สตีม, ไฟฟ้า")}
-      <div class="biglist catlist">${cats.map((c, i) => { const G = grpOf(c); const nc = (c.causes || []).length;
-        return `<button class="big cat ${d.category === c.id ? "on" : ""}" data-cat="${c.id}" data-s="${esc((i + 1) + " " + c.name + " " + (c.causes || []).join(" ") + " " + G.name).toLowerCase()}" data-n="${esc(c.name.toLowerCase())}" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><span class="nm"><span class="cn"><em>${i + 1}</em>${esc(c.name)}</span><small>${nc ? esc(c.causes.join(" · ")) : esc(G.name)}</small></span>${wk[c.id] ? `<span class="wk" title="หม้อนี้ 7 วันล่าสุด">${wk[c.id]}</span>` : ""}${I("right")}</button>`; }).join("")}</div>
-      ${cats.length ? "" : `<p class="sub">ยังไม่มีหัวข้อ เพิ่มได้ที่ช่องค้นหาด้านบน</p>`}`);
-  } else if (S.step === 4) {
-    h += catHead(d, `id="catChange"`) + `<h2 class="q">ถ่ายรูปปัญหา <span class="sub" style="font-weight:400">${d.photos.length ? `${d.photos.length} รูป` : "รูปจะมีเวลาประทับอัตโนมัติ"}</span></h2>
-      <div class="card">
-        <label class="camBtn" id="camLbl"><input type="file" accept="image/*" capture="environment" id="camIn" hidden>${I("camera")}<span><b>เปิดกล้องถ่ายรูป</b><small>ประทับ ${esc(U.stamp)} · วันที่ เวลา กะ</small></span></label>
-        <label class="ghost sm galBtn"><input type="file" accept="image/*" id="galIn" multiple hidden>${I("image")}เลือกจากคลังรูป</label>
-        <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
+    h += `<div class="wz-q"><h2>เกิดปัญหาอะไร?</h2><button class="ghost sm mgbtn ${S.mg === "category" ? "on" : ""}" data-mg="${S.mg === "category" ? "" : "category"}">${I(S.mg === "category" ? "check" : "pen")}${S.mg === "category" ? "เสร็จ" : "เพิ่ม/ลบ"}</button></div>`;
+    h += S.mg === "category" ? mgPanel("category", d) : `<div class="wz-sec">${pickBar("category", "ค้นหาปัญหา เช่น cooling, กราฟ, สตีม")}
+      <div class="wz-cats">${cats.map((c, i) => { const G = grpOf(c);
+        return `<button class="wz-cat ${d.category === c.id ? "on" : ""}" data-cat="${c.id}" data-s="${esc((i + 1) + " " + c.name + " " + (c.causes || []).join(" ") + " " + G.name).toLowerCase()}" data-n="${esc(c.name.toLowerCase())}" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><span class="nm"><b>${esc(c.name)}</b><small>${esc(G.name)}</small></span>${wk[c.id] ? `<span class="wk" title="หม้อนี้ 7 วันล่าสุด">7 วัน ${wk[c.id]}</span>` : ""}${I("right")}</button>`; }).join("")}</div>
+      ${cats.length ? "" : `<p class="sub">ยังไม่มีหัวข้อ · พิมพ์ชื่อในช่องค้นหาแล้วกด เพิ่ม</p>`}</div>`;
+  } else {
+    const G = grpOf(cat), progs = progsFor(d.retort), sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
+    const curCause = d.cause === "__other" ? d.causeOther : (d.cause || "");
+    const causes = [...(cat.causes || []), UNKNOWN];
+    h += `<div class="wz-hero" style="--gc:${G.color}">
+        <button class="wz-hero-r" data-step="1"><small>${esc(d.plant)}</small><b>${esc(d.retort)}</b></button>
+        <button class="wz-hero-c" data-step="2"><span class="gic">${I(G.icon)}</span><span class="t"><small>${esc(G.name)}</small><b>${esc(cat.name)}</b></span>${I("pen")}</button></div>`;
+    h += `<div class="card wz-card"><div class="wz-h"><span class="n">${I("target")}</span><h3>สาเหตุ <span class="req">*</span></h3></div>
+        <div class="wz-chips">${causes.map(c => `<button class="chip ${curCause === c ? "on" : ""}" data-sug="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+        <textarea id="causeIn" rows="2" placeholder="แตะเลือกด้านบน หรือพิมพ์สาเหตุเอง">${esc(curCause)}</textarea>
+        <div id="causeAddW">${causeAddBtn(curCause, causes)}</div></div>`;
+    if (U.form.photo) {
+      const full = d.photos.length >= U.form.maxPhotos;
+      h += `<div class="card wz-card"><div class="wz-h"><span class="n">${I("camera")}</span><h3>รูปถ่าย</h3><small>${d.photos.length}/${U.form.maxPhotos}</small></div>
+        <div class="wz-photos" id="photos">
+          ${full ? "" : `<label class="wz-cam" id="camLbl"><input type="file" accept="image/*" capture="environment" id="camIn" hidden>${I("camera")}<span>ถ่ายรูป</span></label>
+          <label class="wz-gal"><input type="file" accept="image/*" id="galIn" multiple hidden>${I("image")}<span>คลังรูป</span></label>`}
+          ${d.photos.map((f, i) => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
         <div id="upState" class="sub"></div>
         ${(() => { const pts = d.photos.map(f => (d.ptimes || {})[f]).filter(Boolean); if (!pts.length) return "";
-          const t0 = Math.min(...pts), at = new Date(t0), hm = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
+          const tp = Math.min(...pts), at = new Date(tp), hm = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
           if (Math.abs(at - new Date(`${d.date}T${d.time}:00`)) <= 10 * 60e3) return "";
-          return `<div class="ptime">${I("clock")}<div>รูปถ่ายเมื่อ <b>${dmy(iso(at))} ${hm} น.</b> (กะ ${shiftOf(hm)}) · เวลาที่บันทึกไว้ ${dmy(d.date)} ${esc(d.time)} น.</div><button class="soft sm" id="usePt" data-t="${t0}">ใช้เวลาจากรูป</button></div>`; })()}
-      </div>
-      <button class="pri blk savebig" id="photoOk">${d.photos.length ? "ถัดไป" : "ถัดไป (ไม่ถ่ายรูป)"}${I("right")}</button>`;
-  } else {
-    const progs = progsFor(d.retort); const sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
-    const curCause = d.cause === "__other" ? d.causeOther : (d.cause || "");
-    h += catHead(d, `data-step="4"`) + `${d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
-      ${U.form.more ? `<div class="card detcard">${sec("list", "รายละเอียด", "ระยะเวลา · สินค้า · Batch")}<div class="grid">
-        ${(cat.fields || []).map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
-        <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}"></label>
-        <label class="f"><span class="lab">สินค้า</span><input data-k="product" value="${esc(d.product)}"></label>
-        <label class="f"><span class="lab">Batch</span><input data-k="batch" value="${esc(d.batch)}"></label>
-        <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail" rows="2">${esc(d.detail)}</textarea></label>
-      </div></div>` : ""}
-      <div class="card formcard">
-        <label class="f"><span class="lab">สาเหตุ <span class="req">*</span></span><textarea id="causeIn" rows="2" placeholder="กรอกสาเหตุของปัญหา">${esc(curCause)}</textarea></label>
-        <div style="margin-top:10px">${pickBar("cause", "ค้นหาสาเหตุ หรือเพิ่มสาเหตุใหม่เข้ารายการ")}</div>
-        <div class="sugg">${[...(cat.causes || []), UNKNOWN].map(c => `<button class="chip ${curCause === c ? "on" : ""}" data-sug="${esc(c)}" data-s="${esc(c.toLowerCase())}">${esc(c)}</button>`).join("")}</div>
-        ${U.form.action ? `<label class="f" style="margin-top:14px"><span class="lab">การแก้ไข</span><textarea data-k="action" rows="3" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(d.action)}</textarea></label>` : ""}
-        ${U.form.impact ? `<div style="margin-top:14px"><span class="lab">ผลต่อสินค้า</span><div class="seg"><button data-impact="none" class="${d.impact === "none" ? "on" : ""}">ไม่กระทบสินค้า</button><button data-impact="hold" class="${d.impact === "hold" ? "on warnc" : ""}">Hold สินค้า</button></div></div>` : ""}
-        ${U.form.program ? `<label class="f" style="margin-top:14px"><span class="lab">โปรแกรมที่ใช้ (ถ้ามี)</span>
+          return `<div class="ptime">${I("clock")}<div>รูปถ่ายเมื่อ <b>${dmy(iso(at))} ${hm} น.</b> (กะ ${shiftOf(hm)}) · เวลาที่บันทึกไว้ ${dmy(d.date)} ${esc(d.time)} น.</div><button class="soft sm" id="usePt" data-t="${tp}">ใช้เวลาจากรูป</button></div>`; })()}
+        <small class="hint">ประทับ ${esc(U.stamp)} · วันที่ เวลา กะ ลงบนรูปอัตโนมัติ</small></div>`;
+    }
+    if (U.form.action || U.form.impact) {
+      h += `<div class="card wz-card"><div class="wz-h"><span class="n">${I("tool")}</span><h3>${U.form.action ? "การแก้ไข" : "ผลต่อสินค้า"}</h3></div>
+        ${U.form.action ? `<textarea data-k="action" rows="2" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(d.action)}</textarea>` : ""}
+        ${U.form.impact ? `${U.form.action ? `<span class="wz-sublab">ผลต่อสินค้า</span>` : ""}<div class="seg wz-impact"><button data-impact="none" class="${d.impact === "none" ? "on" : ""}">${I("check")}ไม่กระทบสินค้า</button><button data-impact="hold" class="${d.impact === "hold" ? "on warnc" : ""}">${I("alert")}Hold สินค้า</button></div>` : ""}</div>`;
+    }
+    if (U.form.more || U.form.program) {
+      const filled = [d.duration && `${d.duration} นาที`, d.product, d.batch && `Batch ${d.batch}`, d.program && `โปรแกรม ${d.program}`, ...(cat.fields || []).map(fl => d.values[fl.key] ? `${fl.label} ${d.values[fl.key]}` : "")].filter(Boolean);
+      const open = S.more || editing || filled.length || d.detail;
+      h += `<details class="card wz-card wz-more" ${open ? "open" : ""}><summary><span class="n">${I("list")}</span><span class="t"><h3>ข้อมูลเพิ่มเติม</h3><small>${esc(filled.join(" · ") || [U.form.more && "ระยะเวลา · สินค้า · Batch", U.form.program && "โปรแกรม"].filter(Boolean).join(" · "))}</small></span>${I("down")}</summary>
+        <div class="body"><div class="grid">
+        ${U.form.more ? `${(cat.fields || []).map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
+          <label class="f"><span class="lab">นานกี่นาที</span><input inputmode="decimal" data-k="duration" value="${esc(d.duration)}" placeholder="นาที"></label>
+          <label class="f"><span class="lab">Batch</span><input data-k="batch" value="${esc(d.batch)}"></label>
+          <label class="f full"><span class="lab">สินค้า</span><input data-k="product" value="${esc(d.product)}"></label>` : ""}
+        ${U.form.program ? `<label class="f full"><span class="lab">โปรแกรมที่ใช้</span>
           <div class="row"><select id="progSel"><option value="">ไม่ระบุ</option>${progs.map(p => `<option value="${esc(progKey(p))}" ${sel && progKey(sel) === progKey(p) ? "selected" : ""}>โปรแกรม ${esc(p.no)}${progs.filter(x => x.no === p.no).length > 1 ? ` (${esc(p.doc)})` : ""}${p.note ? " · " + esc(p.note.replace(/^โปรแกรม \S+ /, "")) : ""}</option>`).join("")}</select>${sel ? `<button class="soft sm" id="progSpec" style="flex:0 0 auto">ดูค่าควบคุม</button>` : ""}</div></label>` : ""}
-      </div>
-      <div class="card signcard"><span class="lab">ลงนามผู้บันทึก <span class="req">*</span></span>
-        <input id="signIn" data-k="by" value="${esc(d.by || S.user)}" placeholder="ชื่อผู้บันทึก" autocomplete="off">
-        <div class="signline"><span>(${esc(d.by || S.user || "................")})</span><small>วันที่ ${dmy(d.date)} เวลา ${esc(d.time)} น. กะ ${d.shift}</small></div></div>
+        ${U.form.more ? `<label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail" rows="2">${esc(d.detail)}</textarea></label>` : ""}
+        </div></div></details>`;
+    }
+    h += `<div class="card wz-card wz-sign"><div class="wz-h"><span class="n">${I("user")}</span><h3>ผู้บันทึก <span class="req">*</span></h3><small>${dmy(d.date)} ${esc(d.time)} น. · กะ ${d.shift}</small></div>
+        <input id="signIn" data-k="by" value="${esc(d.by || S.user)}" placeholder="ชื่อผู้บันทึก" autocomplete="off"></div>
       <div id="formErr"></div>
-      <button class="pri blk savebig" id="saveBtn">${I("check")}${editing ? "บันทึกการแก้ไข" : "บันทึก"}</button>`;
+      <div class="wz-savebar"><button class="pri blk savebig" id="saveBtn">${I("check")}${editing ? "บันทึกการแก้ไข" : "บันทึก"}</button></div>`;
   }
   if (wide) {
     const t = todayISO(), w7 = addDays(t, -6);
@@ -1348,15 +1475,24 @@ function viewLog() {
         <div class="mini7">${d7.map(([d, v]) => `<div class="${d === t ? "td" : ""}" title="${thLong(d)} · ${v} ครั้ง"><b>${v || ""}</b><span class="bw"><span class="${v ? "on" : ""}" style="height:${v ? Math.max(8, v / mx7 * 100) : 0}%"></span></span><small>${TH_DOW[new Date(d + "T00:00:00").getDay()]}</small></div>`).join("")}</div>
         ${topW ? `<div class="sub">เกิดบ่อยสุดใน 7 วัน: <b style="color:var(--ink)">${esc(catById(topW[0])?.name || "-")}</b> (${topW[1]} ครั้ง)</div>` : `<div class="sub">7 วันล่าสุดยังไม่มีปัญหา</div>`}</div>
       ${U.form.recent ? `<div class="card">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.length ? recent.map(itemRow).join("") : `<p class="sub">ยังไม่มีบันทึก</p>`}</div>` : ""}`;
-    h = `<div class="logL">${h}</div><aside class="logR">${side}</aside>`;
-  } else if (S.step <= 2 && !editing) {
-    const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
-    if (recent.length && U.form.recent) h += `<div class="card" style="margin-top:18px">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.map(itemRow).join("")}</div>`;
+    h = `<div class="logL wz">${h}</div><aside class="logR">${side}</aside>`;
+  } else {
+    if (S.step === 1 && !editing && !S.mg) {
+      const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
+      if (recent.length && U.form.recent) h += `<div class="card" style="margin-top:18px">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.map(itemRow).join("")}</div>`;
+    }
+    h = `<div class="wz">${h}</div>`;
   }
   $("#main").classList.toggle("split", wide);
-  markAnim("log" + S.step + (S.catPick ? "c" : "") + (editing ? "e" : ""));
+  markAnim("log" + S.step + (S.mg || "") + (editing ? "e" : ""));
   $("#main").innerHTML = h;
   wireLog();
+}
+/* สาเหตุที่พิมพ์เอง (ยังไม่อยู่ในรายการ) → ปุ่มเพิ่มเข้ารายการของหัวข้อนี้ */
+function causeAddBtn(v, causes) {
+  v = String(v || "").replace(/\s+/g, " ").trim();
+  if (!v || causes.some(c => c.toLowerCase() === v.toLowerCase())) return "";
+  return `<button class="ghost sm wz-cadd" id="causeAdd">${I("plus")}เพิ่ม "${esc(v.length > 30 ? v.slice(0, 30) + "…" : v)}" เข้ารายการสาเหตุ</button>`;
 }
 function viewSaved() {
   const x = S.justSaved; const c = catById(x.category);
@@ -1472,7 +1608,7 @@ async function addPhotos(files, fromCamera) {
       if (pt.src !== "now") toast(`ประทับเวลาถ่ายจริง ${dmy(iso(pt.at))} ${pad(pt.at.getHours())}:${pad(pt.at.getMinutes())} น.`);
     } catch (e) { toast("อัปโหลดรูปไม่สำเร็จ: " + e.message); }
   }
-  if (S.view === "log" && S.step === 4) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
+  if (S.view === "log" && S.step === 3) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
 }
 function zoomPhoto(f) { modal(`<img src="${photoUrl(f)}" alt="" style="width:100%;border-radius:12px;display:block"><button class="blk" data-close style="margin-top:12px">ปิด</button>`); }
 function pickBar(kind, ph) {
@@ -1499,46 +1635,49 @@ async function addOption(kind, name) {
   try { const r = await jpost("/api/retort/add", body); S.config = migrate(r.config)[0]; toast(`เพิ่ม${label} "${name}" แล้ว`); }
   catch (e) { if (e.status === 401) { showLock(true); return; } toast(`เพิ่ม${label}ไม่สำเร็จ: ` + e.message); return; }
   if (S.mg) { const y = window.scrollY; viewLog(); window.scrollTo(0, y); const i = $("#mgIn"); if (i) i.focus(); return; }  // โหมดเพิ่ม/ลบ: อยู่หน้าเดิม
-  const go = n => { S.step = n; viewLog(); window.scrollTo(0, 0); };
-  if (kind === "plant") { d.plant = name; d.retort = ""; d.program = ""; d.programDoc = ""; lsSet("rt_last", { ...lsGet("rt_last", {}), plant: name }); go(3); }
-  else if (kind === "retort") { if (d.retort !== name) { d.retort = name; d.program = ""; d.programDoc = ""; } go(4); }
-  else if (kind === "category") { const c = S.config.categories.find(x => x.name.toLowerCase() === name.toLowerCase()); if (c) { if (d.category !== c.id) { d.category = c.id; d.cause = ""; d.causeOther = ""; d.values = {}; } S.catPick = false; } go(4); }
+  const go = n => { S.step = n; S.mg = ""; viewLog(); window.scrollTo(0, 0); };
+  if (kind === "plant") { d.plant = name; d.retort = ""; d.program = ""; d.programDoc = ""; lsSet("rt_last", { ...lsGet("rt_last", {}), plant: name }); go(1); }
+  else if (kind === "retort") { if (d.retort !== name) { d.retort = name; d.program = ""; d.programDoc = ""; } go(2); }
+  else if (kind === "category") { const c = S.config.categories.find(x => x.name.toLowerCase() === name.toLowerCase()); if (c) { if (d.category !== c.id) { d.category = c.id; d.cause = ""; d.causeOther = ""; d.values = {}; } go(3); } else go(2); }
   else { const y = window.scrollY; viewLog(); window.scrollTo(0, y); const ci = $("#causeIn"); if (ci) { ci.value = name; ci.dispatchEvent(new Event("input", { bubbles: true })); } }
 }
 function wireLog() {
   const d = S.draft; const m = $("#main");
-  const go = n => { S.step = n; S.mg = ""; if (n === 4 && !d.category) S.catPick = true; viewLog(); window.scrollTo(0, 0); };
+  const go = n => { S.step = n; S.mg = ""; viewLog(); window.scrollTo(0, 0); };
   const stay = () => { const y = window.scrollY; viewLog(); window.scrollTo(0, y); };
-  const setTime = () => { d.shift = shiftOf(d.time); const sb = $("#shiftBig"); if (sb) { sb.className = "shiftbig " + d.shift; sb.querySelector("b").textContent = d.shift; } const tt = $("#tcTime"); if (tt) tt.textContent = d.time + " น."; const td = $(".tc-date"); if (td) td.textContent = thDate(d.date); };
+  const setTime = () => { d.shift = shiftOf(d.time); const sb = $("#shiftBig"); if (sb) { sb.className = "wz-shift " + d.shift; sb.textContent = "กะ " + d.shift; } const tt = $("#tcTime"); if (tt) tt.textContent = d.time + " น."; const td = $("#tcDate"); if (td) td.textContent = dmy(d.date); };
+  const setCause = v => { v = String(v || "").trim(); const cat = catById(d.category), cs = [...((cat && cat.causes) || []), UNKNOWN];
+    const mt = cs.find(c => c.toLowerCase() === v.toLowerCase()); if (mt) { d.cause = mt; d.causeOther = ""; } else { d.cause = v ? "__other" : ""; d.causeOther = v; }
+    m.querySelectorAll("[data-sug]").forEach(b => b.classList.toggle("on", b.dataset.sug === v)); const w = $("#causeAddW"); if (w) w.innerHTML = causeAddBtn(v, cs); };
+  const more = m.querySelector(".wz-more"); if (more) more.ontoggle = () => { S.more = more.open; };
   m.oninput = e => { const t = e.target; if (t.dataset.k) d[t.dataset.k] = t.value; if (t.dataset.v) d.values[t.dataset.v] = t.value;
     if (t.dataset.k === "time" || t.dataset.k === "date") setTime();
-    if (t.id === "signIn") { const s = m.querySelector(".signline span"); if (s) s.textContent = `(${t.value || "................"})`; }
     if (t.classList.contains("pickIn")) pickFilter(t);
-    if (t.id === "causeIn") m.querySelectorAll("[data-sug]").forEach(b => b.classList.toggle("on", b.dataset.sug === t.value.trim())); };
+    if (t.id === "causeIn") { t.classList.remove("err"); setCause(t.value); }
+    if (t.id === "signIn") t.classList.remove("err"); };
   m.onkeydown = e => { if (e.key === "Enter" && e.target.id === "mgIn") { e.preventDefault(); $("#mgAdd").click(); return; }
     if (e.key === "Enter" && e.target.classList.contains("pickIn")) { e.preventDefault(); const { exact, vis } = pickFilter(e.target); const t = exact || (vis.length === 1 ? vis[0] : null);
     if (t) t.click(); else if (e.target.value.trim()) addOption(e.target.closest(".addbar").dataset.kind, e.target.value); } };
   m.onchange = e => { const t = e.target;
     if (t.id === "camIn" || t.id === "galIn") { const fs = [...t.files]; t.value = ""; if (fs.length) addPhotos(fs, t.id === "camIn"); }
-    else if (t.id === "progSel") { const p = progByKey(t.value); d.program = p ? p.no : ""; d.programDoc = p ? p.doc : ""; const y = window.scrollY; viewLog(); window.scrollTo(0, y); } };
+    else if (t.id === "progSel") { const p = progByKey(t.value); d.program = p ? p.no : ""; d.programDoc = p ? p.doc : ""; stay(); } };
   m.onclick = e => {
     const im = e.target.closest("[data-zoom]"); if (im) { zoomPhoto(im.dataset.zoom); return; }
     const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (ds.mg != null) { S.mg = ds.mg; stay(); return; }
     if (b.id === "mgAdd") { const v = $("#mgIn").value; if (v.trim()) addOption(ds.kind, v); else $("#mgIn").focus(); return; }
     if (ds.del) { askDelete(ds.del, ds.key, stay); return; }
-    if (ds.cat) { if (d.category !== ds.cat) { d.category = ds.cat; d.cause = ""; d.causeOther = ""; d.values = {}; } S.catPick = false; go(4); }
-    else if (b.id === "catChange") { S.catPick = true; go(4); }
-    else if (ds.step) { if (+ds.step === 4) S.catPick = true; go(+ds.step); }
+    if (b.id === "timeTog" || b.id === "timeDone") { if (S.timeEdit && (!d.date || !d.time)) { toast("ใส่วันที่และเวลา"); return; } S.timeEdit = !S.timeEdit; d.shift = shiftOf(d.time); stay(); }
+    else if (ds.cat) { if (d.category !== ds.cat) { d.category = ds.cat; d.cause = ""; d.causeOther = ""; d.values = {}; } go(3); }
+    else if (ds.step) go(+ds.step);
     else if (b.id === "nowBtn") { const n = nowHM(); d.date = todayISO(); d.time = n; m.querySelector('[data-k=date]').value = d.date; m.querySelector('[data-k=time]').value = n; setTime(); }
-    else if (b.id === "timeOk") { if (!d.date || !d.time) { toast("ใส่วันที่และเวลา"); return; } d.shift = shiftOf(d.time); go(2); }
-    else if (ds.plant) { if (d.plant !== ds.plant) { d.plant = ds.plant; d.retort = ""; d.program = ""; d.programDoc = ""; } lsSet("rt_last", { ...lsGet("rt_last", {}), plant: d.plant }); go(3); }
-    else if (ds.retort != null) { if (d.retort !== ds.retort) { d.retort = ds.retort; d.program = ""; d.programDoc = ""; } go(4); }
+    else if (ds.plant) { if (d.plant !== ds.plant) { d.plant = ds.plant; d.retort = ""; d.program = ""; d.programDoc = ""; } lsSet("rt_last", { ...lsGet("rt_last", {}), plant: d.plant }); stay(); }
+    else if (ds.retort != null) { if (d.retort !== ds.retort) { d.retort = ds.retort; d.program = ""; d.programDoc = ""; } go(2); }
     else if (b.classList.contains("pickAdd")) { const bar = b.closest(".addbar"); addOption(bar.dataset.kind, bar.querySelector(".pickIn").value); }
-    else if (ds.delph != null) { d.photos.splice(+ds.delph, 1); const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
-    else if (b.id === "photoOk") go(5);
+    else if (ds.delph != null) { d.photos.splice(+ds.delph, 1); stay(); }
     else if (b.id === "usePt") { const at = new Date(+ds.t); d.date = iso(at); d.time = `${pad(at.getHours())}:${pad(at.getMinutes())}`; d.shift = shiftOf(d.time); toast(`ใช้เวลา ${dmy(d.date)} ${d.time} น. กะ ${d.shift}`); stay(); }
-    else if (ds.sug) { const ci = $("#causeIn"); ci.value = ds.sug; m.querySelectorAll("[data-sug]").forEach(x => x.classList.toggle("on", x === b)); $("#formErr").innerHTML = ""; }
+    else if (ds.sug) { const ci = $("#causeIn"); ci.value = ds.sug; ci.classList.remove("err"); setCause(ds.sug); $("#formErr").innerHTML = ""; }
+    else if (b.id === "causeAdd") { const v = $("#causeIn").value; setCause(v); addOption("cause", v); }
     else if (b.id === "progSpec") { if (d.programDoc) showSpec(d.programDoc + "#" + d.program); }
     else if (ds.impact) { d.impact = ds.impact; m.querySelectorAll("[data-impact]").forEach(x => { x.classList.toggle("on", x === b); x.classList.toggle("warnc", x === b && ds.impact === "hold"); }); }
     else if (b.id === "saveBtn") submitLog();
@@ -1551,6 +1690,7 @@ async function submitLog() {
   const d = S.draft; const cat = catById(d.category);
   const txt = ($("#causeIn") ? $("#causeIn").value : "").trim();
   const err = msg => { $("#formErr").innerHTML = `<div class="alert a-bad" style="margin-top:12px">${I("alert")}<div>${msg}</div></div>`; $("#formErr").scrollIntoView({ block: "center" }); };
+  if (!d.date || !d.time) { S.timeEdit = true; viewLog(); window.scrollTo(0, 0); toast("ใส่วันที่และเวลา"); return; }
   if (!txt) { $("#causeIn").classList.add("err"); return err(`กรอกสาเหตุ ถ้ายังไม่รู้ เลือก "${UNKNOWN}"`); }
   d.by = String(d.by || "").trim(); if (!d.by) { $("#signIn").classList.add("err"); return err("ลงนามผู้บันทึก"); }
   const match = [...(cat.causes || []), UNKNOWN].find(c => c.toLowerCase() === txt.toLowerCase());
@@ -1568,7 +1708,7 @@ async function submitLog() {
 function openEdit(id) {
   const x = S.items[id]; if (!x) return;
   S.draft = JSON.parse(JSON.stringify(x)); S.draft.values = S.draft.values || {}; S.draft.photos = S.draft.photos || []; S.draft.by = S.draft.by || S.user;
-  S.editingId = id; S.step = 5; S.catPick = false; S.more = true; S.justSaved = null; S.view = "log"; render(); window.scrollTo(0, 0);
+  S.editingId = id; S.step = 3; S.timeEdit = false; S.mg = ""; S.more = true; S.justSaved = null; S.view = "log"; render(); window.scrollTo(0, 0);
 }
 
 /* ---------- filtered data ---------- */
@@ -2326,8 +2466,8 @@ function viewUI() {
     ${U.tabs.map((t, i) => `<div class="tabrow"><span class="ti">${I(VIEW_ICON[t.k])}</span><input type="text" data-utl="${i}" value="${esc(t.label)}" maxlength="20" ${dis}>
       <button class="ghost mv" data-utmv="${i}.-1" ${ro || !i ? "disabled" : ""} aria-label="เลื่อนขึ้น">${I("up")}</button><button class="ghost mv" data-utmv="${i}.1" ${ro || i === U.tabs.length - 1 ? "disabled" : ""} aria-label="เลื่อนลง">${I("down")}</button>
       <label class="sw mini" title="${t.k === "ui" ? "ซ่อนไม่ได้" : "เปิด/ซ่อน"}"><input type="checkbox" data-uts="${i}" ${t.show ? "checked" : ""} ${ro || t.k === "ui" ? "disabled" : ""}><i></i></label></div>`).join("")}
-    <label class="f" style="margin-top:12px"><span class="lab">แท็บที่เปิดเป็นหน้าแรก</span><select data-udef ${dis}>${U.tabs.filter(t => t.show).map(t => `<option value="${t.k}" ${U.defaultTab === t.k ? "selected" : ""}>${esc(t.label)}</option>`).join("")}</select></label>
-    <small class="hint">แท็บ "${esc(U.tabs.find(t => t.k === "ui").label)}" ซ่อนไม่ได้ เพื่อให้กลับมาแก้ได้เสมอ · เครื่องที่เคยเลือกแท็บไว้จะเปิดแท็บเดิม</small></div>`;
+    <label class="f" style="margin-top:12px"><span class="lab">แท็บที่เปิดเป็นหน้าแรก (ใช้เมื่อซ่อนแท็บบันทึก)</span><select data-udef ${dis}>${U.tabs.filter(t => t.show).map(t => `<option value="${t.k}" ${U.defaultTab === t.k ? "selected" : ""}>${esc(t.label)}</option>`).join("")}</select></label>
+    <small class="hint">แท็บ "${esc(U.tabs.find(t => t.k === "ui").label)}" ซ่อนไม่ได้ เพื่อให้กลับมาแก้ได้เสมอ · เปิดหน้านี้ใหม่จะเริ่มที่แท็บบันทึกเสมอ</small></div>`;
   h += `<div class="card">${sec("pen", "ฟอร์มบันทึก", "ช่องที่แสดงในหน้าบันทึก")}
     <span class="lab">ชื่อขั้นตอน</span><div class="grow5">${U.steps.map((s, i) => `<input data-ustep="${i}" value="${esc(s)}" maxlength="16" aria-label="ขั้นที่ ${i + 1}" ${dis}>`).join("")}</div>
     <div class="grid" style="margin-top:12px"><label class="f"><span class="lab">กะ DS เริ่ม</span><input type="time" data-utime="dsStart" value="${U.dsStart}" ${dis}></label><label class="f"><span class="lab">กะ DS สิ้นสุด</span><input type="time" data-utime="dsEnd" value="${U.dsEnd}" ${dis}></label></div>
@@ -2364,7 +2504,7 @@ function wireUI() {
   m.oninput = e => { const x = e.target, ds = x.dataset;  // ช่องข้อความ: ไม่วาดหน้าใหม่ เคอร์เซอร์จะได้ไม่หลุด
     if (ds.up) ed(c => setP(c, ds.up, x.value));
     else if (ds.utl != null) ed(c => { c.tabs[+ds.utl].label = x.value; });
-    else if (ds.ustep != null) ed(c => { c.steps[+ds.ustep] = x.value; });
+    else if (ds.ustep != null) ed(c => { c.wsteps[+ds.ustep] = x.value; });
     else if (ds.ugn) ed(c => { c.groups[ds.ugn].name = x.value; });
     else if (ds.uai != null) ed(c => { c.aiQuick = x.value.split("\n").map(q => q.trim()).filter(Boolean); });
     else if (ds.uc && isHex(x.value)) { const v = x.value.toLowerCase(); ed(c => setP(c, ds.uc, v)); m.querySelectorAll(`[data-uc="${ds.uc}"]`).forEach(o => { if (o !== x) o.value = v; }); m.querySelectorAll(".swatch").forEach(s => s.classList.toggle("on", s.dataset.preset === U.navy + U.amber)); }
