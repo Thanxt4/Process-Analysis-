@@ -2346,7 +2346,7 @@ def _tp_retorts(text: str) -> list:
 
 def _tp_phase(t: str) -> str:
     t = (t or "").lower()
-    if re.search(r"come\s*-?\s*up|heat(?:ing)?\s*-?\s*up|venting|ไล่อากาศ|ขึ้นอุณหภูมิ", t):
+    if re.search(r"come\s*-?\s*up|heat(?:ing)?\s*-?\s*up|venting|ไล่อากาศ|ขึ้นอุณหภูมิ|\bcut\s*\d", t):  # CUT 1..6 = ช่วง Come up
         return "come"
     if re.search(r"cool|หล่อเย็น|ลดอุณหภูมิ", t):
         return "cool"
@@ -2478,30 +2478,38 @@ def _tp_table_transposed(table):
     width = max((len(r) for r in rows), default=0)
     rows = [r + [None] * (width - len(r)) for r in rows]
     lab = lambda r: " ".join(c for c in r[:3] if c and _tp_num(c) is None).lower()
-    kind = lambda r: ("temp" if re.search(r"อุณหภูมิ|temp", lab(r)) else "time" if re.search(r"เวลา|time|นาที|min", lab(r))
-                      else "press" if re.search(r"ความดัน|press|bar", lab(r)) else "hold" if re.search(r"hold", lab(r)) else "")
+    kind = lambda r: ("temp" if re.search(r"อุณหภูมิ|temp", lab(r)) else "hold" if re.search(r"hold", lab(r))  # Holding Time ก่อน Time
+                      else "time" if re.search(r"เวลา|time|นาที|min", lab(r)) else "press" if re.search(r"ความดัน|press|bar", lab(r)) else "")
     if not any(kind(r) == "temp" and sum(1 for c in r if _tp_num(c) is not None) >= 3 for r in rows):
         return None
     out, cur, phases = [], None, {}
+
+    def phase_row(r, phases):
+        """หัวช่วง (Come up time / Cooking / Cooling หรือ CUT 1 / Cook 1 / Cool 1) → ช่วงของแต่ละคอลัมน์
+        ช่องที่ไม่มีหัวใช้ช่วงจากหัวทางซ้าย · คอลัมน์ก่อนหัวแรกคงค่าเดิม"""
+        new, ph = dict(phases), ""
+        for ci in range(width):
+            p2 = _tp_phase(r[ci]) if r[ci] and _tp_num(r[ci]) is None else ""
+            ph = p2 or ph
+            if ph:
+                new[ci] = ph
+        return new
+
     for i, r in enumerate(rows):
         first = next((c for c in r if c), "") or ""
         if re.search(r"profile\s*name|program\s*name|หมายเลขโปรแกรม", first, re.I):
             continue
         prev = next((c for c in (rows[i - 1] if i else []) if c), "") or ""
         if re.fullmatch(r"\d{1,3}", first) and (re.search(r"profile|program|โปรแกรม", prev, re.I) or not cur):
-            note = " ".join(c for c in r[1:] if c).strip()
+            rest = [c for c in r[1:] if c]
+            note = " ".join(c for c in rest if not _tp_phase(c)).strip()  # หัวช่วงในแถวเดียวกับเลขโปรแกรม ไม่ใช่หมายเหตุ
             cur = {"no": str(int(first)), "note": note[:120], "vals": {}}
             out.append(cur)
-            phases = {}
+            phases = phase_row([None] + r[1:], {}) if any(_tp_phase(c) for c in rest) else {}
             continue
         ph_cells = [(ci, _tp_phase(c)) for ci, c in enumerate(r) if c and _tp_phase(c)]
         if ph_cells and not any(_tp_num(c) is not None for c in r):
-            phases, ph = {}, ""
-            start = ph_cells[0][0]
-            for ci in range(start, width):
-                p2 = _tp_phase(r[ci]) if r[ci] else ""
-                ph = p2 or ph
-                phases[ci] = ph
+            phases = phase_row(r, phases)
             continue
         k = kind(r)
         if k and cur is not None:
@@ -2582,7 +2590,9 @@ def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
     head = text_all[:1500]
     tl = re.search(r"(?:^|\n)\s*(?:เรื่อง|title)\s*:?\s*(.+)", ct, re.I) or re.search(r"(?:เรื่อง|title)\s*:?\s*(.+)", head, re.I)
     title = re.sub(r"\s+", " ", tl.group(1)).strip()[:160] if tl else ""
-    return {"doc": doc, "rev": rev, "eff": eff, "title": title, "retorts": _tp_retorts(title) or _tp_retorts(next((c for c in cells if re.search(r"สำหรับ|for\b", c, re.I) and _TP_RET_RE.search(c)), "")),
+    ret_line = next((ln for ln in text_all.split("\n") if re.search(r"สำหรับ|\bfor\b", ln, re.I) and _TP_RET_RE.search(ln)), "")  # เช่น "...สำหรับ FM-WATER SPRAY RETORT RC18, RC21 และ RC22"
+    return {"doc": doc, "rev": rev, "eff": eff, "title": title,
+            "retorts": _tp_retorts(title) or _tp_retorts(next((c for c in cells if re.search(r"สำหรับ|for\b", c, re.I) and _TP_RET_RE.search(c)), "")) or _tp_retorts(ret_line),
             "progs": [progs[k] for k in order],
             "pages": len(text_all.split("\f")), "tables": n_tables, "chars": len(text_all)}
 
