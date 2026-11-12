@@ -1217,6 +1217,56 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .rk .v small{display:block;font-size:11.5px;font-weight:600;color:var(--mute)}
 @media(max-width:560px){.rk{grid-template-columns:26px minmax(0,1fr) 54px}.rk .tr{grid-column:2;grid-row:2;margin-top:-2px}.rk .v{grid-row:1/3;grid-column:3}}
 @media print{.kps{grid-template-columns:repeat(5,1fr)!important}.dgrid2{grid-template-columns:1fr 1fr!important}.kp,.rk{break-inside:avoid}.kp.k1{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+/* ---------- จำนวนรอบหม้อ (ใส่ต่อวัน ต่อกะ) ---------- */
+.rn{max-width:760px;margin:0 auto}
+.rn-head{padding:16px 20px;border-radius:20px;color:#fff;margin-bottom:12px;background:radial-gradient(380px 120px at 92% -40px,rgba(245,158,11,.3),transparent 70%),linear-gradient(135deg,#14213a,#1b2a41 55%,#2a4a72)}
+.rn-head .t{display:flex;flex-direction:column}.rn-head b{font-size:21px;font-weight:800}.rn-head span{font-size:13.5px;color:#cbd5e1}
+.rn-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px}
+.rn-day{display:flex;align-items:center;gap:6px}
+.rn-day .ghost{width:42px;min-height:42px;padding:0;border:1px solid var(--line);background:#fff}
+.rn-day .ghost:first-child svg.i{transform:rotate(90deg)}
+.rn-day label{display:flex;flex-direction:column;align-items:center;gap:0}
+.rn-day input{min-height:42px;font-size:16px;padding:6px 10px;width:auto;font-weight:700;color:var(--navy)}
+.rn-day label span{font-size:12px;color:var(--mute)}
+.rn-pl{display:flex;gap:6px}
+.rn-pl button{min-height:42px;padding:4px 18px;border-radius:12px;font-weight:700;font-size:16px;color:var(--navy)}
+.rn-pl button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.rn-note{display:flex;gap:6px;align-items:flex-start;margin:0 4px 10px;font-size:12.5px}.rn-note svg.i{width:15px;height:15px;flex:0 0 auto;margin-top:2px}
+.rn-card{padding:6px 14px}
+.rn-th,.rn-r{display:grid;grid-template-columns:minmax(70px,1fr) 1.4fr 1.4fr;gap:10px;align-items:center}
+.rn-th{padding:10px 0 8px;border-bottom:2px solid var(--navy);font-size:13px;font-weight:800;color:var(--navy)}
+.rn-th span{display:flex;flex-direction:column;line-height:1.2}.rn-th small{font-size:11px;font-weight:600;color:var(--mute)}
+.rn-th .ds{color:#b45309}.rn-th .ns{color:#1e3a8a}
+.rn-r{padding:7px 0;border-bottom:1px solid #f1f5f9}
+.rn-r>b{font-size:16.5px;font-weight:800;color:var(--navy)}
+.rn-c{position:relative;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rn-c input{width:84px;min-height:46px;font-size:19px;font-weight:800;text-align:center;padding:4px 6px;color:var(--navy)}
+.rn-c.ds input{background:#fffbeb;border-color:#fde68a}.rn-c.ns input{background:#eff6ff;border-color:#bfdbfe}
+.rn-c input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.25);background:#fff}
+.rn-c input::-webkit-inner-spin-button{opacity:.4}
+.rn-u{font-size:13px;color:var(--mute)}
+.rn-c em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--bad);background:var(--badbg);border-radius:99px;padding:1px 8px}
+.rn-sum{border-bottom:0;border-top:2px solid var(--navy);margin-top:2px}.rn-sum span{font-size:15px;font-weight:800;color:var(--navy);padding-left:8px}
+.rn-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 6px}
+.rn-tools .ghost{background:#fff;border:1px solid var(--line);color:var(--ink2)}
+/* หน้าวิเคราะห์: อัตราปัญหาต่อรอบ */
+.rt-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.rt-sum>div{border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.rt-sum .ds{background:#fffbeb;border:1px solid #fde68a}.rt-sum .ns{background:#eff6ff;border:1px solid #bfdbfe}.rt-sum .all{background:var(--navy);color:#fff}
+.rt-sum small{font-size:12.5px;font-weight:700;opacity:.8}.rt-sum b{font-size:28px;line-height:1.1}.rt-sum span{font-size:12.5px;opacity:.8}
+.rt-sum .all b.hi,.rt-sum .all b.md,.rt-sum .all b.lo,.rt-sum .all b.ok{color:#fff}
+.rt-warn{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:#fff7ed;color:#9a3412;font-size:13.5px;margin-bottom:10px}
+.rt-t{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
+.rt-t th{font-size:12.5px;font-weight:800;padding:6px 6px;text-align:center;color:#fff;background:var(--navy);border:1px solid #3b5577}
+.rt-t th.l{text-align:left}.rt-t th.ds{background:#b45309;border-color:#92400e}.rt-t th.ns{background:#1e3a8a;border-color:#1e40af}.rt-t th.s{font-size:11.5px;opacity:.95}
+.rt-t td{padding:7px 6px;border-bottom:1px solid #e2e8f0;text-align:center;font-variant-numeric:tabular-nums}
+.rt-t td.l{text-align:left}.rt-t td.p{color:var(--bad);font-weight:700}
+.rt-t tbody tr{cursor:pointer}.rt-t tbody tr:hover td{background:#f8fafc}
+.rt-t td.mc b{font-weight:700}.rt-t td.mc em{font-style:normal;font-size:12px;color:var(--mute)}.rt-t td.mc small{display:block;font-size:12px;color:var(--mute)}
+.rt-t tfoot td{font-weight:800;border-top:2px solid var(--navy);background:#f8fafc}
+.rt-t b.hi,.rt-sum b.hi{color:var(--bad)}.rt-t b.md,.rt-sum b.md{color:#c2410c}.rt-t b.lo,.rt-sum b.lo{color:#b45309}.rt-t b.ok,.rt-sum b.ok{color:var(--ok)}
+.rt-na{color:#94a3b8}
+@media(max-width:560px){.rt-sum{grid-template-columns:1fr 1fr}.rt-sum .all{grid-column:1/-1}.rn-th,.rn-r{grid-template-columns:62px 1fr 1fr;gap:6px}.rn-c input{width:64px}.rn-u{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1348,7 +1398,7 @@ const UI_DEFAULT = {
   brand: "LINE QC / RETORT ANALYSIS", title: "บันทึกปัญหา Retort", subtitle: "หาสาเหตุ · วิเคราะห์แนวโน้ม",
   stamp: "i-Tail Corporation: Retort Analysis",
   navy: "#1b2a41", amber: "#f59e0b", scale: 100,
-  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
+  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "runs", label: "รอบหม้อ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
     { k: "progs", label: "โปรแกรม", show: true }, { k: "survey", label: "Survey", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
   defaultTab: "log",
   dsStart: "07:00", dsEnd: "17:30",
@@ -1357,7 +1407,7 @@ const UI_DEFAULT = {
   dash: { insight: true, trend: true, groups: true, hours: true, heat: true, more: true, days: 14 },
   groups: {}, aiQuick: null
 };
-const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", survey: "tool", ai: "spark", settings: "settings", ui: "palette" };
+const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", survey: "tool", runs: "target", ai: "spark", settings: "settings", ui: "palette" };
 let U = JSON.parse(JSON.stringify(UI_DEFAULT));
 /* รวมค่าตั้งต้นกับค่าที่บันทึกไว้ และตรวจทุกค่า (สี/เวลา/ข้อความ) ก่อนใช้ */
 function uiCfg(raw) {
@@ -1367,7 +1417,8 @@ function uiCfg(raw) {
   const hm = (v, d) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v || "") ? v : d;
   const bool = (v, d) => typeof v === "boolean" ? v : d;
   const seen = new Set(); let tabs = (Array.isArray(c.tabs) ? c.tabs : []).filter(t => t && D.tabs.some(x => x.k === t.k) && !seen.has(t.k) && seen.add(t.k));
-  D.tabs.forEach(t => { if (!tabs.some(x => x.k === t.k)) tabs.push(t); });
+  D.tabs.forEach((t, i) => { if (tabs.some(x => x.k === t.k)) return;  // แท็บใหม่: วางต่อจากแท็บที่อยู่ก่อนหน้าในค่าเริ่มต้น
+    const prev = i ? tabs.findIndex(x => x.k === D.tabs[i - 1].k) : -1; tabs.splice(prev + 1, 0, t); });
   tabs = tabs.map(t => { const d = D.tabs.find(x => x.k === t.k); return { k: t.k, label: str(t.label, d.label, 20), show: t.k === "ui" || bool(t.show, true) }; });
   let dsStart = hm(c.dsStart, D.dsStart), dsEnd = hm(c.dsEnd, D.dsEnd); if (hmMin(dsStart) >= hmMin(dsEnd)) { dsStart = D.dsStart; dsEnd = D.dsEnd; }
   const f = c.form || {}, ds = c.dash || {}, groups = {};
@@ -1671,7 +1722,7 @@ async function syncAll(full) {
   } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
-const STAFF_TABS = ["log", "list"];
+const STAFF_TABS = ["log", "list", "runs"];
 const ROLE_NAME = { sup: "หัวหน้า", staff: "พนักงาน" };
 function setRole(role) {
   S.role = role || ""; S.canAdmin = S.role === "sup"; lsSet("rt_role", S.role);
@@ -1721,7 +1772,7 @@ function render() {
   $("#main").classList.toggle("vset", S.view === "settings" || S.view === "ui");
   S.charts = {}; $("#main").classList.remove("split");
   document.body.classList.remove("svfull");  // ออกจากตาราง Survey แบบเต็มจอ เมื่อไปแท็บอื่น
-  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
+  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, runs: viewRuns, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
   persistSoon();
@@ -2492,6 +2543,103 @@ function isoParse(text, html) {
   return [...out.values()];
 }
 const isoBtn = (code, cls = "") => { const x = isoOf(code); return x ? `<a class="isolink ${cls}" href="${esc(x.url)}" target="_blank" rel="noopener">${I("doc")}เปิด PDF ${esc(code)}${x.rev ? ` Rev.${esc(x.rev)}` : ""}</a>` : ""; };
+/* ---------- จำนวนรอบที่หม้อใช้ (ต่อวัน ต่อกะ) · ใช้คำนวณ % รอบที่มีปัญหา ---------- */
+// วันที่ของกะ: กะ NS ที่ข้ามเที่ยงคืน (เช่น 02:00 น.) นับเป็นวันที่เริ่มกะ (คืนวันที่ 12 → เช้าวันที่ 13 = วันที่ 12)
+const prodDate = x => x.shift === "NS" && hmMin(x.time || "00:00") < hmMin(U.dsStart) ? addDays(x.date, -1) : x.date;
+const RN = { day: "", plant: "", data: {}, dirty: false, loading: false, by: "", at: 0 };
+const RUNS = { key: "", items: null, busy: false };  // ข้อมูลรอบสำหรับหน้าวิเคราะห์
+async function runsLoad(day) {
+  RN.loading = true;
+  try { const r = await api(`/api/retort/runs?from=${day}&to=${day}`); RN.data = {}; RN.by = ""; RN.at = 0;
+    (r.items || []).forEach(x => { RN.data[x.retort + "|" + x.shift] = String(x.n); if (x.updated_at > RN.at) { RN.at = x.updated_at; RN.by = x.by; } }); }
+  catch (e) { if (e.status === 401) showLock(true); else toast("โหลดจำนวนรอบไม่สำเร็จ: " + e.message); }
+  RN.loading = false; RN.dirty = false; RUNS.key = "";
+}
+async function viewRuns() {
+  if (!RN.day) RN.day = todayISO();
+  if (!RN.plant || !plantsList().includes(RN.plant)) RN.plant = (lsGet("rt_last", {}) || {}).plant || plantsList()[0];
+  const m = $("#main");
+  if (RN.loadedDay !== RN.day) { RN.loadedDay = RN.day; m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await runsLoad(RN.day); if (S.view !== "runs") return; }
+  const rl = plantRetorts(RN.plant), probs = Object.values(S.items).filter(x => prodDate(x) === RN.day);
+  const pc = (r, sh) => probs.filter(x => x.retort === r && x.shift === sh).length;
+  const tot = sh => rl.reduce((a, r) => a + (+RN.data[r + "|" + sh] || 0), 0);
+  const filled = rl.filter(r => RN.data[r + "|DS"] != null || RN.data[r + "|NS"] != null).length;
+  m.innerHTML = `<div class="rn">
+    <div class="rn-head"><div class="t"><b>จำนวนรอบหม้อ</b><span>ใส่จำนวนรอบที่หม้อแต่ละใบใช้ในแต่ละกะ · ใช้คำนวณ % รอบที่มีปัญหา ในหน้าวิเคราะห์</span></div></div>
+    <div class="card rn-bar">
+      <div class="rn-day"><button class="ghost" data-rnd="-1" aria-label="วันก่อนหน้า">${I("down")}</button>
+        <label><input type="date" id="rnDate" value="${RN.day}" max="${todayISO()}"><span>${thDate(RN.day)}</span></label>
+        <button class="ghost" data-rnd="1" aria-label="วันถัดไป" ${RN.day >= todayISO() ? "disabled" : ""}>${I("right")}</button></div>
+      <div class="rn-pl">${plantsList().map(p => `<button class="${p === RN.plant ? "on" : ""}" data-rnpl="${esc(p)}">${esc(p)}</button>`).join("")}</div>
+    </div>
+    <p class="sub rn-note">${I("info")} กะ NS ให้ใส่ที่<b>วันที่เริ่มกะ</b> (คืนวันที่ 12 ถึงเช้าวันที่ 13 = ใส่ที่วันที่ 12) · ปัญหาที่บันทึกตอนเช้ามืดของกะ NS จะนับรวมกับวันที่เริ่มกะให้อัตโนมัติ</p>
+    <div class="card rn-card">
+      <div class="rn-th"><span>หม้อ</span><span class="ds">กะ DS<small>${U.dsStart}–${U.dsEnd}</small></span><span class="ns">กะ NS<small>${minHM(hmMin(U.dsEnd) + 1)}–${minHM(hmMin(U.dsStart) - 1)}</small></span></div>
+      ${rl.map(r => `<div class="rn-r"><b>${esc(r)}</b>${["DS", "NS"].map(sh => { const p = pc(r, sh);
+        return `<label class="rn-c ${sh.toLowerCase()}"><input type="number" inputmode="numeric" min="0" max="99" data-rn="${esc(r)}|${sh}" value="${esc(RN.data[r + "|" + sh] ?? "")}" placeholder="–"><span class="rn-u">รอบ</span>${p ? `<em title="ปัญหาที่บันทึกในกะนี้">ปัญหา ${p}</em>` : ""}</label>`; }).join("")}</div>`).join("") || `<p class="sub">ยังไม่มีหม้อในพื้นที่นี้</p>`}
+      <div class="rn-r rn-sum"><b>รวม</b><span id="rnSumDS">${tot("DS")} รอบ</span><span id="rnSumNS">${tot("NS")} รอบ</span></div>
+    </div>
+    <div class="rn-tools"><button class="ghost sm" id="rnCopy">${I("download")}คัดลอกจากวันก่อนหน้า</button><button class="ghost sm" id="rnZero">ช่องว่าง = 0 (หม้อไม่ได้ใช้)</button>
+      <span class="sub" style="margin-left:auto">${RN.at ? `บันทึกล่าสุด ${esc(RN.by || "")} · ${fmtTs(RN.at)}` : `กรอกแล้ว ${filled}/${rl.length} หม้อ`}</span></div>
+    <div class="svx-savebar"><button class="pri blk savebig" id="rnSave">${I("check")}บันทึกจำนวนรอบ ${esc(RN.plant)} · ${dmy(RN.day)}</button></div>
+  </div>`;
+  const sums = () => { ["DS", "NS"].forEach(sh => { $("#rnSum" + sh).textContent = tot(sh) + " รอบ"; }); };
+  const go = async day => { if (RN.dirty && !confirm("ยังไม่ได้บันทึก เปลี่ยนวันที่?")) return; RN.day = day; viewRuns(); };
+  m.oninput = e => { const t = e.target; if (t.dataset.rn) { const v = t.value.replace(/[^0-9]/g, "").slice(0, 2); if (v !== t.value) t.value = v; if (v === "") delete RN.data[t.dataset.rn]; else RN.data[t.dataset.rn] = v; RN.dirty = true; sums(); } };
+  m.onchange = e => { if (e.target.id === "rnDate" && e.target.value) go(e.target.value > todayISO() ? todayISO() : e.target.value); };
+  m.onkeydown = e => { if (e.key === "Enter" && e.target.dataset.rn) { e.preventDefault(); const L = [...m.querySelectorAll("[data-rn]")], i = L.indexOf(e.target); (L[i + 1] || $("#rnSave")).focus(); } };
+  m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (ds.rnd) go(addDays(RN.day, +ds.rnd));
+    else if (ds.rnpl) { RN.plant = ds.rnpl; viewRuns(); }
+    else if (b.id === "rnZero") { rl.forEach(r => ["DS", "NS"].forEach(sh => { if (RN.data[r + "|" + sh] == null) RN.data[r + "|" + sh] = "0"; })); RN.dirty = true; viewRuns(); }
+    else if (b.id === "rnCopy") { const prev = addDays(RN.day, -1);
+      try { const r = await api(`/api/retort/runs?from=${prev}&to=${prev}`); let n = 0;
+        (r.items || []).forEach(x => { if (rl.includes(x.retort) && RN.data[x.retort + "|" + x.shift] == null) { RN.data[x.retort + "|" + x.shift] = String(x.n); n++; } });
+        RN.dirty = RN.dirty || n > 0; toast(n ? `คัดลอก ${n} ช่องจาก ${dmy(prev)} · ตรวจแล้วกดบันทึก` : `ไม่มีข้อมูลของ ${dmy(prev)}`); viewRuns(); } catch (err) { toast(err.message); } }
+    else if (b.id === "rnSave") {
+      const rows = rl.flatMap(r => ["DS", "NS"].map(sh => ({ retort: r, shift: sh, plant: RN.plant, n: RN.data[r + "|" + sh] ?? "" })));
+      b.disabled = true;
+      try { await jpost("/api/retort/runs", { date: RN.day, rows, by: S.user }); toast(`บันทึกจำนวนรอบ ${RN.plant} วันที่ ${dmy(RN.day)} แล้ว`); RN.loadedDay = ""; RUNS.key = ""; viewRuns(); }
+      catch (err) { b.disabled = false; if (err.status === 401) showLock(true); else toast("บันทึกไม่สำเร็จ: " + err.message); } } };
+}
+/* หน้าวิเคราะห์: รอบที่ใช้ vs รอบที่มีปัญหา แยกกะ DS / NS · % · ปัญหาหลัก */
+function runSection(R, plant) {
+  const key = R.f1 + R.t1;
+  if (RUNS.key !== key) {
+    if (!RUNS.busy) { RUNS.busy = true; api(`/api/retort/runs?from=${R.f1}&to=${R.t1}`).then(r => { RUNS.items = r.items || []; RUNS.key = key; })
+      .catch(() => { RUNS.items = []; RUNS.key = key; }).finally(() => { RUNS.busy = false; if (S.view === "analyze") { const el = $("#runSec"); if (el) el.outerHTML = runSection(dashRanges(), S.d.plant); } }); }
+    return `<div class="card dcard" id="runSec">${sec("target", "อัตราปัญหาต่อรอบ (แยกกะ)", "กำลังโหลดจำนวนรอบ…")}</div>`;
+  }
+  const inPl = r => plant === "all" || plantRetorts(plant).includes(r);
+  const runs = {}; (RUNS.items || []).forEach(x => { if (!inPl(x.retort)) return; const o = runs[x.retort] = runs[x.retort] || { DS: 0, NS: 0 }; o[x.shift] += x.n; });
+  const P = Object.values(S.items).filter(x => x.retort && inPl(x.retort) && (plant === "all" || x.plant === plant) && prodDate(x) >= R.f1 && prodDate(x) <= R.t1);
+  const rets = [...new Set([...Object.keys(runs), ...P.map(x => x.retort)])].sort(byRetort);
+  const head = sec("target", "อัตราปัญหาต่อรอบ (แยกกะ)", `รอบที่ใช้ vs ปัญหาที่พบ · ${thShort(R.f1)} – ${thShort(R.t1)} · แตะหม้อเพื่อดูแนวโน้ม`,
+    `<button class="ghost sm" data-view-go2="runs">${I("pen")}ใส่จำนวนรอบ</button>`);
+  if (!rets.length) return `<div class="card dcard" id="runSec">${head}<p class="sub">ไม่มีข้อมูลในช่วงนี้</p></div>`;
+  const pct = (p, n) => n ? p / n * 100 : null;
+  const pctTxt = v => v == null ? `<span class="rt-na">–</span>` : `<b class="${v >= 20 ? "hi" : v >= 10 ? "md" : v > 0 ? "lo" : "ok"}">${v < 10 && v > 0 ? v.toFixed(1) : Math.round(v)}%</b>`;
+  const top = (L, f) => { const e = Object.entries(L.reduce((m, x) => { const k = f(x); if (k) m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1])[0]; return e || null; };
+  const rows = rets.map(r => { const L = P.filter(x => x.retort === r), ru = runs[r] || { DS: 0, NS: 0 };
+    const pd = L.filter(x => x.shift === "DS").length, pn = L.filter(x => x.shift !== "DS").length;
+    return { r, ru, pd, pn, pt: pd + pn, nt: ru.DS + ru.NS, L, tc: top(L, x => x.category), tz: top(L, x => causeText(x)) }; })
+    .sort((a, b) => (pct(b.pt, b.nt) ?? -1) - (pct(a.pt, a.nt) ?? -1) || b.pt - a.pt);
+  const T = rows.reduce((a, x) => ({ dn: a.dn + x.ru.DS, nn: a.nn + x.ru.NS, pd: a.pd + x.pd, pn: a.pn + x.pn }), { dn: 0, nn: 0, pd: 0, pn: 0 });
+  const noRuns = rows.filter(x => !x.nt && x.pt).length;
+  const cells = (n, p) => `<td class="n">${n || "–"}</td><td class="n p">${p || "–"}</td><td class="n">${pctTxt(pct(p, n))}</td>`;
+  return `<div class="card dcard" id="runSec">${head}
+    <div class="rt-sum"><div class="ds"><small>กะ DS</small><b>${pctTxt(pct(T.pd, T.dn))}</b><span>${T.pd} ปัญหา / ${T.dn} รอบ</span></div>
+      <div class="ns"><small>กะ NS</small><b>${pctTxt(pct(T.pn, T.nn))}</b><span>${T.pn} ปัญหา / ${T.nn} รอบ</span></div>
+      <div class="all"><small>รวมทั้ง 2 กะ</small><b>${pctTxt(pct(T.pd + T.pn, T.dn + T.nn))}</b><span>${T.pd + T.pn} ปัญหา / ${T.dn + T.nn} รอบ</span></div></div>
+    ${noRuns ? `<div class="rt-warn">${I("alert")}มี ${noRuns} หม้อที่พบปัญหาแต่ยังไม่ได้ใส่จำนวนรอบ จึงคำนวณ % ไม่ได้ · กด <b>ใส่จำนวนรอบ</b></div>` : ""}
+    <div class="tscroll"><table class="rt-t"><thead>
+      <tr><th rowspan="2" class="l">หม้อ</th><th colspan="3" class="ds">กะ DS</th><th colspan="3" class="ns">กะ NS</th><th colspan="3" class="all">รวม</th><th rowspan="2" class="l">ปัญหาหลัก / สาเหตุหลัก</th></tr>
+      <tr><th class="ds s">รอบ</th><th class="ds s">ปัญหา</th><th class="ds s">%</th><th class="ns s">รอบ</th><th class="ns s">ปัญหา</th><th class="ns s">%</th><th class="all s">รอบ</th><th class="all s">ปัญหา</th><th class="all s">%</th></tr></thead><tbody>
+      ${rows.map(x => `<tr data-trend="${esc(x.r)}" data-tby="retort"><td class="l"><b>${esc(x.r)}</b></td>${cells(x.ru.DS, x.pd)}${cells(x.ru.NS, x.pn)}${cells(x.nt, x.pt)}
+        <td class="l mc">${x.tc ? `<b>${esc(catById(x.tc[0])?.name || "-")}</b> <em>${x.tc[1]} ครั้ง</em>${x.tz ? `<small>สาเหตุ: ${esc(x.tz[0])} (${x.tz[1]})</small>` : ""}` : `<span class="rt-na">ไม่พบปัญหา</span>`}</td></tr>`).join("")}
+      </tbody><tfoot><tr><td class="l">รวม ${rows.length} หม้อ</td>${cells(T.dn, T.pd)}${cells(T.nn, T.pn)}${cells(T.dn + T.nn, T.pd + T.pn)}<td></td></tr></tfoot></table></div>
+    <p class="sub" style="margin:8px 2px 0">% = จำนวนปัญหาที่บันทึก ÷ จำนวนรอบ × 100 · ถ้ารอบเดียวมีหลายปัญหาจะนับทุกปัญหา · เรียงจาก % มากไปน้อย</p></div>`;
+}
 /* ---------- Retort Survey Filling Form: ข้อมูลอุปกรณ์ของหม้อแต่ละใบ (คอลัมน์ = เลขหม้อ) ---------- */
 const SV_TABLES = [
   { no: 1, head: "The part of Retort", groups: [
@@ -3154,6 +3302,7 @@ function viewAnalyze() {
     <div class="card dcard">${sec("tag", "ปัญหาที่พบบ่อย", `Top 10 · แตะเพื่อดูแนวโน้ม`)}${rank(byCat, "cat")}</div>
     <div class="card dcard">${sec("grid", "หม้อที่พบปัญหาบ่อย", `Top 10 · แตะเพื่อดูแนวโน้ม`)}${rank(byRet, "retort")}</div>
   </div>
+  ${runSection(R, D.plant)}
   ${UD.groups || UD.hours ? `<div class="dgrid2">${UD.groups ? groupSection(L1) : ""}${UD.hours ? hourSection(L1) : ""}</div>` : ""}
   ${UD.heat && L1.length ? `<div class="dtitle"><div><h2>ตารางรายวัน</h2><div class="sub">สีเข้ม = พบมาก · แตะแถวเพื่อดูกราฟแนวโน้ม</div></div>
     <div class="seg dseg2">${[["cat", "ตามปัญหา"], ["retort", "ตามหม้อ"]].map(([v, l]) => `<button data-dby="${v}" class="${D.by === v ? "on" : ""}">${l}</button>`).join("")}</div></div>${heatSection(R, L1, [])}` : ""}
@@ -3298,6 +3447,7 @@ function wireDash() {
   m.onclick = e => {
     const b = e.target.closest("button,[data-trend]"); if (!b) return; const ds = b.dataset;
     if (b.id === "dPrint") { window.print(); return; }
+    if (ds.viewGo2) { S.view = ds.viewGo2; render(); window.scrollTo(0, 0); return; }
     if (ds.dn) { D.n = +ds.dn; D.f1 = D.t1 = ""; DX.c1 = false; re(); }
     else if (ds.dby) { D.by = ds.dby; re(); }
     else if (ds.dpl) { D.plant = ds.dpl; re(); }

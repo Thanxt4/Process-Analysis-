@@ -573,6 +573,16 @@ with db() as con:
             created_at INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_cm_area ON item_comments(area_id);
+        CREATE TABLE IF NOT EXISTS retort_runs(
+            date TEXT NOT NULL,
+            retort TEXT NOT NULL,
+            shift TEXT NOT NULL,
+            n INTEGER NOT NULL,
+            plant TEXT NOT NULL DEFAULT '',
+            by TEXT NOT NULL DEFAULT '',
+            updated_at INTEGER NOT NULL,
+            PRIMARY KEY(date, retort, shift)
+        );
         CREATE TABLE IF NOT EXISTS retort_surveys(
             id TEXT PRIMARY KEY,
             data TEXT NOT NULL,
@@ -2738,6 +2748,58 @@ _SV_KEY = re.compile(r"^[a-z0-9_]{1,40}$")
 
 def _sv_txt(v, n: int) -> str:
     return " ".join(str(v or "").split())[:n]
+
+
+# ---------------------------------------------------------------- จำนวนรอบที่หม้อใช้ (ต่อวัน ต่อกะ) → คำนวณ % รอบที่มีปัญหา
+@app.get("/api/retort/runs")
+def api_rt_runs(request: Request, frm: str = Query("", alias="from"), to: str = ""):
+    _rt_auth(request)
+    try:
+        a = date.fromisoformat(frm) if frm else (now().date() - timedelta(days=400))
+        b = date.fromisoformat(to) if to else now().date()
+    except ValueError:
+        raise HTTPException(400, "วันที่ไม่ถูกต้อง")
+    with db() as con:
+        rows = con.execute("SELECT date, retort, shift, n, plant, by, updated_at FROM retort_runs WHERE date>=? AND date<=?",
+                           (a.isoformat(), b.isoformat())).fetchall()
+    return {"items": [dict(r) for r in rows]}
+
+
+@app.post("/api/retort/runs")
+async def api_rt_runs_save(request: Request):
+    """บันทึกจำนวนรอบของวันหนึ่ง: rows = [{retort, shift: DS|NS, n, plant}] · n ว่าง/ติดลบ = ลบค่าของช่องนั้น"""
+    _rt_auth(request)
+    d = await request.json()
+    try:
+        day = date.fromisoformat(str(d.get("date") or "")).isoformat()
+    except ValueError:
+        raise HTTPException(400, "วันที่ไม่ถูกต้อง")
+    by = _me_name(request, " ".join(str(d.get("by") or "").split())[:60])
+    ts = int(_time.time() * 1000)
+    saved = 0
+    with db() as con:
+        for r in (d.get("rows") or [])[:400]:
+            if not isinstance(r, dict):
+                continue
+            ret = str(r.get("retort") or "").strip().upper()
+            sh = str(r.get("shift") or "").upper()
+            if not _RT_NAME_RE.match(ret) or sh not in ("DS", "NS"):
+                continue
+            v = r.get("n")
+            try:
+                n = int(v) if v not in (None, "") else -1
+            except (TypeError, ValueError):
+                raise HTTPException(400, f"จำนวนรอบของ {ret} กะ {sh} ไม่ถูกต้อง")
+            if n > 99:
+                raise HTTPException(400, f"จำนวนรอบของ {ret} กะ {sh} มากเกินไป")
+            if n < 0:
+                con.execute("DELETE FROM retort_runs WHERE date=? AND retort=? AND shift=?", (day, ret, sh))
+            else:
+                con.execute("INSERT INTO retort_runs(date, retort, shift, n, plant, by, updated_at) VALUES(?,?,?,?,?,?,?) "
+                            "ON CONFLICT(date, retort, shift) DO UPDATE SET n=excluded.n, plant=excluded.plant, by=excluded.by, updated_at=excluded.updated_at",
+                            (day, ret, sh, n, str(r.get("plant") or "")[:20], by, ts))
+            saved += 1
+    return {"ok": True, "saved": saved}
 
 
 @app.get("/api/retort/surveys")
