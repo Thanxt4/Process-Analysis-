@@ -1081,17 +1081,17 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .svx-savebar .savebig{margin-top:0;box-shadow:0 8px 22px rgba(27,42,65,.3)}
 @media(min-width:700px){.svx-savebar{bottom:0;padding-bottom:14px}}
 /* ---------- กระดิ่งแจ้งเตือน + ใครออนไลน์ (แถบบน) ---------- */
-.hb{flex:0 0 auto;min-height:36px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;font-size:13px;font-weight:700;padding:3px 10px}
-.hb:hover{background:rgba(255,255,255,.16)}
-.hb.bell{position:relative;width:38px;padding:0}
-.hb.bell svg.i{width:18px;height:18px}
-.hb.bell em{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 4px;border-radius:99px;background:#ef4444;color:#fff;font-style:normal;font-size:11px;font-weight:800;line-height:15px;text-align:center;border:2px solid var(--navy)}
-.hb.bell.ring svg.i{animation:ntRing .9s ease 2;transform-origin:50% 10%}
+.tbtn{flex:0 0 auto;min-height:36px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;font-size:13px;font-weight:700;padding:3px 10px}
+.tbtn:hover{background:rgba(255,255,255,.16)}
+.tbtn.bell{position:relative;width:38px;padding:0}
+.tbtn.bell svg.i{width:18px;height:18px}
+.tbtn.bell em{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 4px;border-radius:99px;background:#ef4444;color:#fff;font-style:normal;font-size:11px;font-weight:800;line-height:15px;text-align:center;border:2px solid var(--navy)}
+.tbtn.bell.ring svg.i{animation:ntRing .9s ease 2;transform-origin:50% 10%}
 @keyframes ntRing{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-4deg)}}
-.hb.onl{display:inline-flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:7px;padding:3px 11px 3px 4px;white-space:nowrap;min-width:0;width:auto}
+.tbtn.onl{display:inline-flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:7px;padding:3px 11px 3px 4px;white-space:nowrap;min-width:0;width:auto}
 .onl .stk{display:flex}.onl .stk i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10.5px;font-weight:800;color:#fff;border:2px solid var(--navy);margin-left:-8px}.onl .stk i:first-child{margin-left:0}
 .onl .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25)}
-@media(max-width:560px){.onl .stk i:nth-child(n+2){display:none}.onl #onTxt{font-size:12px}.hb.onl{padding-right:9px}}
+@media(max-width:560px){.onl .stk i:nth-child(n+2){display:none}.onl #onTxt{font-size:12px}.tbtn.onl{padding-right:9px}}
 @media(max-width:400px){.onl #onTxt{display:none}.onl .dot{margin-right:2px}}
 @media(max-width:480px){header.top .sync,header.top .rolepill{display:none!important}}
 .ntsheet{max-width:520px}
@@ -1175,8 +1175,8 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
   <a class="back" href="/" aria-label="กลับหน้าหลัก" title="กลับหน้าหลัก"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></a>
   <div class="ttl"><small class="brand">LINE QC / RETORT ANALYSIS</small><h1 id="title">บันทึกปัญหา Retort</h1><div class="s" id="subtitle">หาสาเหตุ · วิเคราะห์แนวโน้ม</div></div>
   <span class="sync" id="sync"><span class="d"></span><span id="syncTxt">ในเครื่อง</span></span>
-  <button class="hb onl hide" id="onBtn" title="ดูว่าใครออนไลน์"><span class="stk" id="onStk"></span><span class="dot"></span><span id="onTxt">ออนไลน์</span></button>
-  <button class="hb bell" id="bellBtn" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button>
+  <button class="tbtn onl hide" id="onBtn" title="ดูว่าใครออนไลน์"><span class="stk" id="onStk"></span><span class="dot"></span><span id="onTxt">ออนไลน์</span></button>
+  <button class="tbtn bell" id="bellBtn" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button>
   <span class="rolepill hide" id="rolePill"></span>
   <button class="av" id="userBtn" aria-label="ผู้ใช้"></button>
   <button class="lgout hide" id="logoutBtn" title="ออกจากระบบ" aria-label="ออกจากระบบ"><svg class="i" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg><span>ออก</span></button>
