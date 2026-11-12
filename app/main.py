@@ -2470,7 +2470,7 @@ def _tp_n(v: str) -> str:
         return v
 
 
-def _tp_table_transposed(table):
+def _tp_table_transposed(table, ctx=None):
     """ตารางแบบ Profile (เช่น TP003): ขั้นตอนเป็นคอลัมน์ (Come Up Time / Cook / Cooling)
     แถว = อุณหภูมิ / เวลา / ความดัน · เลขโปรแกรมอยู่ใต้หัว Profile Name · ช่องที่ไม่ใช้เป็น 0
     คืน [(เลขโปรแกรม, หมายเหตุ, ขั้นตอน)] หรือ None ถ้าไม่ใช่รูปแบบนี้"""
@@ -2512,6 +2512,10 @@ def _tp_table_transposed(table):
             phases = phase_row(r, phases)
             continue
         k = kind(r)
+        if k and cur is None and ctx and sum(1 for c in r if _tp_num(c) is not None) >= 3:
+            # ตารางค่าแยกจากตารางหัว Profile Name (คนละกรอบ) → ใช้เลขโปรแกรมจากตารางก่อนหน้า / ข้อความเหนือตาราง
+            cur = {"no": ctx[0], "note": ctx[1], "vals": {}}
+            out.append(cur)
         if k and cur is not None:
             cur["vals"][k] = {ci: _tp_num(c) for ci, c in enumerate(r) if c is not None and _tp_num(c) is not None and (not phases or ci in phases)}
             cur["phases"] = dict(phases)
@@ -2535,6 +2539,124 @@ def _tp_table_transposed(table):
     return res or None
 
 
+def _tp_prog_ctx(table):
+    """ตารางหัว Profile Name / Description ที่ไม่มีค่า → (เลขโปรแกรม, หมายเหตุ) ของแถวสุดท้าย"""
+    rows = [[str(c).strip() for c in r if c is not None and str(c).strip()] for r in table]
+    if not any(re.search(r"profile\s*name|program\s*(?:name|no)|หมายเลขโปรแกรม", " ".join(r), re.I) for r in rows):
+        return None
+    ctx = None
+    for r in rows:
+        if r and re.fullmatch(r"\d{1,3}", r[0]) and sum(1 for c in r if _tp_num(c) is not None) <= 1:
+            ctx = (str(int(r[0])), " ".join(r[1:])[:120])
+    return ctx
+
+
+def _tp_words_page(page):
+    """สำรอง: อ่านตารางแบบ Profile จากตำแหน่งตัวอักษร (เมื่อหาเส้นตารางไม่เจอ)
+    แถว อุณหภูมิ/เวลา/ความดัน + หัวช่วง (Come Up / Cook / Cooling) ด้านบน · เลขโปรแกรมจากบรรทัด "30 ..." ใต้ Profile Name"""
+    try:
+        words = page.extract_words(use_text_flow=False, keep_blank_chars=False)
+    except Exception:
+        return []
+    lines = []
+    for w in sorted(words, key=lambda w: (round(w["top"]), w["x0"])):
+        if lines and abs(lines[-1][0] - w["top"]) <= 3:
+            lines[-1][1].append(w)
+        else:
+            lines.append([w["top"], [w]])
+    L = [(top, sorted(ws, key=lambda w: w["x0"])) for top, ws in lines]
+    lab = lambda ws: " ".join(w["text"] for w in ws if _tp_num(w["text"]) is None).lower()
+    def kind(ws):
+        t = lab(ws)
+        return ("temp" if re.search(r"อุณหภูมิ|temp", t) else "hold" if re.search(r"hold", t) else "time" if re.search(r"เวลา|time", t)
+                else "press" if re.search(r"ความดัน|press", t) else "")
+    res, i = [], 0
+    while i < len(L):
+        ws = L[i][1]
+        if kind(ws) != "temp" or sum(1 for w in ws if _tp_num(w["text"]) is not None) < 3:
+            i += 1
+            continue
+        block = {"temp": [w for w in ws if _tp_num(w["text"]) is not None]}
+        j = i + 1
+        while j < len(L) and j <= i + 4:
+            k = kind(L[j][1])
+            if not k or k in block:
+                break
+            block[k] = [w for w in L[j][1] if _tp_num(w["text"]) is not None]
+            j += 1
+        # หัวช่วง: บรรทัดเหนือแถวอุณหภูมิที่มีคำ come/cook/cool
+        hdr = []
+        for back in range(i - 1, max(-1, i - 4), -1):
+            hw = L[back][1]
+            txt = " ".join(w["text"] for w in hw)
+            if _tp_phase(txt) or re.search(r"\bcut\b", txt, re.I):
+                # หัวแต่ละช่วงเริ่มที่คำ Come/CUT/Cook/Cool… แล้วรวมคำที่ติดกัน (Come Up Time / CUT 1) เป็นหัวเดียว
+                grp = []
+                for w in hw:
+                    if re.match(r"(come|cut|cook|cool|heat|vent|steril|ไล่อากาศ|ขึ้นอุณหภูมิ|หล่อเย็น|ลดอุณหภูมิ|ฆ่าเชื้อ)", w["text"].lower()):
+                        grp.append(dict(w))
+                    elif grp and w["x0"] - grp[-1]["x1"] < 8:
+                        grp[-1] = {"text": grp[-1]["text"] + " " + w["text"], "x0": grp[-1]["x0"], "x1": w["x1"]}
+                hdr = [((g["x0"] + g["x1"]) / 2, _tp_phase(g["text"])) for g in grp if _tp_phase(g["text"])]
+                if hdr:
+                    break
+        cols = block["temp"]
+        xs = [(w["x0"] + w["x1"]) / 2 for w in cols]
+        ph = ["come"] * len(cols)
+        if len(hdr) >= len(cols):  # หัวย่อยทุกคอลัมน์ (CUT 1 / Cook 1 / Cool 1) → ใช้หัวที่ตรงคอลัมน์ที่สุด
+            ph = [min(hdr, key=lambda h: abs(h[0] - x))[1] for x in xs]
+        elif 1 < len(hdr) < len(cols):  # หัวอยู่กึ่งกลางของกลุ่มคอลัมน์ → หาจุดแบ่งที่ศูนย์กลางกลุ่มใกล้หัวที่สุด
+            import itertools
+            best = None
+            for cut in itertools.combinations(range(1, len(cols)), len(hdr) - 1):
+                b = (0,) + cut + (len(cols),)
+                cost = sum(abs((xs[b[g]] + xs[b[g + 1] - 1]) / 2 - hdr[g][0]) for g in range(len(hdr)))
+                if best is None or cost < best[0]:
+                    best = (cost, b)
+            b = best[1]
+            for g in range(len(hdr)):
+                for c in range(b[g], b[g + 1]):
+                    ph[c] = hdr[g][1]
+        elif len(hdr) == 1:
+            ph = [hdr[0][1]] * len(cols)
+        def at(k, x):
+            ws2 = block.get(k) or []
+            w = min(ws2, key=lambda w: abs((w["x0"] + w["x1"]) / 2 - x), default=None)
+            return w["text"] if w is not None and abs((w["x0"] + w["x1"]) / 2 - x) < 14 else None
+        steps = []
+        for c, x in enumerate(xs):
+            t, tm, pr = _tp_num(cols[c]["text"]), at("time", x), at("press", x)
+            try:
+                if t is None or float(t) <= 0:
+                    continue
+            except ValueError:
+                pass
+            st = [ph[c], _tp_n(t), _tp_n(_tp_num(tm) or ""), _tp_num(pr) or ""]
+            if "hold" in block:
+                st.append(_tp_num(at("hold", x)) or "")
+            steps.append(st)
+        # เลขโปรแกรม: บรรทัดเหนือขึ้นไปที่ขึ้นต้นด้วยตัวเลข (ใต้ Profile Name) หรือ "Program 30"
+        no, note = None, ""
+        for back in range(i - 1, max(-1, i - 12), -1):
+            hw = L[back][1]
+            if not hw:
+                continue
+            m = _TP_PROG_RE.search(" ".join(w["text"] for w in hw))
+            if kind(hw) and sum(1 for w in hw if _tp_num(w["text"]) is not None) >= 3:
+                break  # ถึงตารางของโปรแกรมก่อนหน้าแล้ว
+            if re.fullmatch(r"\d{1,3}", hw[0]["text"]) and (len(hw) == 1 or hw[1]["x0"] - hw[0]["x1"] > 12):
+                rest = " ".join(w["text"] for w in hw[1:])
+                no, note = str(int(hw[0]["text"])), ("" if _tp_phase(rest) or re.search(r"\bcut\b", rest, re.I) else rest[:120])
+                break
+            if m:
+                no = str(int(m.group(1)))
+                break
+        if steps:
+            res.append((no or f"?{len(res) + 1}", note, steps))
+        i = j
+    return res
+
+
 def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
     try:
         import pdfplumber
@@ -2549,13 +2671,19 @@ def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
     with pdf:
         for page in pdf.pages[:60]:
             text_all += (page.extract_text() or "") + "\n"
+            ctx, got = None, False
             for tb in page.find_tables():
                 n_tables += 1
                 table = tb.extract()
                 if page.page_number <= 2:  # ช่องหัวเอกสาร (เรื่อง / แก้ไขครั้งที่ / วันที่เริ่มใช้) อ่านจากช่องตารางได้ตรงกว่าข้อความทั้งหน้า
                     cells += [re.sub(r"\s+", " ", str(c)).strip() for r in table for c in r if c]
-                multi = _tp_table_multi(table) or _tp_table_transposed(table)
+                pc = _tp_prog_ctx(table)
+                multi = _tp_table_multi(table) or _tp_table_transposed(table, ctx)
+                if pc and not multi:
+                    ctx = pc  # ตารางหัว Profile Name แยกกรอบ → ใช้กับตารางค่าถัดไป
+                    continue
                 if multi:
+                    got = True
                     for no, note, steps in multi:
                         if no not in progs:
                             progs[no] = {"no": no, "note": note, "steps": [], "retorts": _tp_retorts(note) if re.search(r"เฉพาะ|only", note, re.I) else []}
@@ -2580,6 +2708,13 @@ def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
                     order.append(no)
                 progs[no]["steps"] += steps
                 last_no = no if m else last_no
+                got = True
+            if not got:  # หาเส้นตารางไม่เจอ / ตารางแตก → อ่านจากตำแหน่งตัวอักษร
+                for no, note, steps in _tp_words_page(page):
+                    if no not in progs:
+                        progs[no] = {"no": no, "note": note, "steps": [], "retorts": _tp_retorts(note) if re.search(r"เฉพาะ|only", note, re.I) else []}
+                        order.append(no)
+                    progs[no]["steps"] += steps
     if len(text_all.strip()) < 40:
         raise HTTPException(422, "PDF นี้ไม่มีตัวอักษรให้อ่าน (น่าจะเป็นไฟล์สแกนเป็นรูป) · ใส่ค่าเองได้ที่ปุ่ม แก้ไขค่าเอง")
     fname = filename or ""
