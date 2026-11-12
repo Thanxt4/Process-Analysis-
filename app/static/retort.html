@@ -1041,6 +1041,21 @@ table.xls{border-collapse:separate;border-spacing:0;width:max-content;min-width:
 .svx-t input.has{background:#f0fdf4}
 .svx-tools{display:flex;gap:6px;flex-wrap:wrap;margin:-2px 0 6px}
 .svx-tools .ghost{color:var(--ink2);background:#fff;border:1px solid var(--line)}
+.svt th.lab{display:table-cell;margin:0;vertical-align:middle}
+.svx-fullbtn{color:var(--ink2)!important;background:#fff!important;border:1px solid var(--line)!important}
+.svx-fbar{display:none}
+body.svfull{overflow:hidden}
+body.svfull #main,body.svfull #main *{animation:none!important;transform:none!important;filter:none!important;backdrop-filter:none!important}
+.svx-gridwrap.full{position:fixed;inset:0;z-index:30;background:#fff;overflow:auto;padding:0 14px 20px}
+.svx-gridwrap.full .svx-fbar{display:flex;align-items:center;gap:8px;position:sticky;top:0;left:0;z-index:5;background:#fff;padding:12px 0 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.svx-fbar .t{flex:1;min-width:0;display:flex;flex-direction:column}.svx-fbar .t b{font-size:17px;color:var(--navy)}.svx-fbar .t small{font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svx-gridwrap.full .svscroll,.svx-gridwrap.full .tscroll{overflow:visible!important;max-height:none!important}
+.svx-gridwrap.full .svx-t{width:100%;table-layout:fixed;border-radius:0}
+.svx-gridwrap.full .svt th.lab{width:clamp(150px,16vw,230px);min-width:0;font-size:12.5px;padding:3px 6px;white-space:normal;line-height:1.25}
+.svx-gridwrap.full .svt thead th{min-width:0;font-size:12.5px;padding:3px 1px}
+.svx-gridwrap.full .svt td{padding:1px}
+.svx-gridwrap.full .svt input{min-height:28px;font-size:12.5px;padding:2px 3px}
+.svx-gridwrap.full .svx-tt{margin:12px 0 6px}
 .svx-savebar{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:4;padding:12px 0 6px;background:linear-gradient(to top,var(--bg) 65%,rgba(241,245,249,0))}
 .svx-savebar .savebig{margin-top:0;box-shadow:0 8px 22px rgba(27,42,65,.3)}
 @media(min-width:700px){.svx-savebar{bottom:0;padding-bottom:14px}}
@@ -1116,7 +1131,8 @@ const IP = { doc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 
   pie:'<path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
   palette:'<circle cx="13.5" cy="6.5" r="1.3"/><circle cx="17.5" cy="10.5" r="1.3"/><circle cx="8.5" cy="7.5" r="1.3"/><circle cx="6.5" cy="12.5" r="1.3"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.3A5.7 5.7 0 0 0 22 9.7C22 5.4 17.5 2 12 2z"/>',
   printer:'<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>',
-  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', factory:'<path d="M3 21V10l6 4V10l6 4V4h6v17z"/><path d="M7 17h2M12 17h2M17 17h2"/>'
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', factory:'<path d="M3 21V10l6 4V10l6 4V4h6v17z"/><path d="M7 17h2M12 17h2M17 17h2"/>',
+  expand:'<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>', shrink:'<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>'
 };
 const I = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${IP[n] || ""}</svg>`;
 const sec = (icon, title, sub = "", right = "") => `<div class="sec"><span class="ic">${I(icon)}</span><div class="t"><h2>${title}</h2>${sub ? `<div class="sub">${sub}</div>` : ""}</div>${right}</div>`;
@@ -1534,6 +1550,7 @@ function render() {
   $("#main").classList.toggle("xwide", S.view === "analyze");
   $("#main").classList.toggle("vset", S.view === "settings" || S.view === "ui");
   S.charts = {}; $("#main").classList.remove("split");
+  document.body.classList.remove("svfull");  // ออกจากตาราง Survey แบบเต็มจอ เมื่อไปแท็บอื่น
   ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
@@ -2321,6 +2338,7 @@ const SV_GNAME = [[["ระบบสตีม", "Steam", "gauge"], ["ระบ�
   [["ปั๊มหมุนเวียน · Flow meter", "Pump & flow", "gauge"], ["เครื่องมือวัด · สอบเทียบ", "Instruments", "thermo"]]];
 const SV_TYPES = ["WATER SPRAY RETORT", "WATER IMMERSION RETORT", "STEAM RETORT", "STEAM AIR RETORT"];
 const svPct = (n, t) => !t || !n ? 0 : Math.max(1, Math.min(100, Math.floor(n / t * 100)));  // กรอกแล้วอย่างน้อย 1 ช่อง = ไม่ขึ้น 0%
+addEventListener("keydown", e => { if (e.key === "Escape" && SV.full && S.view === "survey" && !$("#modalRoot").innerHTML) { SV.full = false; viewSurvey(); } });
 const svBar = p => `<span class="svx-bar"><i style="width:${p}%"></i></span>`;
 function viewSurvey() {
   if (!SV.loaded) { $("#main").innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; svLoad(); return; }
@@ -2358,11 +2376,13 @@ function viewSurvey() {
   let body = "";
   if (!cols.length) body = "";
   else if (mode === "grid") {
-    body = SV_TABLES.map((t, ti) => `<div class="svx-tt">Table ${t.no} · ${esc(t.head)}</div><div class="tscroll svscroll"><table class="svt svx-t"><thead>
+    body = `<div class="svx-fbar"><div class="t"><b>Retort Survey · ตาราง</b><small>${cols.length} หม้อ · ${esc(retRangeText(cols.map(x => x.retort).sort(byRetort)))} · กรอกแล้ว ${filledAll}/${cols.length * NF} ช่อง</small></div>
+      <button class="pri sm" id="svSaveF">${I("check")}บันทึก</button><button class="sm" id="svFull">${I("shrink")}ย่อ</button></div>` + SV_TABLES.map((t, ti) => `<div class="svx-tt">Table ${t.no} · ${esc(t.head)}</div><div class="tscroll svscroll"><table class="svt svx-t"><thead>
       <tr><th class="lab">รายการ</th>${cols.map(x => `<th>${esc(x.retort)}</th>`).join("")}</tr>
       <tr><th class="lab sub2">หมายเหตุหัวคอลัมน์</th>${cols.map((x, ci) => `<th><input class="svnote" data-cn="${ci}" value="${esc(x.note || "")}" placeholder="–"></th>`).join("")}</tr></thead><tbody>
       ${t.groups.map((g, gi) => `<tr class="gh"><td colspan="${cols.length + 1}">${I(SV_GNAME[ti][gi][2])}${esc(SV_GNAME[ti][gi][0])}</td></tr>` + g.map(([k, l]) => `<tr><th class="lab">${esc(l.trim())}</th>${cols.map((x, ci) => `<td>${inp(ci, k)}</td>`).join("")}</tr>`).join("")).join("")}
       </tbody></table></div>`).join("");
+    body = `<div class="svx-gridwrap ${SV.full ? "full" : ""}" style="--nc:${cols.length}">${body}</div>`;
   } else {
     const ci = SV.ri, x = cols[ci], prev = svPrev(x.retort, c.id), nx = svFilled(x), px = svPct(nx, NF);
     body = `<div class="svx-tabs">${cols.map((y, i) => { const p = svPct(svFilled(y), NF);
@@ -2391,13 +2411,14 @@ function viewSurvey() {
     <div class="card svx-card2"><div class="svx-h"><span class="n">2</span><h3>หม้อที่สำรวจ</h3>${!picking ? `<button class="ghost sm" id="svPickOpen">${I("pen")}เพิ่ม/ลบ</button>` : ""}</div>
       ${picking ? picker() : `<div class="svx-sel"><b>${cols.length}</b><span>หม้อ · ${esc(c.plant || "")}<small>${esc(retRangeText(cols.map(x => x.retort).sort(byRetort)))}</small></span></div>`}</div>
     ${cols.length ? `<div class="card svx-card2"><div class="svx-h"><span class="n">3</span><h3>กรอกข้อมูล</h3>
-        <div class="seg svx-mode"><button class="${mode === "one" ? "on" : ""}" data-svmode="one">ทีละหม้อ</button><button class="${mode === "grid" ? "on" : ""}" data-svmode="grid">ตาราง</button></div></div>
+        ${mode === "grid" ? `<button class="ghost sm svx-fullbtn" id="svFull">${I("expand")}ขยายเต็มจอ</button>` : ""}<div class="seg svx-mode"><button class="${mode === "one" ? "on" : ""}" data-svmode="one">ทีละหม้อ</button><button class="${mode === "grid" ? "on" : ""}" data-svmode="grid">ตาราง</button></div></div>
       <div class="svx-all">${svBar(pAll)}<span>รวม <b>${pAll}%</b> · ${filledAll}/${cols.length * NF} ช่อง</span></div>
       ${hasPrev ? `<button class="ghost sm" id="svCopy" style="margin:-4px 0 8px">${I("download")}คัดลอกค่าจาก Survey ก่อนหน้า (หม้อที่ยังว่าง)</button>` : ""}
       ${body}</div>
     <div class="svx-tools"><button class="ghost sm" id="svPrint">${I("printer")}พิมพ์ / PDF</button><button class="ghost sm" id="svCsv">${I("download")}ไฟล์ CSV</button>
       ${c.id ? `<button class="ghost sm" id="svDel" style="color:var(--bad);margin-left:auto">${I("trash")}ลบ Survey</button>` : ""}</div>` : ""}
     ${cols.length ? `<div class="svx-savebar"><button class="pri blk savebig" id="svSave">${I("check")}บันทึก Survey</button></div>` : ""}</div>`;
+  document.body.classList.toggle("svfull", !!(SV.full && mode === "grid" && cols.length));
   const dirty = () => { if (!SV.dirty) { SV.dirty = true; const st = m.querySelector(".svstate"); if (st) { st.textContent = "ยังไม่บันทึก"; st.className = "svx-state svstate dirty"; } } };
   // อัปเดตตัวเลขความคืบหน้าในที่ (ไม่วาดหน้าใหม่ระหว่างพิมพ์ เคอร์เซอร์จะได้ไม่หลุด)
   const setBar = (el, p) => { const i = el && el.querySelector(".svx-bar i"); if (i) i.style.width = p + "%"; };
@@ -2413,8 +2434,9 @@ function viewSurvey() {
     else if (["svRef", "svRev", "svDate"].includes(t.id)) { c[{ svRef: "ref", svRev: "rev", svDate: "date" }[t.id]] = t.value; dirty(); } };
   m.onchange = null;
   m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
-    if (b.id === "svBack") { if (SV.dirty && !confirm("ยังไม่ได้บันทึก ออกจากหน้านี้?")) return; SV.cur = null; SV.dirty = false; viewSurvey(); scrollTo(0, 0); }
+    if (b.id === "svBack") { if (SV.dirty && !confirm("ยังไม่ได้บันทึก ออกจากหน้านี้?")) return; SV.full = false; SV.cur = null; SV.dirty = false; viewSurvey(); scrollTo(0, 0); }
     else if (b.id === "svPickOpen") { SV.pick = true; redo(); }
+    else if (b.id === "svFull") { SV.full = !SV.full; if (SV.full) viewSurvey(); else redo(); }
     else if (b.id === "svPickDone") { SV.pick = false; redo(); }
     else if (ds.svtype) { c.type = ds.svtype; dirty(); m.querySelectorAll("[data-svtype]").forEach(x => x.classList.toggle("on", x === b)); }
     else if (ds.svplant) { c.plant = ds.svplant; redo(); }
@@ -2426,7 +2448,7 @@ function viewSurvey() {
       if (all) { if (L.some(r => svFilled(cols.find(x => x.retort === r))) && !confirm(`เอาหม้อกลุ่ม ${ds.svgrp} ออกทั้งหมด?`)) return; c.cols = cols.filter(x => !L.includes(x.retort)); }
       else L.forEach(r => { if (!cols.some(x => x.retort === r)) cols.push({ retort: r, plant: c.plant, note: "", v: {} }); });
       c.cols.sort((a, b2) => byRetort(a.retort, b2.retort)); SV.dirty = true; redo(); }
-    else if (ds.svmode) { SV.mode = ds.svmode; SV.pick = false; redo(); }
+    else if (ds.svmode) { SV.mode = ds.svmode; SV.pick = false; SV.full = false; redo(); }
     else if (ds.svri != null) { SV.ri = +ds.svri; viewSurvey(); const o = m.querySelector(".svx-tabs"); if (o) { o.scrollIntoView({ block: "start", behavior: "smooth" }); const on = o.querySelector(".on"); if (on) on.scrollIntoView({ inline: "center", block: "nearest" }); } }
     else if (ds.svcp1 != null || b.id === "svCopy") { let n = 0;
       (ds.svcp1 != null ? [cols[+ds.svcp1]] : cols).forEach(x => { if (svFilled(x)) return; const p = svPrev(x.retort, c.id); if (p) { x.v = { ...p.v }; x.note = x.note || p.note || ""; n++; } });
@@ -2437,7 +2459,7 @@ function viewSurvey() {
       const pin = S.pin || prompt("ใส่รหัสเพื่อลบ Survey"); if (!pin) return;
       try { await api(`/api/retort/surveys/${c.id}?pin=${encodeURIComponent(pin)}`, { method: "DELETE" }); SV.items = SV.items.filter(x => x.id !== c.id); SV.cur = null; SV.dirty = false; toast("ลบ Survey แล้ว"); viewSurvey(); }
       catch (err) { toast(err.message); } }));
-    else if (b.id === "svSave") needEditPin("บันทึก Survey", async () => {
+    else if (b.id === "svSave" || b.id === "svSaveF") needEditPin("บันทึก Survey", async () => {
       b.disabled = true;
       try { const r = await jpost("/api/retort/surveys", { survey: c, by: S.user, pin: S.pin || undefined });
         SV.cur = JSON.parse(JSON.stringify(r.survey)); const i = SV.items.findIndex(x => x.id === r.survey.id); if (i >= 0) SV.items[i] = r.survey; else SV.items.unshift(r.survey);
