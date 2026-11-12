@@ -175,7 +175,7 @@ def _add_picture_fit(slide, path: Path, x, y, w, h):
         slide.shapes.add_picture(str(path), px, py, pw, ph)
 
 
-PROC_ORDER = ["Rawmat", "จุดเตรียม", "ห้องเคมี", "ห้องอิ้ง", "บรรจุ", "Retort&Store", "Warehouse"]
+PROC_ORDER = ["Rawmat", "จุดเตรียม", "ห้องเย็น", "ห้องเคมี", "บรรจุ", "ห้องอิ้ง", "Retort&Store", "Warehouse"]
 
 
 def _proc_rank(p: str) -> int:

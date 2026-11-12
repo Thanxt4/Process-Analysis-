@@ -72,6 +72,8 @@ for d in (UPLOAD_DIR, SLIDE_DIR):
 
 
 CUSTOMERS = ("Weruva", "Smucker")  # ลูกค้าที่เลือกให้แต่ละ Checklist ได้
+BOTH_CUST = "both"  # Checklist ที่ใช้กับทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)
+CUST_FILTERS = CUSTOMERS + ("any", "none")  # ตัวเลือกลูกค้าใน Dashboard: any = ลูกค้าทั้งหมด · none = ไม่มีลูกค้า
 NO_ACT = "ไม่มีกิจกรรม"  # ผลการตรวจแบบที่ 3: ไปตรวจแล้วแต่จุดนั้นไม่มีกิจกรรม → ไม่นับในกราฟ/การวิเคราะห์
 STATUSES = ("ปกติ", "พบปัญหา", NO_ACT)
 
@@ -90,7 +92,7 @@ AREAS, ITEM_MAP = load_areas()
 
 
 # ป้ายบอกว่ารายการตรวจอยู่ในกระบวนการไหน (เลือกได้ในหน้าแก้ไขหัวข้อ) — แก้รายการได้ที่ "process_tags" ใน areas.json
-DEFAULT_PROCESS_TAGS = ["Rawmat", "จุดเตรียม", "บรรจุ", "Retort&Store", "ห้องเคมี", "ห้องอิ้ง", "Warehouse"]
+DEFAULT_PROCESS_TAGS = ["Rawmat", "จุดเตรียม", "ห้องเย็น", "ห้องเคมี", "บรรจุ", "ห้องอิ้ง", "Retort&Store", "Warehouse"]
 
 
 def process_tags():
@@ -238,6 +240,153 @@ def _migrate_delay_qty():
             n += 1
     print(f"[areas] ช่องนับจำนวนคัน (Delay) {n} หัวข้อ · ห้อง: " + ", ".join(DELAY_ROOMS), flush=True)
     _save_areas(AREAS, "delay_qty")
+    AREAS, ITEM_MAP = load_areas()
+
+
+# ลูกค้าของแต่ละหัวข้อ (รายการจากหน้างาน 6 พ.ย. 2569) · หัวข้ออื่นใน Process Control / GMP = ไม่มีลูกค้า
+# (deck, ชื่อพื้นที่, เลขที่, ชื่อหัวข้อขึ้นต้นด้วย, ลูกค้า)  both = Weruva, Smucker
+CUST_SEED = [
+    ("pc", "PF2", 5, "สุ่มตรวจสอบการปั่นผสมสารละลาย", "Weruva"),
+    ("pc", "PF1 - จุดเตรียม", 37, "ลานเขียว จุด Tomra", "both"),
+    ("pc", "PF1 - จุดเตรียม", 66, "จุดล้างถาด", "both"),
+    ("pc", "PF1 - บรรจุ", 40, "สุ่มตรวจสอบการปั่นผสมสารละลาย", "both"),
+    ("pc", "PF1 - บรรจุ", 47, "การชั่งน้ำหนัก/เคาะ/กวาดของบรรจุ", "both"),
+    ("pc", "PF1 - บรรจุ", 48, "การคลุกผสม", "both"),
+    ("pc", "PF1 - บรรจุ", 55, "ห้องเคมี PF1", "both"),
+    ("pc", "PF1 - บรรจุ", 73, "รายงาน Delay Time", "both"),
+    ("pc", "ห้องเย็น PF1", 74, "สุ่มดูเปลือกฟักทอง", "Weruva"),
+    ("pc", "ห้องเย็น PF1", 82, "จุดเตรียมผัก", "Weruva"),
+    ("pc", "ห้องเย็น PF1", 84, "ตรวจสอบวัตถุดิบห้อง CSR3", "Weruva"),
+    ("gmp", "PF1", 2, "พื้นที่เตรียมการผลิต - ตรวจสอบความสะอาด", "both"),
+    ("gmp", "PF1", 3, "พื้นที่เตรียมการผลิต - พนักงานที่ปฏิบัติงาน", "both"),
+    ("gmp", "PF1", 6, "ไลน์บรรจุ - พนักงานที่ปฏิบัติงาน", "both"),
+    ("gmp", "PF1", 8, "ไลน์บรรจุ - ตรวจสอบความสะอาด", "both"),
+    ("gmp", "PF1", 9, "ไลน์บรรจุ - เศษตกพื้น", "Weruva"),
+    ("gmp", "PF1", 12, "ห้องเคมี - ตรวจสอบความสะอาด", "both"),
+    ("gmp", "PF1", 14, "ห้องเคมี - การตัดกระสอบ", "both"),
+    ("gmp", "PF2", 2, "พื้นที่เตรียมการผลิต - ตรวจสอบความสะอาด", "Smucker"),
+    ("gmp", "PF2", 8, "ไลน์บรรจุ - ตรวจสอบความสะอาด", "Weruva"),
+    ("gmp", "PF2", 9, "ไลน์บรรจุ - เศษตกพื้น", "Weruva"),
+]
+
+
+def _migrate_cust_list():
+    """ครั้งเดียว: ตั้งลูกค้าของหัวข้อ Process Control / GMP ตาม CUST_SEED · หัวข้ออื่น = ไม่มีลูกค้า
+    จับคู่ด้วย ชื่อพื้นที่ + เลขที่ และตรวจชื่อหัวข้อ (ถ้าเลขที่ไม่ตรงชื่อ หาจากชื่อในพื้นที่เดียวกัน) · หลังจากนี้แก้ได้ที่หน้าแก้ไขหัวข้อ"""
+    global AREAS, ITEM_MAP
+    if AREAS.get("cust_seed_v1"):
+        return
+    norm = lambda t: " ".join(str(t or "").split())
+    live = [z for z in AREAS["zones"] if not z.get("hidden") and (z.get("deck") or zone_deck(z)) in ("pc", "gmp")]
+    want, missing = {}, []
+    for deck, zname, no, prefix, cust in CUST_SEED:
+        zs = [z for z in live if (z.get("deck") or zone_deck(z)) == deck and norm(z.get("name")) == zname]
+        items = [it for z in zs for it in z["items"] if not it.get("extra") and not it.get("hidden")]
+        one = lambda c: c[0] if len(c) == 1 else None
+        hit = next((it for it in items if str(it.get("no")) == str(no) and norm(it.get("name")).startswith(prefix)), None) \
+            or one([it for it in items if norm(it.get("name")).startswith(prefix)]) \
+            or one([it for it in items if str(it.get("no")) == str(no)])
+        if hit:
+            want[id(hit)] = cust
+        else:
+            missing.append(f"{deck.upper()} {zname} #{no}")
+    n = 0
+    for z in live:
+        for it in z["items"]:
+            if it.get("extra"):
+                continue
+            c = want.get(id(it))
+            if c:
+                it["cust"] = c
+                n += 1
+            else:
+                it.pop("cust", None)
+    AREAS["cust_seed_v1"] = True
+    print(f"[areas] ตั้งลูกค้าตามรายการ {n}/{len(CUST_SEED)} หัวข้อ · ที่เหลือ = ไม่มีลูกค้า"
+          + (f" · หาไม่พบ: {', '.join(missing)}" if missing else ""), flush=True)
+    _save_areas(AREAS, "cust_seed")
+    AREAS, ITEM_MAP = load_areas()
+
+
+# หัวข้อ Checklist ใหม่ (★ ทดลองใช้ · ยังไม่นับใน % ของ Dashboard = pilot) — เพิ่มครั้งเดียวตอนเปิดเซิร์ฟเวอร์
+# (deck, ชื่อพื้นที่, เลขที่, ชื่อหัวข้อ, ลูกค้า)
+NEW_ITEMS_V1 = [
+    ("pc", "PF2", 97, "ตรวจสภาพอุปกรณ์สัมผัสอาหาร จุด Block cutter / Steam tunnel (พลั่ว ถาด ปะเก็น) และนับเครื่องมือหลังซ่อม", "Smucker"),
+    ("pc", "PF2", 98, "ทวนสอบบันทึก: ค่าที่บันทึกตรงกับเครื่อง (steamer), หน่วยตาชั่ง, อุณหภูมิ gravy / chunk ครบทุกจุด", "both"),
+    ("pc", "PF1 - จุดเตรียม", 96, "สภาพอุปกรณ์ไลน์ red meat: guide Metal detector, safety holder เครื่อง flaker, ปะเก็นฝา mixer", "Weruva"),
+    ("pc", "PF1 - บรรจุ", 95, "ตรวจรอยเชื่อม/สภาพอุปกรณ์สัมผัสอาหาร (กรวยบรรจุ ตะแกรงเครื่องผสม gravy) ก่อน-หลังผลิต และนับเครื่องมือหลังซ่อม", "Smucker"),
+    ("gmp", "PF1", 16, "พื้นที่เตรียมการผลิต - วัสดุลอก/หลุดเหนือโซนผลิตภัณฑ์ (สติกเกอร์ tag เทป ซิลิโคน สนิม สีลอก)", "both"),
+    ("gmp", "PF1", 17, "ไลน์บรรจุ - วัสดุลอก/หลุดเหนือโซนผลิตภัณฑ์ (สติกเกอร์ tag เทป ซิลิโคน สนิม สีลอก)", "both"),
+    ("gmp", "PF1", 18, "ห้องเคมี - วัสดุลอก/หลุด และสภาพถุง/ภาชนะเคมี (ไม่ขาด ไม่รั่ว)", "both"),
+    ("gmp", "PF1", 19, "น้ำ condensate / น้ำหยดเหนือผลิตภัณฑ์ (ฝ้า ท่อแอร์ fan coil) และรถเข็น RM มีหลังคาคลุม", "both"),
+    ("gmp", "PF1", 20, "ผนัง / ฝ้า / ประตู ไม่มีคราบดำหรือรา ไม่ชำรุด", "both"),
+    ("gmp", "PF1", 21, "แมลง/สัตว์พาหะในจุดเสี่ยง และที่ดักแมลงมีบันทึกการตรวจ", "both"),
+    ("gmp", "PF2", 15, "พื้นที่เตรียมการผลิต - วัสดุลอก/หลุดเหนือโซนผลิตภัณฑ์ (สติกเกอร์ tag เทป ซิลิโคน สนิม สีลอก)", "Smucker"),
+    ("gmp", "PF2", 16, "ไลน์บรรจุ - วัสดุลอก/หลุดเหนือโซนผลิตภัณฑ์ (สติกเกอร์ tag เทป ซิลิโคน สนิม สีลอก)", "Weruva"),
+    ("gmp", "PF2", 17, "น้ำ condensate / น้ำหยดเหนือผลิตภัณฑ์ (ฝ้า ท่อ hopper)", "Smucker"),
+    ("gmp", "PF2", 18, "ผนัง / ฝ้า / ประตู ไม่มีคราบดำหรือรา ไม่ชำรุด", "Smucker"),
+]
+
+
+def _migrate_new_items_v1():
+    """ครั้งเดียว: เพิ่มหัวข้อ Checklist ใหม่ตาม NEW_ITEMS_V1 (ไม่เพิ่มซ้ำถ้ามีหัวข้อชื่อเดียวกันในพื้นที่นั้นแล้ว)
+    หัวข้อใหม่ติดป้าย pilot = แสดงใน Dashboard แต่ยังไม่นับใน % (เปิดให้นับได้ที่หน้าแก้ไขหัวข้อ)"""
+    global AREAS, ITEM_MAP
+    if AREAS.get("new_items_v1"):
+        return
+    norm = lambda t: " ".join(str(t or "").split())
+    used = {z["id"] for z in AREAS["zones"]} | {it["id"] for z in AREAS["zones"] for it in z["items"]}
+    rd = round_of(now()).isoformat()
+    added, missing = 0, []
+    for deck, zname, no, name, cust in NEW_ITEMS_V1:
+        z = next((z for z in AREAS["zones"] if not z.get("hidden") and (z.get("deck") or zone_deck(z)) == deck and norm(z.get("name")) == zname), None)
+        if not z:
+            missing.append(f"{deck.upper()} {zname}")
+            continue
+        if any(not it.get("hidden") and norm(it.get("name")) == norm(name) for it in z["items"]):
+            continue  # มีแล้ว
+        iid = "A" + uuid.uuid4().hex[:6]
+        while iid in used:
+            iid = "A" + uuid.uuid4().hex[:6]
+        used.add(iid)
+        it = {"id": iid, "no": no, "name": name, "added": rd, "pilot": True}
+        if cust in CUSTOMERS or cust == BOTH_CUST:
+            it["cust"] = cust
+        pos = next((i for i, x in enumerate(z["items"]) if x.get("extra")), len(z["items"]))  # ก่อน "หัวข้อเพิ่มเติม"
+        z["items"].insert(pos, it)
+        added += 1
+    AREAS["new_items_v1"] = True
+    print(f"[areas] เพิ่มหัวข้อใหม่ {added}/{len(NEW_ITEMS_V1)} หัวข้อ (★ ยังไม่นับใน % ของ Dashboard)"
+          + (f" · ไม่พบพื้นที่: {', '.join(missing)}" if missing else ""), flush=True)
+    _save_areas(AREAS, "new_items_v1")
+    AREAS, ITEM_MAP = load_areas()
+
+
+def _proc_sort_items(items, order):
+    """เรียงหัวข้อในพื้นที่ตามลำดับกระบวนการ (หัวข้อในกระบวนการเดียวกันคงลำดับเดิม · ไม่มีป้ายไว้ท้าย · หัวข้อเพิ่มเติมไว้ท้ายสุด)"""
+    rank = {p: i for i, p in enumerate(order)}
+    key = lambda it: (2, 0) if it.get("extra") else (0, rank[it["proc"]]) if it.get("proc") in rank else (1, 0)
+    return sorted(items, key=key)  # sorted() คงลำดับเดิมของตัวที่ key เท่ากัน
+
+
+def _migrate_proc_order_v1():
+    """ครั้งเดียว: ลำดับกระบวนการ Rawmat → จุดเตรียม → ห้องเย็น → ห้องเคมี → บรรจุ → ห้องอิ้ง → Retort&Store → Warehouse
+    แล้วเรียงหัวข้อในแต่ละพื้นที่ตามลำดับนี้ (สำรองไฟล์ก่อนบันทึก)"""
+    global AREAS, ITEM_MAP
+    if AREAS.get("proc_order_v1"):
+        return
+    cur = AREAS.get("process_tags") if isinstance(AREAS.get("process_tags"), list) else None
+    if cur:  # เคยตั้งรายการเอง: ใช้ลำดับใหม่ แล้วต่อด้วยป้ายที่ตั้งเองเพิ่ม
+        AREAS["process_tags"] = DEFAULT_PROCESS_TAGS + [t for t in cur if t not in DEFAULT_PROCESS_TAGS]
+    order = process_tags()
+    moved = 0
+    for z in AREAS["zones"]:
+        new = _proc_sort_items(z["items"], order)
+        moved += sum(1 for a, b in zip(z["items"], new) if a is not b)
+        z["items"] = new
+    AREAS["proc_order_v1"] = True
+    print(f"[areas] เรียงหัวข้อตามกระบวนการ ({' → '.join(order)}) · ย้ายตำแหน่ง {moved} หัวข้อ", flush=True)
+    _save_areas(AREAS, "proc_order_v1")
     AREAS, ITEM_MAP = load_areas()
 
 
@@ -397,6 +546,45 @@ with db() as con:
             seq INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_img_sub ON images(submission_id);
+        CREATE TABLE IF NOT EXISTS users(
+            emp_id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            dept TEXT NOT NULL,
+            pw TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            active INTEGER NOT NULL DEFAULT 1
+        );
+        CREATE TABLE IF NOT EXISTS user_sessions(
+            token TEXT PRIMARY KEY,
+            emp_id TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            last_seen INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS admin_sessions(
+            token TEXT PRIMARY KEY,
+            created_at INTEGER NOT NULL,
+            last_seen INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS item_comments(
+            id TEXT PRIMARY KEY,
+            area_id TEXT NOT NULL,
+            parent TEXT,
+            data TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_cm_area ON item_comments(area_id);
+        CREATE TABLE IF NOT EXISTS retort_surveys(
+            id TEXT PRIMARY KEY,
+            data TEXT NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS followups(
+            id TEXT PRIMARY KEY,
+            data TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
         """
     )
     # เพิ่มคอลัมน์สำหรับหลายสไลด์ต่อ 1 การตรวจ (รองรับฐานข้อมูลเดิม)
@@ -411,7 +599,7 @@ with db() as con:
         con.execute("ALTER TABLE submissions ADD COLUMN late INTEGER NOT NULL DEFAULT 0")
     if "qty" not in cols:  # จำนวนที่นับ เช่น วัตถุดิบ Delay แยกห้อง (JSON)
         con.execute("ALTER TABLE submissions ADD COLUMN qty TEXT")
-    for c in ("remark", "action", "cause"):  # หมายเหตุ / การแก้ไข / สาเหตุ (เมื่อพบปัญหา)
+    for c in ("remark", "action", "cause", "resp", "resp_by", "resp_at"):  # หมายเหตุ / การแก้ไข / สาเหตุ / ฝ่ายที่ตอบ (QC/PD) และผู้ตอบ
         if c not in cols:
             con.execute(f"ALTER TABLE submissions ADD COLUMN {c} TEXT")
     cols = {r[1] for r in con.execute("PRAGMA table_info(images)")}
@@ -474,7 +662,7 @@ def fetch_submissions(rd: date, area_id: Optional[str] = None):
         s["zone"] = it.get("zone", "")
         s["zone_id"] = it.get("zone_id", "")
         s["proc"] = it.get("proc", "")  # ป้ายกระบวนการ (Rawmat / จุดเตรียม / ...)
-        s["cust"] = it.get("cust", "")  # ลูกค้า Weruva / Smucker (ว่าง = ทั้งสองลูกค้า)
+        s["cust"] = it.get("cust", "")  # ลูกค้า: Weruva / Smucker / both (ว่าง = ไม่มีลูกค้า)
         try:
             s["qty"] = json.loads(s.get("qty") or "null")
         except ValueError:
@@ -546,6 +734,8 @@ def status_for(rd: date, deck: Optional[str] = None):
                 "issue": has_issue,
                 "last_inspector": last["inspector"] if last else None,
                 "last_time": last["created_at"] if last else None,
+                # ผลตรวจที่ใช้เปิดเรื่องติดตาม: ครั้งล่าสุดที่พบปัญหา (ถ้ามี) ไม่งั้นครั้งล่าสุด
+                "fu_sid": (next((x for x in reversed(ss) if x["status"] == "พบปัญหา"), last) or {}).get("id"),
                 "images": sum(len(x["images"]) for x in ss),
             })
             issues += has_issue
@@ -655,8 +845,15 @@ def _start():
         _migrate_gmp_areas()
         _migrate_wh_points()
         _migrate_delay_qty()
+        _migrate_cust_list()
+        _migrate_new_items_v1()
+        _migrate_proc_order_v1()
     except Exception as e:  # noqa
         print("[areas] backfill error:", e, flush=True)
+    try:
+        _migrate_pf1_retorts()
+    except Exception as e:  # noqa
+        print("[retort] PF1 retorts migrate error:", e, flush=True)
     threading.Thread(target=scheduler_loop, daemon=True).start()
     print(f"[slides] รูปแบบสไลด์เวอร์ชัน {SLIDES_VERSION}", flush=True)
 
@@ -682,6 +879,329 @@ async def access_gate(request: Request, call_next):
             and path not in ("/api/login",) and request.cookies.get("pc_access") != ACCESS_TOKEN:
         return JSONResponse({"detail": "ACCESS_REQUIRED"}, status_code=401)
     return await call_next(request)
+
+
+# ---------------------------------------------------------------- บัญชีผู้ใช้ (สมัครสมาชิก / เข้าสู่ระบบ ด้วยรหัสพนักงาน)
+DEPTS = ("QC", "PD", "TP")
+USER_COOKIE = "pc_user"
+ADMIN_COOKIE = "pc_uadmin"
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "Admin#12345")  # รหัส Admin สำหรับหน้าจัดการผู้ใช้ (/users.html)
+FOREVER = 10 * 365 * 24 * 3600  # เข้าสู่ระบบครั้งเดียว อยู่จนกว่าจะกดออกจากระบบ
+_EMP_RE = re.compile(r"^[A-Za-z0-9._-]{2,20}$")
+_login_fail = {}  # (ip, emp_id) → [เวลาที่ใส่รหัสผิด]
+
+
+def _pw_hash(pw: str, salt: Optional[bytes] = None) -> str:
+    salt = salt or secrets.token_bytes(16)
+    h = hashlib.pbkdf2_hmac("sha256", pw.encode("utf-8"), salt, 200_000)
+    return f"pbkdf2${salt.hex()}${h.hex()}"
+
+
+def _pw_ok(pw: str, stored: str) -> bool:
+    try:
+        _, salt, h = stored.split("$")
+        return secrets.compare_digest(_pw_hash(pw, bytes.fromhex(salt)).split("$")[2], h)
+    except Exception:
+        return False
+
+
+def _tok_hash(t: str) -> str:
+    return hashlib.sha256(("sess:" + t).encode()).hexdigest()
+
+
+def _me(request: Request):
+    """ผู้ใช้ที่เข้าสู่ระบบอยู่ (จาก cookie) หรือ None"""
+    if hasattr(request.state, "user"):
+        return request.state.user
+    t = request.cookies.get(USER_COOKIE) or ""
+    u = None
+    if t:
+        with db() as con:
+            r = con.execute("SELECT u.emp_id, u.name, u.dept, u.active, s.last_seen FROM user_sessions s JOIN users u ON u.emp_id=s.emp_id "
+                            "WHERE s.token=?", (_tok_hash(t),)).fetchone()
+            if r and r["active"]:
+                u = {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"]}
+                nowms = int(_time.time() * 1000)
+                if nowms - r["last_seen"] > 45_000:  # อัปเดตบ่อยพอให้รู้ว่าใครออนไลน์
+                    con.execute("UPDATE user_sessions SET last_seen=? WHERE token=?", (nowms, _tok_hash(t)))
+    request.state.user = u
+    return u
+
+
+def _me_name(request: Request, fallback: str = "") -> str:
+    u = _me(request)
+    return u["name"] if u else fallback
+
+
+def _fail_check(request: Request, emp: str):
+    key = (request.client.host if request.client else "", emp.lower())
+    now_s = _time.time()
+    L = [t for t in _login_fail.get(key, []) if now_s - t < 600]
+    _login_fail[key] = L
+    if len(L) >= 5:
+        raise HTTPException(429, "ใส่รหัสผิดหลายครั้ง ลองใหม่อีก 10 นาที")
+    return key
+
+
+# หน้าหลักต้องเข้าสู่ระบบก่อน · ยกเว้นหน้า Retort (มีรหัสของตัวเอง) และการเข้าสู่ระบบเอง
+_USER_FREE = ("/api/auth/", "/api/retort", "/api/login", "/api/admin/check", "/api/uadmin/")
+
+
+@app.middleware("http")
+async def user_gate(request: Request, call_next):
+    path = request.url.path
+    if (path.startswith(("/api/", "/uploads/", "/t/")) and not path.startswith(_USER_FREE)
+            and not await run_in_threadpool(_me, request)):
+        return JSONResponse({"detail": "LOGIN_REQUIRED"}, status_code=401)
+    return await call_next(request)
+
+
+def _set_session(resp, emp_id: str):
+    t = secrets.token_urlsafe(32)
+    ms = int(_time.time() * 1000)
+    with db() as con:
+        con.execute("INSERT INTO user_sessions(token, emp_id, created_at, last_seen) VALUES(?,?,?,?)", (_tok_hash(t), emp_id, ms, ms))
+    resp.set_cookie(USER_COOKIE, t, max_age=FOREVER, httponly=True, samesite="lax")
+
+
+def _user_out(r) -> dict:
+    return {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"]}
+
+
+@app.get("/api/auth/me")
+def api_auth_me(request: Request):
+    u = _me(request)
+    resp = JSONResponse({"user": u, "depts": DEPTS})
+    t = request.cookies.get(USER_COOKIE)
+    if u and t:  # ต่ออายุ cookie ทุกครั้งที่เปิดแอป → ไม่หลุดเอง
+        resp.set_cookie(USER_COOKIE, t, max_age=FOREVER, httponly=True, samesite="lax")
+    return resp
+
+
+@app.post("/api/auth/register")
+async def api_auth_register(request: Request):
+    d = await request.json()
+    name = " ".join(str(d.get("name") or "").split())[:60]
+    emp = str(d.get("emp_id") or "").strip()
+    dept = str(d.get("dept") or "").strip().upper()
+    pw = str(d.get("password") or "")
+    if not name:
+        raise HTTPException(400, "กรอกชื่อ")
+    if not _EMP_RE.match(emp):
+        raise HTTPException(400, "รหัสพนักงานใช้ตัวอักษร/ตัวเลข 2–20 ตัว")
+    if dept not in DEPTS:
+        raise HTTPException(400, "เลือกแผนก")
+    if len(pw) < 6:
+        raise HTTPException(400, "รหัสผ่านอย่างน้อย 6 ตัว")
+    with db() as con:
+        if con.execute("SELECT 1 FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone():
+            raise HTTPException(409, "รหัสพนักงานนี้สมัครไว้แล้ว · ไปที่ เข้าสู่ระบบ")
+        con.execute("INSERT INTO users(emp_id, name, dept, pw, created_at) VALUES(?,?,?,?,?)",
+                    (emp, name, dept, await run_in_threadpool(_pw_hash, pw), int(_time.time() * 1000)))
+    resp = JSONResponse({"ok": True, "user": {"emp_id": emp, "name": name, "dept": dept}})
+    _set_session(resp, emp)
+    return resp
+
+
+@app.post("/api/auth/login")
+async def api_auth_login(request: Request):
+    d = await request.json()
+    emp, pw = str(d.get("emp_id") or "").strip(), str(d.get("password") or "")
+    key = _fail_check(request, emp)
+    with db() as con:
+        r = con.execute("SELECT * FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone()
+    if not r or not await run_in_threadpool(_pw_ok, pw, r["pw"]):
+        _login_fail.setdefault(key, []).append(_time.time())
+        raise HTTPException(401, "รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง")
+    if not r["active"]:  # รหัสถูกแล้วจึงบอกว่าถูกระงับ (ไม่เผยว่ามีบัญชีนี้)
+        raise HTTPException(403, "บัญชีนี้ถูกระงับ · ติดต่อผู้ดูแลระบบ")
+    _login_fail.pop(key, None)
+    resp = JSONResponse({"ok": True, "user": _user_out(r)})
+    _set_session(resp, r["emp_id"])
+    return resp
+
+
+@app.post("/api/auth/logout")
+def api_auth_logout(request: Request):
+    t = request.cookies.get(USER_COOKIE) or ""
+    if t:
+        with db() as con:
+            con.execute("DELETE FROM user_sessions WHERE token=?", (_tok_hash(t),))
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie(USER_COOKIE, samesite="lax")
+    return resp
+
+
+@app.post("/api/auth/reset")
+async def api_auth_reset(request: Request):
+    """ลืมรหัสผ่าน: หัวหน้าใส่รหัสแก้ไข (EDIT_PIN) เพื่อตั้งรหัสผ่านใหม่ให้ · ออกจากระบบทุกเครื่องของคนนั้น"""
+    d = await request.json()
+    emp, pw = str(d.get("emp_id") or "").strip(), str(d.get("password") or "")
+    key = _fail_check(request, "reset:" + emp)
+    if str(d.get("pin") or "") != EDIT_PIN:
+        _login_fail.setdefault(key, []).append(_time.time())
+        raise HTTPException(403, "รหัสหัวหน้าไม่ถูกต้อง")
+    if len(pw) < 6:
+        raise HTTPException(400, "รหัสผ่านอย่างน้อย 6 ตัว")
+    with db() as con:
+        r = con.execute("SELECT emp_id FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบรหัสพนักงานนี้")
+        con.execute("UPDATE users SET pw=? WHERE emp_id=?", (await run_in_threadpool(_pw_hash, pw), r["emp_id"]))
+        con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+    for k in [k for k in _login_fail if k[1] in (r["emp_id"].lower(), "reset:" + r["emp_id"].lower())]:
+        _login_fail.pop(k, None)  # ตั้งรหัสใหม่แล้ว ปลดล็อกการใส่รหัสผิด
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------- หน้าจัดการผู้ใช้ (Admin)
+def _is_admin(request: Request) -> bool:
+    t = request.cookies.get(ADMIN_COOKIE) or ""
+    if not t:
+        return False
+    with db() as con:
+        r = con.execute("SELECT last_seen FROM admin_sessions WHERE token=?", (_tok_hash("adm:" + t),)).fetchone()
+        if r and int(_time.time() * 1000) - r["last_seen"] > 3600_000:
+            con.execute("UPDATE admin_sessions SET last_seen=? WHERE token=?", (int(_time.time() * 1000), _tok_hash("adm:" + t)))
+    return bool(r)
+
+
+def _need_admin(request: Request):
+    if not _is_admin(request):
+        raise HTTPException(401, "ADMIN_REQUIRED")
+
+
+ONLINE_MS = 3 * 60 * 1000  # ใช้งานภายใน 3 นาที = ออนไลน์
+
+
+@app.get("/api/presence")
+def api_presence(request: Request):
+    """รายชื่อผู้ใช้ทั้งหมด + ออนไลน์/ออฟไลน์ (สำหรับดูว่าใครอยู่ และแท็กชื่อ @ชื่อ)"""
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    nowms = int(_time.time() * 1000)
+    with db() as con:
+        rows = con.execute("""SELECT u.emp_id, u.name, u.dept, (SELECT MAX(last_seen) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS seen
+                              FROM users u WHERE u.active=1""").fetchall()
+    out = [{"name": r["name"], "dept": r["dept"], "seen": r["seen"] or 0,
+            "online": r["emp_id"] == u["emp_id"] or bool(r["seen"] and nowms - r["seen"] < ONLINE_MS), "me": r["emp_id"] == u["emp_id"]} for r in rows]
+    out.sort(key=lambda x: (not x["online"], -x["seen"], x["name"].lower()))
+    return {"users": out, "now": nowms}
+
+
+@app.get("/api/uadmin/me")
+def api_uadmin_me(request: Request):
+    ok = _is_admin(request)
+    resp = JSONResponse({"admin": ok, "depts": DEPTS})
+    if ok:
+        resp.set_cookie(ADMIN_COOKIE, request.cookies.get(ADMIN_COOKIE), max_age=FOREVER, httponly=True, samesite="lax")
+    return resp
+
+
+@app.post("/api/uadmin/login")
+async def api_uadmin_login(request: Request):
+    d = await request.json()
+    key = _fail_check(request, "__admin__")
+    if not secrets.compare_digest(str(d.get("password") or ""), ADMIN_PASS):
+        _login_fail.setdefault(key, []).append(_time.time())
+        raise HTTPException(401, "รหัส Admin ไม่ถูกต้อง")
+    _login_fail.pop(key, None)
+    t = secrets.token_urlsafe(32)
+    ms = int(_time.time() * 1000)
+    with db() as con:
+        con.execute("INSERT INTO admin_sessions(token, created_at, last_seen) VALUES(?,?,?)", (_tok_hash("adm:" + t), ms, ms))
+    resp = JSONResponse({"ok": True})
+    resp.set_cookie(ADMIN_COOKIE, t, max_age=FOREVER, httponly=True, samesite="lax")
+    return resp
+
+
+@app.post("/api/uadmin/logout")
+def api_uadmin_logout(request: Request):
+    t = request.cookies.get(ADMIN_COOKIE) or ""
+    if t:
+        with db() as con:
+            con.execute("DELETE FROM admin_sessions WHERE token=?", (_tok_hash("adm:" + t),))
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie(ADMIN_COOKIE, samesite="lax")
+    return resp
+
+
+@app.get("/api/uadmin/users")
+def api_uadmin_users(request: Request):
+    _need_admin(request)
+    with db() as con:
+        rows = con.execute("""SELECT u.emp_id, u.name, u.dept, u.active, u.created_at,
+                                     (SELECT MAX(last_seen) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS last_seen,
+                                     (SELECT COUNT(*) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS devices,
+                                     (SELECT COUNT(*) FROM submissions b WHERE b.inspector=u.name) AS subs
+                              FROM users u ORDER BY u.created_at DESC""").fetchall()
+    return {"users": [dict(r) for r in rows], "depts": DEPTS}
+
+
+def _uadmin_user(con, emp: str):
+    r = con.execute("SELECT * FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone()
+    if not r:
+        raise HTTPException(404, "ไม่พบผู้ใช้นี้")
+    return r
+
+
+@app.post("/api/uadmin/users")
+async def api_uadmin_create(request: Request):
+    _need_admin(request)
+    d = await request.json()
+    name, emp = " ".join(str(d.get("name") or "").split())[:60], str(d.get("emp_id") or "").strip()
+    dept, pw = str(d.get("dept") or "").upper(), str(d.get("password") or "")
+    if not name or not _EMP_RE.match(emp) or dept not in DEPTS or len(pw) < 6:
+        raise HTTPException(400, "กรอกชื่อ รหัสพนักงาน (2–20 ตัว) แผนก และรหัสผ่านอย่างน้อย 6 ตัว")
+    with db() as con:
+        if con.execute("SELECT 1 FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone():
+            raise HTTPException(409, "รหัสพนักงานนี้มีอยู่แล้ว")
+        con.execute("INSERT INTO users(emp_id, name, dept, pw, created_at) VALUES(?,?,?,?,?)",
+                    (emp, name, dept, await run_in_threadpool(_pw_hash, pw), int(_time.time() * 1000)))
+    return {"ok": True}
+
+
+@app.post("/api/uadmin/users/{emp}")
+async def api_uadmin_update(emp: str, request: Request):
+    """แก้ชื่อ / แผนก / เปิด-ระงับ / ตั้งรหัสผ่านใหม่ / ออกจากระบบทุกเครื่อง"""
+    _need_admin(request)
+    d = await request.json()
+    with db() as con:
+        r = _uadmin_user(con, emp)
+        if "name" in d:
+            name = " ".join(str(d.get("name") or "").split())[:60]
+            if not name:
+                raise HTTPException(400, "กรอกชื่อ")
+            con.execute("UPDATE users SET name=? WHERE emp_id=?", (name, r["emp_id"]))
+        if "dept" in d:
+            if str(d["dept"]).upper() not in DEPTS:
+                raise HTTPException(400, "แผนกไม่ถูกต้อง")
+            con.execute("UPDATE users SET dept=? WHERE emp_id=?", (str(d["dept"]).upper(), r["emp_id"]))
+        if "active" in d:
+            con.execute("UPDATE users SET active=? WHERE emp_id=?", (1 if d["active"] else 0, r["emp_id"]))
+            if not d["active"]:
+                con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+        if d.get("password"):
+            if len(str(d["password"])) < 6:
+                raise HTTPException(400, "รหัสผ่านอย่างน้อย 6 ตัว")
+            con.execute("UPDATE users SET pw=? WHERE emp_id=?", (await run_in_threadpool(_pw_hash, str(d["password"])), r["emp_id"]))
+            con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+        if d.get("logout"):
+            con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+    for k in [k for k in _login_fail if k[1] == r["emp_id"].lower()]:
+        _login_fail.pop(k, None)
+    return {"ok": True}
+
+
+@app.delete("/api/uadmin/users/{emp}")
+def api_uadmin_delete(emp: str, request: Request):
+    _need_admin(request)
+    with db() as con:
+        r = _uadmin_user(con, emp)
+        con.execute("DELETE FROM user_sessions WHERE emp_id=?", (r["emp_id"],))
+        con.execute("DELETE FROM users WHERE emp_id=?", (r["emp_id"],))
+    return {"ok": True}
 
 
 @app.post("/api/login")
@@ -828,7 +1348,7 @@ async def api_create(request: Request):
     + status, topic, remark (หมายเหตุ), action (การแก้ไขเมื่อพบปัญหา)"""
     form = await request.form()
     area_id = str(form.get("area_id") or "")
-    inspector = str(form.get("inspector") or "").strip()[:60]
+    inspector = _me_name(request, str(form.get("inspector") or "").strip()[:60])
     status = str(form.get("status") or "ปกติ")
     topic = _clean(str(form.get("topic") or ""))[:120]
     remark = _clean(str(form.get("remark") or ""))[:1000]
@@ -844,8 +1364,11 @@ async def api_create(request: Request):
         raise HTTPException(400, f"กรุณากรอกจำนวน{qcfg.get('label', '')}")
     if not inspector:
         raise HTTPException(400, "กรุณาใส่ชื่อผู้ตรวจ")
-    if status != "พบปัญหา":
-        action = cause = ""
+    resp = str(form.get("resp") or "QC").upper() if status == "พบปัญหา" else ""
+    if resp not in RESP_DEPTS:
+        resp = "QC" if status == "พบปัญหา" else ""
+    if status != "พบปัญหา" or resp != "QC":
+        action = cause = ""  # ให้ฝ่ายอื่นตอบ: สาเหตุ/การแก้ไขรอฝ่ายนั้นมากรอก
 
     try:
         page_count = int(form.get("page_count") or 0)
@@ -877,18 +1400,19 @@ async def api_create(request: Request):
 
     with db() as con:
         con.execute(
-            "INSERT INTO submissions(id, round_date, area_id, inspector, status, note, created_at, pages, topic, remark, action, late, cause, qty) "
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO submissions(id, round_date, area_id, inspector, status, note, created_at, pages, topic, remark, action, late, cause, qty, resp) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (sid, rd.isoformat(), area_id, inspector, status, "\n\n".join(x for x in pages if x),
              n.isoformat(timespec="seconds"), json.dumps(pages, ensure_ascii=False), topic, remark, action, late, cause,
-             json.dumps(qty, ensure_ascii=False) if qty else None),
+             json.dumps(qty, ensure_ascii=False) if qty else None, resp),
         )
         con.executemany(
             "INSERT INTO images(submission_id, filename, seq, page) VALUES(?,?,?,?)",
             [(sid, fn, seq, pg) for pg, seq, fn in saved],
         )
+        fid = _fu_for_resp(con, sid) if resp and resp != "QC" else None
     regen_if_closed(rd)
-    return {"ok": True, "id": sid, "round": rd.isoformat(), "pages": len(pages), "late": bool(late)}
+    return {"ok": True, "id": sid, "round": rd.isoformat(), "pages": len(pages), "late": bool(late), "resp": resp, "fu": fid}
 
 
 @app.put("/api/submissions/{sid}")
@@ -908,7 +1432,7 @@ async def api_update(sid: str, request: Request):
     if status not in STATUSES:
         status = row["status"]
     topic = _clean(str(form.get("topic") if form.get("topic") is not None else (row["topic"] or "")))[:120]
-    inspector = str(form.get("inspector") or row["inspector"]).strip()[:60] or row["inspector"]
+    inspector = row["inspector"] if _me(request) else (str(form.get("inspector") or row["inspector"]).strip()[:60] or row["inspector"])  # แก้ไขแล้วผู้ตรวจคงเดิม
     try:
         page_count = int(form.get("page_count") or 0)
     except ValueError:
@@ -919,6 +1443,11 @@ async def api_update(sid: str, request: Request):
     remark = _clean(str(form.get("remark") if form.get("remark") is not None else (row["remark"] or "")))[:1000]
     action = _clean(str(form.get("action") if form.get("action") is not None else (row["action"] or "")))[:2000]
     cause = _clean(str(form.get("cause") if form.get("cause") is not None else (row["cause"] or "")))[:2000]
+    resp = str(form.get("resp") or row["resp"] or "QC").upper() if status == "พบปัญหา" else ""
+    if resp and resp not in RESP_DEPTS:
+        resp = "QC"
+    if resp and resp != "QC" and resp != (row["resp"] or "QC"):
+        action = cause = ""  # เพิ่งเปลี่ยนเป็นให้ฝ่ายอื่นตอบ
     if status != "พบปัญหา":
         action = cause = ""
     qcfg = ITEM_MAP.get(row["area_id"], {}).get("qty")
@@ -951,9 +1480,11 @@ async def api_update(sid: str, request: Request):
         pages = [""]
 
     with db() as con:
-        con.execute("UPDATE submissions SET status=?, topic=?, inspector=?, note=?, pages=?, edited_at=?, remark=?, action=?, cause=?, qty=? WHERE id=?",
+        con.execute("UPDATE submissions SET status=?, topic=?, inspector=?, note=?, pages=?, edited_at=?, remark=?, action=?, cause=?, qty=?, resp=? WHERE id=?",
                     (status, topic, inspector, "\n\n".join(x for x in pages if x),
-                     json.dumps(pages, ensure_ascii=False), now().isoformat(timespec="seconds"), remark, action, cause, qty_s, sid))
+                     json.dumps(pages, ensure_ascii=False), now().isoformat(timespec="seconds"), remark, action, cause, qty_s, resp, sid))
+        if resp and resp != "QC":
+            _fu_for_resp(con, sid)
         con.execute("DELETE FROM images WHERE submission_id=?", (sid,))
         con.executemany("INSERT INTO images(submission_id, filename, seq, page) VALUES(?,?,?,?)",
                         [(sid, fn, seq, pg) for pg, seq, fn in saved])
@@ -962,6 +1493,44 @@ async def api_update(sid: str, request: Request):
         _remove_media(fn)
     regen_if_closed(rd)
     return {"ok": True, "id": sid}
+
+
+RESP_DEPTS = ("QC", "PD")  # ฝ่ายที่ตอบสาเหตุ/การแก้ไขเมื่อพบปัญหา
+
+
+@app.post("/api/submissions/{sid}/answer")
+async def api_answer(sid: str, request: Request):
+    """ฝ่ายที่ถูกขอให้ตอบ (เช่น PD) กรอกสาเหตุและการแก้ไข → บันทึกลงผลตรวจ + ความคืบหน้าในเรื่องที่ต้องติดตาม"""
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    d = await request.json()
+    cause, action = _clean(str(d.get("cause") or ""))[:2000], _clean(str(d.get("action") or ""))[:2000]
+    if not cause or not action:
+        raise HTTPException(400, "กรอกทั้งสาเหตุและการแก้ไข")
+    with db() as con:
+        row = con.execute("SELECT * FROM submissions WHERE id=?", (sid,)).fetchone()
+        if not row:
+            raise HTTPException(404, "ไม่พบผลตรวจนี้")
+        resp = row["resp"] or "QC"
+        if row["status"] != "พบปัญหา" or resp == "QC":
+            raise HTTPException(400, "ผลตรวจนี้ไม่ได้ขอให้ฝ่ายอื่นตอบ")
+        if u["dept"] != resp:
+            raise HTTPException(403, f"เฉพาะแผนก {resp} ตอบได้")
+        ts = now().isoformat(timespec="seconds")
+        con.execute("UPDATE submissions SET cause=?, action=?, resp_by=?, resp_at=? WHERE id=?", (cause, action, u["name"], ts, sid))
+        fid = _fu_for_resp(con, sid)
+        r = con.execute("SELECT data FROM followups WHERE id=?", (fid,)).fetchone()
+        x = json.loads(r["data"])
+        ms = _fu_ms()
+        x.setdefault("notes", []).append({"at": ms, "by": u["name"], "kind": "answer",
+                                          "text": f"{resp} ตอบ · สาเหตุ: {cause} · การแก้ไข: {action}"[:1000]})
+        if x.get("status") == "open":
+            x["status"] = "doing"
+        x["updated_at"], x["updated_by"] = ms, u["name"]
+        con.execute("UPDATE followups SET data=?, status=?, updated_at=? WHERE id=?", (json.dumps(x, ensure_ascii=False), x["status"], ms, fid))
+    regen_if_closed(date.fromisoformat(row["round_date"]))
+    return {"ok": True, "cause": cause, "action": action, "resp_by": u["name"], "resp_at": ts, "fu": fid}
 
 
 @app.delete("/api/submissions/{sid}")
@@ -984,7 +1553,7 @@ def api_delete(sid: str, pin: str = ""):
 
 
 @app.get("/api/heatmap")
-def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None, end: Optional[str] = None):
+def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None, end: Optional[str] = None, cust: str = ""):
     """ข้อมูล Dashboard heat map: สถานะรายการ × วัน ย้อนหลัง N รอบ หรือช่วงที่เลือก (?start=&end=)
     code: 0 = ยังไม่ตรวจ, 1 = ตรวจแล้วปกติ, 2 = พบปัญหา, 3 = ไม่มีกิจกรรม (ไม่นับใน % และจำนวนครั้ง)"""
     cur = round_of(now())
@@ -1011,11 +1580,19 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
             qcell[(r["round_date"], r["area_id"])] = json.loads(r["qty"])
         except ValueError:
             pass
+    # เลือกลูกค้า: นับเฉพาะหัวข้อของลูกค้านั้น (รวมหัวข้อที่เป็นของทั้งสองลูกค้า)
+    # any = ลูกค้าทั้งหมด (ไม่รวมหัวข้อที่ไม่มีลูกค้า) · none = เฉพาะหัวข้อที่ไม่มีลูกค้า
+    has_cust = lambda it: it.get("cust") in CUSTOMERS + (BOTH_CUST,)
+    cust_ok = (lambda it: True) if cust not in CUST_FILTERS else \
+        has_cust if cust == "any" else (lambda it: not has_cust(it)) if cust == "none" else \
+        (lambda it: it.get("cust") in (cust, BOTH_CUST))
     zones = []
     for z in AREAS["zones"]:
         visible = not z.get("hidden")
         items, done, totals = [], [0] * len(rounds), [0] * len(rounds)
         for it in z["items"]:
+            if not it.get("extra") and not cust_ok(it):
+                continue
             codes, counts, ngs = [], [], []
             for di, rd in enumerate(rounds):
                 c, n, ngn = cell.get((rd, it["id"]), (0, 0, 0))
@@ -1023,11 +1600,11 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
                 counts.append(n)
                 ngs.append(ngn)  # จำนวนครั้งที่พบปัญหาในวันนั้น
                 # % ย้อนหลังคิดจากรายการที่มีอยู่จริงในวันนั้น (วันที่ไม่มีกิจกรรมไม่นับ)
-                if c != 3 and not it.get("extra") and item_active(it, rd, bool(c)):
+                if c != 3 and not it.get("extra") and not it.get("pilot") and item_active(it, rd, bool(c)):
                     totals[di] += 1
                     done[di] += bool(c)
             if visible and not it.get("hidden"):
-                row = {"id": it["id"], "no": it["no"], "name": it["name"], "extra": bool(it.get("extra")),
+                row = {"id": it["id"], "no": it["no"], "name": it["name"], "extra": bool(it.get("extra")), "pilot": bool(it.get("pilot")),
                        "proc": it.get("proc", ""), "cust": it.get("cust", ""),
                        "codes": codes, "counts": counts, "ngs": ngs}
                 if it.get("qty"):
@@ -1036,11 +1613,13 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
                 items.append(row)
         if not visible:  # พื้นที่ที่ลบ/แยกไปแล้ว (เช่น WH เดิม, GMP เดิม) ไม่ต้องแสดงใน Dashboard
             continue
-        total = sum(1 for it in z["items"] if not it.get("extra") and not it.get("hidden"))
+        total = sum(1 for it in z["items"] if not it.get("extra") and not it.get("hidden") and not it.get("pilot") and cust_ok(it))
+        if cust and not any(not r["extra"] for r in items):  # ไม่มีหัวข้อของลูกค้านี้ในพื้นที่นี้ (หัวข้อ ★ ยังแสดง)
+            continue
         zones.append({"id": z["id"], "name": z["name"], "owner": z["owner"], "deck": zone_deck(z),
                       "total": total, "totals": totals,
                       "done": done, "items": items})
-    return {"rounds": rounds, "current": cur.isoformat(), "zones": zones}
+    return {"rounds": rounds, "current": cur.isoformat(), "zones": zones, "cust": cust if cust in CUST_FILTERS else ""}
 
 
 @app.get("/api/inspectors")
@@ -1215,10 +1794,15 @@ async def api_admin_save(request: Request):
             else:
                 base.pop("proc", None)
             cust = str(it.get("cust") or "").strip()
-            if cust in CUSTOMERS and not base.get("extra"):
-                base["cust"] = cust  # Checklist ของลูกค้า (ไม่ระบุ = ใช้กับทั้งสองลูกค้า)
+            if (cust in CUSTOMERS or cust == BOTH_CUST) and not base.get("extra"):
+                base["cust"] = cust  # Checklist ของลูกค้า · both = ทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)
             else:
                 base.pop("cust", None)
+            if "pilot" in it:  # ★ หัวข้อทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน %
+                if it.get("pilot") and not base.get("extra"):
+                    base["pilot"] = True
+                else:
+                    base.pop("pilot", None)
             if "qty" in it:  # ช่องนับจำนวน (เช่น วัตถุดิบ Delay แยกห้อง)
                 q = clean_qty_cfg(it.get("qty"))
                 if q and not base.get("extra"):
@@ -1242,6 +1826,7 @@ async def api_admin_save(request: Request):
         # ให้หัวข้อเพิ่มเติมอยู่ท้ายสุดเสมอ
         items.sort(key=lambda i: bool(i.get("extra")))
         zbase = {k: v for k, v in old_zones.get(zid, {}).items() if k not in ("hidden", "items")}
+        items = _proc_sort_items(items, process_tags())  # บันทึกแล้วเรียงตามกระบวนการอัตโนมัติ
         zbase.update({"id": zid, "name": name, "owner": str(z.get("owner") or "").strip()[:80], "items": items})
         if zid not in old_zones and z.get("deck") in DECKS and z.get("deck") != "pc":
             zbase["deck"] = z["deck"]  # พื้นที่ใหม่ที่เพิ่มในกลุ่ม GMP
@@ -1297,7 +1882,7 @@ async def api_admin_disk(request: Request):
 
     def calc():
         du = shutil.disk_usage(DATA_DIR)
-        days = sorted(d.name for d in UPLOAD_DIR.iterdir() if d.is_dir())
+        days = sorted(d.name for d in UPLOAD_DIR.iterdir() if d.is_dir() and re.match(r"^\d{4}-\d{2}-\d{2}$", d.name))
         return {
             "disk_total_gb": _gb(du.total), "disk_free_gb": _gb(du.free),
             "disk_used_pct": round(100 * (du.total - du.free) / du.total, 1),
@@ -1362,20 +1947,56 @@ _RT_PHOTO_RE = re.compile(r"^[0-9]{8}_[0-9a-f]{16}\.jpg$")
 _RT_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _./-]{0,19}$")
 
 
+# บทบาท: หัวหน้า (Supervisor) เข้าด้วย EDIT_PIN → เห็นทุกแท็บ · พนักงานเข้าด้วย RETORT_PIN → บันทึก + รายการ
+RT_SUP_TOKEN = hashlib.sha256(("retort-sup:" + EDIT_PIN).encode()).hexdigest()[:32]
+RT_ROLE_NAME = {"sup": "หัวหน้า (Supervisor)", "staff": "พนักงาน"}
+
+
+def _rt_role(request: Request) -> str:
+    """sup / staff / '' (ยังไม่ได้เข้าระบบ) — จำไว้ใน cookie 400 วัน (เข้าครั้งเดียว)"""
+    t = request.cookies.get("rt_access") or ""
+    if EDIT_PIN and t == RT_SUP_TOKEN:
+        return "sup"
+    if t == RT_TOKEN or not RETORT_PIN:
+        return "staff"
+    return ""
+
+
 def _rt_auth(request: Request):
-    if RETORT_PIN and request.cookies.get("rt_access") != RT_TOKEN:
+    if not _rt_role(request):
         raise HTTPException(401, "RETORT_LOCKED")
+
+
+def _rt_sup(request: Request, pin=None):
+    """เฉพาะหัวหน้า: เข้าระบบด้วยรหัสหัวหน้าแล้ว หรือส่งรหัสแก้ไข (EDIT_PIN) มาด้วย"""
+    _rt_auth(request)
+    if _rt_role(request) != "sup":
+        if pin is None:
+            raise HTTPException(403, "เฉพาะหัวหน้า (Supervisor)")
+        _check_edit_pin(pin)
 
 
 @app.post("/api/retort/login")
 async def api_retort_login(request: Request):
     data = await request.json()
-    if str(data.get("pin") or "").strip() != RETORT_PIN:
+    pin = str(data.get("pin") or "").strip()
+    if pin and EDIT_PIN and pin == EDIT_PIN:
+        role, tok = "sup", RT_SUP_TOKEN
+    elif pin and pin == RETORT_PIN:
+        role, tok = "staff", RT_TOKEN
+    else:
         raise HTTPException(403, "รหัสไม่ถูกต้อง")
-    resp = JSONResponse({"ok": True})
-    resp.set_cookie("rt_access", RT_TOKEN, max_age=60 * 60 * 24 * 400, httponly=True, samesite="lax")
+    resp = JSONResponse({"ok": True, "role": role, "role_name": RT_ROLE_NAME[role]})
+    resp.set_cookie("rt_access", tok, max_age=60 * 60 * 24 * 400, httponly=True, samesite="lax")
     return resp
-_RP_TEXT = {"time": 5, "shift": 4, "plant": 10, "program": 20, "programDoc": 20, "retort": 20, "product": 120, "batch": 60, "category": 40, "cause": 200,
+
+
+@app.post("/api/retort/logout")
+def api_retort_logout():
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie("rt_access", samesite="lax")
+    return resp
+_RP_TEXT = {"time": 5, "shift": 4, "plant": 10, "program": 20, "programDoc": 20, "retort": 20, "product": 120, "batch": 60, "code": 60, "category": 40, "cause": 200,
             "causeOther": 200, "duration": 12, "detail": 3000, "action": 3000, "impact": 8, "by": 60, "updatedBy": 60}
 
 
@@ -1396,7 +2017,8 @@ def _clean_rp(d: dict) -> dict:
     if not out["category"]:
         raise HTTPException(400, "กรุณาเลือกหัวข้อปัญหา")
     vals = d.get("values") if isinstance(d.get("values"), dict) else {}
-    out["values"] = {str(k)[:40]: str(v)[:20] for k, v in list(vals.items())[:20]}
+    # ค่าที่วัดของหัวข้อปัญหา + ช่องรายละเอียดที่ผู้ดูแลเพิ่มเอง (key ขึ้นต้น x_)
+    out["values"] = {str(k)[:40]: str(v)[:200] for k, v in list(vals.items())[:40]}
     ph = d.get("photos") if isinstance(d.get("photos"), list) else []
     out["photos"] = [str(f) for f in ph if isinstance(f, str) and _RT_PHOTO_RE.match(f)][:8]
     out["impact"] = "hold" if out["impact"] == "hold" else "none"
@@ -1423,7 +2045,7 @@ def api_retort(request: Request, since: int = 0):
         rows = con.execute("SELECT data FROM retort_problems WHERE updated_at > ? ORDER BY date DESC", (since,)).fetchall()
         ids = [r["id"] for r in con.execute("SELECT id FROM retort_problems")]
     return {"config": cfg, "items": [json.loads(r["data"]) for r in rows], "ids": ids,
-            "now": int(now().timestamp() * 1000)}
+            "now": int(now().timestamp() * 1000), "role": _rt_role(request)}
 
 
 @app.post("/api/retort/problems")
@@ -1449,6 +2071,8 @@ async def api_retort_save(request: Request):
 @app.delete("/api/retort/problems/{rid}")
 def api_retort_delete(rid: str, request: Request, pin: str = ""):
     _rt_auth(request)
+    if _rt_role(request) != "sup":  # พนักงานลบรายการไม่ได้ (แก้ไขได้)
+        raise HTTPException(403, "ลบรายการได้เฉพาะหัวหน้า (Supervisor)")
     if ADMIN_PIN and pin != ADMIN_PIN:
         raise HTTPException(403, "PIN ไม่ถูกต้อง")
     with db() as con:
@@ -1458,9 +2082,11 @@ def api_retort_delete(rid: str, request: Request, pin: str = ""):
 
 @app.post("/api/retort/problems/{rid}/approve")
 async def api_retort_approve(rid: str, request: Request):
-    """อนุมัติ / ยกเลิกอนุมัติรายการปัญหา Retort: {pin, name, undo}"""
+    """อนุมัติ / ยกเลิกอนุมัติรายการปัญหา Retort: {pin, name, undo} — เฉพาะหัวหน้า"""
     _rt_auth(request)
     data = await request.json()
+    if _rt_role(request) != "sup":
+        raise HTTPException(403, "อนุมัติได้เฉพาะหัวหน้า (Supervisor)")
     if APPROVE_PIN and str(data.get("pin") or "").strip() != APPROVE_PIN:
         raise HTTPException(403, "รหัสผู้อนุมัติไม่ถูกต้อง")
     undo = bool(data.get("undo"))
@@ -1616,6 +2242,27 @@ async def api_retort_add(request: Request):
     return {"ok": True, "config": cfg}
 
 
+# หม้อ PF1 ชุดใหม่: RP01–RP23, RA01–RA04, RS01–RS02 + RS04–RS09, RT01–RT07 + RT09–RT10
+PF1_RETORTS = ([f"RP{i:02d}" for i in range(1, 24)] + [f"RA{i:02d}" for i in range(1, 5)]
+               + [f"RS{i:02d}" for i in range(1, 10) if i != 3] + [f"RT{i:02d}" for i in range(1, 11) if i != 8])
+
+
+def _migrate_pf1_retorts():
+    """ครั้งเดียว: ค่าตั้ง Retort ที่บันทึกหม้อ PF1 ไว้แล้ว → ใช้หม้อชุดใหม่ (รวมหม้อที่เคยเพิ่มเองไว้ด้วย)
+    ถ้ายังไม่เคยบันทึกรายการหม้อ PF1 หน้าเว็บจะใช้ชุดใหม่เป็นค่าเริ่มต้นอยู่แล้ว"""
+    cfg = _read_rt_cfg()
+    if not cfg or cfg.get("pf1Retorts2"):
+        return
+    pr = cfg.get("plantRetorts") if isinstance(cfg.get("plantRetorts"), dict) else {}
+    old = pr.get("PF1") if isinstance(pr.get("PF1"), list) else []
+    if old:
+        pr["PF1"] = list(dict.fromkeys(PF1_RETORTS + [str(x) for x in old]))
+        cfg["plantRetorts"] = pr
+    cfg["pf1Retorts2"] = True
+    _write_rt_cfg(cfg)
+    print(f"[retort] หม้อ PF1 ชุดใหม่ (RP/RA/RS/RT) · {len(pr.get('PF1') or PF1_RETORTS)} หม้อ", flush=True)
+
+
 def _write_rt_cfg(cfg: dict):
     cfg["updatedAt"] = int(now().timestamp() * 1000)
     if RETORT_CFG_PATH.exists():  # สำรองไฟล์เดิมก่อนเขียนทับ
@@ -1632,9 +2279,8 @@ def _write_rt_cfg(cfg: dict):
 async def api_retort_remove(request: Request):
     """ลบพื้นที่ / หม้อ / หัวข้อปัญหา ออกจากรายการ (ต้องใส่รหัสแก้ไข EDIT_PIN)
     ข้อมูลที่บันทึกไว้แล้วยังอยู่ครบ: หัวข้อปัญหาถูกซ่อน (deleted) เพื่อให้ประวัติเก่ายังแสดงชื่อได้"""
-    _rt_auth(request)
     data = await request.json()
-    _check_edit_pin(data.get("pin"))
+    _rt_sup(request, data.get("pin"))
     kind = str(data.get("kind") or "")
     name = " ".join(str(data.get("name") or "").split())
     cfg = _read_rt_cfg()
@@ -1677,11 +2323,483 @@ async def api_retort_remove(request: Request):
     return {"ok": True, "config": cfg}
 
 
+# ---------------------------------------------------------------- Retort: อ่านค่าโปรแกรมฆ่าเชื้อจาก PDF (TP002-*)
+# หัวหน้าอัปโหลด PDF จาก ISO Master → อ่านตาราง Come up / Cooking / Cooling → หน้าเว็บให้ตรวจ/แก้ก่อนกดยืนยัน
+# อ่านได้เฉพาะ PDF ที่เป็นตัวอักษร (ไม่ใช่ภาพสแกน) · ต้องติดตั้ง pdfplumber (อยู่ใน requirements.txt)
+_TP_DOC_RE = re.compile(r"\b(TP\d{3}-[A-Z0-9]{1,4})\b")
+_TP_PROG_RE = re.compile(r"(?:program|prog\.?|p/?g\.?|โปรแกรม)\s*(?:no\.?|number|ที่)?\s*[:#.]?\s*(\d{1,3})\b", re.I)
+_TP_REV_RE = re.compile(r"(?:\bRev(?:ision)?\.?\s*(?:No\.?)?|แก้ไขครั้งที่)\s*[:.]?\s*(\d{1,3})\b", re.I)
+_TP_EFF_RE = re.compile(r"(?:effective|eff\.|มีผล|บังคับใช้|ประกาศใช้|เริ่มใช้)[^0-9]{0,30}(\d{1,2}\s*[/.-]\s*\d{1,2}\s*[/.-]\s*\d{2,4})", re.I)
+_TP_RET_RE = re.compile(r"\b(R[A-Z])\s?(\d{2})(?:\s*[-–]\s*(?:R[A-Z])?\s?(\d{2}))?")
+
+
+def _tp_retorts(text: str) -> list:
+    """RP05- RP08 → RP05..RP08 · RP05, RP07 → RP05, RP07"""
+    out = []
+    for p, a, b in _TP_RET_RE.findall(text or ""):
+        for n in range(int(a), (int(b) if b and int(b) >= int(a) and int(b) - int(a) < 40 else int(a)) + 1):
+            r = f"{p}{n:02d}"
+            if r not in out:
+                out.append(r)
+    return out
+
+
+def _tp_phase(t: str) -> str:
+    t = (t or "").lower()
+    if re.search(r"come\s*-?\s*up|heat(?:ing)?\s*-?\s*up|venting|ไล่อากาศ|ขึ้นอุณหภูมิ|\bcut\s*\d", t):  # CUT 1..6 = ช่วง Come up
+        return "come"
+    if re.search(r"cool|หล่อเย็น|ลดอุณหภูมิ", t):
+        return "cool"
+    if re.search(r"cook|steril|ฆ่าเชื้อ", t):
+        return "cook"
+    return ""
+
+
+def _tp_num(c):
+    c = (c or "").strip().replace(",", ".")
+    if re.fullmatch(r"[xX]{1,3}", c):
+        return "XX"
+    return c if re.fullmatch(r"-?\d+(?:\.\d+)?", c) else None
+
+
+def _tp_rows(table):
+    """แตกแถวที่ pdfplumber รวมไว้ในช่องเดียว (หลายบรรทัด) ให้เป็นทีละแถว"""
+    out = []
+    for row in table:
+        cells = [str(c or "").strip() for c in row]
+        parts = [c.split("\n") for c in cells]
+        k = max([len(p) for p, c in zip(parts, cells) if _tp_num(c.split("\n")[0]) is not None] or [1])
+        if k > 1 and sum(1 for p in parts if len(p) == k) >= 2:
+            for i in range(k):
+                out.append([p[i] if len(p) == k else (p[0] if i == 0 else "") for p in parts])
+        else:
+            out.append([c.replace("\n", " ") for c in cells])
+    return out
+
+
+def _tp_table_steps(table):
+    cols = {}
+    steps, phase = [], ""
+    for cells in _tp_rows(table):
+        low = [c.lower() for c in cells]
+        hdr = {}
+        for i, c in enumerate(low):
+            if re.search(r"temp|อุณหภูมิ|°\s*c", c) and "temp" not in hdr:
+                hdr["temp"] = i
+            elif re.search(r"hold", c):
+                hdr["hold"] = i
+            elif re.search(r"press|bar|ความดัน", c) and "press" not in hdr:
+                hdr["press"] = i
+            elif re.search(r"time|เวลา|min|นาที", c) and "time" not in hdr:
+                hdr["time"] = i
+        if len(hdr) >= 2 and not any(_tp_num(c) for c in cells):
+            cols = hdr
+            continue
+        ph = next((_tp_phase(c) for c in cells if _tp_num(c) is None and _tp_phase(c)), "")
+        phase = ph or phase
+        if cols and {"temp", "time", "press"} <= set(cols):
+            g = lambda k: _tp_num(cells[cols[k]]) if k in cols and cols[k] < len(cells) else None
+            vals = [g("temp"), g("time"), g("press")]
+            hold = g("hold")
+        else:
+            nums = [n for n in (_tp_num(c) for c in cells) if n is not None]
+            if len(nums) >= 2 and re.fullmatch(r"\d{1,2}", nums[0]) and len(nums) >= 4 and not ph:
+                nums = nums[1:]  # คอลัมน์ลำดับขั้น
+            vals, hold = nums[:3], (nums[3] if len(nums) > 3 else None)
+            vals += [None] * (3 - len(vals))
+        t, tm, pr = vals
+        try:
+            ok = t not in (None, "XX") and 20 <= float(t) <= 150 and pr not in (None, "XX") and 0 <= float(pr) <= 6 and tm is not None
+        except ValueError:
+            ok = False
+        if not ok:
+            continue
+        st = [phase or ("cook" if steps and steps[-1][0] == "cook" else "come"), t, tm, pr]
+        if hold is not None:
+            st.append(hold)
+        steps.append(st)
+    return steps
+
+
+def _tp_table_multi(table):
+    """ตารางที่มีหลายโปรแกรมเรียงข้างกัน คืน [(เลขโปรแกรม, หมายเหตุ, ขั้นตอน)] หรือ None ถ้าไม่ใช่รูปแบบนี้"""
+    rows = [[str(c).strip() if c is not None else None for c in r] for r in table]
+    lab = next((i for i, r in enumerate(rows[:4]) if any(c and re.search(r"หมายเลขโปรแกรม|program\s*no|^program$|^โปรแกรม$", c, re.I) for c in r)), None)
+    if lab is None:
+        return None
+    starts = []  # (คอลัมน์เริ่ม, เลขโปรแกรม, หมายเหตุ)
+    for ci, c in enumerate(rows[lab]):
+        if not c or re.search(r"หมายเลขโปรแกรม|program|โปรแกรม", c, re.I):
+            continue
+        m = re.match(r"\s*(\d{1,3})\b(.*)", c, re.S)
+        if m:
+            note = re.sub(r"^[\s(]*\**|[)\s]*$", "", m.group(2).replace("\n", " ")).strip()
+            starts.append((ci, str(int(m.group(1))), note))
+    if not starts:
+        return None
+    width = max(len(r) for r in rows)
+    bounds = [(st[0], (starts[k + 1][0] if k + 1 < len(starts) else width)) for k, st in enumerate(starts)]
+    out = [(no, note, []) for _, no, note in starts]
+    phase = ""
+    for r in rows[lab + 1:]:
+        r = r + [None] * (width - len(r))
+        left = [c for c in r[:starts[0][0]] if c]
+        ph = next((_tp_phase(c) for c in left if _tp_phase(c)), "")
+        phase = ph or phase
+        for k, (a, b) in enumerate(bounds):
+            nums = [n for n in (_tp_num(c) for c in r[a:b] if c is not None) if n is not None]
+            if len(nums) < 3:
+                continue
+            t, tm, pr = nums[:3]
+            try:
+                if not (20 <= float(t) <= 150 and 0 <= float(pr) <= 6):
+                    continue
+            except ValueError:
+                continue
+            st = [phase or "come", t, tm, pr] + ([nums[3]] if len(nums) > 3 else [])
+            out[k][2].append(st)
+    return [x for x in out if x[2]]
+
+
+def _tp_n(v: str) -> str:
+    """90.0 → 90 (อุณหภูมิ/เวลา ให้ตรงกับค่าเดิมในแอป)"""
+    try:
+        f = float(v)
+        return str(int(f)) if f == int(f) else v
+    except (TypeError, ValueError):
+        return v
+
+
+def _tp_table_transposed(table, ctx=None):
+    """ตารางแบบ Profile (เช่น TP003): ขั้นตอนเป็นคอลัมน์ (Come Up Time / Cook / Cooling)
+    แถว = อุณหภูมิ / เวลา / ความดัน · เลขโปรแกรมอยู่ใต้หัว Profile Name · ช่องที่ไม่ใช้เป็น 0
+    คืน [(เลขโปรแกรม, หมายเหตุ, ขั้นตอน)] หรือ None ถ้าไม่ใช่รูปแบบนี้"""
+    rows = [[str(c).strip() if c is not None else None for c in r] for r in table]
+    width = max((len(r) for r in rows), default=0)
+    rows = [r + [None] * (width - len(r)) for r in rows]
+    lab = lambda r: " ".join(c for c in r[:3] if c and _tp_num(c) is None).lower()
+    kind = lambda r: ("temp" if re.search(r"อุณหภูมิ|temp", lab(r)) else "hold" if re.search(r"hold", lab(r))  # Holding Time ก่อน Time
+                      else "time" if re.search(r"เวลา|time|นาที|min", lab(r)) else "press" if re.search(r"ความดัน|press|bar", lab(r)) else "")
+    if not any(kind(r) == "temp" and sum(1 for c in r if _tp_num(c) is not None) >= 3 for r in rows):
+        return None
+    out, cur, phases = [], None, {}
+
+    def phase_row(r, phases):
+        """หัวช่วง (Come up time / Cooking / Cooling หรือ CUT 1 / Cook 1 / Cool 1) → ช่วงของแต่ละคอลัมน์
+        ช่องที่ไม่มีหัวใช้ช่วงจากหัวทางซ้าย · คอลัมน์ก่อนหัวแรกคงค่าเดิม"""
+        new, ph = dict(phases), ""
+        for ci in range(width):
+            p2 = _tp_phase(r[ci]) if r[ci] and _tp_num(r[ci]) is None else ""
+            ph = p2 or ph
+            if ph:
+                new[ci] = ph
+        return new
+
+    for i, r in enumerate(rows):
+        first = next((c for c in r if c), "") or ""
+        if re.search(r"profile\s*name|program\s*name|หมายเลขโปรแกรม", first, re.I):
+            continue
+        prev = next((c for c in (rows[i - 1] if i else []) if c), "") or ""
+        if re.fullmatch(r"\d{1,3}", first) and (re.search(r"profile|program|โปรแกรม", prev, re.I) or not cur):
+            rest = [c for c in r[1:] if c]
+            note = " ".join(c for c in rest if not _tp_phase(c)).strip()  # หัวช่วงในแถวเดียวกับเลขโปรแกรม ไม่ใช่หมายเหตุ
+            cur = {"no": str(int(first)), "note": note[:120], "vals": {}}
+            out.append(cur)
+            phases = phase_row([None] + r[1:], {}) if any(_tp_phase(c) for c in rest) else {}
+            continue
+        ph_cells = [(ci, _tp_phase(c)) for ci, c in enumerate(r) if c and _tp_phase(c)]
+        if ph_cells and not any(_tp_num(c) is not None for c in r):
+            phases = phase_row(r, phases)
+            continue
+        k = kind(r)
+        if k and cur is None and ctx and sum(1 for c in r if _tp_num(c) is not None) >= 3:
+            # ตารางค่าแยกจากตารางหัว Profile Name (คนละกรอบ) → ใช้เลขโปรแกรมจากตารางก่อนหน้า / ข้อความเหนือตาราง
+            cur = {"no": ctx[0], "note": ctx[1], "vals": {}}
+            out.append(cur)
+        if k and cur is not None:
+            cur["vals"][k] = {ci: _tp_num(c) for ci, c in enumerate(r) if c is not None and _tp_num(c) is not None and (not phases or ci in phases)}
+            cur["phases"] = dict(phases)
+    res = []
+    for p in out:
+        v, ph = p["vals"], p.get("phases") or {}
+        steps = []
+        for ci in sorted(v.get("temp", {})):
+            t, tm, pr = v["temp"].get(ci), v.get("time", {}).get(ci), v.get("press", {}).get(ci)
+            try:
+                if t is None or float(t) <= 0 and (tm in (None, "0", "0.0") or float(tm or 0) <= 0):
+                    continue  # ช่องที่ไม่ใช้ (0.0)
+            except ValueError:
+                pass
+            st = [ph.get(ci) or (steps[-1][0] if steps else "come"), _tp_n(t), _tp_n(tm if tm is not None else ""), pr if pr is not None else ""]
+            if "hold" in v:
+                st.append(v["hold"].get(ci, ""))
+            steps.append(st)
+        if steps:
+            res.append((p["no"], p["note"], steps))
+    return res or None
+
+
+def _tp_prog_ctx(table):
+    """ตารางหัว Profile Name / Description ที่ไม่มีค่า → (เลขโปรแกรม, หมายเหตุ) ของแถวสุดท้าย"""
+    rows = [[str(c).strip() for c in r if c is not None and str(c).strip()] for r in table]
+    if not any(re.search(r"profile\s*name|program\s*(?:name|no)|หมายเลขโปรแกรม", " ".join(r), re.I) for r in rows):
+        return None
+    ctx = None
+    for r in rows:
+        if r and re.fullmatch(r"\d{1,3}", r[0]) and sum(1 for c in r if _tp_num(c) is not None) <= 1:
+            ctx = (str(int(r[0])), " ".join(r[1:])[:120])
+    return ctx
+
+
+def _tp_words_page(page):
+    """สำรอง: อ่านตารางแบบ Profile จากตำแหน่งตัวอักษร (เมื่อหาเส้นตารางไม่เจอ)
+    แถว อุณหภูมิ/เวลา/ความดัน + หัวช่วง (Come Up / Cook / Cooling) ด้านบน · เลขโปรแกรมจากบรรทัด "30 ..." ใต้ Profile Name"""
+    try:
+        words = page.extract_words(use_text_flow=False, keep_blank_chars=False)
+    except Exception:
+        return []
+    lines = []
+    for w in sorted(words, key=lambda w: (round(w["top"]), w["x0"])):
+        if lines and abs(lines[-1][0] - w["top"]) <= 3:
+            lines[-1][1].append(w)
+        else:
+            lines.append([w["top"], [w]])
+    L = [(top, sorted(ws, key=lambda w: w["x0"])) for top, ws in lines]
+    lab = lambda ws: " ".join(w["text"] for w in ws if _tp_num(w["text"]) is None).lower()
+    def kind(ws):
+        t = lab(ws)
+        return ("temp" if re.search(r"อุณหภูมิ|temp", t) else "hold" if re.search(r"hold", t) else "time" if re.search(r"เวลา|time", t)
+                else "press" if re.search(r"ความดัน|press", t) else "")
+    res, i = [], 0
+    while i < len(L):
+        ws = L[i][1]
+        if kind(ws) != "temp" or sum(1 for w in ws if _tp_num(w["text"]) is not None) < 3:
+            i += 1
+            continue
+        block = {"temp": [w for w in ws if _tp_num(w["text"]) is not None]}
+        j = i + 1
+        while j < len(L) and j <= i + 4:
+            k = kind(L[j][1])
+            if not k or k in block:
+                break
+            block[k] = [w for w in L[j][1] if _tp_num(w["text"]) is not None]
+            j += 1
+        # หัวช่วง: บรรทัดเหนือแถวอุณหภูมิที่มีคำ come/cook/cool
+        hdr = []
+        for back in range(i - 1, max(-1, i - 4), -1):
+            hw = L[back][1]
+            txt = " ".join(w["text"] for w in hw)
+            if _tp_phase(txt) or re.search(r"\bcut\b", txt, re.I):
+                # หัวแต่ละช่วงเริ่มที่คำ Come/CUT/Cook/Cool… แล้วรวมคำที่ติดกัน (Come Up Time / CUT 1) เป็นหัวเดียว
+                grp = []
+                for w in hw:
+                    if re.match(r"(come|cut|cook|cool|heat|vent|steril|ไล่อากาศ|ขึ้นอุณหภูมิ|หล่อเย็น|ลดอุณหภูมิ|ฆ่าเชื้อ)", w["text"].lower()):
+                        grp.append(dict(w))
+                    elif grp and w["x0"] - grp[-1]["x1"] < 8:
+                        grp[-1] = {"text": grp[-1]["text"] + " " + w["text"], "x0": grp[-1]["x0"], "x1": w["x1"]}
+                hdr = [((g["x0"] + g["x1"]) / 2, _tp_phase(g["text"])) for g in grp if _tp_phase(g["text"])]
+                if hdr:
+                    break
+        cols = block["temp"]
+        xs = [(w["x0"] + w["x1"]) / 2 for w in cols]
+        ph = ["come"] * len(cols)
+        if len(hdr) >= len(cols):  # หัวย่อยทุกคอลัมน์ (CUT 1 / Cook 1 / Cool 1) → ใช้หัวที่ตรงคอลัมน์ที่สุด
+            ph = [min(hdr, key=lambda h: abs(h[0] - x))[1] for x in xs]
+        elif 1 < len(hdr) < len(cols):  # หัวอยู่กึ่งกลางของกลุ่มคอลัมน์ → หาจุดแบ่งที่ศูนย์กลางกลุ่มใกล้หัวที่สุด
+            import itertools
+            best = None
+            for cut in itertools.combinations(range(1, len(cols)), len(hdr) - 1):
+                b = (0,) + cut + (len(cols),)
+                cost = sum(abs((xs[b[g]] + xs[b[g + 1] - 1]) / 2 - hdr[g][0]) for g in range(len(hdr)))
+                if best is None or cost < best[0]:
+                    best = (cost, b)
+            b = best[1]
+            for g in range(len(hdr)):
+                for c in range(b[g], b[g + 1]):
+                    ph[c] = hdr[g][1]
+        elif len(hdr) == 1:
+            ph = [hdr[0][1]] * len(cols)
+        def at(k, x):
+            ws2 = block.get(k) or []
+            w = min(ws2, key=lambda w: abs((w["x0"] + w["x1"]) / 2 - x), default=None)
+            return w["text"] if w is not None and abs((w["x0"] + w["x1"]) / 2 - x) < 14 else None
+        steps = []
+        for c, x in enumerate(xs):
+            t, tm, pr = _tp_num(cols[c]["text"]), at("time", x), at("press", x)
+            try:
+                if t is None or float(t) <= 0:
+                    continue
+            except ValueError:
+                pass
+            st = [ph[c], _tp_n(t), _tp_n(_tp_num(tm) or ""), _tp_num(pr) or ""]
+            if "hold" in block:
+                st.append(_tp_num(at("hold", x)) or "")
+            steps.append(st)
+        # เลขโปรแกรม: บรรทัดเหนือขึ้นไปที่ขึ้นต้นด้วยตัวเลข (ใต้ Profile Name) หรือ "Program 30"
+        no, note = None, ""
+        for back in range(i - 1, max(-1, i - 12), -1):
+            hw = L[back][1]
+            if not hw:
+                continue
+            m = _TP_PROG_RE.search(" ".join(w["text"] for w in hw))
+            if kind(hw) and sum(1 for w in hw if _tp_num(w["text"]) is not None) >= 3:
+                break  # ถึงตารางของโปรแกรมก่อนหน้าแล้ว
+            if re.fullmatch(r"\d{1,3}", hw[0]["text"]) and (len(hw) == 1 or hw[1]["x0"] - hw[0]["x1"] > 12):
+                rest = " ".join(w["text"] for w in hw[1:])
+                no, note = str(int(hw[0]["text"])), ("" if _tp_phase(rest) or re.search(r"\bcut\b", rest, re.I) else rest[:120])
+                break
+            if m:
+                no = str(int(m.group(1)))
+                break
+        if steps:
+            res.append((no or f"?{len(res) + 1}", note, steps))
+        i = j
+    return res
+
+
+def _tp_parse_pdf(raw: bytes, filename: str) -> dict:
+    try:
+        import pdfplumber
+    except ImportError:
+        raise HTTPException(501, "เซิร์ฟเวอร์ยังไม่มีตัวอ่าน PDF · รันคำสั่ง pip install pdfplumber (หรือ start_windows.bat ใหม่) แล้วรีสตาร์ท")
+    progs, order, text_all, n_tables, cells = {}, [], "", 0, []
+    last_no = None
+    try:
+        pdf = pdfplumber.open(io.BytesIO(raw))
+    except Exception:
+        raise HTTPException(400, "เปิดไฟล์ PDF นี้ไม่ได้")
+    with pdf:
+        for page in pdf.pages[:60]:
+            text_all += (page.extract_text() or "") + "\n"
+            ctx, got = None, False
+            for tb in page.find_tables():
+                n_tables += 1
+                table = tb.extract()
+                if page.page_number <= 2:  # ช่องหัวเอกสาร (เรื่อง / แก้ไขครั้งที่ / วันที่เริ่มใช้) อ่านจากช่องตารางได้ตรงกว่าข้อความทั้งหน้า
+                    cells += [re.sub(r"\s+", " ", str(c)).strip() for r in table for c in r if c]
+                pc = _tp_prog_ctx(table)
+                multi = _tp_table_multi(table) or _tp_table_transposed(table, ctx)
+                if pc and not multi:
+                    ctx = pc  # ตารางหัว Profile Name แยกกรอบ → ใช้กับตารางค่าถัดไป
+                    continue
+                if multi:
+                    got = True
+                    for no, note, steps in multi:
+                        if no not in progs:
+                            progs[no] = {"no": no, "note": note, "steps": [], "retorts": _tp_retorts(note) if re.search(r"เฉพาะ|only", note, re.I) else []}
+                            order.append(no)
+                        progs[no]["steps"] += steps
+                    continue
+                steps = _tp_table_steps(table)
+                if not steps:
+                    continue
+                top = max(0, tb.bbox[1] - 140)
+                above = (page.crop((0, top, page.width, tb.bbox[1])).extract_text() or "") if tb.bbox[1] > 1 else ""
+                inside = " ".join(str(c or "") for r in table[:3] for c in r)
+                m = list(_TP_PROG_RE.finditer(inside)) or list(_TP_PROG_RE.finditer(above))
+                no = m[-1].group(1) if m else last_no
+                no = str(int(no)) if no and no.isdigit() else (no or f"?{len(order) + 1}")
+                note = ""
+                if above:
+                    ln = [x.strip() for x in above.split("\n") if x.strip()]
+                    note = next((x for x in reversed(ln) if _TP_PROG_RE.search(x)), "")[:120]
+                if no not in progs:
+                    progs[no] = {"no": no, "note": note, "steps": []}
+                    order.append(no)
+                progs[no]["steps"] += steps
+                last_no = no if m else last_no
+                got = True
+            if not got:  # หาเส้นตารางไม่เจอ / ตารางแตก → อ่านจากตำแหน่งตัวอักษร
+                for no, note, steps in _tp_words_page(page):
+                    if no not in progs:
+                        progs[no] = {"no": no, "note": note, "steps": [], "retorts": _tp_retorts(note) if re.search(r"เฉพาะ|only", note, re.I) else []}
+                        order.append(no)
+                    progs[no]["steps"] += steps
+    if len(text_all.strip()) < 40:
+        raise HTTPException(422, "PDF นี้ไม่มีตัวอักษรให้อ่าน (น่าจะเป็นไฟล์สแกนเป็นรูป) · ใส่ค่าเองได้ที่ปุ่ม แก้ไขค่าเอง")
+    fname = filename or ""
+    ct = "\n".join(cells)
+    doc = (_TP_DOC_RE.search(fname.upper()) or _TP_DOC_RE.search(ct) or _TP_DOC_RE.search(text_all) or [None, ""])[1]
+    rev = (re.search(r"\bRe(?:v)?\.?\s*(\d{1,3})", fname, re.I) or _TP_REV_RE.search(ct) or _TP_REV_RE.search(text_all) or [None, ""])[1]
+    eff = re.sub(r"\s", "", (_TP_EFF_RE.search(ct) or _TP_EFF_RE.search(text_all) or [None, ""])[1])
+    head = text_all[:1500]
+    tl = re.search(r"(?:^|\n)\s*(?:เรื่อง|title)\s*:?\s*(.+)", ct, re.I) or re.search(r"(?:เรื่อง|title)\s*:?\s*(.+)", head, re.I)
+    title = re.sub(r"\s+", " ", tl.group(1)).strip()[:160] if tl else ""
+    ret_line = next((ln for ln in text_all.split("\n") if re.search(r"สำหรับ|\bfor\b", ln, re.I) and _TP_RET_RE.search(ln)), "")  # เช่น "...สำหรับ FM-WATER SPRAY RETORT RC18, RC21 และ RC22"
+    return {"doc": doc, "rev": rev, "eff": eff, "title": title,
+            "retorts": _tp_retorts(title) or _tp_retorts(next((c for c in cells if re.search(r"สำหรับ|for\b", c, re.I) and _TP_RET_RE.search(c)), "")) or _tp_retorts(ret_line),
+            "progs": [progs[k] for k in order],
+            "pages": len(text_all.split("\f")), "tables": n_tables, "chars": len(text_all)}
+
+
+# ---------------------------------------------------------------- Retort Survey Filling Form (ข้อมูลอุปกรณ์ของหม้อแต่ละใบ)
+_SV_KEY = re.compile(r"^[a-z0-9_]{1,40}$")
+
+
+def _sv_txt(v, n: int) -> str:
+    return " ".join(str(v or "").split())[:n]
+
+
+@app.get("/api/retort/surveys")
+def api_rt_surveys(request: Request):
+    _rt_auth(request)
+    with db() as con:
+        rows = con.execute("SELECT data FROM retort_surveys ORDER BY updated_at DESC").fetchall()
+    return {"items": [json.loads(r["data"]) for r in rows]}
+
+
+@app.post("/api/retort/surveys")
+async def api_rt_survey_save(request: Request):
+    data = await request.json()
+    _rt_sup(request, data.get("pin"))
+    x = data.get("survey") if isinstance(data.get("survey"), dict) else {}
+    cols = []
+    for c in (x.get("cols") or [])[:80]:
+        if not isinstance(c, dict):
+            continue
+        vals = {k: _sv_txt(v, 200) for k, v in (c.get("v") or {}).items() if _SV_KEY.match(str(k)) and _sv_txt(v, 200)}
+        cols.append({"retort": _sv_txt(c.get("retort"), 20).upper(), "plant": _sv_txt(c.get("plant"), 20), "note": _sv_txt(c.get("note"), 40), "v": vals})
+    sid = str(x.get("id") or "")
+    if not re.fullmatch(r"sv[a-f0-9]{10}", sid):
+        sid = "sv" + uuid.uuid4().hex[:10]
+    ts = int(now().timestamp() * 1000)
+    out = {"id": sid, "ref": _sv_txt(x.get("ref"), 60), "date": _sv_txt(x.get("date"), 20), "rev": _sv_txt(x.get("rev"), 20),
+           "type": _sv_txt(x.get("type"), 60) or "WATER SPRAY RETORT", "plant": _sv_txt(x.get("plant"), 20),
+           "note": _sv_txt(x.get("note"), 300), "cols": cols, "by": _sv_txt(data.get("by"), 60), "updatedAt": ts}
+    with db() as con:
+        old = con.execute("SELECT data FROM retort_surveys WHERE id=?", (sid,)).fetchone()
+        out["createdAt"] = json.loads(old["data"]).get("createdAt", ts) if old else ts
+        out["createdBy"] = json.loads(old["data"]).get("createdBy", out["by"]) if old else out["by"]
+        con.execute("INSERT INTO retort_surveys(id, data, updated_at) VALUES(?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
+                    (sid, json.dumps(out, ensure_ascii=False), ts))
+    return {"ok": True, "survey": out}
+
+
+@app.delete("/api/retort/surveys/{sid}")
+def api_rt_survey_delete(sid: str, request: Request, pin: str = ""):
+    _rt_auth(request)
+    _check_edit_pin(pin)
+    with db() as con:
+        n = con.execute("DELETE FROM retort_surveys WHERE id=?", (sid,)).rowcount
+    if not n:
+        raise HTTPException(404, "ไม่พบ Survey นี้")
+    return {"ok": True}
+
+
+@app.post("/api/retort/tp/parse")
+async def api_retort_tp_parse(request: Request, file: UploadFile = File(...), pin: str = Form("")):
+    _rt_sup(request, pin or None)
+    raw = await file.read()
+    if len(raw) > 30 * 1024 * 1024:
+        raise HTTPException(400, "ไฟล์ใหญ่เกิน 30 MB")
+    return await run_in_threadpool(_tp_parse_pdf, raw, file.filename or "")
+
+
 @app.post("/api/retort/config")
 async def api_retort_config(request: Request):
-    _rt_auth(request)
     data = await request.json()
-    _check_edit_pin(data.get("pin"))
+    _rt_sup(request, data.get("pin"))
     cfg = data.get("config")
     if not isinstance(cfg, dict) or not isinstance(cfg.get("categories"), list):
         raise HTTPException(400, "ข้อมูลไม่ถูกต้อง")
@@ -1777,9 +2895,8 @@ def api_retort_ai_status(request: Request):
 
 @app.post("/api/retort/ai/key")
 async def api_retort_ai_key(request: Request):
-    _rt_auth(request)
     data = await request.json()
-    _check_edit_pin(data.get("pin"))
+    _rt_sup(request, data.get("pin"))
     key = str(data.get("key") or "").strip()
     if key:
         if len(key) < 20 or any(c.isspace() for c in key):
@@ -1792,8 +2909,8 @@ async def api_retort_ai_key(request: Request):
 
 @app.post("/api/retort/ai")
 async def api_retort_ai(request: Request):
-    """ถาม AI: ส่งข้อมูลปัญหา Retort ที่สรุปจากหน้าเว็บ (context) + ประวัติแชท (messages) ไปให้ Gemini"""
-    _rt_auth(request)
+    """ถาม AI: ส่งข้อมูลปัญหา Retort ที่สรุปจากหน้าเว็บ (context) + ประวัติแชท (messages) ไปให้ Gemini — เฉพาะหัวหน้า"""
+    _rt_sup(request)
     key = gemini_key()
     if not key:
         raise HTTPException(400, "ยังไม่ได้ตั้งค่า API Key ของ AI (ตั้งได้ที่หน้า ตั้งค่า)")
@@ -1815,6 +2932,436 @@ async def api_retort_ai(request: Request):
         reason = (cands[0].get("finishReason") if cands else "") or (r["data"].get("promptFeedback") or {}).get("blockReason", "")
         raise HTTPException(502, f"AI ไม่ได้ตอบกลับ ({reason or 'ไม่ทราบสาเหตุ'})")
     return {"text": text.strip(), "model": "AI"}  # ไม่ส่งชื่อรุ่นไปที่หน้าเว็บ
+
+
+# ---------------------------------------------------------------- ถาม-ตอบ / ความคิดเห็น ในแต่ละหัวข้อ Checklist (Process Control / GMP)
+def _cm_rows(con, where="", args=()):
+    return [json.loads(r["data"]) for r in con.execute(f"SELECT data FROM item_comments {where} ORDER BY created_at", args)]
+
+
+def _cm_threads(items):
+    """จัดเป็นกระทู้: ความคิดเห็น/คำถาม + คำตอบใต้แต่ละอัน · คำถามที่ยังไม่มีคำตอบ = รอตอบ"""
+    top = [dict(x, replies=[]) for x in items if not x.get("parent")]
+    by = {x["id"]: x for x in top}
+    for x in items:
+        if x.get("parent") in by:
+            by[x["parent"]]["replies"].append(x)
+    for t in top:
+        t["open"] = bool(t.get("question")) and not t["replies"] and not t.get("closed")
+    return top
+
+
+@app.get("/api/comments")
+def api_comments(area: str):
+    with db() as con:
+        items = _cm_rows(con, "WHERE area_id=?", (area,))
+    return {"threads": _cm_threads(items)}
+
+
+@app.get("/api/comments/summary")
+def api_comments_summary():
+    """จำนวนความคิดเห็นต่อหัวข้อ + คำถามที่ยังรอคำตอบ (แสดงป้ายในรายการ / สรุปในหน้า Checklist)"""
+    with db() as con:
+        items = _cm_rows(con)
+    per, open_q = {}, []
+    groups = {}
+    for x in items:
+        groups.setdefault(x["area_id"], []).append(x)
+    for aid, L in groups.items():
+        th = _cm_threads(L)
+        per[aid] = {"n": len(L), "open": sum(1 for t in th if t["open"]), "last": max(x["at"] for x in L)}
+        it = ITEM_MAP.get(aid, {})
+        for t in th:
+            if t["open"]:
+                open_q.append({"id": t["id"], "area_id": aid, "no": it.get("no", ""), "name": it.get("name", aid), "zone": it.get("zone", ""),
+                               "text": t["text"][:200], "by": t["by"], "at": t["at"]})
+    open_q.sort(key=lambda q: -q["at"])
+    return {"items": per, "open": open_q[:100]}
+
+
+@app.post("/api/comments")
+async def api_comment_add(request: Request):
+    data = await request.json()
+    aid = str(data.get("area_id") or "")
+    if aid not in ITEM_MAP:
+        raise HTTPException(404, "ไม่พบหัวข้อนี้")
+    text = _fu_txt(data.get("text"), 1000)
+    by = _me_name(request, _fu_txt(data.get("by"), 60))
+    if not by:
+        raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
+    if not text:
+        raise HTTPException(400, "พิมพ์ข้อความก่อน")
+    parent = str(data.get("parent") or "")
+    sid = str(data.get("sid") or "")
+    ts = _fu_ms()
+    with db() as con:
+        if sid and not con.execute("SELECT 1 FROM submissions WHERE id=? AND area_id=?", (sid, aid)).fetchone():
+            raise HTTPException(404, "ไม่พบผลตรวจนี้")
+        if parent:
+            pr = con.execute("SELECT data FROM item_comments WHERE id=? AND area_id=?", (parent, aid)).fetchone()
+            if not pr or json.loads(pr["data"]).get("parent"):
+                raise HTTPException(404, "ไม่พบความคิดเห็นที่จะตอบ")
+        if parent:  # คำตอบอยู่ในผลตรวจเดียวกับข้อความหลัก
+            sid = json.loads(pr["data"]).get("sid") or ""
+        x = {"id": "c" + uuid.uuid4().hex[:10], "area_id": aid, "sid": sid or None, "parent": parent or None, "text": text, "by": by, "at": ts,
+             "question": bool(data.get("question")) and not parent, "round": str(data.get("round") or "")[:10]}
+        con.execute("INSERT INTO item_comments(id, area_id, parent, data, created_at) VALUES(?,?,?,?,?)",
+                    (x["id"], aid, parent or None, json.dumps(x, ensure_ascii=False), ts))
+        items = _cm_rows(con, "WHERE area_id=?", (aid,))
+    return {"ok": True, "threads": _cm_threads(items)}
+
+
+@app.post("/api/comments/{cid}/close")
+async def api_comment_close(cid: str, request: Request):
+    """ปิดคำถาม (ไม่ต้องตอบแล้ว) / เปิดใหม่"""
+    data = await request.json()
+    with db() as con:
+        r = con.execute("SELECT area_id, data FROM item_comments WHERE id=?", (cid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบความคิดเห็นนี้")
+        x = json.loads(r["data"])
+        x["closed"] = bool(data.get("closed"))
+        x["closed_by"] = _me_name(request, _fu_txt(data.get("by"), 60))
+        con.execute("UPDATE item_comments SET data=? WHERE id=?", (json.dumps(x, ensure_ascii=False), cid))
+        items = _cm_rows(con, "WHERE area_id=?", (r["area_id"],))
+    return {"ok": True, "threads": _cm_threads(items)}
+
+
+@app.delete("/api/comments/{cid}")
+def api_comment_delete(cid: str, request: Request, by: str = ""):
+    """ลบได้เฉพาะความคิดเห็นของตัวเอง (ชื่อตรงกับผู้เขียน) · ถ้ามีคนอื่นตอบไว้แล้ว เก็บกระทู้ไว้แต่ขึ้นว่าถูกลบ"""
+    me = " ".join(str(_me_name(request, by) or "").split()).lower()
+    with db() as con:
+        r = con.execute("SELECT area_id, data FROM item_comments WHERE id=?", (cid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบความคิดเห็นนี้")
+        x = json.loads(r["data"])
+        if not me or " ".join(str(x.get("by") or "").split()).lower() != me:
+            raise HTTPException(403, "ลบได้เฉพาะความคิดเห็นของตัวเอง")
+        has_rep = con.execute("SELECT 1 FROM item_comments WHERE parent=?", (cid,)).fetchone()
+        if has_rep:
+            x.update({"text": "", "deleted": True, "deleted_at": _fu_ms(), "question": False})
+            con.execute("UPDATE item_comments SET data=? WHERE id=?", (json.dumps(x, ensure_ascii=False), cid))
+        else:
+            con.execute("DELETE FROM item_comments WHERE id=?", (cid,))
+        items = _cm_rows(con, "WHERE area_id=?", (r["area_id"],))
+    return {"ok": True, "threads": _cm_threads(items)}
+
+
+# ---------------------------------------------------------------- ค้นหาทุกอย่าง (ปุ่มแว่นขยายบนหัวเว็บ)
+@app.get("/api/search")
+def api_search(q: str = "", days: int = Query(90, ge=1, le=400)):
+    """ค้นหัวข้อ Checklist · ผลตรวจ (สิ่งที่พบ/สาเหตุ/การแก้ไข/หมายเหตุ/ผู้ตรวจ) · เรื่องที่ต้องติดตาม · ความคิดเห็น
+    หลายคำ (เว้นวรรค) = ต้องเจอทุกคำ"""
+    terms = [t for t in " ".join(str(q or "").split()).lower().split(" ") if t][:6]
+    if not terms or len("".join(terms)) < 1:
+        return {"items": [], "subs": [], "followups": [], "comments": []}
+    hit = lambda *xs: all(t in " ".join(str(x or "") for x in xs).lower() for t in terms)
+    zdeck = {z["id"]: zone_deck(z) for z in AREAS["zones"]}
+    items = [{"id": aid, "no": it.get("no", ""), "name": it.get("name", ""), "zone": it.get("zone", ""), "deck": zdeck.get(it.get("zone_id"), "pc"),
+              "proc": it.get("proc", ""), "cust": it.get("cust", "")}
+             for aid, it in ITEM_MAP.items() if not it.get("hidden") and not it.get("extra")
+             and hit(it.get("no"), it.get("name"), it.get("zone"), it.get("proc"), it.get("cust"))][:30]
+    since = (round_of(now()) - timedelta(days=days)).isoformat()
+    subs = []
+    with db() as con:
+        for r in con.execute("SELECT * FROM submissions WHERE round_date>=? ORDER BY created_at DESC", (since,)):
+            r = dict(r)
+            it = ITEM_MAP.get(r["area_id"], {})
+            try:
+                pages = json.loads(r.get("pages") or "null") or []
+            except ValueError:
+                pages = []
+            notes = " ".join(p if isinstance(p, str) else str((p or {}).get("note", "")) for p in pages) or (r.get("note") or "")
+            if not hit(notes, r.get("topic"), r.get("cause"), r.get("action"), r.get("remark"), r.get("inspector"), r.get("status"),
+                       it.get("no"), it.get("name"), it.get("zone")):
+                continue
+            f = con.execute("SELECT filename FROM images WHERE submission_id=? ORDER BY page, seq LIMIT 1", (r["id"],)).fetchone()
+            subs.append({"sid": r["id"], "area_id": r["area_id"], "round": r["round_date"], "at": r["created_at"], "inspector": r["inspector"],
+                         "status": r["status"], "no": it.get("no", ""), "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""),
+                         "text": " · ".join(x for x in [r.get("topic") or "", notes, r.get("cause") and "สาเหตุ: " + r["cause"],
+                                                          r.get("action") and "แก้ไข: " + r["action"], r.get("remark") or ""] if x)[:400],
+                         "thumb": media_info(f["filename"])["thumb"] if f else ""})
+            if len(subs) >= 60:
+                break
+        fus = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups ORDER BY updated_at DESC")]
+        cms = _cm_rows(con)
+    fu = [{"id": x["id"], "title": x.get("title", ""), "status": x.get("status", ""), "zone": x.get("zone", ""), "owner": x.get("owner", ""),
+           "due": x.get("due", ""), "text": (x.get("detail") or "")[:300]}
+          for x in fus if hit(x.get("title"), x.get("detail"), x.get("zone"), x.get("owner"), x.get("created_by"),
+                              " ".join(n.get("text", "") for n in x.get("notes") or []))][:30]
+    tops = {c["id"]: c for c in cms if not c.get("parent")}
+    cm = []
+    for c in reversed(cms):
+        if c.get("deleted") or not hit(c.get("text"), c.get("by")):
+            continue
+        it = ITEM_MAP.get(c["area_id"], {})
+        sid = c.get("sid") or (tops.get(c.get("parent")) or {}).get("sid")
+        cm.append({"id": c["id"], "area_id": c["area_id"], "sid": sid, "round": c.get("round") or "", "by": c["by"], "at": c["at"],
+                   "text": c["text"][:300], "no": it.get("no", ""), "name": it.get("name", c["area_id"]), "zone": it.get("zone", "")})
+        if len(cm) >= 30:
+            break
+    return {"items": items, "subs": subs, "followups": fu, "comments": cm, "days": days}
+
+
+# ---------------------------------------------------------------- การแจ้งเตือน (กระดิ่งมุมขวาบน)
+@app.get("/api/notifications")
+def api_notifications(request: Request, name: str = "", days: int = Query(14, ge=1, le=60)):
+    """ความเคลื่อนไหวล่าสุด: ความคิดเห็น/คำถาม/คำตอบ และเรื่องที่ต้องติดตาม
+    mine = เกี่ยวกับชื่อนี้ (คอมเม้นผลตรวจของฉัน · ตอบคำถาม/กระทู้ที่ฉันร่วม · เรื่องที่ฉันเปิดหรือรับผิดชอบ)"""
+    me = " ".join(str(_me_name(request, name) or "").split()).lower()
+    my_dept = (_me(request) or {}).get("dept", "")
+    since = _fu_ms() - days * 86400 * 1000
+    same = lambda x: me and " ".join(str(x or "").split()).lower() == me
+    tagged = lambda t: bool(me) and ("@" + me) in " ".join(str(t or "").split()).lower()  # มีคนแท็ก @ชื่อของฉัน
+    ev = []
+    with db() as con:
+        cms = _cm_rows(con, "WHERE created_at>=?", (since,))
+        tops = {x["id"]: x for x in _cm_rows(con, "WHERE parent IS NULL")}
+        allc = _cm_rows(con)
+        sids = {x.get("sid") for x in cms if x.get("sid")} | {tops.get(x.get("parent"), {}).get("sid") for x in cms if x.get("parent")}
+        insp = {}
+        for sid in sids - {None}:
+            r = con.execute("SELECT inspector, round_date, status FROM submissions WHERE id=?", (sid,)).fetchone()
+            if r:
+                insp[sid] = (r["inspector"], r["round_date"], r["status"])
+        fus = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups WHERE updated_at>=?", (since,))]
+    for x in cms:
+        if x.get("deleted"):
+            continue
+        top = tops.get(x.get("parent")) if x.get("parent") else x
+        sid = (top or {}).get("sid")
+        it = ITEM_MAP.get(x["area_id"], {})
+        who, rd, sst = insp.get(sid, ("", x.get("round") or "", ""))
+        thread = [c for c in allc if c["id"] == (top or {}).get("id") or c.get("parent") == (top or {}).get("id")]
+        reason = ""
+        if not same(x["by"]) and tagged(x.get("text")):
+            reason = "แท็กคุณในความคิดเห็น"
+        elif not same(x["by"]):
+            if x.get("parent") and top and same(top["by"]):
+                reason = "ตอบคำถามของคุณ" if top.get("question") else "ตอบกลับความคิดเห็นของคุณ"
+            elif same(who):
+                reason = "ถามในผลตรวจของคุณ" if x.get("question") else "แสดงความคิดเห็นในผลตรวจของคุณ"
+            elif x.get("parent") and any(same(c["by"]) for c in thread if c["at"] < x["at"]):
+                reason = "ตอบกลับในกระทู้ที่คุณร่วม"
+            elif sst == "พบปัญหา":  # ความคิดเห็นในผลตรวจที่พบปัญหา → แจ้งทุกคน
+                reason = "ตอบกลับในผลตรวจที่พบปัญหา" if x.get("parent") else "ความคิดเห็นในผลตรวจที่พบปัญหา"
+        ev.append({"id": x["id"], "type": "reply" if x.get("parent") else ("question" if x.get("question") else "comment"),
+                   "at": x["at"], "by": x["by"], "text": x["text"][:160], "area_id": x["area_id"], "sid": sid, "round": rd,
+                   "title": f'{it.get("no", "")} {it.get("name", x["area_id"])}'.strip(), "zone": it.get("zone", ""),
+                   "mine": bool(reason), "reason": reason, "ng": sst == "พบปัญหา"})
+    for f in fus:
+        for n in (f.get("notes") or []) + [{"at": f.get("created_at"), "by": f.get("created_by"), "text": "เปิดเรื่องติดตาม", "kind": "open"}]:
+            if not n.get("at") or n["at"] < since:
+                continue
+            reason = ""
+            if not same(n.get("by")) and tagged(n.get("text")):
+                reason = "แท็กคุณในเรื่องที่ต้องติดตาม"
+            elif not same(n.get("by")):
+                if n.get("kind") == "open" and f.get("dept") and f["dept"] == my_dept:
+                    reason = f'{f["dept"]} ต้องตอบสาเหตุและการแก้ไข'
+                elif n.get("kind") == "answer" and same(f.get("created_by")):
+                    reason = "ตอบสาเหตุและการแก้ไขในผลตรวจของคุณ"
+                elif same(f.get("owner")):
+                    reason = "มอบหมายให้คุณรับผิดชอบ" if n.get("kind") == "open" else "อัปเดตเรื่องที่คุณรับผิดชอบ"
+                elif same(f.get("created_by")):
+                    reason = "อัปเดตเรื่องที่คุณเปิดไว้"
+            ev.append({"id": f'{f["id"]}:{n["at"]}', "type": "followup", "fid": f["id"], "at": n["at"], "by": n.get("by") or "",
+                       "text": ("พบปัญหา · ขอให้ " + f["dept"] + " ตอบสาเหตุและการแก้ไข" if n.get("kind") == "open" and f.get("dept") else n.get("text", ""))[:160],
+                       "title": f.get("title", ""), "zone": f.get("zone", ""), "mine": bool(reason), "reason": reason})
+    ev.sort(key=lambda e: -e["at"])
+    return {"items": ev[:150], "now": _fu_ms()}
+
+
+# ---------------------------------------------------------------- เรื่องที่ต้องติดตาม (Follow-up)
+# เพิ่ม/แก้ไข/ปิดเรื่องได้จากหน้าเว็บ · ลบต้องใส่รหัสแก้ไข (EDIT_PIN) · รูปเก็บที่ uploads/followups/
+FU_STATUS = {"open": "รอดำเนินการ", "doing": "กำลังดำเนินการ", "done": "เสร็จแล้ว"}
+FU_PHOTO_RE = re.compile(r"^followups/\d{4}-\d{2}/[A-Za-z0-9_-]+\.jpg$")
+FU_MAX_PHOTOS = 12
+FU_ISSUE_DAYS = 14
+
+
+def _fu_ms() -> int:
+    return int(now().timestamp() * 1000)
+
+
+def _fu_txt(v, n: int) -> str:
+    return _clean(str(v or ""))[:n]
+
+
+def _fu_sub_info(con, sid: str):
+    """ผลตรวจที่เป็นต้นเรื่อง: วันที่ ผู้ตรวจ หัวข้อ สิ่งที่พบ และรูปย่อ"""
+    r = con.execute("SELECT * FROM submissions WHERE id=?", (sid,)).fetchone()
+    if not r:
+        return None
+    r = dict(r)
+    it = ITEM_MAP.get(r["area_id"], {})
+    imgs = [x["filename"] for x in con.execute(
+        "SELECT filename FROM images WHERE submission_id=? ORDER BY page, seq LIMIT 8", (sid,))]
+    return {"sid": sid, "round": r["round_date"], "area_id": r["area_id"], "no": it.get("no", ""),
+            "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""), "zone_id": it.get("zone_id", ""),
+            "inspector": r["inspector"], "at": r["created_at"], "note": r.get("note") or "",
+            "cause": r.get("cause") or "", "action": r.get("action") or "",
+            "resp": r.get("resp") or "", "resp_by": r.get("resp_by") or "", "resp_at": r.get("resp_at") or "",
+            "media": [media_info(f) for f in imgs]}
+
+
+def _fu_for_resp(con, sid: str) -> str:
+    """ผลตรวจที่ให้ฝ่ายอื่นตอบ → เปิดเรื่องที่ต้องติดตามให้อัตโนมัติ (ถ้ายังไม่มี) · คืน id ของเรื่อง"""
+    for r in con.execute("SELECT id, data FROM followups"):
+        if (json.loads(r["data"]).get("src") or {}).get("sid") == sid:
+            return r["id"]
+    s = dict(con.execute("SELECT * FROM submissions WHERE id=?", (sid,)).fetchone())
+    it = ITEM_MAP.get(s["area_id"], {})
+    zone = next((z for z in AREAS["zones"] if z["id"] == it.get("zone_id")), None)
+    dept, ts = s.get("resp") or "PD", _fu_ms()
+    title = f'{it.get("no", "")} {it.get("name", s["area_id"])}'.strip() + (f' · {s["topic"]}' if s.get("topic") else "")
+    x = {"id": "f" + uuid.uuid4().hex[:10], "created_by": s["inspector"], "created_at": ts, "notes": [],
+         "title": title[:200], "detail": _fu_txt(s.get("note"), 3000), "zone_id": zone["id"] if zone else "",
+         "zone": zone["name"] if zone else "", "owner": DEPT_NAMES.get(dept, dept), "due": "", "urgent": False, "photos": [],
+         "src": {"sid": sid}, "dept": dept, "auto": True, "status": "open", "updated_at": ts, "updated_by": s["inspector"]}
+    con.execute("INSERT INTO followups(id, data, status, created_at, updated_at) VALUES(?,?,?,?,?)",
+                (x["id"], json.dumps(x, ensure_ascii=False), "open", ts, ts))
+    return x["id"]
+
+
+DEPT_NAMES = {"PD": "PD (Production)", "QC": "QC", "TP": "TP"}
+
+
+@app.get("/api/followups")
+def api_followups():
+    """รายการเรื่องที่ต้องติดตาม + ปัญหาที่พบล่าสุดที่ยังไม่ได้เปิดเรื่องติดตาม"""
+    with db() as con:
+        items = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups ORDER BY created_at DESC")]
+        linked = {(x.get("src") or {}).get("sid") for x in items} - {None, ""}
+        for x in items:
+            sid = (x.get("src") or {}).get("sid")
+            x["src_info"] = _fu_sub_info(con, sid) if sid else None
+        since = (round_of(now()) - timedelta(days=FU_ISSUE_DAYS)).isoformat()
+        rows = [dict(r) for r in con.execute(
+            "SELECT * FROM submissions WHERE status='พบปัญหา' AND round_date>=? ORDER BY created_at DESC LIMIT 300", (since,))]
+        thumbs = {}
+        for r in rows:
+            f = con.execute("SELECT filename FROM images WHERE submission_id=? ORDER BY page, seq LIMIT 1", (r["id"],)).fetchone()
+            thumbs[r["id"]] = media_info(f["filename"]) if f else None
+    zdeck = {z["id"]: zone_deck(z) for z in AREAS["zones"]}
+    issues = []
+    for r in rows:  # แสดงทั้งที่ติดตามแล้วและยังไม่ติดตาม (linked = ติดตามแล้ว)
+        it = ITEM_MAP.get(r["area_id"], {})
+        issues.append({"sid": r["id"], "round": r["round_date"], "area_id": r["area_id"], "no": it.get("no", ""),
+                       "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""), "zone_id": it.get("zone_id", ""),
+                       "deck": zdeck.get(it.get("zone_id"), "pc"), "inspector": r["inspector"], "at": r["created_at"],
+                       "note": r.get("note") or "", "cause": r.get("cause") or "", "action": r.get("action") or "",
+                       "resp": r.get("resp") or "", "thumb": thumbs.get(r["id"]), "linked": r["id"] in linked})
+    return {"items": items, "issues": issues[:120], "issue_days": FU_ISSUE_DAYS, "status": FU_STATUS}
+
+
+@app.post("/api/followups")
+async def api_followup_save(request: Request):
+    """เพิ่มเรื่องใหม่ (ไม่มี id) หรือแก้ไขเรื่องเดิม · เปลี่ยนสถานะจะบันทึกลงประวัติให้อัตโนมัติ"""
+    data = await request.json()
+    by = _me_name(request, _fu_txt(data.get("by"), 60))
+    if not by:
+        raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
+    title = _fu_txt(data.get("title"), 200)
+    if not title:
+        raise HTTPException(400, "กรอกเรื่องที่ต้องติดตาม")
+    status = data.get("status") if data.get("status") in FU_STATUS else "open"
+    due = str(data.get("due") or "")[:10]
+    if due:
+        try:
+            date.fromisoformat(due)
+        except ValueError:
+            raise HTTPException(400, "วันที่กำหนดเสร็จไม่ถูกต้อง")
+    zone_id = str(data.get("zone_id") or "")
+    zone = next((z for z in AREAS["zones"] if z["id"] == zone_id), None)
+    photos = []
+    for f in data.get("photos") or []:
+        f = str(f)
+        if FU_PHOTO_RE.match(f) and (UPLOAD_DIR / f).exists() and f not in photos:
+            photos.append(f)
+    ts = _fu_ms()
+    fid = str(data.get("id") or "")
+    with db() as con:
+        old = con.execute("SELECT data FROM followups WHERE id=?", (fid,)).fetchone() if fid else None
+        old = json.loads(old["data"]) if old else None
+        if fid and not old:
+            raise HTTPException(404, "ไม่พบเรื่องนี้ (อาจถูกลบไปแล้ว)")
+        x = old or {"id": "f" + uuid.uuid4().hex[:10], "created_by": by, "created_at": ts, "notes": []}
+        src = data.get("src") if not old else old.get("src")
+        if src and isinstance(src, dict) and src.get("sid"):
+            ok = con.execute("SELECT 1 FROM submissions WHERE id=?", (str(src["sid"]),)).fetchone()
+            src = {"sid": str(src["sid"])} if ok else None
+        else:
+            src = None
+        x.update({"title": title, "detail": _fu_txt(data.get("detail"), 3000),
+                  "zone_id": zone["id"] if zone else "", "zone": zone["name"] if zone else _fu_txt(data.get("zone"), 80),
+                  "owner": _fu_txt(data.get("owner"), 80), "due": due, "urgent": bool(data.get("urgent")),
+                  "photos": photos[:FU_MAX_PHOTOS], "src": src, "updated_at": ts, "updated_by": by})
+        prev = (old or {}).get("status")
+        if prev != status:
+            x["status"] = status
+            if old:
+                x["notes"].append({"at": ts, "by": by, "kind": "status", "text": f"เปลี่ยนสถานะเป็น {FU_STATUS[status]}"})
+            if status == "done":
+                x["done_at"], x["done_by"] = ts, by
+            else:
+                x.pop("done_at", None), x.pop("done_by", None)
+        removed = [f for f in (old or {}).get("photos", []) if f not in x["photos"]]
+        con.execute("INSERT INTO followups(id, data, status, created_at, updated_at) VALUES(?,?,?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET data=excluded.data, status=excluded.status, updated_at=excluded.updated_at",
+                    (x["id"], json.dumps(x, ensure_ascii=False), x["status"], x["created_at"], ts))
+    for f in removed:
+        _remove_media(f)
+    return {"ok": True, "item": x}
+
+
+@app.post("/api/followups/{fid}/note")
+async def api_followup_note(fid: str, request: Request):
+    """บันทึกความคืบหน้า"""
+    data = await request.json()
+    by, text = _me_name(request, _fu_txt(data.get("by"), 60)), _fu_txt(data.get("text"), 1000)
+    if not by:
+        raise HTTPException(400, "ตั้งชื่อผู้ใช้ก่อน")
+    if not text:
+        raise HTTPException(400, "พิมพ์ความคืบหน้าก่อน")
+    with db() as con:
+        r = con.execute("SELECT data FROM followups WHERE id=?", (fid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบเรื่องนี้")
+        x = json.loads(r["data"])
+        ts = _fu_ms()
+        x.setdefault("notes", []).append({"at": ts, "by": by, "text": text, **({"kind": "chat"} if data.get("kind") == "chat" else {})})
+        x["notes"] = x["notes"][-200:]
+        x["updated_at"], x["updated_by"] = ts, by
+        con.execute("UPDATE followups SET data=?, updated_at=? WHERE id=?", (json.dumps(x, ensure_ascii=False), ts, fid))
+    return {"ok": True, "item": x}
+
+
+@app.post("/api/followups/photo")
+async def api_followup_photo(file: UploadFile = File(...)):
+    raw = await file.read()
+    if len(raw) > 25 * 1024 * 1024:
+        raise HTTPException(400, "ไฟล์รูปใหญ่เกินไป")
+    month = now().strftime("%Y-%m")
+    (UPLOAD_DIR / "followups" / month).mkdir(parents=True, exist_ok=True)
+    rel = f"followups/{month}/{uuid.uuid4().hex[:12]}.jpg"
+    if not await run_in_threadpool(_store_image, raw, rel):
+        raise HTTPException(400, "ไฟล์นี้ไม่ใช่รูปภาพที่รองรับ")
+    return {"ok": True, "file": rel, **media_info(rel)}
+
+
+@app.delete("/api/followups/{fid}")
+def api_followup_delete(fid: str, pin: str = ""):
+    _check_edit_pin(pin)
+    with db() as con:
+        r = con.execute("SELECT data FROM followups WHERE id=?", (fid,)).fetchone()
+        if not r:
+            raise HTTPException(404, "ไม่พบเรื่องนี้")
+        con.execute("DELETE FROM followups WHERE id=?", (fid,))
+    for f in json.loads(r["data"]).get("photos") or []:
+        _remove_media(f)
+    return {"ok": True}
 
 
 @app.get("/healthz")

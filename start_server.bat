@@ -11,6 +11,8 @@ set "ADMIN_PIN="
 REM PIN before generating slides / PIN for editing checklist items
 set "SLIDE_PIN=0000"
 set "EDIT_PIN=2780"
+REM Admin password for the user management page (/users.html)
+set "ADMIN_PASS=Admin#12345"
 REM Folder for old photos moved by "archive" button. Empty = data\archive_uploads
 REM Example (another drive): set "ARCHIVE_DIR=D:\pc-archive"
 set "ARCHIVE_DIR="
@@ -35,6 +37,17 @@ if errorlevel 1 (
     echo [ERROR] Library install failed - check internet or company proxy, then run again.
     pause
     exit /b 1
+  )
+)
+
+REM ---- PDF reader for Retort programs (optional: server still runs without it) ----
+".venv\Scripts\python.exe" -c "import pdfplumber" 2>nul
+if errorlevel 1 (
+  echo Installing PDF reader pdfplumber...
+  ".venv\Scripts\python.exe" -m pip install pdfplumber
+  ".venv\Scripts\python.exe" -c "import pdfplumber" 2>nul
+  if errorlevel 1 (
+    echo [WARNING] pdfplumber not installed - PDF upload in Retort will not work. Server will still start.
   )
 )
 
