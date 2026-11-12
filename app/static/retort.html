@@ -1180,6 +1180,43 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .dash .dpanel .dp-b{border-radius:18px}
 @media(max-width:700px){.dx-row{gap:10px}.dx-grp{width:100%}.dx-grp .seg{overflow-x:auto;max-width:100%}.dx-bar .dseg3{margin-left:0}.dx-cust input[type=date]{flex:1 1 130px}.dx-cust button{flex:1 0 100%}}
 @media print{.dx-bar{display:none!important}.dx-head{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+/* ---------- Dashboard ใหม่: ตัวเลขสรุป · อันดับ ---------- */
+.kps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px}
+@media(max-width:1200px){.kps{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.kps{grid-template-columns:1fr 1fr}.kps .kp.k1{grid-column:1/-1}}
+.kp{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px 14px;box-shadow:0 1px 2px rgba(15,23,42,.05);display:flex;flex-direction:column;gap:4px;min-width:0}
+.kp-h{display:flex;align-items:center;gap:8px}
+.kp-ic{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#eef2f7;color:var(--navy);flex:0 0 auto}
+.kp-ic svg.i{width:16px;height:16px}
+.kp small{font-size:13px;font-weight:700;color:var(--mute)}
+.kp>b{font-size:32px;font-weight:800;color:var(--navy);line-height:1.1;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kp>b i{font-style:normal;font-size:14px;font-weight:600;color:var(--mute);margin-left:6px}
+.kp-s{font-size:12.5px;color:var(--mute);line-height:1.4}.kp-s b{color:var(--ink)}
+.kp.k1{background:linear-gradient(135deg,var(--navy),#2c4a72);border-color:transparent;color:#fff;box-shadow:0 10px 24px rgba(27,42,65,.22)}
+.kp.k1 .kp-ic{background:rgba(245,158,11,.2);color:var(--amber)}.kp.k1 small,.kp.k1 .kp-s{color:#cbd5e1}.kp.k1>b{color:#fff}.kp.k1>b i{color:#cbd5e1}
+.kp-sp{display:block;width:100%;height:30px;margin-top:4px}
+.kp.k1 .kp-s{position:relative;z-index:1}
+.kp.k2 .kp-ic{background:#fef3c7;color:#b45309}.kp.k3 .kp-ic{background:#e0f2fe;color:#0369a1}.kp.k4 .kp-ic{background:#ede9fe;color:#6d28d9}
+.kp.k4>b{font-size:19px;line-height:1.35;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.kp.k5 .kp-ic{background:#dcfce7;color:var(--ok)}.kp.k5.bad .kp-ic{background:var(--badbg);color:var(--bad)}.kp.k5.bad>b{color:var(--bad)}
+.dgrid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}.dgrid2>.card{margin:0}
+@media(max-width:900px){.dgrid2{grid-template-columns:1fr}}
+.dx .dcard{border-radius:18px;margin-bottom:14px}.dgrid2>.dcard{margin-bottom:0}
+.rk-l{display:flex;flex-direction:column}
+.rk{display:grid;grid-template-columns:28px minmax(0,1.3fr) minmax(60px,1fr) 64px;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 6px;border:0;border-radius:12px;background:transparent;min-height:0;font-weight:400}
+.rk:hover{background:#f8fafc}
+.rk+.rk{border-top:1px solid #f1f5f9;border-radius:0}
+.rk em{width:26px;height:26px;border-radius:8px;background:#eef2f7;color:var(--ink2);font-style:normal;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.rk.top em{background:var(--navy);color:#fff}
+.rk .nm{min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.rk .nm b{font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk .nm small{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk .tr{height:10px;border-radius:99px;background:#f1f5f9;overflow:hidden}
+.rk .tr i{display:block;height:100%;border-radius:99px;background:var(--rc);opacity:.85}
+.rk .v{text-align:right;font-size:17px;font-weight:800;color:var(--navy);line-height:1.1}
+.rk .v small{display:block;font-size:11.5px;font-weight:600;color:var(--mute)}
+@media(max-width:560px){.rk{grid-template-columns:26px minmax(0,1fr) 54px}.rk .tr{grid-column:2;grid-row:2;margin-top:-2px}.rk .v{grid-row:1/3;grid-column:3}}
+@media print{.kps{grid-template-columns:repeat(5,1fr)!important}.dgrid2{grid-template-columns:1fr 1fr!important}.kp,.rk{break-inside:avoid}.kp.k1{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3059,74 +3096,71 @@ function chgPill(a, b, big) {
   const t = S.d.metric === "minutes" ? Math.round(Math.abs(d)) : Math.abs(d);
   return d > 0 ? `<span class="cpill up">▲ +${t}</span>` : d < 0 ? `<span class="cpill dn">▼ -${t}</span>` : `<span class="cpill z">เท่าเดิม</span>`;
 }
-const DX = { c1: false, c2: false };  // เปิดช่องเลือกวันที่เอง (ช่วงที่ 1 / ช่วงเทียบ)
+const DX = { c1: false };  // เปิดช่องเลือกวันที่เอง
+/* Dashboard: รายงานปัญหา Retort ล้วนๆ (ไม่มีเทียบดีขึ้น/แย่ลง) · ตัวเลขสรุป → แนวโน้ม → อันดับปัญหา/หม้อ → สัดส่วน/ช่วงเวลา → ตารางรายวัน */
 function viewAnalyze() {
   const D = dashState(); const R = dashRanges(); const UD = U.dash;
   if (!Object.keys(S.items).length) {
-    $("#main").innerHTML = `<div class="card empty"><div class="ic">${I("chart")}</div><h2>ยังไม่มีข้อมูลให้วิเคราะห์</h2><p class="sub">เริ่มบันทึกปัญหาที่หน้า บันทึก แล้วกลับมาดูที่นี่</p><button class="pri" data-go-log style="margin-top:12px">${I("plus")}บันทึกปัญหา</button></div>`;
+    $("#main").innerHTML = `<div class="card empty"><div class="ic">${I("chart")}</div><h2>ยังไม่มีข้อมูลให้วิเคราะห์</h2><p class="sub">เริ่มบันทึกปัญหาที่หน้า บันทึก แล้วกลับมาดูที่นี่</p><button class="pri" data-go-log style="margin-top:12px">${I("plus")}ไปหน้าบันทึก</button></div>`;
     $("[data-go-log]").onclick = () => { S.view = "log"; render(); }; return;
   }
   const plants = plantsList();
-  const A1 = dItems(R.f1, R.t1, "all");
-  const L1 = dItems(R.f1, R.t1, D.plant), L2 = dItems(R.f2, R.t2, D.plant);
-  const tot1 = L1.reduce((a, x) => a + dmv(x), 0), tot2 = L2.reduce((a, x) => a + dmv(x), 0);
-  const days1 = daysBetween(R.f1, R.t1) + 1, days2 = daysBetween(R.f2, R.t2) + 1;
-  const m1 = sumBy(L1, dKey), m2 = sumBy(L2, dKey);
-  const keys = [...new Set([...Object.keys(m1), ...Object.keys(m2)])];
-  const rows = keys.map(k => ({ k, a: m1[k] || 0, b: m2[k] || 0 })).filter(r => r.a > 0 || r.b > 0).sort((p, q) => q.a - p.a || q.b - p.b);
-  const worst = [...rows].filter(r => r.a - r.b > 0).sort((p, q) => (q.a - q.b) - (p.a - p.b))[0];
-  const best = [...rows].filter(r => r.a - r.b < 0).sort((p, q) => (p.a - p.b) - (q.a - q.b))[0];
-  const diff = tot1 - tot2, pct = tot2 ? Math.round(diff / tot2 * 100) : null;
-  const plantLabel = D.plant === "all" ? "ทุกพื้นที่" : D.plant;
-  const byLabel = D.by === "retort" ? "แยกตามหม้อ" : "แยกตามปัญหา";
-  const pr = `${thShort(R.f1)} – ${thShort(R.t1)}`, pr2 = `${thShort(R.f2)} – ${thShort(R.t2)}`;
-  let h = `<div class="dash">
-  <div class="dx-head"><div class="dx-t"><b>Dashboard</b><span>${esc(plantLabel)} · ${pr} · ${days1} วัน <em>เทียบ ${pr2}</em></span></div>
+  const A1 = dItems(R.f1, R.t1, "all"), L1 = dItems(R.f1, R.t1, D.plant);
+  const days1 = daysBetween(R.f1, R.t1) + 1, tot1 = L1.reduce((a, x) => a + dmv(x), 0), n1 = L1.length;
+  const plantLabel = D.plant === "all" ? "ทุกพื้นที่" : D.plant, pr = `${thShort(R.f1)} – ${thShort(R.t1)}`;
+  // ตัวเลขสรุป
+  const withDur = L1.filter(x => num(x.duration) != null), mins = Math.round(withDur.reduce((a, x) => a + num(x.duration), 0));
+  const byRet = Object.entries(L1.reduce((m, x) => { if (x.retort) m[x.retort] = (m[x.retort] || 0) + dmv(x); return m; }, {})).sort((a, b) => b[1] - a[1]);
+  const byCat = Object.entries(L1.reduce((m, x) => { m[x.category] = (m[x.category] || 0) + dmv(x); return m; }, {})).sort((a, b) => b[1] - a[1]);
+  const hold = L1.filter(x => x.impact === "hold").length, wait = L1.filter(x => !x.approvedBy).length, daysWith = new Set(L1.map(x => x.date)).size;
+  const daily = dayList(R.f1, R.t1).map(d => L1.filter(x => x.date === d).length);
+  const spark = (() => { const mx = Math.max(1, ...daily), w = 120, h = 34, k = daily.length;
+    if (k < 2) return ""; const pts = daily.map((v, i) => `${(i / (k - 1) * w).toFixed(1)},${(h - 2 - v / mx * (h - 6)).toFixed(1)}`);
+    return `<svg class="kp-sp" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path d="M0,${h} L${pts.join(" L")} L${w},${h} Z" fill="rgba(245,158,11,.18)"/><path d="M${pts.join(" L")}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`; })();
+  const topCat = byCat[0] ? catById(byCat[0][0]) : null;
+  const kpi = (cls, ic, lab, val, unit, sub, extra = "") => `<div class="kp ${cls}"><div class="kp-h"><span class="kp-ic">${I(ic)}</span><small>${lab}</small></div><b>${val}<i>${unit}</i></b><span class="kp-s">${sub}</span>${extra}</div>`;
+  // อันดับ (แถบเดียว ไม่มีการเทียบ)
+  const rank = (rows, kind) => { if (!rows.length) return `<p class="sub" style="margin:6px 2px">ไม่พบปัญหาในช่วงนี้</p>`;
+    const mx = rows[0][1], tot = rows.reduce((a, r) => a + r[1], 0);
+    return `<div class="rk-l">${rows.slice(0, 10).map(([k, v], i) => { const c = kind === "cat" ? catById(k) : null, G = c ? grpOf(c) : null;
+      const sub = kind === "cat" ? (G ? G.name : "") : ((L1.find(x => x.retort === k) || {}).plant || "");
+      const topC = kind === "retort" ? (Object.entries(L1.filter(x => x.retort === k).reduce((m, x) => { m[x.category] = (m[x.category] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1])[0] || [])[0] : "";
+      return `<button class="rk ${i < 3 ? "top" : ""}" data-trend="${esc(k)}" data-tby="${kind}" style="--rc:${G ? G.color : "#1b2a41"}"><em>${i + 1}</em>
+        <span class="nm"><b>${esc(kind === "cat" ? (c ? c.name : "หัวข้อที่ถูกลบ") : k)}</b><small>${esc(sub)}${topC ? ` · บ่อยสุด: ${esc(catById(topC)?.name || "-")}` : ""}</small></span>
+        <span class="tr"><i style="width:${Math.max(3, v / mx * 100)}%"></i></span><span class="v">${dv(v)}<small>${Math.round(v / tot * 100)}%</small></span></button>`; }).join("")}</div>`; };
+  let h = `<div class="dash dx">
+  <div class="dx-head"><div class="dx-t"><b>Dashboard</b><span>รายงานปัญหา Retort · ${esc(plantLabel)} · ${pr} · ${days1} วัน</span></div>
     <button class="dh-btn sm" id="dPrint">${I("printer")}<span>พิมพ์ / PDF</span></button></div>
   <div class="dx-bar">
     <div class="dx-row">
       <div class="dx-grp"><span class="dx-lab">${I("calendar")}ช่วงเวลา</span>
         <div class="seg dseg">${[7, 14, 30, 90].map(n => `<button data-dn="${n}" class="${!D.f1 && +D.n === n ? "on" : ""}">${n} วัน</button>`).join("")}<button id="dC1" class="${D.f1 || DX.c1 ? "on" : ""}">กำหนดเอง</button></div></div>
-      <div class="dx-grp"><span class="dx-lab">${I("trend")}เทียบกับ</span>
-        <div class="seg dseg"><button id="dPrev" class="${R.custom2 || DX.c2 ? "" : "on"}">ช่วงก่อนหน้า</button><button id="dC2" class="${R.custom2 || DX.c2 ? "on" : ""}">กำหนดเอง</button></div></div>
-    </div>
-    ${DX.c1 ? `<div class="dx-cust"><span class="rlab r1">ช่วงที่ 1</span><input type="date" id="dF1" value="${R.f1}"><span>–</span><input type="date" id="dT1" value="${R.t1}"><button class="pri sm" id="dGo1">แสดง</button></div>` : ""}
-    ${DX.c2 ? `<div class="dx-cust"><span class="rlab r2">ช่วงที่ 2</span><input type="date" id="dF2" value="${R.f2}"><span>–</span><input type="date" id="dT2" value="${R.t2}"><button class="pri sm" id="dGo2">เทียบ</button></div>` : ""}
-    <div class="dx-row">
-      <div class="dx-grp dx-pl"><span class="dx-lab">${I("factory")}พื้นที่</span>
-        ${[...plants, "all"].map(p => { const n = A1.filter(x => p === "all" || x.plant === p).reduce((a, x) => a + dmv(x), 0);
-          return `<button class="pchip ${D.plant === p ? "on" : ""}" data-dpl="${esc(p)}">${p === "all" ? "ทุกพื้นที่" : esc(p)}<span>${S.d.metric === "minutes" ? Math.round(n) : n}</span></button>`; }).join("")}</div>
       <div class="seg dseg3">${[["count", "จำนวนครั้ง"], ["minutes", "รวมนาที"]].map(([v, l]) => `<button data-dm="${v}" class="${D.metric === v ? "on" : ""}">${l}</button>`).join("")}</div>
     </div>
+    ${DX.c1 ? `<div class="dx-cust"><span class="dx-lab">ตั้งแต่</span><input type="date" id="dF1" value="${R.f1}"><span>–</span><input type="date" id="dT1" value="${R.t1}"><button class="pri sm" id="dGo1">แสดง</button></div>` : ""}
+    <div class="dx-row"><div class="dx-grp dx-pl"><span class="dx-lab">${I("factory")}พื้นที่</span>
+      ${[...plants, "all"].map(p => { const n = A1.filter(x => p === "all" || x.plant === p).reduce((a, x) => a + dmv(x), 0);
+        return `<button class="pchip ${D.plant === p ? "on" : ""}" data-dpl="${esc(p)}">${p === "all" ? "ทุกพื้นที่" : esc(p)}<span>${dv(n)}</span></button>`; }).join("")}</div></div>
   </div>
-  <div class="dkpis dx-kpis">
-        <div class="dk"><small>ช่วงที่ 1 · ${pr}</small><b class="c1">${S.d.metric === "minutes" ? Math.round(tot1) : tot1} <i>${dunit()}</i></b><span>เฉลี่ย ${(tot1 / days1).toFixed(1)} ${dunit()}/วัน · ${days1} วัน</span></div>
-        <div class="dk"><small>ช่วงที่ 2 · ${pr2}</small><b class="c2">${S.d.metric === "minutes" ? Math.round(tot2) : tot2} <i>${dunit()}</i></b><span>เฉลี่ย ${(tot2 / days2).toFixed(1)} ${dunit()}/วัน · ${days2} วัน</span></div>
-        <div class="dk ${diff > 0 ? "bad" : diff < 0 ? "good" : ""}"><small>${esc(plantLabel)} · ภาพรวม</small><b>${diff > 0 ? "▲" : diff < 0 ? "▼" : ""} ${pct == null ? (diff ? Math.abs(S.d.metric === "minutes" ? Math.round(diff) : diff) + " " + dunit() : "0%") : Math.abs(pct) + "%"}</b><span>${diff > 0 ? "พบปัญหาเพิ่มขึ้น (แย่ลง)" : diff < 0 ? "พบปัญหาลดลง (ดีขึ้น)" : "เท่าเดิม"}</span></div>
-      </div>
-  <div class="dtitle"><div><h2>ปัญหาที่พบบ่อย <em>Top 10</em></h2><div class="sub">${byLabel} · ${plantLabel} · ${pr}</div></div>
-    <div class="seg dseg2">${[["cat", "ตามปัญหา"], ["retort", "ตามหม้อ"]].map(([v, l]) => `<button data-dby="${v}" class="${D.by === v ? "on" : ""}">${l}</button>`).join("")}</div></div>
-  <div class="dpanel">
-    <div class="dp-b">
-      <div class="dwb">
-        <div class="dwb-c bad">${worst ? `<small>▲ แย่ลงมากที่สุด</small><b>${esc(dName(worst.k))}</b><span class="sub">${esc(dSub(worst.k, [...L1, ...L2]))}</span><div>${dfmt(worst.b)} → <b>${dfmt(worst.a)}</b> ${chgPill(worst.a, worst.b)}</div>` : `<small>▲ แย่ลงมากที่สุด</small><b class="muted">ไม่มีรายการที่แย่ลง</b>`}</div>
-        <div class="dwb-c good">${best ? `<small>▼ ดีขึ้นมากที่สุด</small><b>${esc(dName(best.k))}</b><span class="sub">${esc(dSub(best.k, [...L1, ...L2]))}</span><div>${dfmt(best.b)} → <b>${dfmt(best.a)}</b> ${chgPill(best.a, best.b)}</div>` : `<small>▼ ดีขึ้นมากที่สุด</small><b class="muted">ไม่มีรายการที่ดีขึ้น</b>`}</div>
-      </div>
-      ${cmpBars(rows.slice(0, 10), pr, pr2, [...L1, ...L2])}
-    </div>
+  <div class="kps">
+    ${kpi("k1", "alert", "ปัญหาทั้งหมด", n1, "ครั้ง", `เฉลี่ย ${(n1 / days1).toFixed(1)} ครั้ง/วัน · พบ ${daysWith}/${days1} วัน`, spark)}
+    ${kpi("k2", "clock", "เวลาที่เสียไป", mins.toLocaleString(), "นาที", withDur.length ? `≈ ${(mins / 60).toFixed(1)} ชม. · เฉลี่ย ${Math.round(mins / withDur.length)} นาที/ครั้ง` : "ยังไม่มีการกรอกระยะเวลา")}
+    ${kpi("k3", "grid", "หม้อที่มีปัญหา", byRet.length, "หม้อ", byRet[0] ? `มากสุด <b>${esc(byRet[0][0])}</b> ${dfmt(dv(byRet[0][1]))}` : "ไม่มี")}
+    ${kpi("k4", "tag", "ปัญหาที่พบบ่อยสุด", topCat ? esc(topCat.name) : "–", "", byCat[0] ? `${dfmt(dv(byCat[0][1]))} · ${tot1 ? Math.round(byCat[0][1] / tot1 * 100) : 0}% ของทั้งหมด` : "")}
+    ${kpi(hold ? "k5 bad" : "k5", "alert", "Hold สินค้า", hold, "ครั้ง", `รออนุมัติ ${wait} รายการ`)}
   </div>
-  ${UD.insight || UD.trend || UD.groups || UD.hours ? `<div class="dtitle"><div><h2>เจาะลึก <em class="b">Insight</em></h2><div class="sub">${esc(plantLabel)} · ช่วงที่ 1 (${pr})</div></div></div>` : ""}
-  ${UD.insight ? insightSection(R, L1) : ""}
-  ${UD.trend || UD.groups || UD.hours ? `<div class="dgrid" style="margin-top:${UD.insight ? 16 : 0}px">
-    ${UD.trend ? `<div class="card span2">${sec("trend", "แนวโน้มตามเวลา", "เส้นทึบ = ช่วงที่ 1 · เส้นประ = ค่าเฉลี่ยของช่วงที่ 2 (ปรับตามจำนวนวัน) · ชี้/แตะกราฟเพื่อดูตัวเลข")}<div class="chart"><div class="svgc" id="cDash"></div></div><div class="legend" id="lDash"></div></div>` : ""}
-    ${UD.groups ? groupSection(L1) : ""}
-    ${UD.hours ? hourSection(L1) : ""}
-  </div>` : ""}
-  ${UD.heat && L1.length ? `<div class="dtitle"><div><h2>ตารางรายวัน</h2><div class="sub">แยกตามกลุ่ม · สีเข้ม = พบมาก · แตะแถวเพื่อดูกราฟแนวโน้ม</div></div></div>${heatSection(R, L1, L2)}` : ""}
+  ${UD.trend ? `<div class="card dcard">${sec("trend", "แนวโน้มปัญหา", `${pr} · ชี้/แตะกราฟเพื่อดูตัวเลข`)}<div class="chart"><div class="svgc" id="cDash"></div></div><div class="legend" id="lDash"></div></div>` : ""}
+  <div class="dgrid2">
+    <div class="card dcard">${sec("tag", "ปัญหาที่พบบ่อย", `Top 10 · แตะเพื่อดูแนวโน้ม`)}${rank(byCat, "cat")}</div>
+    <div class="card dcard">${sec("grid", "หม้อที่พบปัญหาบ่อย", `Top 10 · แตะเพื่อดูแนวโน้ม`)}${rank(byRet, "retort")}</div>
+  </div>
+  ${UD.groups || UD.hours ? `<div class="dgrid2">${UD.groups ? groupSection(L1) : ""}${UD.hours ? hourSection(L1) : ""}</div>` : ""}
+  ${UD.heat && L1.length ? `<div class="dtitle"><div><h2>ตารางรายวัน</h2><div class="sub">สีเข้ม = พบมาก · แตะแถวเพื่อดูกราฟแนวโน้ม</div></div>
+    <div class="seg dseg2">${[["cat", "ตามปัญหา"], ["retort", "ตามหม้อ"]].map(([v, l]) => `<button data-dby="${v}" class="${D.by === v ? "on" : ""}">${l}</button>`).join("")}</div></div>${heatSection(R, L1, [])}` : ""}
   ${UD.more ? moreSection(L1, tot1) : ""}
   </div>`;
   $("#main").innerHTML = h; wireDash();
-  drawDashTrend(R, L1, L2);
+  drawDashTrend(R, L1);
 }
 /* ---------- วิเคราะห์เชิงลึก: ข้อสังเกตอัตโนมัติ · แนวโน้ม · สัดส่วนกลุ่ม · ช่วงเวลา ---------- */
 const dv = v => S.d.metric === "minutes" ? Math.round(v) : v;
@@ -3171,20 +3205,20 @@ function insightSection(R, L1) {
   h += `<div class="notes">${notes.map(([c, ic, t]) => `<div class="note ${c}"><span class="ni">${I(ic)}</span><div>${t}</div></div>`).join("")}</div>`;
   return `<div class="card">${sec("spark", "ข้อสังเกตอัตโนมัติ", "ระบบคำนวณจากข้อมูลที่บันทึก · ใช้ประกอบการประชุม/รายงาน")}${h}</div>`;
 }
-function drawDashTrend(R, L1, L2) {
+function drawDashTrend(R, L1) {
   const el = $("#cDash"); if (!el) return;
   const n = daysBetween(R.f1, R.t1) + 1; const B = bucketsOf(R.f1, R.t1, n <= 45 ? "day" : n <= 200 ? "week" : "month");
-  const days2 = daysBetween(R.f2, R.t2) + 1, tot2 = L2.reduce((a, x) => a + dmv(x), 0);
   const d1 = B.list.map(b => L1.filter(x => x.date >= b.from && x.date <= b.to).reduce((a, x) => a + dmv(x), 0));
-  const avg = B.list.map(b => tot2 / days2 * (daysBetween(b.from, b.to) + 1));
-  const series = [{ name: "ช่วงที่ 1", color: "#2563eb", data: d1 }, { name: "เฉลี่ยช่วงที่ 2", color: "#94a3b8", data: avg, dash: true }];
-  $("#lDash").innerHTML = `<span><i style="background:#2563eb"></i>ช่วงที่ 1 (${B.unit === "วัน" ? "รายวัน" : "ราย" + B.unit})</span><span><i style="background:#94a3b8"></i>เฉลี่ยช่วงที่ 2</span>`;
+  const series = [{ name: "ปัญหา", color: "#2563eb", data: d1 }];
+  const ma = B.unit === "วัน" && d1.length >= 10 ? d1.map((_, i) => { const w = d1.slice(Math.max(0, i - 6), i + 1); return w.reduce((a, v) => a + v, 0) / w.length; }) : null;
+  if (ma) series.push({ name: "เฉลี่ย 7 วัน", color: "#f59e0b", data: ma, dash: true });
+  $("#lDash").innerHTML = `<span><i style="background:#2563eb"></i>${B.unit === "วัน" ? "รายวัน" : "ราย" + B.unit}</span>${ma ? `<span><i style="background:#f59e0b"></i>ค่าเฉลี่ย 7 วัน</span>` : ""}`;
   svgChart(el, B, series, v => S.d.metric === "minutes" ? `${Math.round(v)} นาที` : `${Math.round(v * 10) / 10} ครั้ง`, true);
 }
 function groupSection(L1) {
   const m = {}; L1.forEach(x => { const g = catById(x.category)?.grp || "other"; m[g] = (m[g] || 0) + dmv(x); });
   const rows = Object.entries(m).filter(r => r[1] > 0).sort((a, b) => b[1] - a[1]); const tot = rows.reduce((a, r) => a + r[1], 0);
-  const head = sec("pie", "สัดส่วนตามกลุ่มปัญหา", "ช่วงที่ 1 · " + (S.d.metric === "minutes" ? "รวมนาที" : "จำนวนครั้ง"));
+  const head = sec("pie", "สัดส่วนตามกลุ่มปัญหา", (S.d.metric === "minutes" ? "รวมนาที" : "จำนวนครั้ง"));
   if (!tot) return `<div class="card">${head}<p class="sub">ไม่มีข้อมูล</p></div>`;
   let off = 0; const gap = rows.length > 1 ? .6 : 0;
   const segs = rows.map(([g, v]) => { const G = GROUPS[g] || GROUPS.other, p = v / tot * 100, len = Math.max(.01, p - gap);
@@ -3197,7 +3231,7 @@ function groupSection(L1) {
   </div></div>`;
 }
 function hourSection(L1) {
-  const head = sec("clock", "ช่วงเวลาที่เกิดปัญหา", "ช่วงที่ 1 · แยกตามชั่วโมง กะ และวันในสัปดาห์");
+  const head = sec("clock", "ช่วงเวลาที่เกิดปัญหา", "แยกตามชั่วโมง กะ และวันในสัปดาห์");
   if (!L1.length) return `<div class="card">${head}<p class="sub">ไม่มีข้อมูล</p></div>`;
   const hr = Array(24).fill(0); L1.forEach(x => { const h = hourOf(x); if (h >= 0) hr[h] += dmv(x); }); const mx = Math.max(1, ...hr);
   const ds = L1.filter(x => x.shift === "DS").reduce((a, x) => a + dmv(x), 0), ns = L1.filter(x => x.shift !== "DS").reduce((a, x) => a + dmv(x), 0), tot = ds + ns;
@@ -3236,15 +3270,15 @@ function heatSection(R, L1, L2) {
   const gOrder = Object.keys(groups).sort((a, b) => groups[b].reduce((s, k) => s + m1[k], 0) - groups[a].reduce((s, k) => s + m1[k], 0));
   const cell = {}; L1.forEach(x => { const k = dKey(x) + "|" + x.date; cell[k] = (cell[k] || 0) + dmv(x); });
   const mxc = Math.max(1, ...Object.values(cell));
-  const head = `<tr><th class="hn"></th>${days.map(d => { const dt = new Date(d + "T00:00:00"); return `<th class="hd${dt.getDay() === 0 ? " sun" : ""}"><small>${TH_DOW[dt.getDay()]}</small>${dt.getDate()}/${dt.getMonth() + 1}</th>`; }).join("")}<th class="hx">รวม</th><th class="hx">หม้อที่พบบ่อย</th><th class="hx">เทียบช่วง 2</th></tr>`;
+  const head = `<tr><th class="hn"></th>${days.map(d => { const dt = new Date(d + "T00:00:00"); return `<th class="hd${dt.getDay() === 0 ? " sun" : ""}"><small>${TH_DOW[dt.getDay()]}</small>${dt.getDate()}/${dt.getMonth() + 1}</th>`; }).join("")}<th class="hx">รวม</th><th class="hx">หม้อที่พบบ่อย</th></tr>`;
   const topRet = k => { const m = {}; L1.filter(x => dKey(x) === k).forEach(x => { const r = S.d.by === "retort" ? (causeText(x) || "-") : (x.retort || "-"); m[r] = (m[r] || 0) + 1; }); const e = Object.entries(m).sort((a, b) => b[1] - a[1])[0]; return e ? `${e[0]} (${e[1]})` : "-"; };
   return gOrder.map(g => { const ks = groups[g]; const G = S.d.by === "retort" ? { name: g, color: "#1b2a41", icon: "factory" } : (GROUPS[g] || GROUPS.other);
     const gt = ks.reduce((s, k) => s + m1[k], 0);
     return `<div class="hgrp" style="--gc:${G.color}"><div class="hg-h"><span class="gic">${I(G.icon)}</span><b>${esc(G.name)}</b><span class="hchip bad">พบ ${dfmt(gt)}</span><span class="hchip">${ks.length} ${S.d.by === "retort" ? "หม้อ" : "หัวข้อ"}ที่พบปัญหา</span></div>
       <div class="tscroll"><table class="heat">${head}${ks.map((k, i) => `<tr data-trend="${esc(k)}"><td class="hn">${S.d.by === "retort" ? `<small>${esc(dSub(k, L1))}</small>` : ""}<span><em>${i + 1}</em>${esc(dName(k))}</span></td>
         ${days.map(d => { const v = cell[k + "|" + d] || 0; return v ? `<td class="hc on" style="--a:${(0.3 + 0.7 * v / mxc).toFixed(2)}" title="${thLong(d)} · ${dfmt(v)}">${S.d.metric === "minutes" ? Math.round(v) : v}</td>` : `<td class="hc"></td>`; }).join("")}
-        <td class="hx"><b>${S.d.metric === "minutes" ? Math.round(m1[k]) : m1[k]}</b></td><td class="hx small">${esc(S.d.by === "retort" ? "" : topRet(k))}</td><td class="hx">${chgPill(m1[k], m2[k] || 0)}</td></tr>`).join("")}</table></div></div>`; }).join("")
-    + (dayList(R.f1, R.t1).length > 31 ? `<p class="sub" style="margin:-4px 4px 12px">ตารางรายวันแสดง 31 วันล่าสุดของช่วงที่ 1</p>` : "");
+        <td class="hx"><b>${S.d.metric === "minutes" ? Math.round(m1[k]) : m1[k]}</b></td><td class="hx small">${esc(S.d.by === "retort" ? "" : topRet(k))}</td></tr>`).join("")}</table></div></div>`; }).join("")
+    + (dayList(R.f1, R.t1).length > 31 ? `<p class="sub" style="margin:-4px 4px 12px">ตารางรายวันแสดง 31 วันล่าสุดของช่วงที่เลือก</p>` : "");
 }
 function moreSection(L, total) {
   if (!L.length) return "";
@@ -3253,8 +3287,8 @@ function moreSection(L, total) {
   const fm = v => dfmt(v);
   const hb = (rows) => rows.map(([n, v]) => `<div class="hb"><span class="n">${esc(n)}</span><span class="v">${S.d.metric === "minutes" ? Math.round(v) : v}<small>${total ? Math.round(v / total * 100) : 0}%</small></span><span class="track"><span class="fill" style="width:${total ? v / total * 100 : 0}%"></span></span></div>`).join("");
   return `<div class="dgrid" style="margin-top:4px">
-    <div class="card">${sec("tool", "สาเหตุที่พบบ่อย", "ช่วงที่ 1")}${hb(byCause.slice(0, 10))}</div>
-    <div class="card">${sec("factory", "แยกตามพื้นที่ / โปรแกรม", "ช่วงที่ 1")}${hb(g(x => x.plant || "ไม่ระบุพื้นที่"))}
+    <div class="card">${sec("tool", "สาเหตุที่พบบ่อย", "Top 10")}${hb(byCause.slice(0, 10))}</div>
+    <div class="card">${sec("factory", "แยกตามพื้นที่ / โปรแกรม")}${hb(g(x => x.plant || "ไม่ระบุพื้นที่"))}
       <span class="lab" style="margin:16px 0 4px 2px">โปรแกรมที่ใช้ตอนเกิดปัญหา</span>${(() => { const P = g(x => x.program ? "โปรแกรม " + x.program : "").filter(r => r[0]); const none = L.filter(x => !x.program).length;
         return (P.length ? hb(P.slice(0, 8)) : `<p class="sub" style="margin:4px 2px">ยังไม่มีรายการที่ระบุโปรแกรม</p>`) + (none && P.length ? `<div class="sub" style="margin-top:6px">ไม่ระบุโปรแกรม ${none} รายการ</div>` : ""); })()}</div>
   </div>`;
@@ -3269,11 +3303,10 @@ function wireDash() {
     else if (ds.dpl) { D.plant = ds.dpl; re(); }
     else if (ds.dm) { D.metric = ds.dm; re(); }
     else if (b.id === "dGo1") { const f = $("#dF1").value, t = $("#dT1").value; if (!f || !t || f > t) return toast("เลือกวันที่ให้ถูกต้อง"); D.f1 = f; D.t1 = t; re(); }
-    else if (b.id === "dPrev") { D.f2 = D.t2 = ""; DX.c2 = false; re(); }
+    else if (b.id === "dPrev") { D.f2 = D.t2 = ""; re(); }
     else if (b.id === "dC1") { DX.c1 = !DX.c1; viewAnalyze(); }
-    else if (b.id === "dC2") { DX.c2 = !DX.c2; viewAnalyze(); }
     else if (b.id === "dGo2") { const f = $("#dF2").value, t = $("#dT2").value; if (!f || !t || f > t) return toast("เลือกวันที่ให้ถูกต้อง"); D.f2 = f; D.t2 = t; re(); }
-    else if (ds.trend != null) trendModal(ds.trend, "sel");
+    else if (ds.trend != null) { if (ds.tby && D.by !== ds.tby) { D.by = ds.tby; saveDash(); } trendModal(ds.trend, "sel"); }
   };
 }
 /* ---------- ป๊อปอัปกราฟแนวโน้ม (กราฟแท่งรายวัน) ---------- */
