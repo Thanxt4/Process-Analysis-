@@ -853,6 +853,21 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .fu-addn{margin-top:8px}
 .fu-addn .btn{width:100%;margin-top:8px}
 .fu-sec{margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
+.fu-chat{margin-top:14px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.fu-chat .ch{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f8fafc;border-bottom:1px solid var(--line)}
+.fu-chat .ch b{flex:1;color:var(--navy);font-size:14.5px}.fu-chat .ch span{font-size:12.5px;color:var(--muted)}
+.fu-msgs{max-height:320px;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:#f8fafc}
+.fu-msgs .empty{padding:14px 4px;text-align:center;color:var(--muted);font-size:13.5px}
+.fcm{max-width:82%;align-self:flex-start;display:block}
+.fcm .who{font-size:12px;color:var(--muted);margin:0 0 2px 4px}.fcm .who b{color:var(--navy)}
+.fcm .bb{background:#fff;border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:7px 11px;font-size:14.5px;white-space:pre-wrap;word-break:break-word}
+.fcm.mine{align-self:flex-end}.fcm.mine .who{text-align:right;margin:0 4px 2px 0}
+.fcm.mine .bb{background:#2563eb;border-color:#2563eb;color:#fff;border-radius:14px 14px 4px 14px}.fcm.mine .bb .mtag{color:#fff;text-decoration:underline}
+.fu-chin{display:flex;gap:6px;align-items:center;padding:8px;border-top:1px solid var(--line)}
+.fu-chin input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:99px;padding:9px 14px;font:inherit;font-size:15px}
+.fu-chin input:focus{outline:none;border-color:#2563eb}
+.fu-chin .send{border:0;background:#2563eb;color:#fff;border-radius:99px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;flex:none}
+.fu-chin .send:disabled{opacity:.6}
 .fu-sec h4{margin:0 0 4px}
 .fu-del{border:0;background:none;color:var(--red);font-weight:700;padding:12px 0 0;font-size:14px}
 
@@ -3287,7 +3302,7 @@ function renderFollow(){
   const list = all.filter(pass).filter(x => !q || [x.title, x.detail, x.zone, x.owner, x.created_by].join(" ").toLowerCase().includes(q)).sort(fuSort);
   $("#fuList").innerHTML = list.length ? list.map(x => {
     const ov = fuOver(x), dn = x.due ? fuDays(x.due) : null;
-    const last = [...(x.notes || [])].reverse().find(m => m.kind !== "status");
+    const last = [...(x.notes || [])].reverse().find(m => m.kind !== "status" && m.kind !== "chat");
     return `<button type="button" class="fu-card st-${x.status} ${ov ? "over" : ""}" data-fu="${x.id}">
       <div class="fu-l1"><span class="fu-st st-${x.status}">${FU_ST[x.status]}</span>${x.urgent && x.status !== "done" ? `<span class="fu-urg">ด่วน</span>` : ""}${x.zone ? `<span class="fu-zone">${esc(x.zone)}</span>` : ""}${x.dept && x.src_info && x.status !== "done" ? `<span class="pdwait ${x.src_info.cause ? "ok" : ""}">${x.src_info.cause ? esc(x.dept) + " ตอบแล้ว" : "รอ " + esc(x.dept) + " ตอบ"}</span>` : ""}</div>
       <b class="fu-t">${esc(x.title)}</b>
@@ -3305,7 +3320,7 @@ function renderFollow(){
     ${days.map(d => { const rs = fl.filter(r => r.i.round === d);
       return `<div class="fu-iday"><b>${thDate(d)}</b><span>${rs.length} เรื่อง${rs.some(r => r.x.status !== "done") ? ` · ค้าง ${rs.filter(r => r.x.status !== "done").length}` : " · เสร็จหมดแล้ว"}</span></div>` + rs.map(({i, x}) => {
         const wait = x.dept && x.status !== "done" ? `<span class="pdwait ${x.src_info && x.src_info.cause ? "ok" : ""}" style="margin:0">${x.src_info && x.src_info.cause ? esc(x.dept) + " ตอบแล้ว" : "รอ " + esc(x.dept) + " ตอบ"}</span>` : "";
-        const last = [...(x.notes || [])].reverse().find(m => m.kind !== "status");
+        const last = [...(x.notes || [])].reverse().find(m => m.kind !== "status" && m.kind !== "chat");
         return `<div class="fu-irow st-${x.status}" data-fuissv="${i.sid}">${i.thumb ? `<img src="${i.thumb.thumb}" loading="lazy" alt="">` : ""}<div class="t">
           <div class="fu-l1"><span class="fu-st st-${x.status}">${FU_ST[x.status]}</span>${x.urgent && x.status !== "done" ? `<span class="fu-urg">ด่วน</span>` : ""}${fuOver(x) ? `<span class="fu-urg">เกินกำหนด</span>` : ""}${wait}</div>
           <b>${esc(i.no)} ${esc(i.name)}</b><small>${esc(i.zone)} · ${hm(i.at)} น. · ${esc(i.inspector)}${x.owner ? ` · ผู้รับผิดชอบ ${esc(x.owner)}` : ""}${x.due ? ` · กำหนด ${fuDueTxt(x)}` : ""}</small>${i.note ? `<p>${esc(i.note)}</p>` : ""}
@@ -3338,14 +3353,17 @@ function fuPhotosHTML(){
   return c.photos.map((f, k) => `<div><img src="/t/${esc(f)}" data-full="/uploads/${esc(f)}" loading="lazy" alt=""><button type="button" class="rm" data-furm="${k}" aria-label="ลบรูป">×</button></div>`).join("")
     + Array.from({length: FU.ups}, () => `<div><span class="up">กำลังอัปโหลด…</span></div>`).join("");
 }
-function fuRenderSheet(){
+function fuRenderSheet(){ fuRenderSheet0(); if(FU.cur && FU.cur.id){ if(FU.chat.id === FU.cur.id){ FU.chat.drawn = false; fuChatDraw(); } fuChatLoad(); } }
+function fuRenderSheet0(){
   const c = FU.cur, old = !!c.id, si = c.src_info;
   const pdx = !!(old && c.dept && si), canAns = pdx && ME && ME.dept === c.dept;
   if(pdx && c._cause == null){ c._cause = si.cause || ""; c._act = si.action || ""; }
-  const notes = old ? [{at: c.created_at, by: c.created_by, text: "เปิดเรื่อง", kind: "open"}, ...(c.notes || [])] : [];
+  const notes = old ? [{at: c.created_at, by: c.created_by, text: "เปิดเรื่อง", kind: "open"}, ...(c.notes || []).filter(m => m.kind !== "chat")] : [];
   $("#fuBody").innerHTML = `
     ${si ? `<div class="fu-src"><b>มาจากผลตรวจที่พบปัญหา</b> · ${esc(si.no)} ${esc(si.name)}<br><span class="note">${esc(si.zone)} · ${thDate(si.round)} · ตรวจโดย ${esc(si.inspector)}</span>
       ${si.note ? `<p>${esc(si.note)}</p>` : ""}${si.resp && si.resp !== "QC" && !pdx ? `<div class="sub" style="border:0;padding:0;margin:0;background:none">${respBlock({...si, status: "พบปัญหา"})}</div>` : ""}${(si.media || []).length ? `<div class="thumbs">${si.media.map(m => `<div><img src="${m.thumb}" data-full="${m.poster}" loading="lazy" alt="" ${m.kind === "video" ? `data-video="${m.url}"` : ""}></div>`).join("")}</div>` : ""}</div>` : ""}
+    ${old ? `<div class="fu-chat"><div class="ch"><b>แชทถามตอบ</b><span id="fuChN"></span></div><div class="fu-msgs" id="fuMsgs"><div class="empty">กำลังโหลด…</div></div>
+      <div class="fu-chin"><button type="button" class="igat" data-tagbtn data-for="fuChatIn" title="แท็กชื่อ">@</button><input type="text" id="fuChatIn" maxlength="1000" placeholder="พิมพ์ข้อความ ถาม/ตอบ… (@ เพื่อแท็ก)" autocomplete="off"><button type="button" class="send" id="fuChatSend">ส่ง</button></div></div>` : ""}
     <label class="fu-lab" for="fuT">เรื่องที่ต้องติดตาม <i>*</i></label><input type="text" id="fuT" maxlength="200" value="${esc(c.title)}" placeholder="เช่น ฝ้าเหนือไลน์บรรจุมีคราบรา ต้องทำความสะอาด">
     ${pdx ? `<label class="fu-lab" for="fuCause">สาเหตุ <span class="pdwait ${si.cause ? "ok" : ""}" style="margin:0 0 0 4px">${si.cause ? `${esc(c.dept)} ตอบแล้ว${si.resp_by ? " · " + esc(si.resp_by) : ""}` : `รอ ${esc(c.dept)} ตอบ`}</span></label>
       <textarea id="fuCause" maxlength="2000" ${canAns ? "" : "readonly"} placeholder="${canAns ? "ปัญหานี้เกิดจากอะไร" : `รอ ${esc(c.dept)} กรอก (เฉพาะแผนก ${esc(c.dept)})`}">${esc(c._cause)}</textarea>
@@ -3368,6 +3386,40 @@ function fuRenderSheet(){
       <div class="fu-addn"><button type="button" class="igat" data-tagbtn data-for="fuNote">@ แท็กชื่อ</button><textarea id="fuNote" maxlength="1000" placeholder="อัปเดตความคืบหน้า เช่น แจ้งช่างแล้ว รออะไหล่"></textarea><button class="btn ghost" id="fuNoteBtn" type="button">บันทึกความคืบหน้า</button></div>
       <button class="fu-del" id="fuDel" type="button">ลบเรื่องนี้ (ต้องใส่รหัส)</button></div>` : ""}`;
 }
+/* แชทถามตอบในแต่ละเรื่อง: ถ้ามาจากผลตรวจ = ใช้ความคิดเห็นของผลตรวจนั้น (เห็นเหมือนกันในหน้า Checklist) · เรื่องที่เพิ่มเอง = เก็บในเรื่องนั้น */
+FU.chat = {id: "", msgs: [], at: 0};
+function fuChatDraw(){
+  const box = $("#fuMsgs"); if(!box || !FU.cur || FU.chat.id !== FU.cur.id) return;
+  const me = (getMyName() || "").trim().toLowerCase(), M = FU.chat.msgs, nearEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  box.innerHTML = M.length ? M.map(m => `<div class="fcm ${String(m.by).trim().toLowerCase() === me ? "mine" : ""}"><div class="who"><b>${esc(m.by)}</b> · ${fuAt(m.at)}</div><div class="bb">${mtext(m.text)}</div></div>`).join("")
+    : `<div class="empty">ยังไม่มีข้อความ · เริ่มถาม/ตอบเกี่ยวกับปัญหานี้ได้เลย</div>`;
+  $("#fuChN").textContent = M.length ? `${M.length} ข้อความ` : "";
+  if(nearEnd || !FU.chat.drawn){ box.scrollTop = box.scrollHeight; FU.chat.drawn = true; }
+}
+async function fuChatLoad(){
+  const c = FU.cur; if(!c || !c.id) return; const si = c.src_info;
+  if(FU.chat.id !== c.id) FU.chat = {id: c.id, msgs: [], drawn: false};
+  try{
+    let msgs;
+    if(si && si.sid){ const r = await api(`/api/comments?area=${encodeURIComponent(si.area_id)}`);
+      msgs = r.threads.filter(t => t.sid === si.sid).flatMap(t => [t, ...t.replies]).filter(x => !x.deleted).map(x => ({by: x.by, at: x.at, text: x.text})); }
+    else { const x = FU.items.find(y => y.id === c.id) || c; msgs = (x.notes || []).filter(n => n.kind === "chat"); }
+    if(!FU.cur || FU.cur.id !== c.id) return;
+    FU.chat.msgs = msgs.sort((a, b) => a.at - b.at); fuChatDraw();
+  }catch{}
+}
+async function fuChatSend(){
+  const c = FU.cur, inp = $("#fuChatIn"), t = inp.value.trim(); if(!c || !t){ inp.focus(); return; }
+  const b = $("#fuChatSend"), si = c.src_info; b.disabled = true;
+  try{
+    if(si && si.sid) await api("/api/comments", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({area_id: si.area_id, sid: si.sid, text: t, by: getMyName(), round: si.round})});
+    else { const r = await api(`/api/followups/${encodeURIComponent(c.id)}/note`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({text: t, kind: "chat", by: getMyName()})});
+      const i = FU.items.findIndex(y => y.id === r.item.id); if(i >= 0){ r.item.src_info = FU.items[i].src_info; FU.items[i] = r.item; } c.notes = r.item.notes; }
+    inp.value = ""; FU.chat.drawn = false; await fuChatLoad(); inp.focus(); setTimeout(loadNotif, 300);
+  }catch(err){ toast(err.message, true); }
+  finally{ b.disabled = false; }
+}
+setInterval(() => { if(FU.cur && FU.cur.id && $("#fuBg").classList.contains("on") && !document.hidden) fuChatLoad(); }, 15000);
 function fuGrab(){  // เก็บค่าที่กรอกในหน้าต่างไว้ก่อนวาดใหม่/บันทึก
   const c = FU.cur; if(!c || !$("#fuT")) return;
   c.title = $("#fuT").value; if($("#fuD")) c.detail = $("#fuD").value; if($("#fuCause")){ c._cause = $("#fuCause").value; c._act = $("#fuAct").value; } c.zone_id = $("#fuZ").value; c.owner = $("#fuO").value; c.due = $("#fuDue").value;
@@ -3403,6 +3455,7 @@ $("#tab-follow").addEventListener("click", e => {
   const v = e.target.closest("[data-fuissv]"); if(v){ const x = fuOf(v.dataset.fuissv); if(x) fuOpen(x); return; }
   const so = e.target.closest("[data-issort]"); if(so){ FU.issSort = so.dataset.issort; store.set("pc_fuisssort", FU.issSort); renderFollow(); return; }
 });
+$("#fuBody").addEventListener("keydown", e => { if(e.target.id === "fuChatIn" && e.key === "Enter" && !e.isComposing){ e.preventDefault(); fuChatSend(); } });
 $("#fuBody").addEventListener("change", e => {
   if(e.target.id === "fuCam" || e.target.id === "fuGal"){ const fs = [...e.target.files]; e.target.value = ""; if(fs.length) fuUpload(fs); }
 });
@@ -3427,6 +3480,7 @@ $("#fuBody").addEventListener("click", async e => {
     }catch(err){ toast(err.message, true); b.disabled = false; b.textContent = c.id ? "บันทึกการแก้ไข" : "เปิดเรื่องติดตาม"; }
     return;
   }
+  if(b.id === "fuChatSend"){ fuChatSend(); return; }
   if(b.id === "fuNoteBtn"){
     const t = $("#fuNote").value.trim(); if(!t){ $("#fuNote").focus(); return; }
     fuGrab(); b.disabled = true;
@@ -3816,7 +3870,7 @@ $("#pplX").onclick = pplClose;
 $("#pplBg").addEventListener("click", e => { if(e.target.id === "pplBg") pplClose(); });
 $("#pplQ").addEventListener("input", drawPpl);
 // ช่องที่พิมพ์ล่าสุด (ความคิดเห็น / ความคืบหน้า / สาเหตุ-การแก้ไข) → ปุ่มแท็กใส่ชื่อให้ตรงนั้น
-const TAGGABLE = "[data-igtext], #cmText, #fuNote, #fuCause, #fuAct, [data-pdc], [data-pda], #pagesWrap textarea, #cause, #action, #remark";
+const TAGGABLE = "#fuChatIn, [data-igtext], #cmText, #fuNote, #fuCause, #fuAct, [data-pdc], [data-pda], #pagesWrap textarea, #cause, #action, #remark";
 let lastTag = null;
 document.addEventListener("focusin", e => { if(e.target.matches && e.target.matches(TAGGABLE)) lastTag = e.target; });
 function insTag(el, name, from){  // from = ตำแหน่ง @ ที่พิมพ์ค้างไว้ (ถ้ามี)

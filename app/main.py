@@ -3186,7 +3186,7 @@ async def api_followup_note(fid: str, request: Request):
             raise HTTPException(404, "ไม่พบเรื่องนี้")
         x = json.loads(r["data"])
         ts = _fu_ms()
-        x.setdefault("notes", []).append({"at": ts, "by": by, "text": text})
+        x.setdefault("notes", []).append({"at": ts, "by": by, "text": text, **({"kind": "chat"} if data.get("kind") == "chat" else {})})
         x["notes"] = x["notes"][-200:]
         x["updated_at"], x["updated_by"] = ts, by
         con.execute("UPDATE followups SET data=?, updated_at=? WHERE id=?", (json.dumps(x, ensure_ascii=False), ts, fid))
