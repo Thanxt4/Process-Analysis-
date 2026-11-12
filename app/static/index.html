@@ -802,6 +802,13 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .fu-irow .t p{margin:3px 0 0;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .fu-irow .btn{flex:none}
 .fu-irow .btn.fu-done{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+.fu-isort{display:flex;align-items:center;gap:10px;padding:8px 16px 10px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted);font-weight:700}
+.fu-isort .fu-seg{flex:0 1 260px}.fu-isort .fu-seg button{min-height:36px;padding:6px}.fu-isort .fu-seg button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.fu-iday{display:flex;align-items:baseline;gap:10px;padding:9px 16px;background:#f8fafc;border-top:1px solid var(--line);position:sticky;top:0}
+.fu-iday b{color:var(--navy);font-size:14.5px}.fu-iday span{color:var(--muted);font-size:12.5px}
+.fu-irow[data-fuissv]{cursor:pointer;border-left:4px solid #94a3b8}.fu-irow[data-fuissv]:hover{background:#f8fafc}
+.fu-irow.st-open{border-left-color:var(--amber)}.fu-irow.st-doing{border-left-color:#2563eb}.fu-irow.st-done{border-left-color:var(--green)}
+.fu-irow .fu-l1{margin-bottom:3px}
 .fu-more{display:block;width:100%;border:0;border-top:1px solid var(--line);background:#f8fafc;padding:10px;font-weight:700;color:var(--navy)}
 .crow .fubtn{flex:none;align-self:center;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer}
 .crow .fubtn:hover{border-color:var(--navy)}
@@ -3183,7 +3190,7 @@ $("#roundList").addEventListener("click", e => { const b = e.target.closest(".dl
 
 /* ---------- เรื่องที่ต้องติดตาม: เพิ่ม/แก้ไข/ปิดเรื่องได้จากหน้าเว็บ · ลบต้องใส่รหัส ---------- */
 const FU_ST = {open: "รอดำเนินการ", doing: "กำลังดำเนินการ", done: "เสร็จแล้ว"};
-const FU = {items: [], issues: [], days: 14, loaded: false, filter: store.get("pc_fufilter", "active"), q: "", cur: null, ups: 0, issAll: false};
+const FU = {items: [], issues: [], days: 14, loaded: false, filter: store.get("pc_fufilter", "active"), q: "", cur: null, ups: 0, issAll: false, issSort: store.get("pc_fuisssort", "desc")};
 const fuToday = () => { const d = new Date(Date.now() + clockOffset); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const fuDays = due => Math.round((new Date(due + "T00:00:00") - new Date(fuToday() + "T00:00:00")) / 864e5);
 const fuOver = x => x.status !== "done" && !!x.due && fuDays(x.due) < 0;
@@ -3256,13 +3263,23 @@ function renderFollow(){
       <div class="fu-meta">${x.owner ? `<span>ผู้รับผิดชอบ <b>${esc(x.owner)}</b></span>` : ""}${x.due ? `<span class="fu-due ${ov ? "over" : dn !== null && dn <= 2 && x.status !== "done" ? "soon" : ""}">กำหนด ${fuDueTxt(x)}</span>` : ""}${(x.photos || []).length ? `<span>รูป ${x.photos.length}</span>` : ""}${x.status === "done" && x.done_at ? `<span>ปิดเรื่อง ${fuAt(x.done_at)} · ${esc(x.done_by || "")}</span>` : ""}</div>
       ${last ? `<div class="fu-last">${esc(last.text)} <i>· ${esc(last.by)} ${fuAt(last.at)}</i></div>` : ""}</button>`; }).join("")
     : `<div class="card fu-empty">${q ? `ไม่พบเรื่องที่ค้นหา "${esc(FU.q.trim())}"` : FU.filter === "active" ? "ไม่มีเรื่องค้าง 👍 กด <b>เพิ่มเรื่อง</b> เพื่อเปิดเรื่องใหม่" : "ไม่มีเรื่องในหมวดนี้"}</div>`;
-  // ปัญหาที่พบล่าสุด (ยังไม่ได้เปิดเรื่อง)
-  const iss = FU.issues, show = FU.issAll ? iss : iss.slice(0, 8), open = store.get("pc_fuiss", "0") === "1";
-  const nWait = iss.filter(i => !fuOf(i.sid)).length;
-  $("#fuIssues").innerHTML = iss.length ? `<details class="card fu-iss" id="fuIssBox" ${open ? "open" : ""}><summary><b>ปัญหาที่พบ ${FU.days} วันล่าสุด</b><span class="ct" title="ยังไม่ได้ติดตาม / ทั้งหมด">ยังไม่ติดตาม ${nWait} / ${iss.length}</span></summary>
-    ${show.map(i => `<div class="fu-irow">${i.thumb ? `<img src="${i.thumb.thumb}" loading="lazy" alt="">` : ""}<div class="t"><b>${esc(i.no)} ${esc(i.name)}</b><small>${esc(i.zone)} · ${thDate(i.round)} · ${esc(i.inspector)}</small>${i.note ? `<p>${esc(i.note)}</p>` : ""}</div>
-      ${fuOf(i.sid) ? `<button type="button" class="btn sm ghost fu-done" data-fuissv="${i.sid}">✓ ติดตามแล้ว</button>` : `<button type="button" class="btn sm ghost" data-fuiss="${i.sid}">＋ ติดตาม</button>`}</div>`).join("")}
-    ${iss.length > show.length ? `<button type="button" class="fu-more" id="fuIssMore">ดูทั้งหมด ${iss.length} รายการ ▾</button>` : ""}</details>` : "";
+  // ปัญหาที่พบล่าสุด: แสดงเฉพาะเรื่องที่ติดตามแล้ว แยกตามวัน · เรียงวันที่ได้ · มีสถานะการติดตาม
+  const asc = FU.issSort === "asc", open = store.get("pc_fuiss", "1") === "1";
+  const fl = FU.issues.map(i => ({i, x: fuOf(i.sid)})).filter(r => r.x && (!q || [r.i.no, r.i.name, r.i.zone, r.i.note, r.i.inspector, r.x.owner, r.x.title].join(" ").toLowerCase().includes(q)))
+    .sort((p, q) => (p.i.round === q.i.round ? (p.i.at < q.i.at ? -1 : 1) : (p.i.round < q.i.round ? -1 : 1)) * (asc ? 1 : -1));
+  const days = [...new Set(fl.map(r => r.i.round))];
+  const nDone = fl.filter(r => r.x.status === "done").length;
+  $("#fuIssues").innerHTML = fl.length ? `<details class="card fu-iss" id="fuIssBox" ${open ? "open" : ""}><summary><b>ปัญหาที่ติดตาม ${FU.days} วันล่าสุด</b><span class="ct" title="เสร็จแล้ว / ทั้งหมด">เสร็จ ${nDone} / ${fl.length}</span></summary>
+    <div class="fu-isort"><span>เรียงวันที่</span><div class="fu-seg"><button type="button" data-issort="desc" class="${asc ? "" : "on"}">ใหม่ → เก่า</button><button type="button" data-issort="asc" class="${asc ? "on" : ""}">เก่า → ใหม่</button></div></div>
+    ${days.map(d => { const rs = fl.filter(r => r.i.round === d);
+      return `<div class="fu-iday"><b>${thDate(d)}</b><span>${rs.length} เรื่อง${rs.some(r => r.x.status !== "done") ? ` · ค้าง ${rs.filter(r => r.x.status !== "done").length}` : " · เสร็จหมดแล้ว"}</span></div>` + rs.map(({i, x}) => {
+        const wait = x.dept && x.status !== "done" ? `<span class="pdwait ${x.src_info && x.src_info.cause ? "ok" : ""}" style="margin:0">${x.src_info && x.src_info.cause ? esc(x.dept) + " ตอบแล้ว" : "รอ " + esc(x.dept) + " ตอบ"}</span>` : "";
+        const last = [...(x.notes || [])].reverse().find(m => m.kind !== "status");
+        return `<div class="fu-irow st-${x.status}" data-fuissv="${i.sid}">${i.thumb ? `<img src="${i.thumb.thumb}" loading="lazy" alt="">` : ""}<div class="t">
+          <div class="fu-l1"><span class="fu-st st-${x.status}">${FU_ST[x.status]}</span>${x.urgent && x.status !== "done" ? `<span class="fu-urg">ด่วน</span>` : ""}${fuOver(x) ? `<span class="fu-urg">เกินกำหนด</span>` : ""}${wait}</div>
+          <b>${esc(i.no)} ${esc(i.name)}</b><small>${esc(i.zone)} · ${hm(i.at)} น. · ${esc(i.inspector)}${x.owner ? ` · ผู้รับผิดชอบ ${esc(x.owner)}` : ""}${x.due ? ` · กำหนด ${fuDueTxt(x)}` : ""}</small>${i.note ? `<p>${esc(i.note)}</p>` : ""}
+          ${last ? `<div class="fu-last">${esc(last.text)} <i>· ${esc(last.by)} ${fuAt(last.at)}</i></div>` : ""}</div></div>`; }).join(""); }).join("")}
+    </details>` : `<div class="card fu-empty" style="margin-bottom:12px">ยังไม่มีปัญหาที่ติดตามใน ${FU.days} วันล่าสุด · กด <b>＋ ติดตาม</b> ในผลตรวจที่พบปัญหา (หน้า Checklist) เพื่อเริ่มติดตาม</div>`;
   const box = $("#fuIssBox"); if(box) box.ontoggle = () => store.set("pc_fuiss", box.open ? "1" : "0");
 }
 // เปิดเรื่องจากผลตรวจที่พบปัญหา: ใส่หัวข้อ/รายละเอียด/พื้นที่ให้อัตโนมัติ
@@ -3347,7 +3364,7 @@ $("#tab-follow").addEventListener("click", e => {
     const y = scrollY; i.disabled = true; i.textContent = "กำลังเพิ่ม…";
     fuAddSub(fuFromSub(s)).catch(err => toast(err.message, true)).finally(() => { renderFollow(); scrollTo(0, y); }); return; }
   const v = e.target.closest("[data-fuissv]"); if(v){ const x = fuOf(v.dataset.fuissv); if(x) fuOpen(x); return; }
-  if(e.target.id === "fuIssMore"){ FU.issAll = true; renderFollow(); }
+  const so = e.target.closest("[data-issort]"); if(so){ FU.issSort = so.dataset.issort; store.set("pc_fuisssort", FU.issSort); renderFollow(); return; }
 });
 $("#fuBody").addEventListener("change", e => {
   if(e.target.id === "fuCam" || e.target.id === "fuGal"){ const fs = [...e.target.files]; e.target.value = ""; if(fs.length) fuUpload(fs); }
