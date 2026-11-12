@@ -1151,6 +1151,35 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
   header.top .wrap{max-width:1320px}
   .wrap.wide,#main.wide{max-width:1320px}
 }
+/* ---------- Dashboard: หัว + แถบตัวเลือกแบบกระชับ ---------- */
+.dx-head{display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:20px;color:#fff;margin-bottom:12px;
+  background:radial-gradient(420px 140px at 92% -40px,rgba(245,158,11,.32),transparent 70%),linear-gradient(135deg,#14213a,#1b2a41 55%,#2a4a72);box-shadow:0 10px 24px rgba(27,42,65,.18)}
+.dx-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.dx-t b{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.dx-t span{font-size:14px;color:#cbd5e1}.dx-t em{font-style:normal;color:#94a3b8;margin-left:6px}
+.dx-bar{background:#fff;border:1px solid var(--line);border-radius:18px;padding:10px 14px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.dx-row{display:flex;align-items:center;gap:10px 22px;flex-wrap:wrap;padding:6px 0}
+.dx-row+.dx-row,.dx-cust+.dx-row{border-top:1px solid #f1f5f9;margin-top:4px;padding-top:10px}
+.dx-grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.dx-lab{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--mute);white-space:nowrap}
+.dx-lab svg.i{width:16px;height:16px}
+.dx-bar .seg{background:#eef2f7}
+.dx-bar .seg button{min-height:36px;padding:4px 13px;font-size:14px;flex:0 0 auto;white-space:nowrap}
+.dx-bar .seg button.on{background:var(--navy);color:#fff;box-shadow:0 2px 6px rgba(27,42,65,.25)}
+.dx-cust{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 2px;padding:10px 12px;border-radius:14px;background:#f8fafc;border:1px dashed #cbd5e1}
+.dx-cust input[type=date]{width:auto;min-height:40px;font-size:15px;padding:6px 10px;background:#fff}
+.dx-cust .rlab{font-size:14px;padding:4px 10px}
+.dx-bar .pchip{min-height:38px;border-radius:12px;background:#fff;border:1.5px solid var(--line);color:var(--navy);font-size:15px;padding:4px 12px}
+.dx-bar .pchip span{background:#f1f5f9;color:var(--ink2)}
+.dx-bar .pchip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.dx-bar .pchip.on span{background:var(--amber);color:var(--navy)}
+.dx-bar .dseg3{margin-left:auto}
+.dx-bar .dseg3 button{color:var(--ink2)}
+.dx-kpis{margin-bottom:6px}
+.dx-kpis .dk{box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.dash .dpanel .dp-b{border-radius:18px}
+@media(max-width:700px){.dx-row{gap:10px}.dx-grp{width:100%}.dx-grp .seg{overflow-x:auto;max-width:100%}.dx-bar .dseg3{margin-left:0}.dx-cust input[type=date]{flex:1 1 130px}.dx-cust button{flex:1 0 100%}}
+@media print{.dx-bar{display:none!important}.dx-head{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3023,6 +3052,7 @@ function chgPill(a, b, big) {
   const t = S.d.metric === "minutes" ? Math.round(Math.abs(d)) : Math.abs(d);
   return d > 0 ? `<span class="cpill up">▲ +${t}</span>` : d < 0 ? `<span class="cpill dn">▼ -${t}</span>` : `<span class="cpill z">เท่าเดิม</span>`;
 }
+const DX = { c1: false, c2: false };  // เปิดช่องเลือกวันที่เอง (ช่วงที่ 1 / ช่วงเทียบ)
 function viewAnalyze() {
   const D = dashState(); const R = dashRanges(); const UD = U.dash;
   if (!Object.keys(S.items).length) {
@@ -3044,27 +3074,33 @@ function viewAnalyze() {
   const byLabel = D.by === "retort" ? "แยกตามหม้อ" : "แยกตามปัญหา";
   const pr = `${thShort(R.f1)} – ${thShort(R.t1)}`, pr2 = `${thShort(R.f2)} – ${thShort(R.t2)}`;
   let h = `<div class="dash">
-  <div class="dhead"><div class="dh-l"><b>Dashboard</b><span>วิเคราะห์ปัญหา Retort ย้อนหลัง · เทียบ 2 ช่วง · แตะรายการเพื่อดูกราฟแนวโน้ม</span></div><button class="dh-btn sm" id="dPrint">${I("printer")}<span>พิมพ์ / PDF</span></button></div>
-  <div class="drange">
-    <div class="rcard"><div class="rc-h"><span class="rlab r1">ช่วงที่ 1</span><span class="rc-d">${pr} · ${days1} วัน</span><div class="seg dseg">${[7, 14, 30, 90].map(n => `<button data-dn="${n}" class="${!D.f1 && +D.n === n ? "on" : ""}">${n} วัน</button>`).join("")}</div></div>
-      <div class="rc-b"><span class="rc-or">หรือเลือกวันที่</span><div class="rc-dates"><input type="date" id="dF1" value="${R.f1}"><span>–</span><input type="date" id="dT1" value="${R.t1}"><button class="pri sm" id="dGo1">แสดง</button></div></div></div>
-    <div class="rcard"><div class="rc-h"><span class="rlab r2">ช่วงที่ 2 (เทียบ)</span><span class="rc-d">${pr2} · ${days2} วัน</span><div class="seg dseg"><button id="dPrev" class="${R.custom2 ? "" : "on"}">ช่วงก่อนหน้า</button></div></div>
-      <div class="rc-b"><span class="rc-or">หรือเลือกวันที่</span><div class="rc-dates"><input type="date" id="dF2" value="${R.f2}"><span>–</span><input type="date" id="dT2" value="${R.t2}"><button class="pri sm" id="dGo2">เทียบ</button></div></div></div>
-  </div>
-  <div class="dtitle"><div><h2>ปัญหาที่พบบ่อย <em>Top 10</em></h2><div class="sub">${byLabel} · ${plantLabel} · ${days1} วันล่าสุด (${pr})</div></div>
-    <div class="seg dseg2">${[["cat", "ตามปัญหา"], ["retort", "ตามหม้อ"]].map(([v, l]) => `<button data-dby="${v}" class="${D.by === v ? "on" : ""}">${l}</button>`).join("")}</div></div>
-  <div class="dpanel">
-    <div class="dp-h"><span class="dp-ic">${I("bars")}</span>
-      ${[...plants, "all"].map(p => { const n = A1.filter(x => p === "all" || x.plant === p).reduce((a, x) => a + dmv(x), 0);
-        return `<button class="pchip ${D.plant === p ? "on" : ""}" data-dpl="${esc(p)}">${p === "all" ? "ทุกพื้นที่" : esc(p)}<span>${S.d.metric === "minutes" ? Math.round(n) : n}</span></button>`; }).join("")}
+  <div class="dx-head"><div class="dx-t"><b>Dashboard</b><span>${esc(plantLabel)} · ${pr} · ${days1} วัน <em>เทียบ ${pr2}</em></span></div>
+    <button class="dh-btn sm" id="dPrint">${I("printer")}<span>พิมพ์ / PDF</span></button></div>
+  <div class="dx-bar">
+    <div class="dx-row">
+      <div class="dx-grp"><span class="dx-lab">${I("calendar")}ช่วงเวลา</span>
+        <div class="seg dseg">${[7, 14, 30, 90].map(n => `<button data-dn="${n}" class="${!D.f1 && +D.n === n ? "on" : ""}">${n} วัน</button>`).join("")}<button id="dC1" class="${D.f1 || DX.c1 ? "on" : ""}">กำหนดเอง</button></div></div>
+      <div class="dx-grp"><span class="dx-lab">${I("trend")}เทียบกับ</span>
+        <div class="seg dseg"><button id="dPrev" class="${R.custom2 || DX.c2 ? "" : "on"}">ช่วงก่อนหน้า</button><button id="dC2" class="${R.custom2 || DX.c2 ? "on" : ""}">กำหนดเอง</button></div></div>
+    </div>
+    ${DX.c1 ? `<div class="dx-cust"><span class="rlab r1">ช่วงที่ 1</span><input type="date" id="dF1" value="${R.f1}"><span>–</span><input type="date" id="dT1" value="${R.t1}"><button class="pri sm" id="dGo1">แสดง</button></div>` : ""}
+    ${DX.c2 ? `<div class="dx-cust"><span class="rlab r2">ช่วงที่ 2</span><input type="date" id="dF2" value="${R.f2}"><span>–</span><input type="date" id="dT2" value="${R.t2}"><button class="pri sm" id="dGo2">เทียบ</button></div>` : ""}
+    <div class="dx-row">
+      <div class="dx-grp dx-pl"><span class="dx-lab">${I("factory")}พื้นที่</span>
+        ${[...plants, "all"].map(p => { const n = A1.filter(x => p === "all" || x.plant === p).reduce((a, x) => a + dmv(x), 0);
+          return `<button class="pchip ${D.plant === p ? "on" : ""}" data-dpl="${esc(p)}">${p === "all" ? "ทุกพื้นที่" : esc(p)}<span>${S.d.metric === "minutes" ? Math.round(n) : n}</span></button>`; }).join("")}</div>
       <div class="seg dseg3">${[["count", "จำนวนครั้ง"], ["minutes", "รวมนาที"]].map(([v, l]) => `<button data-dm="${v}" class="${D.metric === v ? "on" : ""}">${l}</button>`).join("")}</div>
     </div>
-    <div class="dp-b">
-      <div class="dkpis">
+  </div>
+  <div class="dkpis dx-kpis">
         <div class="dk"><small>ช่วงที่ 1 · ${pr}</small><b class="c1">${S.d.metric === "minutes" ? Math.round(tot1) : tot1} <i>${dunit()}</i></b><span>เฉลี่ย ${(tot1 / days1).toFixed(1)} ${dunit()}/วัน · ${days1} วัน</span></div>
         <div class="dk"><small>ช่วงที่ 2 · ${pr2}</small><b class="c2">${S.d.metric === "minutes" ? Math.round(tot2) : tot2} <i>${dunit()}</i></b><span>เฉลี่ย ${(tot2 / days2).toFixed(1)} ${dunit()}/วัน · ${days2} วัน</span></div>
         <div class="dk ${diff > 0 ? "bad" : diff < 0 ? "good" : ""}"><small>${esc(plantLabel)} · ภาพรวม</small><b>${diff > 0 ? "▲" : diff < 0 ? "▼" : ""} ${pct == null ? (diff ? Math.abs(S.d.metric === "minutes" ? Math.round(diff) : diff) + " " + dunit() : "0%") : Math.abs(pct) + "%"}</b><span>${diff > 0 ? "พบปัญหาเพิ่มขึ้น (แย่ลง)" : diff < 0 ? "พบปัญหาลดลง (ดีขึ้น)" : "เท่าเดิม"}</span></div>
       </div>
+  <div class="dtitle"><div><h2>ปัญหาที่พบบ่อย <em>Top 10</em></h2><div class="sub">${byLabel} · ${plantLabel} · ${pr}</div></div>
+    <div class="seg dseg2">${[["cat", "ตามปัญหา"], ["retort", "ตามหม้อ"]].map(([v, l]) => `<button data-dby="${v}" class="${D.by === v ? "on" : ""}">${l}</button>`).join("")}</div></div>
+  <div class="dpanel">
+    <div class="dp-b">
       <div class="dwb">
         <div class="dwb-c bad">${worst ? `<small>▲ แย่ลงมากที่สุด</small><b>${esc(dName(worst.k))}</b><span class="sub">${esc(dSub(worst.k, [...L1, ...L2]))}</span><div>${dfmt(worst.b)} → <b>${dfmt(worst.a)}</b> ${chgPill(worst.a, worst.b)}</div>` : `<small>▲ แย่ลงมากที่สุด</small><b class="muted">ไม่มีรายการที่แย่ลง</b>`}</div>
         <div class="dwb-c good">${best ? `<small>▼ ดีขึ้นมากที่สุด</small><b>${esc(dName(best.k))}</b><span class="sub">${esc(dSub(best.k, [...L1, ...L2]))}</span><div>${dfmt(best.b)} → <b>${dfmt(best.a)}</b> ${chgPill(best.a, best.b)}</div>` : `<small>▼ ดีขึ้นมากที่สุด</small><b class="muted">ไม่มีรายการที่ดีขึ้น</b>`}</div>
@@ -3221,12 +3257,14 @@ function wireDash() {
   m.onclick = e => {
     const b = e.target.closest("button,[data-trend]"); if (!b) return; const ds = b.dataset;
     if (b.id === "dPrint") { window.print(); return; }
-    if (ds.dn) { D.n = +ds.dn; D.f1 = D.t1 = ""; re(); }
+    if (ds.dn) { D.n = +ds.dn; D.f1 = D.t1 = ""; DX.c1 = false; re(); }
     else if (ds.dby) { D.by = ds.dby; re(); }
     else if (ds.dpl) { D.plant = ds.dpl; re(); }
     else if (ds.dm) { D.metric = ds.dm; re(); }
     else if (b.id === "dGo1") { const f = $("#dF1").value, t = $("#dT1").value; if (!f || !t || f > t) return toast("เลือกวันที่ให้ถูกต้อง"); D.f1 = f; D.t1 = t; re(); }
-    else if (b.id === "dPrev") { D.f2 = D.t2 = ""; re(); }
+    else if (b.id === "dPrev") { D.f2 = D.t2 = ""; DX.c2 = false; re(); }
+    else if (b.id === "dC1") { DX.c1 = !DX.c1; viewAnalyze(); }
+    else if (b.id === "dC2") { DX.c2 = !DX.c2; viewAnalyze(); }
     else if (b.id === "dGo2") { const f = $("#dF2").value, t = $("#dT2").value; if (!f || !t || f > t) return toast("เลือกวันที่ให้ถูกต้อง"); D.f2 = f; D.t2 = t; re(); }
     else if (ds.trend != null) trendModal(ds.trend, "sel");
   };
