@@ -1042,6 +1042,7 @@ table.xls{border-collapse:separate;border-spacing:0;width:max-content;min-width:
 .svx-tools{display:flex;gap:6px;flex-wrap:wrap;margin:-2px 0 6px}
 .svx-tools .ghost{color:var(--ink2);background:#fff;border:1px solid var(--line)}
 .svt th.lab{display:table-cell;margin:0;vertical-align:middle}
+#specBack svg.i{transform:rotate(90deg)}
 .svx-fullbtn{color:var(--ink2)!important;background:#fff!important;border:1px solid var(--line)!important}
 .svx-fbar{display:none}
 body.svfull{overflow:hidden}
@@ -1498,7 +1499,15 @@ function specTable(p, opts = {}) {
     ${opts.foot === false ? "" : `<p class="sub" style="margin:6px 0 0">"XX" = เวลาฆ่าเชื้อของแต่ละผลิตภัณฑ์ตามตารางฆ่าเชื้อ ที่พนักงานคุม Retort ต้องคีย์ก่อนเริ่มฆ่าเชื้อ · ค่าทั้งหมดแสดงตามเอกสาร ${esc(p.doc)} Rev.${esc(d.rev || "")}</p>`}
   </div>`;
 }
-function showSpec(key) { const p = progByKey(key); if (!p) return; modal(specTable(p) + `<button class="blk" data-close style="margin-top:14px">ปิด</button>`); }
+// back = เปิดมาจากหน้าต่างรายการ → ปิดแล้วกลับไปหน้าต่างรายการนั้น (ไม่หลุดไปหน้ารายการทั้งหมด)
+function showSpec(key, back) {
+  const p = progByKey(key); if (!p) return;
+  modal(specTable(p) + (back ? `<button class="blk" id="specBack" style="margin-top:14px">${I("down")}กลับไปที่รายการ</button>` : `<button class="blk" data-close style="margin-top:14px">ปิด</button>`), box => {
+    if (!back) return;
+    box.querySelector("#specBack").onclick = back;
+    $("#modalRoot .modal").onclick = e => { if (e.target.classList.contains("modal")) back(); };  // แตะพื้นหลัง = กลับ
+  });
+}
 
 /* ---------- state ---------- */
 // ชื่อผู้บันทึก ใช้ชื่อเดียวกับฟอร์มตรวจพื้นที่ (เก็บในเครื่องนี้)
@@ -2369,7 +2378,7 @@ function showItem(id) {
     const ap = box.querySelector("#mAppr"); if (ap) ap.onclick = () => approveItem(id, false);
     const un = box.querySelector("#mUnappr"); if (un) un.onclick = () => approveItem(id, true);
     box.querySelectorAll("[data-mzoom]").forEach(im => im.onclick = () => window.open(photoUrl(im.dataset.mzoom), "_blank"));
-    const sp = box.querySelector("#mSpec"); if (sp) sp.onclick = () => showSpec(x.programDoc + "#" + x.program);
+    const sp = box.querySelector("#mSpec"); if (sp) sp.onclick = () => showSpec(x.programDoc + "#" + x.program, () => showItem(id));
     const dl = box.querySelector("#mDel"); if (dl) dl.onclick = () => confirmBox("ลบรายการนี้?", async () => { if (await deleteItem(id)) { toast("ลบแล้ว"); render(); } });
   });
 }
