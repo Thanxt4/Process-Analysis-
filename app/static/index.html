@@ -918,6 +918,30 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 
 /* ---- กระดิ่งแจ้งเตือน ---- */
 .merow{display:flex;align-items:center;gap:8px;margin-top:6px}
+.hright{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.onl{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;padding:3px 11px 3px 4px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.onl:hover{background:rgba(255,255,255,.16)}
+.onl .stk{display:flex}.onl .stk i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10.5px;font-weight:800;color:#fff;border:2px solid var(--navy);margin-left:-7px}.onl .stk i:first-child{margin-left:0}
+.onl .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25)}
+.ppl-q{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;font-size:15px;margin-bottom:6px}
+.ppl-h{font-size:12.5px;font-weight:800;color:var(--muted);margin:12px 0 4px;letter-spacing:.02em}
+.ppl-r{display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid #f1f5f9}
+.pav{position:relative;width:38px;height:38px;border-radius:12px;flex:none;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13.5px}
+.pav b{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2.5px solid #fff;background:#cbd5e1}.pav b.on{background:#22c55e}
+.ppl-r .t{flex:1;min-width:0}.ppl-r .t b{display:block;color:var(--ink,#0f172a);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ppl-r .t small{color:var(--muted);font-size:12.5px}
+.ppl-r .t small.on{color:#16a34a;font-weight:700}
+.ppl-d{font-size:11.5px;font-weight:800;border-radius:99px;padding:1px 8px;background:#e2e8f0;color:#334155;margin-left:4px;vertical-align:1px}
+.ppl-tag{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;font:inherit;font-size:13px;font-weight:800;color:#2563eb;cursor:pointer;flex:none}
+.ppl-tag:hover{border-color:#93c5fd;background:#eff6ff}
+.mnt{position:fixed;z-index:200;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 34px -10px rgba(15,23,42,.35);padding:4px;max-height:240px;overflow:auto;min-width:220px}
+.mnt button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:7px 9px;border-radius:8px;font:inherit;font-size:14.5px;text-align:left;cursor:pointer;color:var(--text)}
+.mnt button.on,.mnt button:hover{background:#eff6ff}
+.mnt .d{width:8px;height:8px;border-radius:50%;background:#cbd5e1;flex:none}.mnt .d.on{background:#22c55e}
+.mnt small{margin-left:auto;color:var(--muted);font-size:12px}
+.mtag{color:#2563eb;font-weight:700}
+#pplBg{z-index:70}
+.igat{border:0;background:none;color:#2563eb;font-weight:800;font-size:16px;padding:4px 6px;cursor:pointer;flex:none}
+.fu-addn .igat{align-self:flex-start;border:1.5px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:6px;background:#fff}
 .merow .me{margin-top:0}
 .bell{position:relative;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;padding:3px 10px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none;align-self:stretch}
 .bell svg{width:15px;height:15px}
@@ -1036,7 +1060,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
     <div class="hrow">
       <div class="brand"><small id="appTitle">LINE QC / PROCESS CONTROL</small><h1>ฟอร์มตรวจพื้นที่หน้างาน</h1>
         <span class="merow"><button class="me" id="meBtn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> <span id="meName">ตั้งชื่อผู้ตรวจ</span> <em id="meDept">เปลี่ยน</em></button><button class="bell" id="srchBtn" type="button" aria-label="ค้นหา" title="ค้นหาทุกอย่าง"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><button class="bell" id="bellBtn" type="button" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button></span></div>
-      <div class="hright">      <div class="clock"><b id="roundLbl">–</b>ตัดรอบใน <span class="cd" id="countdown">--:--:--</span><br><button class="install" id="installBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v7m0 0-3-3m3 3 3-3"/></svg> ติดตั้งแอป</button></div></div>
+      <div class="hright"><button class="onl" id="onBtn" type="button" title="ดูว่าใครออนไลน์ · แท็กชื่อ" hidden><span class="stk" id="onStk"></span><span class="dot"></span><span id="onTxt">ออนไลน์</span></button>      <div class="clock"><b id="roundLbl">–</b>ตัดรอบใน <span class="cd" id="countdown">--:--:--</span><br><button class="install" id="installBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v7m0 0-3-3m3 3 3-3"/></svg> ติดตั้งแอป</button></div></div>
     </div>
     <div class="overall"><span>ตรวจแล้ว <b id="ovNum">0/0</b></span><div class="bar"><i id="ovBar" style="width:0"></i></div><span id="ovIssue"></span></div>
   </div>
@@ -1319,6 +1343,13 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
   </form>
   <div class="aremember"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>เข้าครั้งเดียว เครื่องนี้จำไว้จนกว่าจะกดออกจากระบบ</div>
   </div>
+</div></div>
+<!-- ใครออนไลน์ / แท็กชื่อ -->
+<div class="sheet-bg" id="pplBg"><div class="sheet" role="dialog" aria-modal="true" style="max-width:440px">
+  <div class="top"><div class="t"><small>ทีม</small><h2>ใครออนไลน์อยู่</h2></div><button class="x" id="pplX" aria-label="ปิด">×</button></div>
+  <p class="note" style="margin:0 0 8px">กด <b>แท็ก @</b> เพื่อใส่ชื่อในช่องความคิดเห็น/ความคืบหน้าที่พิมพ์อยู่ หรือพิมพ์ <b>@</b> ในช่องพิมพ์เพื่อเลือกชื่อ · คนที่ถูกแท็กจะได้รับแจ้งเตือน</p>
+  <input type="search" class="ppl-q" id="pplQ" placeholder="ค้นหาชื่อ / แผนก" autocomplete="off">
+  <div id="pplList"></div>
 </div></div>
 <!-- บัญชีของฉัน -->
 <div class="sheet-bg" id="acctBg"><div class="sheet" role="dialog" aria-modal="true" style="max-width:420px">
@@ -3309,12 +3340,18 @@ function fuPhotosHTML(){
 }
 function fuRenderSheet(){
   const c = FU.cur, old = !!c.id, si = c.src_info;
+  const pdx = !!(old && c.dept && si), canAns = pdx && ME && ME.dept === c.dept;
+  if(pdx && c._cause == null){ c._cause = si.cause || ""; c._act = si.action || ""; }
   const notes = old ? [{at: c.created_at, by: c.created_by, text: "เปิดเรื่อง", kind: "open"}, ...(c.notes || [])] : [];
   $("#fuBody").innerHTML = `
     ${si ? `<div class="fu-src"><b>มาจากผลตรวจที่พบปัญหา</b> · ${esc(si.no)} ${esc(si.name)}<br><span class="note">${esc(si.zone)} · ${thDate(si.round)} · ตรวจโดย ${esc(si.inspector)}</span>
-      ${si.note ? `<p>${esc(si.note)}</p>` : ""}${si.resp && si.resp !== "QC" ? `<div class="sub" style="border:0;padding:0;margin:0;background:none">${respBlock({...si, status: "พบปัญหา"})}</div>` : ""}${(si.media || []).length ? `<div class="thumbs">${si.media.map(m => `<div><img src="${m.thumb}" data-full="${m.poster}" loading="lazy" alt="" ${m.kind === "video" ? `data-video="${m.url}"` : ""}></div>`).join("")}</div>` : ""}</div>` : ""}
+      ${si.note ? `<p>${esc(si.note)}</p>` : ""}${si.resp && si.resp !== "QC" && !pdx ? `<div class="sub" style="border:0;padding:0;margin:0;background:none">${respBlock({...si, status: "พบปัญหา"})}</div>` : ""}${(si.media || []).length ? `<div class="thumbs">${si.media.map(m => `<div><img src="${m.thumb}" data-full="${m.poster}" loading="lazy" alt="" ${m.kind === "video" ? `data-video="${m.url}"` : ""}></div>`).join("")}</div>` : ""}</div>` : ""}
     <label class="fu-lab" for="fuT">เรื่องที่ต้องติดตาม <i>*</i></label><input type="text" id="fuT" maxlength="200" value="${esc(c.title)}" placeholder="เช่น ฝ้าเหนือไลน์บรรจุมีคราบรา ต้องทำความสะอาด">
-    <label class="fu-lab" for="fuD">รายละเอียด</label><textarea id="fuD" maxlength="3000" placeholder="สิ่งที่พบ / สิ่งที่ต้องทำ">${esc(c.detail)}</textarea>
+    ${pdx ? `<label class="fu-lab" for="fuCause">สาเหตุ <span class="pdwait ${si.cause ? "ok" : ""}" style="margin:0 0 0 4px">${si.cause ? `${esc(c.dept)} ตอบแล้ว${si.resp_by ? " · " + esc(si.resp_by) : ""}` : `รอ ${esc(c.dept)} ตอบ`}</span></label>
+      <textarea id="fuCause" maxlength="2000" ${canAns ? "" : "readonly"} placeholder="${canAns ? "ปัญหานี้เกิดจากอะไร" : `รอ ${esc(c.dept)} กรอก (เฉพาะแผนก ${esc(c.dept)})`}">${esc(c._cause)}</textarea>
+      <label class="fu-lab" for="fuAct">การแก้ไข</label>
+      <textarea id="fuAct" maxlength="2000" ${canAns ? "" : "readonly"} placeholder="${canAns ? "แก้ไขอย่างไร / ผลหลังแก้ไข" : `รอ ${esc(c.dept)} กรอก`}">${esc(c._act)}</textarea>`
+    : `<label class="fu-lab" for="fuD">รายละเอียด</label><textarea id="fuD" maxlength="3000" placeholder="สิ่งที่พบ / สิ่งที่ต้องทำ">${esc(c.detail)}</textarea>`}
     <div class="fu-2">
       <div><label class="fu-lab" for="fuZ">พื้นที่</label><select id="fuZ">${fuZoneOpts(c.zone_id)}</select></div>
       <div><label class="fu-lab" for="fuO">ผู้รับผิดชอบ</label><input type="text" id="fuO" maxlength="80" list="inspList" value="${esc(c.owner)}" placeholder="ชื่อ / แผนก"></div>
@@ -3327,13 +3364,13 @@ function fuRenderSheet(){
     <div class="fu-pick"><label class="btn ghost sm"><input type="file" accept="image/*" capture="environment" id="fuCam">ถ่ายรูป</label><label class="btn ghost sm"><input type="file" accept="image/*" multiple id="fuGal">เลือกจากคลัง</label></div>
     <button class="btn submit fu-save" id="fuSave" type="button">${old ? "บันทึกการแก้ไข" : "เปิดเรื่องติดตาม"}</button>
     ${old ? `<div class="fu-sec"><h4>ความคืบหน้า</h4>
-      <div class="fu-tl">${notes.map(m => `<div class="fu-n ${m.kind || ""}"><div class="h"><b>${esc(m.by)}</b> · ${fuAt(m.at)}</div><p>${esc(m.text)}</p></div>`).join("")}</div>
-      <div class="fu-addn"><textarea id="fuNote" maxlength="1000" placeholder="อัปเดตความคืบหน้า เช่น แจ้งช่างแล้ว รออะไหล่"></textarea><button class="btn ghost" id="fuNoteBtn" type="button">บันทึกความคืบหน้า</button></div>
+      <div class="fu-tl">${notes.map(m => `<div class="fu-n ${m.kind || ""}"><div class="h"><b>${esc(m.by)}</b> · ${fuAt(m.at)}</div><p>${mtext(m.text)}</p></div>`).join("")}</div>
+      <div class="fu-addn"><button type="button" class="igat" data-tagbtn data-for="fuNote">@ แท็กชื่อ</button><textarea id="fuNote" maxlength="1000" placeholder="อัปเดตความคืบหน้า เช่น แจ้งช่างแล้ว รออะไหล่"></textarea><button class="btn ghost" id="fuNoteBtn" type="button">บันทึกความคืบหน้า</button></div>
       <button class="fu-del" id="fuDel" type="button">ลบเรื่องนี้ (ต้องใส่รหัส)</button></div>` : ""}`;
 }
 function fuGrab(){  // เก็บค่าที่กรอกในหน้าต่างไว้ก่อนวาดใหม่/บันทึก
   const c = FU.cur; if(!c || !$("#fuT")) return;
-  c.title = $("#fuT").value; c.detail = $("#fuD").value; c.zone_id = $("#fuZ").value; c.owner = $("#fuO").value; c.due = $("#fuDue").value;
+  c.title = $("#fuT").value; if($("#fuD")) c.detail = $("#fuD").value; if($("#fuCause")){ c._cause = $("#fuCause").value; c._act = $("#fuAct").value; } c.zone_id = $("#fuZ").value; c.owner = $("#fuO").value; c.due = $("#fuDue").value;
 }
 async function fuUpload(files){
   const c = FU.cur; if(!c) return;
@@ -3377,10 +3414,16 @@ $("#fuBody").addEventListener("click", async e => {
   if(b.id === "fuSave"){
     fuGrab(); if(!c.title.trim()){ toast("กรอกเรื่องที่ต้องติดตาม", true); $("#fuT").focus(); return; }
     if(FU.ups){ toast("รอให้รูปอัปโหลดเสร็จก่อน", true); return; }
+    const si = c.src_info, ans = !!($("#fuCause") && !$("#fuCause").readOnly), cz = (c._cause || "").trim(), ac = (c._act || "").trim();
+    const ansCh = ans && (cz !== (si.cause || "") || ac !== (si.action || ""));
+    if(ansCh && (!cz || !ac)){ toast("กรอกทั้งสาเหตุและการแก้ไข", true); (cz ? $("#fuAct") : $("#fuCause")).focus(); return; }
     b.disabled = true; b.textContent = "กำลังบันทึก…";
     try{
-      const r = await api("/api/followups", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...c, src_info: undefined, notes: undefined, by: getMyName()})});
-      fuPut(r.item); toast(c.id ? "บันทึกการแก้ไขแล้ว" : "เปิดเรื่องติดตามแล้ว"); fuClose();
+      const r = await api("/api/followups", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...c, src_info: undefined, notes: undefined, _cause: undefined, _act: undefined, by: getMyName()})});
+      fuPut(r.item);
+      if(ansCh){ await api(`/api/submissions/${si.sid}/answer`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({cause: cz, action: ac})}); await loadFollowups(); toast(`บันทึกสาเหตุและการแก้ไขแล้ว · แจ้ง ${si.inspector} แล้ว`); }
+      else toast(c.id ? "บันทึกการแก้ไขแล้ว" : "เปิดเรื่องติดตามแล้ว");
+      fuClose();
     }catch(err){ toast(err.message, true); b.disabled = false; b.textContent = c.id ? "บันทึกการแก้ไข" : "เปิดเรื่องติดตาม"; }
     return;
   }
@@ -3487,14 +3530,14 @@ function drawIg(){
   document.querySelectorAll("#prevWrap .igc[data-igsid]").forEach(box => {
     const sid = box.dataset.igsid, T = CM.threads.filter(t => t.sid === sid), n = T.reduce((a, t) => a + 1 + t.replies.length, 0);
     const wait = T.filter(t => t.open).length, all = IG.open.has(sid), show = all ? T : T.slice(-2), rp = IG.reply[sid];
-    const line = (x, top) => x.deleted ? `<div class="igl del" data-cid="${x.id}"><p><i>ความคิดเห็นนี้ถูกลบโดยผู้เขียน</i></p></div>` : `<div class="igl ${top ? "" : "rep"}" data-cid="${x.id}"><p><b>${esc(x.by)}</b> ${top && x.question ? `<span class="cmk ${x.closed ? "cl" : x.parent || (T.find(t => t.id === x.id) || {}).replies?.length ? "ok" : "wait"}">${x.closed ? "ปิดแล้ว" : (T.find(t => t.id === x.id) || {}).replies?.length ? "ตอบแล้ว" : "คำถาม · รอตอบ"}</span> ` : ""}${esc(x.text)}</p>
+    const line = (x, top) => x.deleted ? `<div class="igl del" data-cid="${x.id}"><p><i>ความคิดเห็นนี้ถูกลบโดยผู้เขียน</i></p></div>` : `<div class="igl ${top ? "" : "rep"}" data-cid="${x.id}"><p><b>${esc(x.by)}</b> ${top && x.question ? `<span class="cmk ${x.closed ? "cl" : x.parent || (T.find(t => t.id === x.id) || {}).replies?.length ? "ok" : "wait"}">${x.closed ? "ปิดแล้ว" : (T.find(t => t.id === x.id) || {}).replies?.length ? "ตอบแล้ว" : "คำถาม · รอตอบ"}</span> ` : ""}${mtext(x.text)}</p>
       <div class="igm"><span>${cmAt(x.at)}</span>${top ? `<button type="button" data-igrep="${x.id}" data-n="${esc(x.by)}">ตอบกลับ</button>` : ""}${top && x.question ? `<button type="button" data-cmclose="${x.id}" data-v="${x.closed ? 0 : 1}">${x.closed ? "เปิดคำถาม" : "ปิดคำถาม"}</button>` : ""}${cmMine(x) ? `<button type="button" class="del" data-cmdel="${x.id}">ลบ</button>` : ""}</div></div>`;
     box.innerHTML = `<div class="igbar"><button type="button" class="igbtn ${wait ? "q" : ""}" data-igtog="${sid}">${CM_IC}${n ? `${n} ความคิดเห็น${wait ? ` · รอตอบ ${wait}` : ""}` : "แสดงความคิดเห็น"}</button></div>
       ${!all && T.length > 2 ? `<button type="button" class="igmore" data-igtog="${sid}">ดูความคิดเห็นทั้งหมด ${n} รายการ</button>` : ""}
       ${(all || T.length) ? show.map(t => line(t, true) + t.replies.map(r => line(r, false)).join("")).join("") : ""}
       ${all || T.length || IG.open.has(sid) ? `<div class="igin">${rp ? `<div class="igto">ตอบกลับ <b>${esc(rp.n)}</b> <button type="button" data-igcancel="${sid}">ยกเลิก</button></div>` : ""}
         <div class="igrow"><input type="text" maxlength="1000" placeholder="${rp ? `ตอบกลับ ${esc(rp.n)}…` : "เพิ่มความคิดเห็น…"}" data-igtext="${sid}">
-        ${rp ? "" : `<button type="button" class="igq ${IG.q === sid ? "on" : ""}" data-igq="${sid}" title="ตั้งเป็นคำถาม (รอคำตอบ)">ถาม?</button>`}<button type="button" class="igsend" data-igsend="${sid}">ส่ง</button></div></div>` : ""}`;
+        <button type="button" class="igat" data-tagbtn title="แท็กชื่อ (ดูใครออนไลน์)">@</button>${rp ? "" : `<button type="button" class="igq ${IG.q === sid ? "on" : ""}" data-igq="${sid}" title="ตั้งเป็นคำถาม (รอคำตอบ)">ถาม?</button>`}<button type="button" class="igsend" data-igsend="${sid}">ส่ง</button></div></div>` : ""}`;
   });
   // ความคิดเห็นเก่าที่ไม่ได้ผูกกับผลตรวจ (ก่อนอัปเดต) ยังแสดงด้านล่างเหมือนเดิม
   const legacy = CM.threads.filter(t => !t.sid);
@@ -3739,7 +3782,89 @@ async function refreshAll(){
   }catch(err){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้", true); }
   finally{ busy=false; }
 }
-ensureLogin().then(refreshAll);  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล
+/* ---------- ใครออนไลน์ + แท็กชื่อ (@ชื่อ) ---------- */
+const PPL = {users: []};
+const PCOL = ["#2563eb", "#7c3aed", "#db2777", "#ea580c", "#16a34a", "#0891b2", "#4f46e5", "#b45309"];
+const pcol = n => PCOL[[...String(n)].reduce((a, c) => a + c.charCodeAt(0), 0) % PCOL.length];
+const pini = n => (String(n).trim().split(/\s+/)[0] || "?").slice(0, 2).toUpperCase();
+const pago = u => u.online ? "ออนไลน์" : !u.seen ? "ยังไม่เคยเข้า" : (m => m < 60 ? `${Math.max(1, m)} นาทีที่แล้ว` : m < 1440 ? `${Math.round(m / 60)} ชม.ที่แล้ว` : `${Math.round(m / 1440)} วันที่แล้ว`)(Math.round((Date.now() - u.seen) / 6e4));
+async function loadPpl(){
+  if(!ME || document.hidden) return;
+  try{ PPL.users = (await api("/api/presence")).users; drawOnl(); if($("#pplBg").classList.contains("on")) drawPpl(); }catch{}
+}
+setInterval(loadPpl, 60000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) loadPpl(); });
+function drawOnl(){
+  const on = PPL.users.filter(u => u.online), oth = on.filter(u => !u.me);
+  $("#onBtn").hidden = !PPL.users.length;
+  $("#onStk").innerHTML = (oth.length ? oth : on).slice(0, 3).map(u => `<i style="background:${pcol(u.name)}">${esc(pini(u.name))}</i>`).join("");
+  $("#onTxt").textContent = `ออนไลน์ ${on.length}`;
+}
+function drawPpl(){
+  const q = $("#pplQ").value.trim().toLowerCase(), L = PPL.users.filter(u => !q || `${u.name} ${u.dept}`.toLowerCase().includes(q));
+  const row = u => `<div class="ppl-r"><div class="pav" style="background:${pcol(u.name)}">${esc(pini(u.name))}<b class="${u.online ? "on" : ""}"></b></div>
+    <div class="t"><b>${esc(u.name)}${u.me ? ` <span class="note" style="font-weight:400">(คุณ)</span>` : ""}<span class="ppl-d">${esc(u.dept)}</span></b><small class="${u.online ? "on" : ""}">${pago(u)}</small></div>
+    ${u.me ? "" : `<button type="button" class="ppl-tag" data-tag="${esc(u.name)}">แท็ก @</button>`}</div>`;
+  const on = L.filter(u => u.online), off = L.filter(u => !u.online);
+  $("#pplList").innerHTML = (on.length ? `<div class="ppl-h">ออนไลน์ (${on.length})</div>` + on.map(row).join("") : "") + (off.length ? `<div class="ppl-h">ออฟไลน์ (${off.length})</div>` + off.map(row).join("") : "") || `<div class="empty">ไม่พบชื่อที่ค้นหา</div>`;
+}
+const pplClose = () => { $("#pplBg").classList.remove("on"); if(!document.querySelector(".sheet-bg.on")) document.body.style.overflow = ""; };
+document.addEventListener("click", e => { const b = e.target.closest("[data-tagbtn]"); if(!b) return; e.stopPropagation();
+  lastTag = b.dataset.for ? document.getElementById(b.dataset.for) : b.parentElement.querySelector("input,textarea"); $("#onBtn").click(); }, true);
+$("#onBtn").onclick = () => { $("#pplQ").value = ""; drawPpl(); $("#pplBg").classList.add("on"); document.body.style.overflow = "hidden"; loadPpl(); };
+$("#pplX").onclick = pplClose;
+$("#pplBg").addEventListener("click", e => { if(e.target.id === "pplBg") pplClose(); });
+$("#pplQ").addEventListener("input", drawPpl);
+// ช่องที่พิมพ์ล่าสุด (ความคิดเห็น / ความคืบหน้า / สาเหตุ-การแก้ไข) → ปุ่มแท็กใส่ชื่อให้ตรงนั้น
+const TAGGABLE = "[data-igtext], #cmText, #fuNote, #fuCause, #fuAct, [data-pdc], [data-pda], #pagesWrap textarea, #cause, #action, #remark";
+let lastTag = null;
+document.addEventListener("focusin", e => { if(e.target.matches && e.target.matches(TAGGABLE)) lastTag = e.target; });
+function insTag(el, name, from){  // from = ตำแหน่ง @ ที่พิมพ์ค้างไว้ (ถ้ามี)
+  const v = el.value, at = el.selectionStart ?? v.length, st = from ?? at, pre = v.slice(0, st), add = (pre && !/\s$/.test(pre) ? " " : "") + "@" + name + " ";
+  el.value = pre + add + v.slice(at); const p = (pre + add).length; el.focus(); el.setSelectionRange(p, p); el.dispatchEvent(new Event("input", {bubbles: true}));
+}
+$("#pplList").addEventListener("click", async e => {
+  const b = e.target.closest("[data-tag]"); if(!b) return; const n = b.dataset.tag;
+  if(lastTag && lastTag.isConnected && lastTag.offsetParent && !lastTag.readOnly){ pplClose(); insTag(lastTag, n); toast(`แท็ก @${n} แล้ว · ส่งข้อความเพื่อแจ้งเตือน`); return; }
+  try{ await navigator.clipboard.writeText("@" + n + " "); toast(`คัดลอก @${n} แล้ว · วางในช่องความคิดเห็นได้เลย`); }catch{ toast(`พิมพ์ @${n} ในช่องความคิดเห็นเพื่อแท็ก`); }
+});
+// พิมพ์ @ แล้วเลือกชื่อ
+const MN = {el: null, from: 0, list: [], i: 0};
+const mnBox = document.createElement("div"); mnBox.className = "mnt"; mnBox.hidden = true; document.body.appendChild(mnBox);
+function mnHide(){ mnBox.hidden = true; MN.el = null; }
+function mnDraw(){ mnBox.innerHTML = MN.list.map((u, k) => `<button type="button" data-mn="${k}" class="${k === MN.i ? "on" : ""}"><span class="d ${u.online ? "on" : ""}"></span>${esc(u.name)}<small>${esc(u.dept)}</small></button>`).join(""); }
+document.addEventListener("input", e => {
+  const el = e.target; if(!el.matches || !el.matches(TAGGABLE)) return;
+  const m = el.value.slice(0, el.selectionStart ?? el.value.length).match(/(?:^|\s)@([^\s@]{0,30})$/);
+  if(!m || !PPL.users.length){ if(MN.el === el) mnHide(); return; }
+  const q = m[1].toLowerCase();
+  MN.list = PPL.users.filter(u => !u.me && (!q || u.name.toLowerCase().split(/\s+/).some(w => w.startsWith(q)) || u.name.toLowerCase().startsWith(q))).slice(0, 8);
+  if(!MN.list.length){ mnHide(); return; }
+  MN.el = el; MN.from = (el.selectionStart ?? el.value.length) - m[1].length - 1; MN.i = 0; mnDraw();
+  const r = el.getBoundingClientRect(); mnBox.hidden = false;
+  const h = Math.min(240, MN.list.length * 38 + 8), below = r.bottom + h + 8 < innerHeight;
+  mnBox.style.left = Math.max(8, Math.min(r.left, innerWidth - 240)) + "px"; mnBox.style.top = (below ? r.bottom + 4 : Math.max(8, r.top - h - 4)) + "px";
+});
+function mnPick(k){ const u = MN.list[k], el = MN.el; if(!u || !el) return; mnHide(); insTag(el, u.name, MN.from); }
+mnBox.addEventListener("mousedown", e => { e.preventDefault(); const b = e.target.closest("[data-mn]"); if(b) mnPick(+b.dataset.mn); });
+window.addEventListener("keydown", e => {
+  if(mnBox.hidden || e.target !== MN.el) return;
+  if(e.key === "ArrowDown" || e.key === "ArrowUp"){ MN.i = (MN.i + (e.key === "ArrowDown" ? 1 : MN.list.length - 1)) % MN.list.length; mnDraw(); }
+  else if(e.key === "Enter" || e.key === "Tab") mnPick(MN.i);
+  else if(e.key === "Escape") mnHide();
+  else return;
+  e.preventDefault(); e.stopImmediatePropagation();
+}, true);
+document.addEventListener("focusout", e => { if(e.target === MN.el) setTimeout(() => { if(document.activeElement !== MN.el) mnHide(); }, 120); });
+addEventListener("scroll", () => { if(!mnBox.hidden) mnHide(); }, true);
+// แสดง @ชื่อ เป็นสีน้ำเงิน
+function mtext(t){
+  let h = esc(t); const names = PPL.users.map(u => esc(u.name)).sort((a, b) => b.length - a.length);
+  if(!names.length || h.indexOf("@") < 0) return h;
+  const re = new RegExp("@(" + names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "g");
+  return h.replace(re, '<span class="mtag">@$1</span>');
+}
+ensureLogin().then(() => { refreshAll(); loadPpl(); });  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล
 
 /* PWA: ติดตั้งเป็นแอปบนมือถือ */
 if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});

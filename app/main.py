@@ -922,7 +922,7 @@ def _me(request: Request):
             if r and r["active"]:
                 u = {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"]}
                 nowms = int(_time.time() * 1000)
-                if nowms - r["last_seen"] > 3600_000:
+                if nowms - r["last_seen"] > 45_000:  # อัปเดตบ่อยพอให้รู้ว่าใครออนไลน์
                     con.execute("UPDATE user_sessions SET last_seen=? WHERE token=?", (nowms, _tok_hash(t)))
     request.state.user = u
     return u
@@ -1069,6 +1069,25 @@ def _is_admin(request: Request) -> bool:
 def _need_admin(request: Request):
     if not _is_admin(request):
         raise HTTPException(401, "ADMIN_REQUIRED")
+
+
+ONLINE_MS = 3 * 60 * 1000  # ใช้งานภายใน 3 นาที = ออนไลน์
+
+
+@app.get("/api/presence")
+def api_presence(request: Request):
+    """รายชื่อผู้ใช้ทั้งหมด + ออนไลน์/ออฟไลน์ (สำหรับดูว่าใครอยู่ และแท็กชื่อ @ชื่อ)"""
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    nowms = int(_time.time() * 1000)
+    with db() as con:
+        rows = con.execute("""SELECT u.emp_id, u.name, u.dept, (SELECT MAX(last_seen) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS seen
+                              FROM users u WHERE u.active=1""").fetchall()
+    out = [{"name": r["name"], "dept": r["dept"], "seen": r["seen"] or 0,
+            "online": r["emp_id"] == u["emp_id"] or bool(r["seen"] and nowms - r["seen"] < ONLINE_MS), "me": r["emp_id"] == u["emp_id"]} for r in rows]
+    out.sort(key=lambda x: (not x["online"], -x["seen"], x["name"].lower()))
+    return {"users": out, "now": nowms}
 
 
 @app.get("/api/uadmin/me")
@@ -2949,6 +2968,7 @@ def api_notifications(request: Request, name: str = "", days: int = Query(14, ge
     my_dept = (_me(request) or {}).get("dept", "")
     since = _fu_ms() - days * 86400 * 1000
     same = lambda x: me and " ".join(str(x or "").split()).lower() == me
+    tagged = lambda t: bool(me) and ("@" + me) in " ".join(str(t or "").split()).lower()  # มีคนแท็ก @ชื่อของฉัน
     ev = []
     with db() as con:
         cms = _cm_rows(con, "WHERE created_at>=?", (since,))
@@ -2970,7 +2990,9 @@ def api_notifications(request: Request, name: str = "", days: int = Query(14, ge
         who, rd, sst = insp.get(sid, ("", x.get("round") or "", ""))
         thread = [c for c in allc if c["id"] == (top or {}).get("id") or c.get("parent") == (top or {}).get("id")]
         reason = ""
-        if not same(x["by"]):
+        if not same(x["by"]) and tagged(x.get("text")):
+            reason = "แท็กคุณในความคิดเห็น"
+        elif not same(x["by"]):
             if x.get("parent") and top and same(top["by"]):
                 reason = "ตอบคำถามของคุณ" if top.get("question") else "ตอบกลับความคิดเห็นของคุณ"
             elif same(who):
@@ -2988,7 +3010,9 @@ def api_notifications(request: Request, name: str = "", days: int = Query(14, ge
             if not n.get("at") or n["at"] < since:
                 continue
             reason = ""
-            if not same(n.get("by")):
+            if not same(n.get("by")) and tagged(n.get("text")):
+                reason = "แท็กคุณในเรื่องที่ต้องติดตาม"
+            elif not same(n.get("by")):
                 if n.get("kind") == "open" and f.get("dept") and f["dept"] == my_dept:
                     reason = f'{f["dept"]} ต้องตอบสาเหตุและการแก้ไข'
                 elif n.get("kind") == "answer" and same(f.get("created_by")):
