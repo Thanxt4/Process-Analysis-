@@ -1059,6 +1059,44 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .svx-savebar{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:4;padding:12px 0 6px;background:linear-gradient(to top,var(--bg) 65%,rgba(241,245,249,0))}
 .svx-savebar .savebig{margin-top:0;box-shadow:0 8px 22px rgba(27,42,65,.3)}
 @media(min-width:700px){.svx-savebar{bottom:0;padding-bottom:14px}}
+/* ---------- กระดิ่งแจ้งเตือน + ใครออนไลน์ (แถบบน) ---------- */
+.hb{flex:0 0 auto;min-height:36px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;font-size:13px;font-weight:700;padding:3px 10px}
+.hb:hover{background:rgba(255,255,255,.16)}
+.hb.bell{position:relative;width:38px;padding:0}
+.hb.bell svg.i{width:18px;height:18px}
+.hb.bell em{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 4px;border-radius:99px;background:#ef4444;color:#fff;font-style:normal;font-size:11px;font-weight:800;line-height:15px;text-align:center;border:2px solid var(--navy)}
+.hb.bell.ring svg.i{animation:ntRing .9s ease 2;transform-origin:50% 10%}
+@keyframes ntRing{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-4deg)}}
+.hb.onl{display:inline-flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:7px;padding:3px 11px 3px 4px;white-space:nowrap;min-width:0;width:auto}
+.onl .stk{display:flex}.onl .stk i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10.5px;font-weight:800;color:#fff;border:2px solid var(--navy);margin-left:-8px}.onl .stk i:first-child{margin-left:0}
+.onl .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25)}
+@media(max-width:560px){.onl .stk i:nth-child(n+2){display:none}.onl #onTxt{font-size:12px}.hb.onl{padding-right:9px}}
+@media(max-width:400px){.onl #onTxt{display:none}.onl .dot{margin-right:2px}}
+@media(max-width:480px){header.top .sync,header.top .rolepill{display:none!important}}
+.ntsheet{max-width:520px}
+.nt-tabs{margin-bottom:10px}
+.nt-list{display:flex;flex-direction:column;gap:6px;max-height:min(62vh,560px);overflow:auto;margin:0 -4px;padding:0 4px}
+.nti{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;justify-content:flex-start;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-weight:400;min-height:0}
+.nti.new{background:#fffbeb;border-color:#fde68a}
+.nti .ic2{width:34px;height:34px;border-radius:11px;background:#e0f2fe;color:#0369a1;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.nti .ic2.fu{background:#fef3c7;color:#92400e}
+.nti .ic2 svg.i{width:17px;height:17px}
+.nti .b{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;line-height:1.35}
+.nti .r{font-size:12px;font-weight:700;color:#1d4ed8}.nti .r.ng{color:var(--bad)}
+.nti .b>b{font-size:14.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nti .x2{font-size:13.5px;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nti .x2 em{font-style:normal;font-weight:700}
+.nti small{font-size:12px;color:var(--mute)}
+.nt-empty{text-align:center;padding:28px 12px;color:var(--mute)}
+.nt-foot{margin:10px 0 0;text-align:center;font-size:12.5px}
+.ppl-list{max-height:min(60vh,520px);overflow:auto;margin-top:6px}
+.ppl-h{font-size:12.5px;font-weight:800;color:var(--mute);margin:12px 0 4px}
+.ppl-r{display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid #f1f5f9}
+.pav{position:relative;width:38px;height:38px;border-radius:12px;flex:none;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13.5px}
+.pav b{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2.5px solid #fff;background:#cbd5e1}.pav b.on{background:#22c55e}
+.ppl-r .t{flex:1;min-width:0}.ppl-r .t b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ppl-r .t small{color:var(--mute);font-size:12.5px}
+.ppl-r .t small.on{color:#16a34a;font-weight:700}
+.ppl-d{font-size:11.5px;font-weight:800;border-radius:99px;padding:1px 8px;background:#e2e8f0;color:#334155;margin-left:6px;vertical-align:1px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1084,6 +1122,8 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
   <a class="back" href="/" aria-label="กลับหน้าหลัก" title="กลับหน้าหลัก"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></a>
   <div class="ttl"><small class="brand">LINE QC / RETORT ANALYSIS</small><h1 id="title">บันทึกปัญหา Retort</h1><div class="s" id="subtitle">หาสาเหตุ · วิเคราะห์แนวโน้ม</div></div>
   <span class="sync" id="sync"><span class="d"></span><span id="syncTxt">ในเครื่อง</span></span>
+  <button class="hb onl hide" id="onBtn" title="ดูว่าใครออนไลน์"><span class="stk" id="onStk"></span><span class="dot"></span><span id="onTxt">ออนไลน์</span></button>
+  <button class="hb bell" id="bellBtn" aria-label="การแจ้งเตือน" title="การแจ้งเตือน"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><em id="bellN" hidden></em></button>
   <span class="rolepill hide" id="rolePill"></span>
   <button class="av" id="userBtn" aria-label="ผู้ใช้"></button>
   <button class="lgout hide" id="logoutBtn" title="ออกจากระบบ" aria-label="ออกจากระบบ"><svg class="i" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg><span>ออก</span></button>
@@ -3427,6 +3467,84 @@ function askName(force) {
 
 setRole(S.role);
 if (!S.role) showLock(true);  // ยังไม่ได้เข้าสู่ระบบ: แสดงหน้าใส่รหัสเลย ไม่ต้องรอเซิร์ฟเวอร์
+/* ---------- การแจ้งเตือน + ใครออนไลน์ (เหมือนหน้าหลัก · ใช้ข้อมูลชุดเดียวกัน) ---------- */
+// อ่านแล้วที่หน้าไหน ก็นับว่าอ่านแล้วทั้งสองหน้า (ใช้ค่า pc_ntseen ร่วมกับหน้าหลัก)
+const lsRaw = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+const lsRawSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const NT = { items: [], tab: lsRaw("pc_nttab", "mine"), seen: +lsRaw("pc_ntseen", "0") || 0, lastSeen: 0, open: false };
+const PPL = { users: [], open: false, q: "" };
+const PCOL = ["#2563eb", "#7c3aed", "#db2777", "#ea580c", "#16a34a", "#0891b2", "#4f46e5", "#b45309"];
+const pcol = n => PCOL[[...String(n)].reduce((a, c) => a + c.charCodeAt(0), 0) % PCOL.length];
+const pini = n => (String(n).trim().split(/\s+/)[0] || "?").slice(0, 2).toUpperCase();
+const agoTxt = ms => { const m = Math.round((Date.now() - ms) / 6e4); return m < 1 ? "เมื่อสักครู่" : m < 60 ? `${m} นาทีที่แล้ว` : m < 1440 ? `${Math.round(m / 60)} ชม.ที่แล้ว` : `${Math.round(m / 1440)} วันที่แล้ว`; };
+const pago = u => u.online ? "ออนไลน์" : !u.seen ? "ยังไม่เคยเข้า" : agoTxt(u.seen);
+const ntVerb = e => e.type === "followup" ? "" : e.type === "question" ? "ถามคำถาม: " : e.type === "reply" ? "ตอบกลับ: " : "แสดงความคิดเห็น: ";
+const NT_IC = { followup: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>', other: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' };
+const ntMine = () => !!S.user;
+async function loadNotif() {
+  if (document.hidden && NT.items.length) return;
+  try { NT.items = (await api(`/api/notifications?name=${encodeURIComponent(S.user || "")}`)).items || []; } catch { return; }
+  NT.seen = Math.max(NT.seen, +lsRaw("pc_ntseen", "0") || 0); ntBadge(); if (NT.open) ntRender();
+}
+function ntBadge() {
+  const pool = ntMine() ? NT.items.filter(e => e.mine) : NT.items, n = pool.filter(e => e.at > NT.seen).length, b = $("#bellN"), bt = $("#bellBtn");
+  const was = +(b.textContent || 0); b.hidden = !n; b.textContent = n > 99 ? "99+" : n;
+  bt.title = n ? `มีการแจ้งเตือนใหม่ ${n} รายการ` : "การแจ้งเตือน";
+  if (n > was) { bt.classList.remove("ring"); void bt.offsetWidth; bt.classList.add("ring"); }
+}
+function ntRender() {
+  const box = $("#ntBox"); if (!box) return;
+  const tab = ntMine() ? NT.tab : "all", L = tab === "mine" ? NT.items.filter(e => e.mine) : NT.items;
+  box.innerHTML = `<div class="seg nt-tabs"><button data-nt="mine" class="${tab === "mine" ? "on" : ""}" ${ntMine() ? "" : "disabled"}>ของฉัน</button><button data-nt="all" class="${tab === "all" ? "on" : ""}">ทั้งหมด</button></div>
+    <div class="nt-list">${L.length ? L.slice(0, 80).map(e => `<button class="nti ${e.at > NT.lastSeen ? "new" : ""}" data-nti="${esc(e.id)}">
+        <span class="ic2 ${e.type === "followup" ? "fu" : ""}"><svg class="i" viewBox="0 0 24 24">${NT_IC[e.type] || NT_IC.other}</svg></span>
+        <span class="b">${e.reason ? `<span class="r ${e.ng ? "ng" : ""}">${esc(e.reason)}</span>` : ""}<b>${esc(e.title || "")}</b>
+          <span class="x2"><em>${esc(e.by || "")}</em> ${ntVerb(e)}${esc(e.text || "")}</span><small>${esc(e.zone || "")}${e.zone ? " · " : ""}${agoTxt(e.at)}</small></span></button>`).join("")
+      : `<div class="nt-empty">${tab === "mine" ? "ยังไม่มีการแจ้งเตือนที่เกี่ยวกับคุณ<br><small>เช่น มีคนตอบคำถาม แท็กชื่อ หรืออัปเดตเรื่องที่คุณรับผิดชอบ</small>" : "ยังไม่มีความเคลื่อนไหว"}</div>`}</div>
+    <p class="sub nt-foot">${ntMine() ? `แจ้งเตือนของ <b>${esc(S.user)}</b> · ` : ""}แตะรายการเพื่อเปิดในหน้าหลัก</p>`;
+}
+function ntOpen() {
+  NT.lastSeen = NT.seen; NT.open = true;
+  modal(`<div class="row sp" style="margin-bottom:10px"><h2>การแจ้งเตือน</h2><button class="ghost sm" data-close>${I("x")}ปิด</button></div><div id="ntBox"></div>`, box => {
+    box.onclick = e => { const t = e.target.closest("[data-nt]"); if (t && !t.disabled) { NT.tab = t.dataset.nt; lsRawSet("pc_nttab", NT.tab); ntRender(); return; }
+      const b = e.target.closest("[data-nti]"); if (b) location.href = "/#nt=" + encodeURIComponent(b.dataset.nti); };
+    ntRender();
+  }, "ntsheet");
+  NT.seen = Date.now(); lsRawSet("pc_ntseen", String(NT.seen)); ntBadge(); loadNotif();
+}
+async function loadPpl() {
+  if (document.hidden && PPL.users.length) return;
+  try { PPL.users = (await api("/api/presence")).users || []; } catch (e) { if (e.status === 401) { PPL.users = []; drawOnl(); } return; }
+  drawOnl(); if (PPL.open) drawPpl();
+}
+function drawOnl() {
+  const on = PPL.users.filter(u => u.online), oth = on.filter(u => !u.me);
+  $("#onBtn").classList.toggle("hide", !PPL.users.length);
+  $("#onStk").innerHTML = (oth.length ? oth : on).slice(0, 3).map(u => `<i style="background:${pcol(u.name)}">${esc(pini(u.name))}</i>`).join("");
+  $("#onTxt").textContent = `ออนไลน์ ${on.length}`;
+}
+function drawPpl() {
+  const box = $("#pplList"); if (!box) return;
+  const q = PPL.q.trim().toLowerCase(), L = PPL.users.filter(u => !q || `${u.name} ${u.dept}`.toLowerCase().includes(q));
+  const row = u => `<div class="ppl-r"><div class="pav" style="background:${pcol(u.name)}">${esc(pini(u.name))}<b class="${u.online ? "on" : ""}"></b></div>
+    <div class="t"><b>${esc(u.name)}${u.me ? ` <span class="sub" style="font-weight:400">(คุณ)</span>` : ""}${u.dept ? `<span class="ppl-d">${esc(u.dept)}</span>` : ""}</b><small class="${u.online ? "on" : ""}">${pago(u)}</small></div></div>`;
+  const on = L.filter(u => u.online), off = L.filter(u => !u.online);
+  box.innerHTML = (on.length ? `<div class="ppl-h">ออนไลน์ (${on.length})</div>` + on.map(row).join("") : "") + (off.length ? `<div class="ppl-h">ออฟไลน์ (${off.length})</div>` + off.map(row).join("") : "") || `<p class="sub">ไม่พบชื่อที่ค้นหา</p>`;
+}
+$("#bellBtn").onclick = ntOpen;
+$("#onBtn").onclick = () => {
+  PPL.q = ""; PPL.open = true;
+  modal(`<div class="row sp" style="margin-bottom:10px"><h2>ใครออนไลน์</h2><button class="ghost sm" data-close>${I("x")}ปิด</button></div>
+    <input id="pplQ" placeholder="ค้นหาชื่อ หรือแผนก" autocomplete="off"><div id="pplList" class="ppl-list"></div>`, box => {
+    box.querySelector("#pplQ").oninput = e => { PPL.q = e.target.value; drawPpl(); }; drawPpl(); }, "ntsheet");
+  loadPpl();
+};
+// ปิดหน้าต่าง → หยุดอัปเดตรายการในหน้าต่าง
+new MutationObserver(() => { if (!$("#ntBox")) NT.open = false; if (!$("#pplList")) PPL.open = false; }).observe($("#modalRoot"), { childList: true });
+setInterval(loadNotif, 45000); setInterval(loadPpl, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadNotif(); loadPpl(); } });
+setTimeout(() => { loadNotif(); loadPpl(); }, 800);
+
 render();
 (async () => { if (S.role && await loadCache()) softRender(); syncAll(!lastSync); })();
 /* ลากไฟล์ PDF มาวางในแถบ โปรแกรม → อัปเดตค่าโปรแกรม */

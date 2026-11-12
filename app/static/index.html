@@ -3623,7 +3623,15 @@ const ntAgo = ms => { const m = Math.round((Date.now() - ms) / 6e4); return m < 
 const ntMineMode = () => !!getMyName();
 async function loadNotif(){
   try{ const r = await api(`/api/notifications?name=${encodeURIComponent(getMyName())}`); NT.items = r.items || []; }catch{ return; }
-  ntBadge(); if($("#ntBg").classList.contains("on")) ntRender(); ntPop();
+  ntBadge(); if($("#ntBg").classList.contains("on")) ntRender(); ntPop(); ntDeepLink();
+}
+// มาจากกระดิ่งในหน้าอื่น (เช่น หน้า Retort): /#nt=<id> → เปิดเรื่องนั้นให้เลย
+function ntDeepLink(){
+  const m = /^#nt=(.+)$/.exec(location.hash); if(!m || !NT.items.length) return;
+  let id = m[1]; try{ id = decodeURIComponent(id); }catch{}
+  history.replaceState(null, "", location.pathname + location.search);
+  const ev = NT.items.find(x => x.id === id); if(!ev){ toast("ไม่พบการแจ้งเตือนนี้ (อาจเก่าเกินไป)", true); return; }
+  const go = (n = 0) => CFG ? ntGo(ev) : n < 50 && setTimeout(() => go(n + 1), 200); go();
 }
 function ntBadge(){
   const pool = ntMineMode() ? NT.items.filter(e => e.mine) : NT.items, n = pool.filter(e => e.at > NT.seen).length, b = $("#bellN");
