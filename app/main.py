@@ -2162,7 +2162,8 @@ def api_retort_logout():
     resp.delete_cookie("rt_access", samesite="lax")
     return resp
 _RP_TEXT = {"time": 5, "shift": 4, "plant": 10, "program": 20, "programDoc": 20, "retort": 20, "product": 120, "batch": 60, "code": 60, "category": 40, "cause": 200,
-            "causeOther": 200, "duration": 12, "detail": 3000, "action": 3000, "impact": 8, "by": 60, "updatedBy": 60}
+            "causeOther": 200, "duration": 12, "detail": 3000, "action": 3000, "impact": 8, "by": 60, "updatedBy": 60,
+            "holdQty": 12, "holdUnit": 20}
 
 
 def _rp_bizdate(day: str, hm: str) -> str:
@@ -2217,6 +2218,14 @@ def _clean_rp(d: dict) -> dict:
     ph = d.get("photos") if isinstance(d.get("photos"), list) else []
     out["photos"] = [str(f) for f in ph if isinstance(f, str) and _RT_PHOTO_RE.match(f)][:8]
     out["impact"] = "hold" if out["impact"] == "hold" else "none"
+    if out["impact"] != "hold":  # จำนวน Hold ใช้เฉพาะเมื่อ Hold สินค้า
+        out["holdQty"] = out["holdUnit"] = ""
+    elif out["holdQty"]:
+        try:
+            q = float(out["holdQty"].replace(",", ""))
+            out["holdQty"] = ("%g" % q) if q > 0 else ""
+        except ValueError:
+            out["holdQty"] = ""
     out["shift"] = out["shift"] if out["shift"] in ("DS", "NS") else "DS"
     # วันที่แบบ i-Tail: วันใหม่เริ่มเวลาตัดรอบ (07:00) · 00:00–06:59 นับเป็นวันก่อนหน้า
     # หน้าเว็บใหม่ส่ง bd=1 (วันที่เป็นแบบ i-Tail แล้ว) · หน้าเว็บเก่าส่งวันที่ปฏิทิน → แปลงให้
