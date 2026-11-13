@@ -1329,9 +1329,12 @@ body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
 .holdq-r input{font-size:20px;font-weight:800;text-align:center;color:#9a3412;background:#fff}
 .holdq-r select{background-color:#fff}
 /* IR (Incident Report) */
-.irrow{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin:0 0 14px}
-.irstat{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
-.irchip{display:inline-flex;align-items:center;gap:5px;min-height:38px;padding:4px 10px;border-radius:12px;background:#fff;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(15,23,42,.05);white-space:nowrap}
+.irrow{display:flex;align-items:center;gap:8px 12px;margin:0 0 14px;padding:6px;border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid #e2e8f0;
+  box-shadow:0 1px 2px rgba(15,23,42,.05),0 6px 16px -10px rgba(15,23,42,.18);container-type:inline-size}
+.irrow:has(.isir){border-color:#fecaca;background:linear-gradient(180deg,#fff,#fff5f5)}
+.irstat{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1;min-width:0;margin-left:auto}
+.irstat>*{flex:0 1 auto;min-width:0}
+.irchip{display:inline-flex;align-items:center;gap:5px;min-height:38px;padding:4px 10px;border-radius:12px;background:#f1f5f9;border:1px solid transparent;white-space:nowrap;overflow:hidden}
 .irchip svg.i{width:16px;height:16px;color:var(--mute)}
 .irchip b{font-size:16px;font-weight:800;color:var(--navy)}.irchip small{font-size:12.5px;color:var(--mute);font-weight:600}
 .irchip.bad b{color:var(--bad)}.irchip.bad svg.i{color:var(--bad)}.irchip.ok b{color:var(--ok)}
@@ -1339,10 +1342,12 @@ body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
 .irchip .sh.DS{background:#fef3c7;color:#92400e}.irchip .sh.NS{background:var(--navy);color:#fde68a}
 .irexp{min-height:38px;padding:4px 12px;border-radius:12px;font-size:13.5px;font-weight:700;gap:6px;background:var(--navy);border-color:var(--navy);color:#fff}
 .irexp svg.i{width:16px;height:16px}.irexp:disabled{opacity:.45}
-@media(max-width:700px){.irstat{margin-left:0}}
-#main.split .irpick>.lab{display:none}  /* จอคอมที่มีแผงด้านข้าง: เหลือไอคอน + ปุ่ม ให้ช่องสถานะอยู่บรรทัดเดียวกัน */
-.irpick{display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:100%;margin:0;padding:6px 6px 6px 8px;border-radius:18px;
-  background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(15,23,42,.05),0 6px 16px -10px rgba(15,23,42,.18)}
+.irpick>.lab{display:none}
+/* พื้นที่ไม่พอ: ย่อช่องสถานะเหลือไอคอน + ตัวเลข (ไม่ตกบรรทัด) */
+@container (max-width:760px){.irchip small:not(.sh){display:none}.irexp{padding:4px 10px}}
+@container (max-width:600px){.irchip.day b,.irchip.day>svg.i{display:none}.irpick .seg button{padding:3px 11px}.irchip{padding:4px 8px}}
+@container (max-width:470px){.irrow{flex-wrap:wrap}.irstat{flex:1 0 100%;justify-content:space-between}.irstat>*{flex:1 1 0;justify-content:center}}
+.irpick{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;margin:0;padding:0 0 0 2px}
 .irpick .ipk-ic{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fef3c7;color:#b45309;flex:0 0 auto}
 .irpick .ipk-ic svg.i{width:17px;height:17px}
 .irpick>.lab{margin:0;font-size:13.5px;font-weight:700;color:var(--navy)}
@@ -1353,7 +1358,7 @@ body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
 .irpick .seg button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,23,42,.14)}
 .irpick .seg button.on.ir{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;box-shadow:0 4px 12px -2px rgba(185,28,28,.45)}
 .irpick .seg button.on.ir svg.i{color:#fff}
-.irpick.isir{border-color:#fecaca;background:linear-gradient(180deg,#fff,#fff5f5)}.irpick.isir .ipk-ic{background:#fee2e2;color:#b91c1c}
+.irpick.isir .ipk-ic{background:#fee2e2;color:#b91c1c}
 .irpick .seg button.on.ir{background:#b91c1c;color:#fff}
 .ir{max-width:900px}
 .irc{padding:16px}
@@ -2970,7 +2975,7 @@ async function viewIR() {
 // ตัวเลือกบนสุดของแท็บบันทึก: ไม่ออก IR (บันทึกปัญหา) / ออก IR
 function irPicker(on) {
   const pick = `<div class="irpick ${on ? "isir" : ""}" id="irPick"><span class="ipk-ic" title="ประเภทการรายงาน">${I(on ? "alert" : "pen")}</span><span class="lab">ประเภทการรายงาน</span><div class="seg"><button data-irmode="0" class="${on ? "" : "on"}">${I("plus")}ไม่ออก IR</button><button data-irmode="1" class="${on ? "on ir" : ""}">${I("alert")}ออก IR</button></div></div>`;
-  const t = todayISO(), chip = (cls, ic, val, lab) => `<span class="irchip ${cls}">${I(ic)}<b>${val}</b><small>${lab}</small></span>`;
+  const t = todayISO(), chip = (cls, ic, val, lab) => `<span class="irchip ${cls}" title="${lab} ${val}">${I(ic)}<b>${val}</b><small>${lab}</small></span>`;
   let side;
   if (on) {  // สถานะ IR + ส่งออก
     const L = IR.items, open = L.filter(x => (x.status || "Open") !== "Close").length, mon = t.slice(0, 7);
