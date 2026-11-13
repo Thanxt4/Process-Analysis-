@@ -1329,9 +1329,11 @@ body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
 .holdq-r input{font-size:20px;font-weight:800;text-align:center;color:#9a3412;background:#fff}
 .holdq-r select{background-color:#fff}
 /* IR (Incident Report) */
-.irpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px;border-radius:16px;background:#fff;border:1px solid var(--line)}
-.irpick .seg{flex:1;min-width:260px}
-.irpick .seg button{gap:6px;font-weight:700}
+.irpick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.irpick>.lab{font-size:13px;font-weight:600;color:var(--mute)}
+.irpick .seg{flex:0 0 auto;padding:3px;border-radius:99px;background:#e9eef5}
+.irpick .seg button{flex:0 0 auto;gap:5px;font-weight:700;font-size:13.5px;min-height:32px;padding:3px 14px;border-radius:99px}
+.irpick .seg button svg.i{width:15px;height:15px}
 .irpick .seg button.on.ir{background:#b91c1c;color:#fff}
 .ir{max-width:900px}
 .irc{padding:16px}
