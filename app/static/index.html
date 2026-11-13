@@ -804,6 +804,10 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .fu-irow .btn.fu-done{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
 .fu-isort{display:flex;align-items:center;gap:10px;padding:8px 16px 10px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted);font-weight:700}
 .fu-isort .fu-seg{flex:0 1 260px}.fu-isort .fu-seg button{min-height:36px;padding:6px}.fu-isort .fu-seg button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.fu-dayh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:16px 4px 8px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+.fu-dayh:first-child{margin-top:4px}
+.fu-dayh b{font-size:16px;color:var(--navy)}.fu-dayh span{font-size:13px;color:var(--muted)}
+.fu-dayh.today{border-bottom-color:var(--amber,#f59e0b)}.fu-dayh.today b{color:#b45309}
 .fu-iday{display:flex;align-items:baseline;gap:10px;padding:9px 16px;background:#f8fafc;border-top:1px solid var(--line);position:sticky;top:0}
 .fu-iday b{color:var(--navy);font-size:14.5px}.fu-iday span{color:var(--muted);font-size:12.5px}
 .fu-irow[data-fuissv]{cursor:pointer;border-left:4px solid #94a3b8}.fu-irow[data-fuissv]:hover{background:#f8fafc}
@@ -1436,6 +1440,10 @@ const $ = s => document.querySelector(s);
 const TH_M = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 const thDate = iso => { const [y,m,d] = iso.slice(0,10).split("-").map(Number); return `${d} ${TH_M[m-1]} ${y+543}`; };
 const hm = iso => iso ? iso.slice(11,16) : "";
+// วันแบบ i-Tail: วันใหม่เริ่มเวลาตัดรอบ (07:00) · 00:00–06:59 ยังเป็นวันก่อนหน้า
+const cutMs = () => { const [h, m] = String((typeof CFG !== "undefined" && CFG && CFG.cutoff) || "07:00").split(":").map(Number); return ((h || 0) * 60 + (m || 0)) * 6e4; };
+const bizISO = t => { const d = new Date((typeof t === "number" ? t : Date.parse(t)) - cutMs()); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const bizDM = t => { const [y, m, d] = bizISO(t).split("-").map(Number); return `${d} ${TH_M[m-1]}`; };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const store = { get(k,d){ try{ return localStorage.getItem(k) ?? d }catch{ return d } }, set(k,v){ try{ localStorage.setItem(k,v) }catch{} } };
 /* ชื่อผู้ตรวจของเครื่องนี้: เก็บทั้ง localStorage และ cookie (บางเบราว์เซอร์ในแอปล้าง localStorage) */
@@ -1839,7 +1847,7 @@ $("#sheetBg").addEventListener("click", e => { if(e.target.id==="sheetBg") close
 function respBlock(s, ctx){
   if(s.status !== "พบปัญหา" && !s.cause && !s.action) return "";
   const r = s.resp || "QC", ext = r !== "QC";
-  const by = ext && s.resp_by ? ` <span class="note" style="font-weight:400">(${esc(r)} · ${esc(s.resp_by)}${s.resp_at ? " " + thDate(s.resp_at) + " " + hm(s.resp_at) + " น." : ""})</span>` : "";
+  const by = ext && s.resp_by ? ` <span class="note" style="font-weight:400">(${esc(r)} · ${esc(s.resp_by)}${s.resp_at ? " " + thDate(bizISO(s.resp_at)) + " " + hm(s.resp_at) + " น." : ""})</span>` : "";
   let h = (s.cause ? `<p class="extra-l act"><b>สาเหตุ${by}:</b> ${esc(s.cause)}</p>` : "") + (s.action ? `<p class="extra-l act"><b>การแก้ไข:</b> ${esc(s.action)}</p>` : "");
   if(ext && !s.cause && !s.action){
     const sid = s.id || s.sid;
@@ -1873,7 +1881,7 @@ async function renderPrev(){
   const editable = canEdit(sheetItem.round);
   $("#prevWrap").innerHTML = subs.length ? `<h4>ผลการตรวจในรอบ${sheetItem.round===CFG.current_round?"นี้":" "+thDate(sheetItem.round)} (${subs.length})</h4>` + subs.map(s => `
     <div class="sub ${s.id===editingId?"being-edited":""}"><div class="h"><span class="pill ${s.status==="พบปัญหา"?"ng":s.status===NO_ACT?"na":"ok"}">${esc(s.status)}</span><b>${s.topic?esc(s.topic)+" · ":""}${esc(s.inspector)}</b>${s.status==="พบปัญหา"&&s.resp&&s.resp!=="QC"?`<span class="pdwait ${s.cause?"ok":""}">${s.cause?esc(s.resp)+" ตอบแล้ว":"รอ "+esc(s.resp)+" ตอบ"}</span>`:""}
-      <span class="note">${thDate(s.created_at)} ${hm(s.created_at)} น.${s.late?`<span class="tag-late">ส่งย้อนหลัง</span>`:""}${s.edited_at?`<span class="tag-ed" title="แก้ไขล่าสุด ${hm(s.edited_at)} น.">แก้ไขแล้ว</span>`:""}</span><button class="zoom" data-id="${s.id}" title="ขยายเต็มหน้าจอ" aria-label="ขยายเต็มหน้าจอ"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>ขยาย</button>${s.status==="พบปัญหา"?`<button class="fumk" data-id="${s.id}" title="เปิดเรื่องที่ต้องติดตามจากผลตรวจนี้">${FU.items.some(x => (x.src||{}).sid === s.id) ? "✓ ติดตามแล้ว" : "＋ ติดตาม"}</button>`:""}${editable?`<button class="edit" data-id="${s.id}">แก้ไข</button><button class="del" data-id="${s.id}">ลบ</button>`:""}</div>
+      <span class="note">${thDate(bizISO(s.created_at))} ${hm(s.created_at)} น.${s.late?`<span class="tag-late">ส่งย้อนหลัง</span>`:""}${s.edited_at?`<span class="tag-ed" title="แก้ไขล่าสุด ${hm(s.edited_at)} น.">แก้ไขแล้ว</span>`:""}</span><button class="zoom" data-id="${s.id}" title="ขยายเต็มหน้าจอ" aria-label="ขยายเต็มหน้าจอ"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>ขยาย</button>${s.status==="พบปัญหา"?`<button class="fumk" data-id="${s.id}" title="เปิดเรื่องที่ต้องติดตามจากผลตรวจนี้">${FU.items.some(x => (x.src||{}).sid === s.id) ? "✓ ติดตามแล้ว" : "＋ ติดตาม"}</button>`:""}${editable?`<button class="edit" data-id="${s.id}">แก้ไข</button><button class="del" data-id="${s.id}">ลบ</button>`:""}</div>
       ${s.pages.map((p,i)=>`${s.pages.length>1?`<div class="pl">สไลด์ ${i+1}</div>`:""}
         ${p.note?`<p>${esc(p.note)}</p>`:""}
         ${(p.media||[]).length?`<div class="thumbs">${p.media.map(m=>`<div><img src="${m.thumb||m.poster}" data-full="${m.poster}" loading="lazy" decoding="async" alt="" ${m.kind==="video"?`data-video="${m.url}"`:""}>${m.kind==="video"?`<span class="vbadge"><svg class="ic" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l15 8-15 8z"/></svg> วิดีโอ</span>`:""}</div>`).join("")}</div>`:""}`).join("")}
@@ -3237,10 +3245,10 @@ $("#roundList").addEventListener("click", e => { const b = e.target.closest(".dl
 /* ---------- เรื่องที่ต้องติดตาม: เพิ่ม/แก้ไข/ปิดเรื่องได้จากหน้าเว็บ · ลบต้องใส่รหัส ---------- */
 const FU_ST = {open: "รอดำเนินการ", doing: "กำลังดำเนินการ", done: "เสร็จแล้ว"};
 const FU = {items: [], issues: [], days: 14, loaded: false, filter: store.get("pc_fufilter", "active"), q: "", cur: null, ups: 0, issAll: false, issSort: store.get("pc_fuisssort", "desc")};
-const fuToday = () => { const d = new Date(Date.now() + clockOffset); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const fuToday = () => bizISO(Date.now() + clockOffset);  // "วันนี้" แบบ i-Tail (วันใหม่เริ่ม 07:00)
 const fuDays = due => Math.round((new Date(due + "T00:00:00") - new Date(fuToday() + "T00:00:00")) / 864e5);
 const fuOver = x => x.status !== "done" && !!x.due && fuDays(x.due) < 0;
-const fuAt = ms => { const d = new Date(ms); return `${d.getDate()} ${TH_M[d.getMonth()]} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`; };
+const fuAt = ms => { const d = new Date(ms); return `${bizDM(ms)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`; };
 function fuDueTxt(x){
   if(!x.due) return ""; const n = fuDays(x.due);
   if(x.status === "done") return thDate(x.due);
@@ -3300,14 +3308,19 @@ function renderFollow(){
   const q = FU.q.trim().toLowerCase();
   const pass = {active: x => x.status !== "done", over: fuOver, urgent: x => x.status !== "done" && x.urgent, done: x => x.status === "done", all: () => true}[FU.filter] || (() => true);
   const list = all.filter(pass).filter(x => !q || [x.title, x.detail, x.zone, x.owner, x.created_by].join(" ").toLowerCase().includes(q)).sort(fuSort);
-  $("#fuList").innerHTML = list.length ? list.map(x => {
+  // แบ่งตามรอบวัน (07:00–06:59): วันที่พบปัญหา (ถ้ามาจากผลตรวจ) หรือวันที่เปิดเรื่อง · วันล่าสุดอยู่บน
+  const fuDay = x => (x.src && x.src.sid && (FU.issues.find(i => i.sid === x.src.sid) || {}).round) || (x.created_at ? bizISO(x.created_at) : fuToday());
+  const fuDays = [...new Set(list.map(fuDay))].sort().reverse(), today = fuToday();
+  const fuCard = x => {
     const ov = fuOver(x), dn = x.due ? fuDays(x.due) : null;
     const last = [...(x.notes || [])].reverse().find(m => m.kind !== "status" && m.kind !== "chat");
     return `<button type="button" class="fu-card st-${x.status} ${ov ? "over" : ""}" data-fu="${x.id}">
       <div class="fu-l1"><span class="fu-st st-${x.status}">${FU_ST[x.status]}</span>${x.urgent && x.status !== "done" ? `<span class="fu-urg">ด่วน</span>` : ""}${x.zone ? `<span class="fu-zone">${esc(x.zone)}</span>` : ""}${x.dept && x.src_info && x.status !== "done" ? `<span class="pdwait ${x.src_info.cause ? "ok" : ""}">${x.src_info.cause ? esc(x.dept) + " ตอบแล้ว" : "รอ " + esc(x.dept) + " ตอบ"}</span>` : ""}</div>
       <b class="fu-t">${esc(x.title)}</b>
       <div class="fu-meta">${x.owner ? `<span>ผู้รับผิดชอบ <b>${esc(x.owner)}</b></span>` : ""}${x.due ? `<span class="fu-due ${ov ? "over" : dn !== null && dn <= 2 && x.status !== "done" ? "soon" : ""}">กำหนด ${fuDueTxt(x)}</span>` : ""}${(x.photos || []).length ? `<span>รูป ${x.photos.length}</span>` : ""}${x.status === "done" && x.done_at ? `<span>ปิดเรื่อง ${fuAt(x.done_at)} · ${esc(x.done_by || "")}</span>` : ""}</div>
-      ${last ? `<div class="fu-last">${esc(last.text)} <i>· ${esc(last.by)} ${fuAt(last.at)}</i></div>` : ""}</button>`; }).join("")
+      ${last ? `<div class="fu-last">${esc(last.text)} <i>· ${esc(last.by)} ${fuAt(last.at)}</i></div>` : ""}</button>`; };
+  $("#fuList").innerHTML = list.length ? fuDays.map(d => { const L = list.filter(x => fuDay(x) === d), open = L.filter(x => x.status !== "done").length;
+      return `<div class="fu-dayh ${d === today ? "today" : ""}"><b>${d === today ? "วันนี้ · " : d === shiftDay(today, -1) ? "เมื่อวาน · " : ""}รอบ ${thDate(d)}</b><span>${L.length} เรื่อง${open ? ` · ค้าง ${open}` : " · เสร็จหมดแล้ว"}</span></div>` + L.map(fuCard).join(""); }).join("")
     : `<div class="card fu-empty">${q ? `ไม่พบเรื่องที่ค้นหา "${esc(FU.q.trim())}"` : FU.filter === "active" ? "ไม่มีเรื่องค้าง 👍 กด <b>เพิ่มเรื่อง</b> เพื่อเปิดเรื่องใหม่" : "ไม่มีเรื่องในหมวดนี้"}</div>`;
   // ปัญหาที่พบล่าสุด: แสดงเฉพาะเรื่องที่ติดตามแล้ว แยกตามวัน · เรียงวันที่ได้ · มีสถานะการติดตาม
   const asc = FU.issSort === "asc", open = store.get("pc_fuiss", "1") === "1";
@@ -3503,7 +3516,7 @@ setInterval(() => { if(!document.hidden && curTab() === "follow" && !FU.cur) loa
 const CM = { sum: {}, open: [], threads: [], area: "", kind: store.get("pc_cmkind", "c") };
 const CM_IC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12Z"/></svg>`;
 const cmMine = x => { const a = (getMyName() || "").trim().replace(/\s+/g, " ").toLowerCase(); return !!a && a === String(x.by || "").trim().replace(/\s+/g, " ").toLowerCase(); };
-const cmAt = ms => { const d = new Date(ms); return `${d.getDate()} ${TH_M[d.getMonth()]} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`; };
+const cmAt = ms => { const d = new Date(ms); return `${bizDM(ms)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`; };
 async function loadCmSummary(){
   try{ const r = await api("/api/comments/summary"); CM.sum = r.items || {}; CM.open = r.open || []; }catch{ return; }
   cmDecorate(); renderCmOpen();

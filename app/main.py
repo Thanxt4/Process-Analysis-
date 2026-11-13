@@ -864,6 +864,10 @@ def _start():
         _migrate_pf1_retorts()
     except Exception as e:  # noqa
         print("[retort] PF1 retorts migrate error:", e, flush=True)
+    try:
+        _migrate_rp_bizdate()
+    except Exception as e:  # noqa
+        print("[retort] date migrate error:", e, flush=True)
     threading.Thread(target=scheduler_loop, daemon=True).start()
     print(f"[slides] รูปแบบสไลด์เวอร์ชัน {SLIDES_VERSION}", flush=True)
 
@@ -2010,6 +2014,36 @@ _RP_TEXT = {"time": 5, "shift": 4, "plant": 10, "program": 20, "programDoc": 20,
             "causeOther": 200, "duration": 12, "detail": 3000, "action": 3000, "impact": 8, "by": 60, "updatedBy": 60}
 
 
+def _rp_bizdate(day: str, hm: str) -> str:
+    """วันที่ปฏิทิน + เวลา → วันที่แบบ i-Tail (เวลาก่อนตัดรอบ 07:00 = วันก่อนหน้า)"""
+    try:
+        h, m = (int(v) for v in str(hm or "").split(":")[:2])
+        if time(h, m) < CUTOFF:
+            return (date.fromisoformat(day) - timedelta(days=1)).isoformat()
+    except (TypeError, ValueError):
+        pass
+    return day
+
+
+def _migrate_rp_bizdate():
+    """ครั้งเดียว: ปัญหา Retort ที่บันทึกด้วยวันที่ปฏิทิน → วันที่แบบ i-Tail (ตัดวันตอน 07:00)"""
+    ts = int(now().timestamp() * 1000)
+    n = 0
+    with db() as con:
+        for r in con.execute("SELECT id, data FROM retort_problems").fetchall():
+            x = json.loads(r["data"])
+            if x.get("bd"):
+                continue
+            x["date"] = _rp_bizdate(x.get("date") or "", x.get("time") or "")
+            x["bd"] = 1
+            x["updatedAt"] = ts  # ให้ทุกเครื่องโหลดรายการนี้ใหม่
+            con.execute("UPDATE retort_problems SET date=?, data=?, updated_at=? WHERE id=?",
+                        (x["date"], json.dumps(x, ensure_ascii=False), ts, r["id"]))
+            n += 1
+    if n:
+        print(f"[retort] ปรับวันที่ {n} รายการเป็นแบบ i-Tail (วันใหม่เริ่ม {CUTOFF.strftime('%H:%M')})", flush=True)
+
+
 def _clean_rp(d: dict) -> dict:
     """ตรวจ/ตัดข้อมูลปัญหา Retort ที่ส่งมาจากหน้าเว็บ"""
     if not isinstance(d, dict):
@@ -2033,6 +2067,11 @@ def _clean_rp(d: dict) -> dict:
     out["photos"] = [str(f) for f in ph if isinstance(f, str) and _RT_PHOTO_RE.match(f)][:8]
     out["impact"] = "hold" if out["impact"] == "hold" else "none"
     out["shift"] = out["shift"] if out["shift"] in ("DS", "NS") else "DS"
+    # วันที่แบบ i-Tail: วันใหม่เริ่มเวลาตัดรอบ (07:00) · 00:00–06:59 นับเป็นวันก่อนหน้า
+    # หน้าเว็บใหม่ส่ง bd=1 (วันที่เป็นแบบ i-Tail แล้ว) · หน้าเว็บเก่าส่งวันที่ปฏิทิน → แปลงให้
+    if not d.get("bd"):
+        out["date"] = _rp_bizdate(out["date"], out["time"])
+    out["bd"] = 1
     for k in ("createdAt", "updatedAt"):
         try:
             out[k] = int(d.get(k) or 0)
@@ -2755,8 +2794,8 @@ def _sv_txt(v, n: int) -> str:
 def api_rt_runs(request: Request, frm: str = Query("", alias="from"), to: str = ""):
     _rt_auth(request)
     try:
-        a = date.fromisoformat(frm) if frm else (now().date() - timedelta(days=400))
-        b = date.fromisoformat(to) if to else now().date()
+        a = date.fromisoformat(frm) if frm else (round_of(now()) - timedelta(days=400))
+        b = date.fromisoformat(to) if to else round_of(now())
     except ValueError:
         raise HTTPException(400, "วันที่ไม่ถูกต้อง")
     with db() as con:

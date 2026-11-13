@@ -1401,7 +1401,12 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pad = n => String(n).padStart(2, "0");
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const todayISO = () => iso(new Date());
+// วันแบบ i-Tail: วันใหม่เริ่ม 07:00 (00:00–06:59 ยังเป็นวันก่อนหน้า) · ใช้กับ "วันนี้" ช่วงวันที่ และวันที่ของรายการ
+const DAY_START = "07:00", DAY_MS = 7 * 3600e3;
+const bizISO = t => iso(new Date((t instanceof Date ? t.getTime() : t) - DAY_MS));
+const todayISO = () => bizISO(Date.now());
+// วันที่แบบ i-Tail + เวลา → เวลาจริง (ใช้เทียบกับเวลาถ่ายรูป)
+const realTs = (d, hm) => new Date(`${d}T${hm}:00`).getTime() + (hmMin(hm) < hmMin(DAY_START) ? 864e5 : 0);
 const nowHM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const dmy = s => { if (!s) return ""; const [y, m, d] = s.split("-"); return `${d}/${m}/${y.slice(2)}`; };
 const addDays = (s, n) => { const d = new Date(s + "T00:00:00"); d.setDate(d.getDate() + n); return iso(d); };
@@ -1571,6 +1576,8 @@ function normItem(x) {
   else if (x.category === "c08" && x.cause === "ใช้ PG ผิด") x.cause = "ใช้ Program ผิด";
   // PF2 เปลี่ยนชื่อหม้อ RP → RC (บันทึกเก่าที่ไม่มีพื้นที่: ถือเป็น PF2 ถ้าไม่ใช่หม้อของ PF1)
   if (/^RP\d+$/.test(x.retort || "") && (x.plant === "PF2" || (!x.plant && !LEGACY_PF1.includes(x.retort)))) x.retort = toRC(x.retort);
+  // รายการเก่าที่ยังเป็นวันที่ปฏิทิน (เซิร์ฟเวอร์จะแปลงให้ตอนเริ่ม) → แปลงในเครื่องด้วย กันแสดงผิดวัน
+  if (!x.bd && x.date && x.time) { if (hmMin(x.time) < hmMin(DAY_START)) x.date = addDays(x.date, -1); x.bd = 1; }
   return x;
 }
 /* PF2 เปลี่ยนชื่อหม้อจาก RP เป็น RC เลขเดิม (RP01 → RC01) · หม้อ PF1 เดิม (RP09, RP19–RP21) ยังเป็น RP
@@ -1840,7 +1847,7 @@ addEventListener("pageshow", e => { if (e.persisted && S.view !== "log") { S.vie
 /* ---------- log form ---------- */
 function newDraft() {
   const t = nowHM();
-  return { id: uid("p"), date: todayISO(), time: t, shift: shiftOf(t), plant: (lsGet("rt_last", {}) || {}).plant || "", retort: "", program: "", programDoc: "", product: "", batch: "", category: "", cause: "", causeOther: "", values: {}, duration: "", detail: "", action: "", impact: "none", photos: [], by: S.user, createdAt: Date.now(), cats: [], pc: {} };
+  return { id: uid("p"), bd: 1, date: todayISO(), time: t, shift: shiftOf(t), plant: (lsGet("rt_last", {}) || {}).plant || "", retort: "", program: "", programDoc: "", product: "", batch: "", category: "", cause: "", causeOther: "", values: {}, duration: "", detail: "", action: "", impact: "none", photos: [], by: S.user, createdAt: Date.now(), cats: [], pc: {} };
 }
 function retortList() {
   const seen = {}; Object.values(S.items).sort((a, b) => b.createdAt - a.createdAt).forEach(x => { if (x.retort) seen[x.retort] = (seen[x.retort] || 0) + 1; });
@@ -1937,7 +1944,7 @@ function viewLog() {
         <div class="grid" style="margin-top:14px">
           <label class="f"><span class="lab">วันที่</span><input type="date" data-k="date" value="${d.date}"></label>
           <label class="f"><span class="lab">เวลา</span><input type="time" data-k="time" value="${d.time}"></label></div>
-        <div class="row sp" style="margin-top:10px;flex-wrap:wrap"><small class="hint" style="margin:0">กะคำนวณจากเวลาอัตโนมัติ · ${shiftHint()}</small><button class="ghost sm" id="nowBtn">${I("clock")}ใช้เวลาปัจจุบัน</button></div>
+        <div class="row sp" style="margin-top:10px;flex-wrap:wrap"><small class="hint" style="margin:0">กะคำนวณจากเวลาอัตโนมัติ · ${shiftHint()}<br>วันใหม่เริ่ม ${DAY_START} น. (แบบ i-Tail) · เวลา 00:00–06:59 นับเป็นวันก่อนหน้า</small><button class="ghost sm" id="nowBtn">${I("clock")}ใช้เวลาปัจจุบัน</button></div>
       </div>
       <button class="pri blk savebig" id="timeOk">ถัดไป${I("right")}</button>`;
   } else if (S.step === 2) {
@@ -1980,8 +1987,8 @@ function viewLog() {
         ${photoPicker(d)}
         ${(() => { const pts = d.photos.map(f => (d.ptimes || {})[f]).filter(Boolean); if (!pts.length) return "";
           const t0 = Math.min(...pts), at = new Date(t0), hm = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
-          if (Math.abs(at - new Date(`${d.date}T${d.time}:00`)) <= 10 * 60e3) return "";
-          return `<div class="ptime">${I("clock")}<div>รูปถ่ายเมื่อ <b>${dmy(iso(at))} ${hm} น.</b> (กะ ${shiftOf(hm)}) · เวลาที่บันทึกไว้ ${dmy(d.date)} ${esc(d.time)} น.</div><button class="soft sm" id="usePt" data-t="${t0}">ใช้เวลาจากรูป</button></div>`; })()}
+          if (Math.abs(at - realTs(d.date, d.time)) <= 10 * 60e3) return "";
+          return `<div class="ptime">${I("clock")}<div>รูปถ่ายเมื่อ <b>${dmy(bizISO(at))} ${hm} น.</b> (กะ ${shiftOf(hm)}) · เวลาที่บันทึกไว้ ${dmy(d.date)} ${esc(d.time)} น.</div><button class="soft sm" id="usePt" data-t="${t0}">ใช้เวลาจากรูป</button></div>`; })()}
       </div>
       <button class="pri blk savebig" id="photoOk">${d.photos.length ? "ถัดไป" : "ถัดไป (ไม่ถ่ายรูป)"}${I("right")}</button>`;
   } else {
@@ -2053,7 +2060,7 @@ function viewSaved() {
   if ($("#seeList")) $("#seeList").onclick = () => go2("list");
 }
 function causeText(x) { return x.cause === "__other" ? (x.causeOther || "อื่นๆ") : x.cause; }
-const fmtTs = ms => { if (!ms) return ""; const d = new Date(ms); return `${dmy(iso(d))} ${pad(d.getHours())}:${pad(d.getMinutes())} น.`; };
+const fmtTs = ms => { if (!ms) return ""; const d = new Date(ms); return `${dmy(bizISO(d))} ${pad(d.getHours())}:${pad(d.getMinutes())} น.`; };
 const apprTag = x => x.approvedBy
   ? `<span class="tag ok" title="อนุมัติเมื่อ ${esc(fmtTs(x.approvedAt))}">${I("check")} อนุมัติ · ${esc(x.approvedBy)}</span>`
   : `<span class="tag wait">รออนุมัติ</span>`;
@@ -2124,7 +2131,7 @@ async function stampPhoto(file, when) {
   const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const g = cv.getContext("2d");
   g.drawImage(im, 0, 0, w, h);
   const n = when || new Date(); const hm = `${pad(n.getHours())}:${pad(n.getMinutes())}`;  // เวลาถ่ายจริง
-  const l2 = `${dmy(iso(n))}  ${hm} น.  กะ ${shiftOf(hm)}`;
+  const l2 = `${dmy(bizISO(n))}  ${hm} น.  กะ ${shiftOf(hm)}`;  // วันที่แบบ i-Tail (วันใหม่เริ่ม 07:00)
   const fs = Math.max(16, Math.round(Math.min(w, h) * 0.042));
   try { await document.fonts.load(`700 ${fs}px Sarabun`); } catch {}
   g.font = `700 ${fs}px Sarabun, sans-serif`; g.textBaseline = "top";
@@ -2336,7 +2343,7 @@ function wireLog() {
     else if (ds.delph != null) { d.photos.splice(+ds.delph, 1); const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
     else if (b.id === "photoOk") go(5);
     else if (b.id === "detEdit") needEditPin("แก้ไขหัวข้อรายละเอียด", () => openDetailEditor(stay));
-    else if (b.id === "usePt") { const at = new Date(+ds.t); d.date = iso(at); d.time = `${pad(at.getHours())}:${pad(at.getMinutes())}`; d.shift = shiftOf(d.time); toast(`ใช้เวลา ${dmy(d.date)} ${d.time} น. กะ ${d.shift}`); stay(); }
+    else if (b.id === "usePt") { const at = new Date(+ds.t); d.date = bizISO(at); d.time = `${pad(at.getHours())}:${pad(at.getMinutes())}`; d.shift = shiftOf(d.time); toast(`ใช้เวลา ${dmy(d.date)} ${d.time} น. กะ ${d.shift}`); stay(); }
     else if (ds.sug) { const card = b.closest(".pcard"), ci = card.querySelector(".causeIn"); ci.value = ds.sug; ci.classList.remove("err"); d.pc[card.dataset.cid].cause = ds.sug;
       card.querySelectorAll("[data-sug]").forEach(x => x.classList.toggle("on", x === b)); $("#formErr").innerHTML = ""; }
     else if (b.id === "progSpec") { if (d.programDoc) showSpec(d.programDoc + "#" + d.program); }
@@ -2596,7 +2603,7 @@ function isoParse(text, html) {
 const isoBtn = (code, cls = "") => { const x = isoOf(code); return x ? `<a class="isolink ${cls}" href="${esc(x.url)}" target="_blank" rel="noopener">${I("doc")}เปิด PDF ${esc(code)}${x.rev ? ` Rev.${esc(x.rev)}` : ""}</a>` : ""; };
 /* ---------- จำนวนรอบที่หม้อใช้ (ต่อวัน ต่อกะ) · ใช้คำนวณ % รอบที่มีปัญหา ---------- */
 // วันที่ของกะ: กะ NS ที่ข้ามเที่ยงคืน (เช่น 02:00 น.) นับเป็นวันที่เริ่มกะ (คืนวันที่ 12 → เช้าวันที่ 13 = วันที่ 12)
-const prodDate = x => x.shift === "NS" && hmMin(x.time || "00:00") < hmMin(U.dsStart) ? addDays(x.date, -1) : x.date;
+const prodDate = x => x.date;  // วันที่ของรายการเป็นแบบ i-Tail แล้ว (วันใหม่เริ่ม 07:00) จึงตรงกับวันที่เริ่มกะ NS
 const RN = { day: "", plant: "", data: {}, dirty: false, loading: false, by: "", at: 0, hn: lsGet("rt_rnhist", 7), hk: "", hist: [] };
 /* ตารางย้อนหลังวันต่อวัน: แถว = หม้อ · คอลัมน์ = วัน · ช่อง = รอบ DS / NS + จุดแดงถ้ามีปัญหา */
 function runsHist(rl) {
@@ -2649,7 +2656,7 @@ async function viewRuns() {
         <button class="ghost" data-rnd="1" aria-label="วันถัดไป" ${RN.day >= todayISO() ? "disabled" : ""}>${I("right")}</button></div>
       <div class="rn-pl">${plantsList().map(p => `<button class="${p === RN.plant ? "on" : ""}" data-rnpl="${esc(p)}">${esc(p)}</button>`).join("")}</div>
     </div>
-    <p class="sub rn-note">${I("info")} กะ NS ให้ใส่ที่<b>วันที่เริ่มกะ</b> (คืนวันที่ 12 ถึงเช้าวันที่ 13 = ใส่ที่วันที่ 12) · ปัญหาที่บันทึกตอนเช้ามืดของกะ NS จะนับรวมกับวันที่เริ่มกะให้อัตโนมัติ</p>
+    <p class="sub rn-note">${I("info")} วันใหม่เริ่ม ${DAY_START} น. แบบ i-Tail · กะ NS คืนวันที่ 12 ถึงเช้าวันที่ 13 = วันที่ 12 (ทั้งจำนวนรอบและปัญหา)</p>
     <div class="card rn-card">
       <div class="rn-th"><span>หม้อ</span><span class="ds">กะ DS<small>${U.dsStart}–${U.dsEnd}</small></span><span class="ns">กะ NS<small>${minHM(hmMin(U.dsEnd) + 1)}–${minHM(hmMin(U.dsStart) - 1)}</small></span></div>
       ${rl.map(r => `<div class="rn-r"><b>${esc(r)}</b>${["DS", "NS"].map(sh => { const p = pc(r, sh);
