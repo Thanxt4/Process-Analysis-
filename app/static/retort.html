@@ -1585,6 +1585,7 @@ function migrate(cfg) {
   return [cfg, true];
 }
 /* ปรับบันทึกเก่าให้ตรงกับหัวข้อใหม่ (เฉพาะการแสดงผล ไม่แก้ข้อมูลบนเซิร์ฟเวอร์) */
+const PRODUCT_TH = { "กระป๋อง": "Can", "ถ้วย": "Cup", "ถุง": "Pouch" };  // ชื่อสินค้าเดิม (ภาษาไทย) → ชื่อใหม่
 function normItem(x) {
   if (x.category === "c12" && /cooling/i.test(x.cause || "")) { x.category = "c15"; x.cause = /ความดัน/.test(x.cause) ? "ความดันยืด" : "อุณหภูมิยืด"; }
   else if (x.category === "c07" && x.cause === "ความดันแกว่ง") x.cause = "Main ลมตก";
@@ -1592,6 +1593,7 @@ function normItem(x) {
   // PF2 เปลี่ยนชื่อหม้อ RP → RC (บันทึกเก่าที่ไม่มีพื้นที่: ถือเป็น PF2 ถ้าไม่ใช่หม้อของ PF1)
   if (/^RP\d+$/.test(x.retort || "") && (x.plant === "PF2" || (!x.plant && !LEGACY_PF1.includes(x.retort)))) x.retort = toRC(x.retort);
   // รายการเก่าที่ยังเป็นวันที่ปฏิทิน (เซิร์ฟเวอร์จะแปลงให้ตอนเริ่ม) → แปลงในเครื่องด้วย กันแสดงผิดวัน
+  if (x.product && PRODUCT_TH[x.product]) x.product = PRODUCT_TH[x.product];
   if (!x.bd && x.date && x.time) { if (hmMin(x.time) < hmMin(DAY_START)) x.date = addDays(x.date, -1); x.bd = 1; }
   return x;
 }
@@ -2186,7 +2188,7 @@ async function addPhotos(files, fromCamera) {
 const DEFAULT_DETAILS = [
   { key: "code", label: "Code", type: "text", ph: "เช่น D018", builtin: true },
   { key: "duration", label: "ระยะเวลาที่เกิดปัญหา", type: "number", builtin: true },  // กรอกเป็น ชั่วโมง + นาที · เก็บเป็นนาทีรวม
-  { key: "product", label: "สินค้า", type: "select", options: ["ถ้วย", "ถุง", "กระป๋อง"], builtin: true },
+  { key: "product", label: "สินค้า", type: "select", options: ["Can", "Cup", "Pouch", "Spout", "Sachet"], builtin: true },
   { key: "batch", label: "Retort no./รอบหม้อ", type: "text", builtin: true },
   { key: "detail", label: "รายละเอียดเพิ่มเติม", type: "textarea", builtin: true }
 ];
@@ -2200,8 +2202,9 @@ function detailFields() {
     const type = (bi && DF_LOCKED[x.key]) || (DF_TYPES.some(t => t[0] === x.type) ? x.type : "text");
     let label = String(x.label || (bi && bi.label) || "หัวข้อ").slice(0, 40);
     if (x.key === "batch" && /^(batch\s*)?รอบหม้อ$/i.test(label.trim())) label = "Retort no./รอบหม้อ";  // ชื่อเดิม → ชื่อใหม่
-    out.push({ key: x.key, builtin: !!bi, label, type, ph: String(x.ph || "").slice(0, 40),
-      options: type === "select" ? (Array.isArray(x.options) ? x.options : []).map(o => String(o).trim().slice(0, 40)).filter(Boolean).slice(0, 30) : [], hide: !!x.hide }); });
+    let options = type === "select" ? (Array.isArray(x.options) ? x.options : []).map(o => String(o).trim().slice(0, 40)).filter(Boolean).slice(0, 30) : [];
+    if (x.key === "product" && (!options.length || options.every(o => PRODUCT_TH[o]))) options = bi.options;  // ตัวเลือกเดิม (ถ้วย/ถุง/กระป๋อง) → Can, Cup, Pouch, Spout, Sachet
+    out.push({ key: x.key, builtin: !!bi, label, type, ph: String(x.ph || "").slice(0, 40), options, hide: !!x.hide }); });
   DEFAULT_DETAILS.forEach(d => { if (!seen.has(d.key)) out.push({ ...d, options: d.options || [], hide: true }); });  // ช่องเดิมที่หายไป = ซ่อนไว้
   return out;
 }
