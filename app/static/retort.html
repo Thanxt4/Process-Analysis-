@@ -3442,12 +3442,10 @@ function heatSection(R, L1, L2) {
 }
 function moreSection(L, total) {
   if (!L.length) return "";
-  const byCause = groupSum(L, x => causeText(x) || "ไม่ระบุ").map(([k]) => [k, L.filter(x => (causeText(x) || "ไม่ระบุ") === k).reduce((a, x) => a + dmv(x), 0)]).sort((a, b) => b[1] - a[1]);
   const g = f => { const m = {}; L.forEach(x => { const k = f(x); m[k] = (m[k] || 0) + dmv(x); }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
   const fm = v => dfmt(v);
   const hb = (rows) => rows.map(([n, v]) => `<div class="hb"><span class="n">${esc(n)}</span><span class="v">${S.d.metric === "minutes" ? Math.round(v) : v}<small>${total ? Math.round(v / total * 100) : 0}%</small></span><span class="track"><span class="fill" style="width:${total ? v / total * 100 : 0}%"></span></span></div>`).join("");
-  return `<div class="dgrid" style="margin-top:4px">
-    <div class="card">${sec("tool", "สาเหตุที่พบบ่อย", "Top 10")}${hb(byCause.slice(0, 10))}</div>
+  return `<div style="margin-top:4px">
     <div class="card">${sec("factory", "แยกตามพื้นที่ / โปรแกรม")}${hb(g(x => x.plant || "ไม่ระบุพื้นที่"))}
       <span class="lab" style="margin:16px 0 4px 2px">โปรแกรมที่ใช้ตอนเกิดปัญหา</span>${(() => { const P = g(x => x.program ? "โปรแกรม " + x.program : "").filter(r => r[0]); const none = L.filter(x => !x.program).length;
         return (P.length ? hb(P.slice(0, 8)) : `<p class="sub" style="margin:4px 2px">ยังไม่มีรายการที่ระบุโปรแกรม</p>`) + (none && P.length ? `<div class="sub" style="margin-top:6px">ไม่ระบุโปรแกรม ${none} รายการ</div>` : ""); })()}</div>
@@ -3720,7 +3718,7 @@ function viewUI() {
       <div class="colrow"><input type="color" data-ugc="${g}" value="${G.color}" ${dis}><select data-ugi="${g}" ${dis}>${GROUP_ICONS.map(ic => `<option value="${ic}" ${G.icon === ic ? "selected" : ""}>${ICON_TH[ic]}</option>`).join("")}</select></div></div>`; }).join("")}
     <small class="hint">เลือกว่าหัวข้อปัญหาไหนอยู่กลุ่มไหน ได้ที่แท็บ ตั้งค่า</small></div>`;
   h += `<div class="card">${sec("chart", "หน้าวิเคราะห์", "เลือกส่วนที่แสดง")}
-    ${sw("dash.insight", U.dash.insight, "ข้อสังเกตอัตโนมัติ")}${sw("dash.trend", U.dash.trend, "กราฟแนวโน้มตามเวลา")}${sw("dash.groups", U.dash.groups, "สัดส่วนตามกลุ่มปัญหา")}${sw("dash.hours", U.dash.hours, "ช่วงเวลาที่เกิดปัญหา")}${sw("dash.heat", U.dash.heat, "ตารางรายวัน")}${sw("dash.more", U.dash.more, "สาเหตุที่พบบ่อย · พื้นที่ / โปรแกรม")}
+    ${sw("dash.insight", U.dash.insight, "ข้อสังเกตอัตโนมัติ")}${sw("dash.trend", U.dash.trend, "กราฟแนวโน้มตามเวลา")}${sw("dash.groups", U.dash.groups, "สัดส่วนตามกลุ่มปัญหา")}${sw("dash.hours", U.dash.hours, "ช่วงเวลาที่เกิดปัญหา")}${sw("dash.heat", U.dash.heat, "ตารางรายวัน")}${sw("dash.more", U.dash.more, "แยกตามพื้นที่ / โปรแกรม")}
     <label class="f" style="margin-top:10px"><span class="lab">ช่วงวันที่เริ่มต้น</span><select data-udays ${dis}>${[7, 14, 30, 90].map(n => `<option value="${n}" ${U.dash.days === n ? "selected" : ""}>${n} วัน</option>`).join("")}</select></label>
     <small class="hint">ส่วน Top 10 และการเทียบ 2 ช่วงแสดงเสมอ</small></div>`;
   h += `<div class="card">${sec("factory", "พื้นที่ (Plant)", "คั่นด้วยเครื่องหมายจุลภาค เช่น PF1, PF2, PF3")}<input data-uplants value="${esc(plantsList().join(", "))}" autocapitalize="characters" ${dis}>
