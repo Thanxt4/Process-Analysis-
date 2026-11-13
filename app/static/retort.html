@@ -2467,8 +2467,9 @@ function wireLog() {
     if (t.id === "signIn") { const s = m.querySelector(".signline span"); if (s) s.textContent = `(${t.value || "................"})`; }
     if (t.classList.contains("pickIn")) pickFilter(t);
     if (t.classList.contains("causeIn")) { d.pc[t.dataset.cid].cause = t.value; t.closest(".pcard").querySelectorAll("[data-sug]").forEach(b => b.classList.toggle("on", b.dataset.sug === t.value.trim())); t.classList.remove("err"); }
-    if (t.classList.contains("actIn") || t.classList.contains("pAct")) d.pc[t.dataset.cid].action = t.value;
-    if (t.classList.contains("pCause")) d.pc[t.dataset.cid].cause = t.value;
+    if (t.classList.contains("actIn")) d.pc[t.dataset.cid].action = t.value;
+    if (t.classList.contains("pAct")) d.cats.forEach(id => { (d.pc[id] = d.pc[id] || { cause: "", action: "" }).action = t.value; });
+    if (t.classList.contains("pCause")) d.cats.forEach(id => { (d.pc[id] = d.pc[id] || { cause: "", action: "" }).cause = t.value; });
     if (t.dataset.dur) { const w = t.closest(".hm2"), h = num(w.querySelector('[data-dur="h"]').value) || 0, mm = num(w.querySelector('[data-dur="m"]').value) || 0;
       d.duration = h || mm ? String(Math.round((h * 60 + mm) * 100) / 100) : ""; } };
   m.onkeydown = e => { if (e.key === "Enter" && e.target.id === "mgIn") { e.preventDefault(); $("#mgAdd").click(); return; }
@@ -2749,7 +2750,7 @@ function showItem(id) {
   modal(`<h2>${esc(itemTitle(x))}</h2><p class="sub" style="margin:2px 0 12px">${esc(c ? c.name : "")}${causeText(x) ? "" : " · ยังไม่ระบุสาเหตุ (กด แก้ไข เพื่อเพิ่มได้)"}</p>
     ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}
     ${(() => { const v = x.values || {}; return [["หมายเลข IR", v.ir_irno], ["NRFT?", v.ir_nrft], ["ตลาด", v.ir_market], ["โค๊ตผลิตภัณฑ์", v.ir_pcode], ["ไลน์", v.ir_line], ["Shot Code", v.ir_shot],
-      ["วันผลิต / กะผลิต", v.ir_pdate ? `${dmy(v.ir_pdate)} ${v.ir_pshift || ""}` : ""], ["จำนวน (NRFT)", v.ir_qnrft], ["หมายเลขเครื่อง INK", v.ir_ink], ["หมายเลข BSK", v.ir_bsk]].map(([k, val]) => kv(k, val)).join(""); })()}
+      ["วันผลิต / กะผลิต", v.ir_pdate ? `${dmy(v.ir_pdate)} ${v.ir_pshift || ""}` : ""], ["จำนวน (NRFT)", v.ir_qnrft], ["หมายเลขเครื่อง INK", v.ir_ink], ["การตัดสินใจดำเนินการ", v.ir_decision], ["หมายเลข Basket (BSK)", v.ir_bsk]].map(([k, val]) => kv(k, val)).join(""); })()}
     ${vals}${detailFields().map(df => kv(df.label, detailVal(x, df) ? (df.key === "duration" ? fmtDur(detailVal(x, df)) : detailVal(x, df)) : "")).join("")}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? holdTxt(x).replace(/^Hold/, "Hold สินค้า") : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
   ? `<div class="apprbox ok">${I("check")}<div><b>อนุมัติแล้ว · ${esc(x.approvedBy)}</b><small>${esc(fmtTs(x.approvedAt))}</small></div></div>`
   : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>${S.role === "sup" ? "กดปุ่ม อนุมัติ ด้านล่าง" : "รอหัวหน้า (Supervisor) อนุมัติ"}</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
@@ -2944,6 +2945,7 @@ const IR_LABEL = Object.fromEntries(IR_COLS.map(c => [c[0], c[1]]));
 const IR = { items: [], loaded: false, codes: null, d: null, q: "", open2: false };
 // ประเภทไลน์: Cup · Can · Pouch · Freeze Dry · ช่อง "ไลน์" (คอลัมน์ R) = ประเภท + ไลน์ย่อย เช่น "Can Z"
 const IR_LINES = ["Cup", "Can", "Pouch", "Freeze Dry"];
+const irLtLab = t => t === "Freeze Dry" ? "FD" : t;  // ป้ายบนปุ่ม: Freeze Dry ย่อเป็น FD
 const irLtCls = t => t ? "t-" + t.toLowerCase().replace(/\s+/g, "-") : "";
 // รายชื่อไลน์ทั้งหมด (จากตารางไลน์ของโรงงาน) · ไลน์ใหม่ที่หน้างานพิมพ์เองใน IR จะขึ้นเป็นตัวเลือกให้ครั้งหน้าอัตโนมัติ
 const IR_LINE_MASTER = {
@@ -2960,7 +2962,7 @@ const irLT = x => x.lineType || irLineType(x.line);  // ประเภทไล
 const irLinesOf = t => [...new Set([...(IR_LINE_MASTER[t] || []), ...IR.items.filter(x => irLT(x) === t && x.line).map(x => irNormLine(x.line))])];
 function irLineField(d) {
   const t = d.lineType || irLineType(d.line), L = t ? irLinesOf(t) : [], cur = irNormLine(d.line), other = IR.lineNew || (cur && !L.includes(cur));
-  return `<div class="irline"><div class="seg">${IR_LINES.map(x => `<button type="button" data-irlt="${x}" class="${t === x ? "on" : ""}">${x}</button>`).join("")}</div>
+  return `<div class="irline"><div class="seg">${IR_LINES.map(x => `<button type="button" data-irlt="${x}" class="${t === x ? "on" : ""}">${irLtLab(x)}</button>`).join("")}</div>
     <select id="irLineSel" ${t ? "" : "disabled"}><option value="">${t ? "— เลือกไลน์ —" : "เลือกประเภทก่อน"}</option>${L.map(x => `<option ${x === cur && !other ? "selected" : ""}>${esc(x)}</option>`).join("")}<option value="__new" ${other && t ? "selected" : ""}>＋ ไลน์อื่น (พิมพ์เอง)</option></select></div>
     ${t && other ? `<input id="irLineNew" value="${esc(cur)}" placeholder="พิมพ์ชื่อไลน์ เช่น ${t === "Can" ? "Can Z" : t === "Cup" ? "Cup15" : t + " 1"}" autocomplete="off" style="margin-top:8px"><small class="hint">ไลน์ใหม่จะขึ้นเป็นตัวเลือกให้ครั้งหน้าอัตโนมัติ</small>` : ""}`;
 }
@@ -3245,7 +3247,7 @@ const PIR = { lineNew: false };
 const pv = (d, k) => (d.values || {})["ir_" + k] ?? "";
 function pirLineField(d) {
   const t = d.product && IR_LINES.includes(d.product) ? d.product : irLineType(pv(d, "line")), L = t ? irLinesOf(t) : [], cur = irNormLine(pv(d, "line")), other = PIR.lineNew || (cur && !L.includes(cur));
-  return `<div class="irline"><div class="seg">${IR_LINES.map(x => `<button type="button" data-plt="${x}" class="${t === x ? "on" : ""}">${x}</button>`).join("")}</div>
+  return `<div class="irline"><div class="seg">${IR_LINES.map(x => `<button type="button" data-plt="${x}" class="${t === x ? "on" : ""}">${irLtLab(x)}</button>`).join("")}</div>
     <select id="pLineSel" ${t ? "" : "disabled"}><option value="">${t ? "— เลือกไลน์ —" : "เลือกประเภทก่อน"}</option>${L.map(x => `<option ${x === cur && !other ? "selected" : ""}>${esc(x)}</option>`).join("")}<option value="__new" ${other && t ? "selected" : ""}>＋ ไลน์อื่น (พิมพ์เอง)</option></select></div>
     ${t && other ? `<input id="pLineNew" value="${esc(cur)}" placeholder="พิมพ์ชื่อไลน์" autocomplete="off" style="margin-top:8px">` : ""}`;
 }
@@ -3265,15 +3267,17 @@ function pirCard(d, many, fields) {
     ${inp("irno", "หมายเลข IR", 'placeholder="เช่น IR-PF1-001"')}${inp("shot", "Shot Code")}${inp("qnrft", "จำนวน (NRFT)", 'inputmode="decimal"')}
     <label class="f"><span class="lab">วันผลิต</span><input type="date" data-v="ir_pdate" value="${esc(pv(d, "pdate") || d.date)}"></label>
     <div class="f"><span class="lab">กะผลิต</span><div class="seg">${["DS", "NS"].map(v => `<button type="button" data-ppsh="${v}" class="${(pv(d, "pshift") || d.shift) === v ? "on" : ""}">${v}</button>`).join("")}</div></div>
-    ${inp("ink", "หมายเลขเครื่อง INK")}${inp("bsk", "หมายเลข BSK")}
+    ${inp("ink", "หมายเลขเครื่อง INK")}${inp("bsk", "หมายเลข Basket (BSK)")}
     ${fields.map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
     ${detailInput(detailFields().find(x => x.key === "duration") || DEFAULT_DETAILS[1], d)}
     ${custom.map(x => detailInput(x, d)).join("")}
     <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail" rows="2">${esc(d.detail || "")}</textarea></label>
-    ${S.editingId ? "" : (d.cats || []).map(catById).filter(Boolean).map(c => { const pc = (d.pc || {})[c.id] || { cause: "", action: "" }, nm = many ? ` <small class="sub">· ${esc(c.name)}</small>` : "";
-      return `<label class="f full"><span class="lab">สาเหตุ${nm}</span><input class="pCause" data-cid="${c.id}" value="${esc(pc.cause)}" list="pcs_${c.id}" placeholder="กรอกสาเหตุ หรือเลือกจากรายการ" autocomplete="off"></label>
-        <datalist id="pcs_${c.id}">${[...(c.causes || []), UNKNOWN].map(x => `<option value="${esc(x)}">`).join("")}</datalist>
-        <label class="f full"><span class="lab">การแก้ไข${nm}</span><textarea class="pAct" data-cid="${c.id}" rows="2" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(pc.action)}</textarea></label>`; }).join("")}
+    ${S.editingId ? "" : (() => { const cs = (d.cats || []).map(catById).filter(Boolean), pc = (d.pc || {})[d.cats[0]] || { cause: "", action: "" };
+      const sug = [...new Set([...cs.flatMap(c => c.causes || []), UNKNOWN])];  // ช่องเดียว ใช้ร่วมกันทุกปัญหาที่เลือก
+      return `<label class="f full"><span class="lab">สาเหตุ</span><input class="pCause" value="${esc(pc.cause)}" list="pcsAll" placeholder="กรอกสาเหตุ หรือเลือกจากรายการ" autocomplete="off"></label>
+        <datalist id="pcsAll">${sug.map(x => `<option value="${esc(x)}">`).join("")}</datalist>
+        <label class="f full"><span class="lab">การแก้ไข</span><textarea class="pAct" rows="2" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(pc.action)}</textarea></label>`; })()}
+    <label class="f full"><span class="lab">การตัดสินใจดำเนินการ</span><textarea data-v="ir_decision" rows="2" placeholder="เช่น Hold รอตรวจสอบ, ปล่อยผ่าน, ฆ่าเชื้อซ้ำ">${esc(pv(d, "decision"))}</textarea></label>
   </div></div>
   <datalist id="irDocs">${Object.keys(IR.codes || {}).map(v => `<option value="${esc(v)}">`).join("")}</datalist>
   <datalist id="pMk">${(mk.length ? mk : ["P", "N", "E", "X", "C", "S"]).map(v => `<option value="${esc(v)}">`).join("")}</datalist>`;
@@ -3313,7 +3317,7 @@ function problemToIR(x) {
   return { nrft: v.ir_nrft || "N", doc: x.code || "", market: v.ir_market || "", irNo: v.ir_irno || "", plant: x.plant || "", prodDate: v.ir_pdate || x.date, prodShift: v.ir_pshift || x.shift,
     repDate: x.date, repShift: x.shift, checkpoint: "Retort" + (x.retort ? " " + x.retort : ""), productCode: v.ir_pcode || "", shotCode: v.ir_shot || "",
     qtyHold: x.impact === "hold" ? (x.holdQty || "") : "", qtyNrft: v.ir_qnrft || "", line: v.ir_line || "", problem: c ? c.name : "", detail: x.detail || "",
-    cause: causeText(x) || "", inkNo: v.ir_ink || "", fix: x.action || "", decision: x.impact === "hold" ? "Hold" : "", bsk: v.ir_bsk || "", by: x.by || "",
+    cause: causeText(x) || "", inkNo: v.ir_ink || "", fix: x.action || "", decision: v.ir_decision || (x.impact === "hold" ? "Hold" : ""), bsk: v.ir_bsk || "", by: x.by || "",
     approver: x.approvedBy || "", result: "", status: "", closeDate: "", decision2: "", otr: "", ots: "", ncpNo: "", remark: x.batch ? `Retort no./รอบหม้อ ${x.batch}` : "",
     by3: "", approvedBy: x.approvedBy || "", ncpLevel: "", trim: "" };
 }
