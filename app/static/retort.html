@@ -792,10 +792,11 @@ h2.q::before{content:"";width:6px;height:22px;border-radius:3px;background:linea
 .tabrow .mv{width:38px;min-height:38px;padding:0;flex:0 0 auto}.tabrow .mv:disabled{opacity:.3}
 .grow5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 .grow5 input{min-height:44px;font-size:14.5px;padding:8px 6px;text-align:center}
-.grprow{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(0,190px);gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9}
+.grprow{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(0,190px) 36px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9}
 .grprow .gic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--gc)}
 .grprow input:not([type=color]){min-height:46px;font-size:15px;padding:8px 10px}
-@media(max-width:560px){.grprow{grid-template-columns:42px minmax(0,1fr)}.grprow .colrow{grid-column:2}.grow5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.grpdel{width:36px;padding:0!important}
+@media(max-width:560px){.grprow{grid-template-columns:42px minmax(0,1fr) 36px}.grprow .colrow{grid-column:2}.grow5{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* ===== ความเร็ว: แถบเมนูล่างไม่ใช้ blur (หนักตอนเลื่อนจอบนมือถือรุ่นเล็ก) · ย่อหน้าที่อยู่นอกจอไม่ต้องวาด ===== */
 @media(max-width:699px){.nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:#fff}}
 #listCard .item{content-visibility:auto;contain-intrinsic-size:auto 76px}
@@ -1278,6 +1279,15 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 #main.vset>.addcat{grid-column:1/-1}
 .card.flashnew{animation:flashNew 2.4s ease}
 @keyframes flashNew{0%,40%{box-shadow:0 0 0 4px rgba(245,158,11,.55);border-color:var(--amber)}100%{box-shadow:var(--sh)}}
+/* ปรับแต่ง: เพิ่มกลุ่มปัญหา */
+.grpadd{margin-top:12px;padding:12px;border-radius:14px;border:1.5px dashed var(--amber);background:#fffbeb}
+.grpadd .lab{margin:0 0 8px 2px}
+.grpadd-r{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(110px,160px) auto;gap:8px;align-items:center}
+.grpadd-r input,.grpadd-r select{background-color:#fff}
+.grpadd-r input[type=color]{padding:4px;min-height:50px;cursor:pointer}
+.grpadd-r button{min-height:50px;white-space:nowrap}
+@media(max-width:600px){.grpadd-r{grid-template-columns:56px 1fr}.grpadd-r #ugNewName,.grpadd-r button{grid-column:1/-1}}
+.grprow.flashnew{animation:flashNew 2.4s ease;border-radius:12px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1435,6 +1445,9 @@ function uiCfg(raw) {
   const f = c.form || {}, ds = c.dash || {}, groups = {};
   Object.keys(GROUPS_DEFAULT).forEach(g => { const o = (c.groups || {})[g] || {}, d = GROUPS_DEFAULT[g];
     groups[g] = { name: str(o.name, d.name, 40), color: hex(o.color, d.color), icon: GROUP_ICONS.includes(o.icon) ? o.icon : d.icon }; });
+  // กลุ่มที่ผู้ดูแลเพิ่มเอง (คีย์ gxxxxxx) ต่อท้ายกลุ่มมาตรฐาน
+  Object.entries(c.groups || {}).filter(([g, o]) => /^g[0-9a-z]{4,10}$/.test(g) && !GROUPS_DEFAULT[g] && o && typeof o === "object").slice(0, 30)
+    .forEach(([g, o]) => { groups[g] = { name: str(o.name, "กลุ่มใหม่", 40), color: hex(o.color, "#64748b"), icon: GROUP_ICONS.includes(o.icon) ? o.icon : "tag", custom: true }; });
   return {
     brand: str(c.brand, D.brand, 60), title: str(c.title, D.title, 60), subtitle: str(c.subtitle, D.subtitle, 80), stamp: str(c.stamp, D.stamp, 60),
     navy: hex(c.navy, D.navy), amber: hex(c.amber, D.amber), scale: Math.min(130, Math.max(85, parseInt(c.scale, 10) || 100)),
@@ -1472,7 +1485,8 @@ function applyTheme(navy, amber) {
 function applyUI() {
   U = uiCfg(S.config.ui);
   $(".ttl .brand").textContent = U.brand; $("#title").textContent = U.title; $("#subtitle").textContent = U.subtitle;
-  Object.keys(U.groups).forEach(g => Object.assign(GROUPS[g], U.groups[g]));
+  Object.keys(GROUPS).forEach(g => { if (!U.groups[g] && !GROUPS_DEFAULT[g]) delete GROUPS[g]; });  // กลุ่มที่ถูกลบ
+  Object.keys(U.groups).forEach(g => { GROUPS[g] = Object.assign(GROUPS[g] || {}, U.groups[g]); });
   applyTheme(U.navy, U.amber);
   document.body.style.zoom = U.scale === 100 ? "" : String(U.scale / 100);
 }
@@ -3715,8 +3729,12 @@ function viewUI() {
     <small class="hint">ช่อง สาเหตุ และ ลงนามผู้บันทึก บังคับกรอกเสมอ</small></div>`;
   h += `<div class="card">${sec("tag", "กลุ่มปัญหา", "ชื่อ · สี · ไอคอน ใช้ในหน้าบันทึกและหน้าวิเคราะห์")}
     ${Object.keys(U.groups).map(g => { const G = U.groups[g]; return `<div class="grprow" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><input data-ugn="${g}" value="${esc(G.name)}" maxlength="40" ${dis}>
-      <div class="colrow"><input type="color" data-ugc="${g}" value="${G.color}" ${dis}><select data-ugi="${g}" ${dis}>${GROUP_ICONS.map(ic => `<option value="${ic}" ${G.icon === ic ? "selected" : ""}>${ICON_TH[ic]}</option>`).join("")}</select></div></div>`; }).join("")}
-    <small class="hint">เลือกว่าหัวข้อปัญหาไหนอยู่กลุ่มไหน ได้ที่แท็บ ตั้งค่า</small></div>`;
+      <div class="colrow"><input type="color" data-ugc="${g}" value="${G.color}" ${dis}><select data-ugi="${g}" ${dis}>${GROUP_ICONS.map(ic => `<option value="${ic}" ${G.icon === ic ? "selected" : ""}>${ICON_TH[ic]}</option>`).join("")}</select></div>${G.custom && !ro ? `<button class="ghost sm danger grpdel" data-ugdel="${g}" aria-label="ลบกลุ่ม" title="ลบกลุ่ม">${I("trash")}</button>` : `<span></span>`}</div>`; }).join("")}
+    ${ro ? "" : `<div class="grpadd"><span class="lab">เพิ่มกลุ่มใหม่</span><div class="grpadd-r"><input id="ugNewName" placeholder="ชื่อกลุ่ม เช่น ระบบปั๊ม, วัตถุดิบ" maxlength="40" autocomplete="off">
+      <input type="color" id="ugNewColor" value="${["#0d9488", "#be123c", "#4d7c0f", "#a16207", "#6d28d9", "#0369a1"][Object.keys(U.groups).length % 6]}" aria-label="สี">
+      <select id="ugNewIcon" aria-label="ไอคอน">${GROUP_ICONS.map(ic => `<option value="${ic}" ${ic === "target" ? "selected" : ""}>${ICON_TH[ic]}</option>`).join("")}</select>
+      <button class="pri" id="ugAdd">${I("plus")}เพิ่มกลุ่ม</button></div></div>`}
+    <small class="hint">เลือกว่าหัวข้อปัญหาไหนอยู่กลุ่มไหน ได้ที่แท็บ ตั้งค่า · กลุ่มที่เพิ่มเองลบได้ (หัวข้อในกลุ่มนั้นจะย้ายไป "${esc(U.groups.other.name)}")</small></div>`;
   h += `<div class="card">${sec("chart", "หน้าวิเคราะห์", "เลือกส่วนที่แสดง")}
     ${sw("dash.insight", U.dash.insight, "ข้อสังเกตอัตโนมัติ")}${sw("dash.trend", U.dash.trend, "กราฟแนวโน้มตามเวลา")}${sw("dash.groups", U.dash.groups, "สัดส่วนตามกลุ่มปัญหา")}${sw("dash.hours", U.dash.hours, "ช่วงเวลาที่เกิดปัญหา")}${sw("dash.heat", U.dash.heat, "ตารางรายวัน")}${sw("dash.more", U.dash.more, "แยกตามพื้นที่ / โปรแกรม")}
     <label class="f" style="margin-top:10px"><span class="lab">ช่วงวันที่เริ่มต้น</span><select data-udays ${dis}>${[7, 14, 30, 90].map(n => `<option value="${n}" ${U.dash.days === n ? "selected" : ""}>${n} วัน</option>`).join("")}</select></label>
@@ -3763,7 +3781,20 @@ function wireUI() {
     else if (x.id === "uiImport" && x.files[0]) { const fr = new FileReader(); fr.onload = () => { try { const o = JSON.parse(fr.result); S.config.ui = JSON.parse(JSON.stringify(uiCfg(o.ui || o)));
         applyUI(); renderNav(); uiSave(); redo(); toast("นำเข้าการตั้งค่าแล้ว"); } catch { toast("ไฟล์ไม่ถูกต้อง"); } }; fr.readAsText(x.files[0]); x.value = ""; }
   };
+  m.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "ugNewName") { e.preventDefault(); $("#ugAdd").click(); } });
   m.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (b.id === "ugAdd") {  // เพิ่มกลุ่มปัญหาใหม่
+      const inp = $("#ugNewName"), name = inp.value.replace(/\s+/g, " ").trim();
+      if (!name) { toast("พิมพ์ชื่อกลุ่มก่อน"); inp.focus(); return; }
+      if (Object.values(U.groups).some(G => G.name.trim().toLowerCase() === name.toLowerCase())) { toast(`มีกลุ่ม "${name}" อยู่แล้ว`); inp.select(); return; }
+      const key = "g" + Math.random().toString(36).slice(2, 8), color = $("#ugNewColor").value, icon = $("#ugNewIcon").value;
+      ed(c => { c.groups[key] = { name, color, icon }; }, true); toast(`เพิ่มกลุ่ม "${name}" แล้ว · ไปเลือกหัวข้อเข้ากลุ่มนี้ได้ที่แท็บ ตั้งค่า`);
+      setTimeout(() => { const r = m.querySelector(`[data-ugn="${key}"]`); if (r) { r.closest(".grprow").scrollIntoView({ block: "center", behavior: "smooth" }); r.closest(".grprow").classList.add("flashnew"); } }, 50);
+      return; }
+    if (ds.ugdel) { const g = ds.ugdel, G = U.groups[g], used = S.config.categories.filter(c => !c.deleted && c.grp === g);
+      confirmBox(`ลบกลุ่ม "${G.name}"?${used.length ? ` หัวข้อ ${used.length} หัวข้อในกลุ่มนี้จะย้ายไป "${U.groups.other.name}"` : ""}`, () => {
+        used.forEach(c => { c.grp = "other"; }); ed(c => { delete c.groups[g]; }, true); toast(`ลบกลุ่ม "${G.name}" แล้ว`); });
+      return; }
     if (ds.preset) ed(c => { c.navy = ds.preset.slice(0, 7); c.amber = ds.preset.slice(7); }, true);
     else if (ds.uscale) ed(c => { c.scale = +ds.uscale; }, true);
     else if (ds.utmv) { const [i, d] = ds.utmv.split(".").map(Number); ed(c => { [c.tabs[i], c.tabs[i + d]] = [c.tabs[i + d], c.tabs[i]]; }, true); }
