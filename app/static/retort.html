@@ -2885,7 +2885,7 @@ const IR_LINES = ["Cup", "Can", "Pouch", "Spout", "Sachet"];
 const IR_LINE_MASTER = {
   Cup: Array.from({ length: 14 }, (_, i) => "Cup" + (i + 1)),
   Can: ["B", "C", "D", "E", "F", "H", "J", "K", "P", "R", "T", "U", "Y", "Z"].map(x => "Can " + x),
-  Pouch: ["Pouch PF1", "Pouch VS", "Pouch Spout 2", "Pouch Spout 3", "Big Spout", "Auto A", "Auto B", "Auto C", "Auto D", "Auto E", "Auto F"],
+  Pouch: ["Pouch PF1", "Pouch VS", "Pouch Spout 2", "Pouch Spout 3", "Big Spout", "Pouch Jerky", "Auto A", "Auto B", "Auto C", "Auto D", "Auto E", "Auto F", "Auto B+C", "Auto C+D"],
   Spout: [], Sachet: [] };
 const irNormLine = v => String(v || "").replace(/\s+/g, " ").trim().replace(/^cup\s+(\d+)$/i, "Cup$1");
 const irLineType = v => { const n = irNormLine(v).toLowerCase(); if (!n) return "";
