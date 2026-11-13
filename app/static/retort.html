@@ -1267,6 +1267,17 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .rt-t b.hi,.rt-sum b.hi{color:var(--bad)}.rt-t b.md,.rt-sum b.md{color:#c2410c}.rt-t b.lo,.rt-sum b.lo{color:#b45309}.rt-t b.ok,.rt-sum b.ok{color:var(--ok)}
 .rt-na{color:#94a3b8}
 @media(max-width:560px){.rt-sum{grid-template-columns:1fr 1fr}.rt-sum .all{grid-column:1/-1}.rn-th,.rn-r{grid-template-columns:62px 1fr 1fr;gap:6px}.rn-c input{width:64px}.rn-u{display:none}}
+/* ตั้งค่า: เพิ่มหัวข้อปัญหาใหม่ (บนสุด) */
+.addcat{border:2px solid var(--amber);background:linear-gradient(180deg,#fffbeb,#fff 60%)}
+.addcat-r{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.addcat-r input{min-height:50px;font-size:17px;background:#fff}
+.addcat-r select{width:auto;min-height:50px;font-size:15px;background-color:#fff}
+.addcat-r button{min-height:50px;padding:0 18px;white-space:nowrap}
+.addcat-err{min-height:18px;margin-top:6px;font-size:13.5px;color:var(--bad)}
+@media(max-width:700px){.addcat-r{grid-template-columns:1fr 1fr}.addcat-r input{grid-column:1/-1}}
+#main.vset>.addcat{grid-column:1/-1}
+.card.flashnew{animation:flashNew 2.4s ease}
+@keyframes flashNew{0%,40%{box-shadow:0 0 0 4px rgba(245,158,11,.55);border-color:var(--amber)}100%{box-shadow:var(--sh)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3586,9 +3597,13 @@ function viewSettings() {
   const ro = !S.canAdmin;
   let h = ro ? `<div class="alert a-warn">${I("info")}<div style="flex:1">ดูได้อย่างเดียว · ผู้ดูแลกดปลดล็อกเพื่อแก้หัวข้อ/สาเหตุ/รายชื่อ Retort</div><button class="pri sm" id="unlock">ปลดล็อกแก้ไข</button></div>` : "";
   h += `<div class="alert a-info">${I("info")}<div>เพิ่มหัวข้อปัญหาและสาเหตุได้ที่นี่ หัวข้อที่ปิดไว้จะไม่ขึ้นในหน้าบันทึก แต่ข้อมูลเก่ายังอยู่ในการวิเคราะห์</div></div>`;
+  if (!ro) h += `<div class="card addcat">${sec("plus", "เพิ่มหัวข้อปัญหาใหม่", `ตอนนี้มี ${S.config.categories.filter(c => !c.deleted).length} หัวข้อ · หัวข้อใหม่จะขึ้นในหน้าบันทึกทันที`)}
+    <div class="addcat-r"><input id="newCat" placeholder="ชื่อหัวข้อ เช่น Cooling ผิดปกติ, Flow rate ต่ำ" maxlength="120" autocomplete="off">
+      <select id="newCatGrp" aria-label="กลุ่ม">${Object.keys(GROUPS).map(g => `<option value="${g}" ${g === "other" ? "selected" : ""}>${esc(GROUPS[g].name)}</option>`).join("")}</select>
+      <button class="pri" id="addCat">${I("plus")}เพิ่มหัวข้อ</button></div><div class="addcat-err" id="newCatErr"></div></div>`;
   S.config.categories.forEach((c, ci) => {
     if (c.deleted) return;  // หัวข้อที่ลบแล้ว (เก็บไว้ให้ประวัติเก่าแสดงชื่อได้)
-    h += `<div class="card"><div class="sec"><span class="ic" style="background:${grpOf(c).color}1f;color:${grpOf(c).color}">${I(grpOf(c).icon)}</span><div class="t"><input data-cname="${ci}" value="${esc(c.name)}" ${ro ? "disabled" : ""} style="font-weight:600"></div></div>
+    h += `<div class="card" id="cat-${esc(c.id)}"><div class="sec"><span class="ic" style="background:${grpOf(c).color}1f;color:${grpOf(c).color}">${I(grpOf(c).icon)}</span><div class="t"><input data-cname="${ci}" value="${esc(c.name)}" ${ro ? "disabled" : ""} style="font-weight:600"></div></div>
       <div class="row sp" style="margin-bottom:6px"><span class="lab" style="margin:0">ใช้งาน</span><div class="seg" style="width:180px"><button data-cact="${ci}" data-v="1" class="${c.active ? "on" : ""}" ${ro ? "disabled" : ""}>เปิด</button><button data-cact="${ci}" data-v="0" class="${!c.active ? "on" : ""}" ${ro ? "disabled" : ""}>ปิด</button></div></div>
       <div class="row sp" style="margin-bottom:6px"><span class="lab" style="margin:0">กลุ่ม (สี/ไอคอน)</span><select data-cgrp="${ci}" style="width:auto;min-height:42px;font-size:15px;padding:6px 36px 6px 12px" ${ro ? "disabled" : ""}>${Object.keys(GROUPS).map(g => `<option value="${g}" ${(c.grp || "other") === g ? "selected" : ""}>${esc(GROUPS[g].name)}</option>`).join("")}</select></div>
       <span class="lab" style="margin-top:12px">สาเหตุ (${c.causes.length})</span>
@@ -3601,7 +3616,6 @@ function viewSettings() {
       <button class="ghost sm danger" data-catdel="${esc(c.id)}" style="margin-top:12px">${I("trash")}ลบหัวข้อนี้ (ต้องใส่รหัสผ่าน)</button>
     </div>`;
   });
-  if (!ro) h += `<div class="card">${sec("plus", "เพิ่มหัวข้อปัญหาใหม่")}<div class="row"><input id="newCat" placeholder="เช่น Cooling ผิดปกติ, Flow rate ต่ำ"><button class="pri" id="addCat" style="flex:0 0 auto">${I("plus")}เพิ่ม</button></div></div>`;
   const nDemo = Object.values(S.items).filter(x => x.demo).length;
   if (nDemo && !ro) h += `<div class="card">${sec("info", "ข้อมูลตัวอย่าง (Demo)", `มีข้อมูลตัวอย่าง ${nDemo} รายการ ลบออกก่อนเริ่มใช้งานจริง`)}<button class="blk danger" id="delDemo">${I("trash")}ลบข้อมูลตัวอย่างทั้งหมด</button></div>`;
   h += `<div class="card">${sec("spark", "ผู้ช่วย AI", AI.status ? (AI.status.configured ? `ตั้งค่าแล้ว${AI.status.from_env ? " (จาก start_server.bat)" : ""}` : "ยังไม่ได้ตั้งค่า API Key") : "")}
@@ -3627,6 +3641,9 @@ function viewSettings() {
     else if (ds.plret) { S.config.plantRetorts = { ...(S.config.plantRetorts || {}), [ds.plret]: x.value.split(",").map(v => v.trim().toUpperCase()).filter(Boolean) }; later(); }
     else if (x.id === "retCfg") { S.config.retorts = x.value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean); later(); }
   };
+  m.onkeydown = e => { if (e.key !== "Enter") return; const t = e.target;
+    if (t.id === "newCat") { e.preventDefault(); $("#addCat").click(); }
+    else if (/^newCause\d+$/.test(t.id)) { e.preventDefault(); const b = m.querySelector(`[data-cadd="${t.id.slice(8)}"]`); if (b) b.click(); } };
   m.onclick = e => {
     const b = e.target.closest("button"); if (!b) return; const ds = b.dataset; const C = S.config.categories;
     const redo = () => { saveConfig(); const y = window.scrollY; viewSettings(); window.scrollTo(0, y); };
@@ -3639,7 +3656,18 @@ function viewSettings() {
     else if (ds.fadd) { const c = C[+ds.fadd]; c.fields = c.fields || []; c.fields.push({ key: uid("f"), label: "ค่าใหม่", unit: "" }); redo(); }
     else if (ds.fdel) { const [ci, i] = ds.fdel.split(".").map(Number); C[ci].fields.splice(i, 1); redo(); }
     else if (b.id === "delDemo") { const ids = Object.values(S.items).filter(x => x.demo).map(x => x.id); confirmBox(`ลบข้อมูลตัวอย่าง ${ids.length} รายการ?`, async () => { for (const id of ids) await deleteItem(id); toast("ลบข้อมูลตัวอย่างแล้ว"); render(); }); }
-    else if (b.id === "addCat") { const v = $("#newCat").value.trim(); if (!v) return; C.push({ id: uid("c"), name: v, active: true, causes: [], fields: [] }); redo(); toast("เพิ่มหัวข้อแล้ว เพิ่มสาเหตุต่อได้เลย"); }
+    else if (b.id === "addCat") {
+      const inp = $("#newCat"), v = inp.value.replace(/\s+/g, " ").trim(), err = $("#newCatErr");
+      if (!v) { err.textContent = "พิมพ์ชื่อหัวข้อก่อน"; inp.focus(); return; }
+      const dup = C.find(c => c.name.trim().toLowerCase() === v.toLowerCase());
+      if (dup && !dup.deleted) { err.textContent = `มีหัวข้อ "${dup.name}" อยู่แล้ว`; inp.select(); return; }
+      let id = dup ? dup.id : uid("c");
+      if (dup) { dup.deleted = false; dup.active = true; dup.grp = $("#newCatGrp").value; }  // เคยลบไปแล้ว → นำกลับมา (ประวัติเก่ายังผูกกับหัวข้อเดิม)
+      else C.push({ id, name: v, active: true, causes: [], fields: [], grp: $("#newCatGrp").value });
+      saveConfig(); viewSettings(); toast(`เพิ่มหัวข้อ "${v}" แล้ว · เพิ่มสาเหตุต่อได้เลย`);
+      const card = document.getElementById("cat-" + id);
+      if (card) { card.scrollIntoView({ behavior: "smooth", block: "center" }); card.classList.add("flashnew"); setTimeout(() => card.classList.remove("flashnew"), 2600);
+        const ci = C.findIndex(c => c.id === id), ni = $("#newCause" + ci); if (ni) setTimeout(() => ni.focus({ preventScroll: true }), 500); } }
   };
 }
 
