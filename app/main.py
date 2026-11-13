@@ -2983,17 +2983,22 @@ def _ir_codes_load(p: Path) -> dict:
         return {}
 
 
+def _ir_code_list(v) -> list:
+    return [str(c) for c in v] if isinstance(v, list) else ([str(v)] if v else [])
+
+
 def _ir_codes_learn(x: dict) -> bool:
     """รหัสเอกสาร + ตลาด → โค๊ตผลิตภัณฑ์ ที่ยังไม่มีในระบบ: เพิ่มเข้า ir_codes_custom.json"""
     doc, mk, code = (str(x.get(k) or "").strip().upper() for k in ("doc", "market", "productCode"))
     if not (doc and code and _IR_CODE_RE.match(doc) and _IR_CODE_RE.match(code) and (not mk or _IR_CODE_RE.match(mk))):
         return False
-    if mk in (_ir_codes_load(IR_CODES_STATIC).get(doc) or {}):
+    if code in _ir_code_list((_ir_codes_load(IR_CODES_STATIC).get(doc) or {}).get(mk)):
         return False
     cus = _ir_codes_load(IR_CODES_CUSTOM)
-    if mk in (cus.get(doc) or {}):
+    have = _ir_code_list((cus.get(doc) or {}).get(mk))
+    if code in have:
         return False
-    cus.setdefault(doc, {})[mk] = code
+    cus.setdefault(doc, {})[mk] = have + [code] if have else code  # มีหลายโค๊ต = เก็บเป็นรายการ
     tmp = IR_CODES_CUSTOM.with_suffix(".tmp")
     tmp.write_text(json.dumps(cus, ensure_ascii=False, indent=0), encoding="utf-8")
     tmp.replace(IR_CODES_CUSTOM)
@@ -3009,7 +3014,9 @@ def api_rt_ir_codes(request: Request):
         if isinstance(m, dict):
             out.setdefault(doc, {})
             for mk, code in m.items():
-                out[doc].setdefault(mk, code)
+                L = _ir_code_list(out[doc].get(mk))
+                L += [c for c in _ir_code_list(code) if c not in L]
+                out[doc][mk] = L[0] if len(L) == 1 else L
     return out
 
 
