@@ -1476,6 +1476,9 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
   .lc-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}.lc-chips::-webkit-scrollbar{display:none}.lc-chips button{flex:0 0 auto;min-height:34px;padding:2px 11px;font-size:13px}
   .lc-sel{flex-wrap:wrap}.lc-sel .lc-chips{flex:1 1 calc(100% - 60px)}.lc-sel .lc-dd{flex:1 1 40%;padding-left:8px}.lc-dd select{max-width:none;width:100%;min-height:36px;font-size:13px}
   .lc-reset{flex:0 0 auto;padding:0 6px}}
+.addcat-fab{position:fixed;right:24px;bottom:24px;z-index:40;display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:0 22px;border-radius:99px;font-size:16px;font-weight:800;background:var(--amber);border-color:var(--amber);color:#1b2a41;box-shadow:0 10px 28px rgba(15,23,42,.3)}
+.addcat-fab[hidden]{display:none}
+@media(max-width:900px){.addcat-fab{bottom:92px;right:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2001,7 +2004,8 @@ function render() {
   $("#main").classList.toggle("xwide", S.view === "analyze");
   $("#main").classList.toggle("vset", S.view === "settings" || S.view === "ui");
   S.charts = {}; $("#main").classList.remove("split");
-  document.body.classList.remove("svfull");  // ออกจากตาราง Survey แบบเต็มจอ เมื่อไปแท็บอื่น
+  document.body.classList.remove("svfull");
+  document.querySelectorAll(".addcat-fab").forEach(x => x.remove());  // ออกจากตาราง Survey แบบเต็มจอ เมื่อไปแท็บอื่น
   ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, runs: viewRuns, irlist: viewIRList, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
@@ -4333,6 +4337,12 @@ function viewSettings() {
   h += `<div class="card">${sec("grid", "หม้อของแต่ละพื้นที่", "ใช้แสดงในหน้าบันทึก (เลือกพื้นที่ → หม้อ) คั่นด้วยเครื่องหมายจุลภาค")}
     ${plantsList().map(pl => `<label class="f" style="margin-top:8px"><span class="lab">${pl}</span><input data-plret="${pl}" value="${esc(plantRetorts(pl).join(", "))}" ${ro ? "disabled" : ""}></label>`).join("")}</div>`;
   $("#main").innerHTML = h;
+  // ปุ่มลอย "เพิ่มหัวข้อ": ขึ้นเมื่อเลื่อนลงจนไม่เห็นกล่องเพิ่มหัวข้อ · แตะแล้วกลับไปที่กล่องพร้อมพิมพ์
+  document.querySelectorAll(".addcat-fab").forEach(x => x.remove());
+  const ac = $(".addcat");
+  if (ac) { const fab = document.createElement("button"); fab.className = "pri addcat-fab"; fab.innerHTML = `${I("plus")}<span>เพิ่มหัวข้อ</span>`; fab.hidden = true; document.body.appendChild(fab);
+    fab.onclick = () => { ac.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => $("#newCat") && $("#newCat").focus(), 350); };
+    const io = new IntersectionObserver(([en]) => { if (!fab.isConnected) return io.disconnect(); fab.hidden = en.isIntersecting || S.view !== "settings"; }); io.observe(ac); }
   if (!AI.status) aiStatus().then(() => { if (S.view === "settings") { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); } });
   $("#main").querySelectorAll("[data-catdel]").forEach(b => b.onclick = () => askDelete("category", b.dataset.catdel, () => { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); }));
   if (ro) { $("#unlock").onclick = async () => { if (await unlockAdmin()) viewSettings(); }; return; }
