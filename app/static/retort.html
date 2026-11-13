@@ -1314,6 +1314,15 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .rh-t tfoot tr:first-child td,.rh-t tfoot tr:first-child th{border-top:0}
 .rh-t tfoot tr:nth-child(1) td{color:#b45309}.rh-t tfoot tr:nth-child(2) td{color:#1e3a8a}
 .rh-t tfoot tr.p td{color:var(--bad)}.rh-t tfoot tr.pc td{background:var(--navy);color:#fff}
+/* ตั้งค่าจากหน้า Admin */
+body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
+.sitebn-w{padding-bottom:0}
+.sitebn{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:14px;font-size:14.5px;font-weight:600;line-height:1.45;border:1px solid}
+.sitebn.info{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}.sitebn.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.sitebn.bad{background:#fef2f2;border-color:#fecaca;color:#991b1b}.sitebn.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+.siteoff{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.siteoff>div{max-width:420px;text-align:center;background:#fff;border-radius:22px;padding:28px 24px;box-shadow:var(--sh);border:1px solid var(--line)}
+.siteoff h2{margin:10px 0 6px;color:var(--navy)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1348,6 +1357,7 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 <nav class="nav"><div class="sb-brand"><span class="sb-logo"><svg class="i" viewBox="0 0 24 24"><path d="M10 13.5a4 4 0 1 0 4 0V5a2 2 0 0 0-4 0v8.5"/><path d="M10 9h4"/></svg></span><span><b>Retort</b><small>Analysis</small></span></div>
   <div class="sb-lab">เมนู</div><div class="in" id="nav"></div>
   <a class="sb-home" href="/"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>กลับหน้าหลัก</a></nav>
+<div class="wrap sitebn-w" id="siteBannerW" hidden><div class="sitebn" id="siteBanner"></div></div>
 <main class="wrap" id="main"></main>
 <div id="modalRoot"></div>
 <div class="lock hide" id="lock"><form class="lockbox" id="lockForm">
@@ -3955,6 +3965,22 @@ new MutationObserver(() => { if (!$("#ntBox")) NT.open = false; if (!$("#pplList
 setInterval(loadNotif, 45000); setInterval(loadPpl, 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadNotif(); loadPpl(); } });
 setTimeout(() => { loadNotif(); loadPpl(); }, 800);
+
+
+/* ---------- ตั้งค่าจากหน้า Admin: ปิดหน้า Retort ชั่วคราว · ซ่อนกระดิ่ง/ออนไลน์ · ประกาศ ---------- */
+async function loadSite() {
+  let st; try { const r = await fetch("/api/site", { cache: "no-store" }); if (!r.ok) return; st = await r.json(); } catch { return; }
+  const F = st.feats || {}, B = st.banner || {};
+  ["bell", "online"].forEach(k => document.body.classList.toggle("no-" + k, F[k] === false));
+  $("#siteBannerW").hidden = !(B.on && B.text);
+  const bn = $("#siteBanner"); bn.className = "sitebn " + (B.tone || "info"); bn.textContent = B.text || "";
+  let off = document.getElementById("siteOff");
+  if (F.retort === false && !off) { off = document.createElement("div"); off.id = "siteOff"; off.className = "siteoff";
+    off.innerHTML = `<div>${I("alert")}<h2>ปิดใช้งานหน้า Retort ชั่วคราว</h2><p class="sub">ผู้ดูแลระบบปิดหน้านี้ไว้ชั่วคราว · ข้อมูลที่บันทึกไว้ยังอยู่ครบ</p><a class="pri blk" href="/" style="display:inline-flex;justify-content:center;margin-top:12px;padding:12px 18px;border-radius:12px;background:var(--navy);color:#fff;text-decoration:none">กลับหน้าหลัก</a></div>`;
+    document.body.appendChild(off); }
+  else if (F.retort !== false && off) off.remove();
+}
+loadSite(); setInterval(() => { if (!document.hidden) loadSite(); }, 120000);
 
 render();
 (async () => { if (S.role && await loadCache()) softRender(); syncAll(!lastSync); })();

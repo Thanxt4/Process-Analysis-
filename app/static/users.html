@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f1a2e">
 <link rel="icon" href="/icon-192.png">
-<title>จัดการผู้ใช้ · Process Control</title>
+<title>Admin · Process Control &amp; GMP</title>
 <style>
 @font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:400;src:url(/fonts/sarabun-thai-400-normal.woff2) format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
 @font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:500;src:url(/fonts/sarabun-thai-500-normal.woff2) format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
@@ -94,6 +94,57 @@ header{background:linear-gradient(135deg,#0f1a2e,#1b2a41 60%,#24395a);color:#fff
 .mbox input:focus,.mbox select:focus{outline:none;border-color:var(--navy)}
 .mrow{display:flex;gap:8px;margin-top:16px}.mrow button{flex:1;border-radius:12px;padding:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--line);background:#fff;color:var(--navy)}
 .mrow .pri{border:0;background:linear-gradient(135deg,#1b2a41,#2c4a72);color:#fff}.mrow .danger{border:0;background:var(--red);color:#fff}
+/* ---- แท็บหน้า Admin ---- */
+.vtabs{display:flex;gap:6px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+.vtabs button{border:0;background:rgba(255,255,255,.08);color:#cbd5e1;border-radius:11px;padding:8px 16px;font-weight:700;font-size:14.5px;cursor:pointer;white-space:nowrap}
+.vtabs button.on{background:#fff;color:var(--navy)}
+.vtabs button:hover:not(.on){background:rgba(255,255,255,.16);color:#fff}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:20px 2px 10px}
+.sec-h h2{margin:0;font-size:17px;color:var(--navy)}.sec-h small{color:var(--muted)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+/* ---- ภาพรวมระบบ ---- */
+.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:860px){.mgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mk{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;position:relative;overflow:hidden}
+.mk::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,#1b2a41)}
+.mk small{display:block;color:var(--muted);font-weight:700;font-size:12.5px}
+.mk b{display:block;font-size:28px;color:var(--navy);line-height:1.2}
+.mk span{font-size:12.5px;color:var(--muted)}
+.mk.bad b{color:var(--red)}.mk.ok b{color:var(--green)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:860px){.cols2{grid-template-columns:1fr}}
+.onl-r{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9}
+.onl-r:last-child{border-bottom:0}
+.onl-r .av{width:34px;height:34px;border-radius:11px;font-size:12.5px}
+.onl-r b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2);flex:none}
+.act-r{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px}
+.act-r:last-child{border-bottom:0}.act-r .tm{color:var(--muted);font-variant-numeric:tabular-nums}
+.act-r .tt{min-width:0}.act-r .tt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.act-r .tt small{color:var(--muted)}
+.pill{font-size:12px;font-weight:800;border-radius:99px;padding:2px 9px;white-space:nowrap}
+.pill.ng{background:#fee2e2;color:#b91c1c}.pill.ok{background:#dcfce7;color:#15803d}.pill.na{background:#f1f5f9;color:#475569}
+.srv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;font-size:14px}
+.srv div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #e2e8f0;padding:4px 0}.srv span{color:var(--muted)}
+.bar2{height:8px;border-radius:99px;background:#f1f5f9;overflow:hidden;margin-top:6px}.bar2 i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444)}
+/* ---- ตั้งค่าหน้าบ้าน ---- */
+.tg{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f1f5f9}
+.tg:last-child{border-bottom:0}
+.tg .tx{flex:1;min-width:0}.tg .tx b{display:block}.tg .tx small{color:var(--muted)}
+.sw{position:relative;width:52px;height:30px;flex:none}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw i{position:absolute;inset:0;border-radius:99px;background:#cbd5e1;transition:.15s;cursor:pointer}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.15s}
+.sw input:checked+i{background:#16a34a}.sw input:checked+i::after{transform:translateX(22px)}
+.sw input:disabled+i{opacity:.5;cursor:default}
+.bnr textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;min-height:70px;resize:vertical}
+.tones{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tones button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;font-weight:700;cursor:pointer}
+.tones button.on{border-color:var(--navy);background:var(--navy);color:#fff}
+.prev{display:flex;gap:10px;padding:11px 14px;border-radius:14px;font-weight:600;border:1px solid}
+.prev.info{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}.prev.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.prev.bad{background:#fef2f2;border-color:#fecaca;color:#991b1b}.prev.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+.savebar{position:sticky;bottom:12px;margin-top:14px;display:flex;gap:10px;align-items:center;justify-content:flex-end;background:rgba(241,245,249,.92);padding:10px;border-radius:16px;backdrop-filter:blur(6px)}
+.savebar .pri{border:0;border-radius:12px;padding:11px 20px;font-weight:800;color:#fff;background:var(--navy);cursor:pointer}
+.savebar .pri:disabled{opacity:.5;cursor:default}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:11px 18px;border-radius:12px;font-size:14.5px;opacity:0;transition:.2s;z-index:80;pointer-events:none;max-width:calc(100vw - 32px)}
 .toast.on{opacity:1;transform:translateX(-50%)}.toast.err{background:var(--red)}
 </style>
@@ -102,7 +153,7 @@ header{background:linear-gradient(135deg,#0f1a2e,#1b2a41 60%,#24395a);color:#fff
 <!-- เข้าสู่ระบบ Admin -->
 <div class="gate" id="gate" hidden><form class="gcard" id="gForm" autocomplete="off">
   <div class="gbadge"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></div>
-  <h1>จัดการผู้ใช้</h1>
+  <h1>ผู้ดูแลระบบ (Admin)</h1>
   <p class="sub">สำหรับผู้ดูแลระบบ · เข้าครั้งเดียว เครื่องนี้จำไว้จนกว่าจะออกจากระบบ</p>
   <div class="fld"><svg class="ic lead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
     <input type="password" id="gPw" placeholder="รหัส Admin" autocomplete="current-password" required>
@@ -115,10 +166,13 @@ header{background:linear-gradient(135deg,#0f1a2e,#1b2a41 60%,#24395a);color:#fff
 <!-- หน้าจัดการ -->
 <div id="app" hidden>
 <header><div class="wrap hrow">
-  <div class="t"><small>LINE QC / ADMIN</small><h1>จัดการผู้ใช้</h1></div>
+  <div class="t"><small>PROCESS CONTROL &amp; GMP / ADMIN</small><h1 id="vTitle">ภาพรวมระบบ</h1></div>
   <a class="hbtn" href="/">หน้าหลัก</a><button class="hbtn" id="out" type="button">ออกจากระบบ Admin</button>
-</div></header>
-<main class="wrap">
+</div>
+<div class="wrap"><nav class="vtabs" id="vtabs"><button data-v="mon" class="on">ภาพรวมระบบ</button><button data-v="users">ผู้ใช้</button><button data-v="site">ตั้งค่าหน้าบ้าน</button></nav></div></header>
+<main class="wrap" id="v-mon"><div id="mon"><div class="empty">กำลังโหลด…</div></div></main>
+<main class="wrap" id="v-site" hidden><div id="site"><div class="empty">กำลังโหลด…</div></div></main>
+<main class="wrap" id="v-users" hidden>
   <div class="stats" id="stats"></div>
   <div class="bar">
     <div class="sx"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="q" placeholder="ค้นหา ชื่อ / รหัสพนักงาน" autocomplete="off"></div>
@@ -152,7 +206,8 @@ const ini = n => { const w = String(n).trim().split(/\s+/); return (w[0] || "?")
 const ago = ms => { if(!ms) return "ยังไม่เคยเข้า"; const m = Math.round((Date.now() - ms) / 6e4); return m < 60 ? "ใช้งานเมื่อสักครู่" : m < 1440 ? `${Math.round(m / 60)} ชม.ที่แล้ว` : m < 43200 ? `${Math.round(m / 1440)} วันที่แล้ว` : new Date(ms).toLocaleDateString("th-TH"); };
 async function load(){
   const r = await api("/api/uadmin/users"); S.users = r.users; S.depts = r.depts || S.depts;
-  $("#gate").hidden = true; $("#app").hidden = false; render();
+  const first = $("#app").hidden; $("#gate").hidden = true; $("#app").hidden = false;
+  if(first) showView(VIEW); else render();
 }
 function render(){
   const U = S.users, cnt = k => k === "all" ? U.length : k === "off" ? U.filter(u => !u.active).length : U.filter(u => u.dept === k).length;
@@ -196,6 +251,87 @@ $("#list").addEventListener("click", async e => {
   else if(b.dataset.a === "del") modal(`<h2>ลบผู้ใช้</h2><p class="mut">ลบบัญชี <b>${esc(u.name)}</b> (${esc(u.emp_id)}) · ผลตรวจที่เคยส่งยังอยู่ครบ · ถ้าแค่ไม่ให้ใช้งาน แนะนำ "ระงับ" แทน</p>
       <div class="mrow"><button type="button" data-close>ยกเลิก</button><button class="danger" type="submit">ลบผู้ใช้</button></div>`, f => submit(f, async () => { await api(url, {method: "DELETE"}); toast("ลบผู้ใช้แล้ว"); }));
 });
+/* ---------- แท็บของหน้า Admin ---------- */
+const VIEWS = { mon: "ภาพรวมระบบ", users: "จัดการผู้ใช้", site: "ตั้งค่าหน้าบ้าน" };
+let VIEW = localStorage.getItem("adm_view") || "mon"; if(!VIEWS[VIEW]) VIEW = "mon";
+function showView(v){
+  VIEW = v; localStorage.setItem("adm_view", v); $("#vTitle").textContent = VIEWS[v];
+  document.querySelectorAll("#vtabs button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  Object.keys(VIEWS).forEach(k => $("#v-" + k).hidden = k !== v);
+  if(v === "mon") loadMon(); else if(v === "site") loadSiteCfg(); else if(v === "users") render();
+  window.scrollTo(0, 0);
+}
+$("#vtabs").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if(b){ if(VIEW === "site" && SITE.dirty && !confirm("ยังไม่ได้บันทึกการตั้งค่า ออกจากหน้านี้?")) return; SITE.dirty = false; showView(b.dataset.v); } });
+
+/* ---------- ภาพรวมระบบ (อัปเดตทุก 30 วินาที) ---------- */
+const fmtB = n => n >= 1e9 ? (n / 1e9).toFixed(1) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : Math.round(n / 1e3) + " KB";
+const upTxt = ms => { const m = Math.floor(ms / 6e4), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60); return d ? `${d} วัน ${h} ชม.` : h ? `${h} ชม. ${m % 60} นาที` : `${m} นาที`; };
+const TH_M = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const thD = iso => { const [y, m, d] = iso.split("-").map(Number); return `${d} ${TH_M[m - 1]} ${y + 543}`; };
+async function loadMon(){
+  let M; try{ M = await api("/api/uadmin/monitor"); }catch(err){ $("#mon").innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
+  const R = M.round_stats, F = M.followups, T = M.retort, V = M.server, ng = R.subs ? Math.round(R.ng / R.subs * 100) : 0;
+  const mk = (lab, val, sub, c, cls = "") => `<div class="mk ${cls}" style="--c:${c}"><small>${lab}</small><b>${val}</b><span>${sub}</span></div>`;
+  const used = V.disk_total ? (V.disk_total - V.disk_free) / V.disk_total * 100 : 0;
+  const off = Object.entries({...M.site.tabs, ...M.site.feats}).filter(([, v]) => v === false).length;
+  $("#mon").innerHTML = `
+    <div class="sec-h"><h2>รอบ ${thD(M.round)}</h2><small>ตัดรอบ ${esc(M.cutoff)} น. · อัปเดต ${new Date(M.now).toLocaleTimeString("th-TH", {hour: "2-digit", minute: "2-digit", second: "2-digit"})}</small></div>
+    <div class="mgrid">
+      ${mk("ออนไลน์ตอนนี้", M.online.length, `ผู้ใช้ทั้งหมด ${M.users.active}/${M.users.total} · ใช้ใน 7 วัน ${M.users.active7}`, "#16a34a", M.online.length ? "ok" : "")}
+      ${mk("ผลตรวจรอบนี้", R.subs, `ผู้ตรวจ ${R.inspectors} คน · หัวข้อทั้งหมด ${R.items}`, "#2563eb")}
+      ${mk("พบปัญหารอบนี้", R.ng, `${ng}% ของผลตรวจ · คอมเมนต์ ${R.comments}`, "#dc2626", R.ng ? "bad" : "ok")}
+      ${mk("เรื่องที่ต้องติดตาม (ค้าง)", F.open, `เกินกำหนด ${F.over} · ด่วน ${F.urgent}`, "#f59e0b", F.over ? "bad" : "")}
+      ${mk("ปัญหา Retort วันนี้", T.today, `ทั้งหมด ${T.all} รายการ`, "#7c3aed", T.today ? "bad" : "")}
+      ${mk("รอบหม้อที่กรอกวันนี้", T.cycles, `${T.runs_rows} ช่อง (หม้อ × กะ)`, "#0891b2")}
+      ${mk("Retort Survey", T.surveys, "แบบฟอร์มที่บันทึกไว้", "#475569")}
+      ${mk("ฟีเจอร์ที่ปิดอยู่", off, off ? "ดู/แก้ที่แท็บ ตั้งค่าหน้าบ้าน" : "เปิดครบทุกฟีเจอร์", "#64748b")}
+    </div>
+    <div class="cols2" style="margin-top:12px">
+      <div class="card"><div class="sec-h" style="margin-top:0"><h2>ใครออนไลน์</h2><small>ใช้งานภายใน 3 นาที</small></div>
+        ${M.online.length ? M.online.map(u => `<div class="onl-r"><div class="av" style="background:${avColor(u.name)}">${esc(ini(u.name))}</div><b>${esc(u.name)}</b><span class="dp ${esc(u.dept)}">${esc(u.dept)}</span><span class="dot"></span></div>`).join("") : `<div class="mut">ไม่มีใครออนไลน์ตอนนี้</div>`}</div>
+      <div class="card"><div class="sec-h" style="margin-top:0"><h2>ผลตรวจล่าสุด</h2><small>15 รายการล่าสุด</small></div>
+        ${M.recent.length ? M.recent.map(r => `<div class="act-r"><span class="tm">${esc((r.created_at || "").slice(11, 16))}</span><div class="tt"><b>${esc(r.title)}</b><small>${esc(r.zone)} · ${esc(r.inspector)}${r.round_date !== M.round ? ` · รอบ ${thD(r.round_date)}` : ""}</small></div>
+          <span class="pill ${r.status === "พบปัญหา" ? "ng" : r.status === "ปกติ" ? "ok" : "na"}">${esc(r.status)}</span></div>`).join("") : `<div class="mut">ยังไม่มีผลตรวจ</div>`}</div>
+    </div>
+    <div class="card"><div class="sec-h" style="margin-top:0"><h2>เซิร์ฟเวอร์</h2><small>${esc(V.data_dir)}</small></div>
+      <div class="srv"><div><span>เปิดมาแล้ว</span><b>${upTxt(M.now - V.started)}</b></div><div><span>ฐานข้อมูล</span><b>${fmtB(V.db_bytes)}</b></div>
+        <div><span>รูปภาพ</span><b>${fmtB(V.uploads_bytes)} · ${V.uploads_files.toLocaleString()} ไฟล์</b></div><div><span>พื้นที่ว่างในดิสก์</span><b>${fmtB(V.disk_free)} / ${fmtB(V.disk_total)}</b></div></div>
+      <div class="bar2" title="ใช้ไปแล้ว ${Math.round(used)}%"><i style="width:${used.toFixed(1)}%"></i></div>
+      <div class="mut" style="margin-top:4px">ใช้ดิสก์ไปแล้ว ${Math.round(used)}%${used > 90 ? " · ใกล้เต็ม ควรย้ายรูปเก่าไปคลัง" : ""}</div></div>`;
+}
+setInterval(() => { if(VIEW === "mon" && !document.hidden && !$("#app").hidden) loadMon(); }, 30000);
+
+/* ---------- ตั้งค่าหน้าบ้าน ---------- */
+const SITE = { cur: null, dirty: false };
+const TAB_L = { form: ["กรอกฟอร์ม", "หน้าบันทึกผลตรวจ"], check: ["Checklist", "สถานะการตรวจของแต่ละพื้นที่ · สรุปที่ยังไม่ส่ง"], follow: ["เรื่องที่ต้องติดตาม", "รายการเรื่องค้าง · ตอบสาเหตุ/การแก้ไข"], slides: ["สไลด์", "ดาวน์โหลด/สร้างสไลด์"] };
+const FEAT_L = { bell: ["กระดิ่งแจ้งเตือน", "หน้าหลัก และหน้า Retort"], online: ["ปุ่ม \"ออนไลน์\" (ดูว่าใครออนไลน์)", "หน้าหลัก และหน้า Retort"], search: ["ปุ่มค้นหา", "ค้นหาทุกอย่างในหน้าหลัก"],
+  comments: ["ถาม-ตอบ / คอมเมนต์ใต้ผลตรวจ", "ซ่อนกล่องคอมเมนต์และป้ายถาม-ตอบ"], followbtn: ["ปุ่ม \"＋ ติดตาม\"", "ปุ่มเพิ่มผลตรวจไปเรื่องที่ต้องติดตาม"],
+  retort: ["หน้า Retort Analysis", "ปิดแล้ว: ซ่อนการ์ด Retort ในหน้าหลัก และหน้า Retort จะขึ้นว่าปิดชั่วคราว"], install: ["ปุ่ม \"ติดตั้งแอป\"", "ปุ่มติดตั้งบนมือถือ"] };
+const TONES = [["info", "แจ้งข่าว (ฟ้า)"], ["warn", "เตือน (เหลือง)"], ["bad", "สำคัญ (แดง)"], ["ok", "ปกติ (เขียว)"]];
+async function loadSiteCfg(){ try{ SITE.cur = await api("/api/uadmin/site"); SITE.dirty = false; drawSite(); }catch(err){ $("#site").innerHTML = `<div class="empty">${esc(err.message)}</div>`; } }
+function drawSite(){
+  const c = SITE.cur, sw = (grp, k, L) => `<label class="tg"><div class="tx"><b>${esc(L[0])}</b><small>${esc(L[1])}</small></div><span class="sw"><input type="checkbox" data-g="${grp}" data-k="${k}" ${c[grp][k] ? "checked" : ""}><i></i></span></label>`;
+  $("#site").innerHTML = `
+    <div class="sec-h"><h2>แถบในหน้าหลัก</h2><small>ปิดแล้วแถบนั้นจะไม่แสดงในทุกเครื่อง (ภายใน 2 นาที หรือเมื่อรีเฟรช)</small></div>
+    <div class="card">${Object.keys(TAB_L).map(k => sw("tabs", k, TAB_L[k])).join("")}</div>
+    <div class="sec-h"><h2>ฟีเจอร์</h2><small>เปิด/ปิดได้ทันที ข้อมูลไม่หาย</small></div>
+    <div class="card">${Object.keys(FEAT_L).map(k => sw("feats", k, FEAT_L[k])).join("")}</div>
+    <div class="sec-h"><h2>ประกาศแถบบน</h2><small>แสดงใต้หัวหน้าหลัก และหน้า Retort</small></div>
+    <div class="card bnr"><label class="tg" style="padding-top:0"><div class="tx"><b>แสดงประกาศ</b><small>เช่น แจ้งปิดปรับปรุงระบบ แจ้งเปลี่ยนขั้นตอน</small></div><span class="sw"><input type="checkbox" id="bnOn" ${c.banner.on ? "checked" : ""}><i></i></span></label>
+      <textarea id="bnTx" maxlength="300" placeholder="ข้อความประกาศ (ไม่เกิน 300 ตัวอักษร)">${esc(c.banner.text)}</textarea>
+      <div class="tones">${TONES.map(([v, l]) => `<button type="button" data-tone="${v}" class="${c.banner.tone === v ? "on" : ""}">${l}</button>`).join("")}</div>
+      <div class="prev ${c.banner.tone}" id="bnPrev">${esc(c.banner.text || "ตัวอย่างประกาศ")}</div></div>
+    <div class="savebar"><span class="mut" id="siteSt">${c.updated_at ? `บันทึกล่าสุด ${new Date(c.updated_at).toLocaleString("th-TH")}` : "ยังไม่เคยแก้ไข · ใช้ค่าเริ่มต้น (เปิดทุกอย่าง)"}</span><button class="pri" id="siteSave" disabled>บันทึกการตั้งค่า</button></div>`;
+}
+const siteDirty = () => { SITE.dirty = true; $("#siteSave").disabled = false; $("#siteSt").textContent = "ยังไม่ได้บันทึก"; };
+$("#site").addEventListener("change", e => { const t = e.target, c = SITE.cur; if(!c) return;
+  if(t.dataset.g){ c[t.dataset.g][t.dataset.k] = t.checked; if(t.dataset.g === "tabs" && !Object.values(c.tabs).some(Boolean)){ t.checked = true; c.tabs[t.dataset.k] = true; toast("ต้องเปิดอย่างน้อย 1 แถบ", true); return; } siteDirty(); }
+  else if(t.id === "bnOn"){ c.banner.on = t.checked; siteDirty(); } });
+$("#site").addEventListener("input", e => { if(e.target.id === "bnTx" && SITE.cur){ SITE.cur.banner.text = e.target.value; $("#bnPrev").textContent = e.target.value || "ตัวอย่างประกาศ"; siteDirty(); } });
+$("#site").addEventListener("click", async e => { const b = e.target.closest("button"); if(!b || !SITE.cur) return;
+  if(b.dataset.tone){ SITE.cur.banner.tone = b.dataset.tone; document.querySelectorAll("[data-tone]").forEach(x => x.classList.toggle("on", x === b)); $("#bnPrev").className = "prev " + b.dataset.tone; siteDirty(); }
+  else if(b.id === "siteSave"){ b.disabled = true; try{ SITE.cur = await jpost("/api/uadmin/site", SITE.cur); SITE.dirty = false; drawSite(); toast("บันทึกการตั้งค่าแล้ว · ทุกเครื่องจะเห็นภายใน 2 นาที"); }catch(err){ b.disabled = false; toast(err.message, true); } } });
+addEventListener("beforeunload", e => { if(SITE.dirty){ e.preventDefault(); e.returnValue = ""; } });
 (async () => { try{ const r = await fetch("/api/uadmin/me"); const j = await r.json(); if(j.admin) await load(); else showGate(); }catch{ showGate(); } })();
 </script>
 </body>

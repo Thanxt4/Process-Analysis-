@@ -1159,6 +1159,139 @@ def api_uadmin_logout(request: Request):
     return resp
 
 
+# ---------------------------------------------------------------- ตั้งค่าหน้าบ้าน (Admin) + ภาพรวมระบบ
+SITE_PATH = DATA_DIR / "site_settings.json"
+START_MS = int(_time.time() * 1000)
+SITE_TABS = ("form", "check", "follow", "slides")
+SITE_FEATS = ("bell", "online", "search", "comments", "followbtn", "retort", "install")
+SITE_TONES = ("info", "warn", "bad", "ok")
+
+
+def _site_default():
+    return {"tabs": {k: True for k in SITE_TABS}, "feats": {k: True for k in SITE_FEATS},
+            "banner": {"on": False, "text": "", "tone": "info"}, "updated_at": 0, "updated_by": ""}
+
+
+def site_settings():
+    out = _site_default()
+    try:
+        d = json.loads(SITE_PATH.read_text(encoding="utf-8")) if SITE_PATH.exists() else {}
+    except (OSError, ValueError):
+        d = {}
+    for grp, keys in (("tabs", SITE_TABS), ("feats", SITE_FEATS)):
+        src = d.get(grp) if isinstance(d.get(grp), dict) else {}
+        for k in keys:
+            if isinstance(src.get(k), bool):
+                out[grp][k] = src[k]
+    if not any(out["tabs"].values()):
+        out["tabs"]["form"] = True  # ต้องมีอย่างน้อย 1 แถบ
+    b = d.get("banner") if isinstance(d.get("banner"), dict) else {}
+    out["banner"] = {"on": bool(b.get("on")), "text": " ".join(str(b.get("text") or "").split())[:300],
+                     "tone": b.get("tone") if b.get("tone") in SITE_TONES else "info"}
+    out["updated_at"] = int(d.get("updated_at") or 0)
+    out["updated_by"] = str(d.get("updated_by") or "")[:60]
+    return out
+
+
+@app.get("/api/site")
+def api_site():
+    """ค่าตั้งหน้าบ้าน (ทุกคนอ่านได้): แถบที่เปิด · ฟีเจอร์ที่เปิด · ประกาศ"""
+    s = site_settings()
+    s.pop("updated_by", None)
+    return s
+
+
+@app.get("/api/uadmin/site")
+def api_uadmin_site(request: Request):
+    _need_admin(request)
+    return site_settings()
+
+
+@app.post("/api/uadmin/site")
+async def api_uadmin_site_save(request: Request):
+    _need_admin(request)
+    d = await request.json()
+    cur = site_settings()
+    for grp in ("tabs", "feats"):
+        if isinstance(d.get(grp), dict):
+            for k, v in d[grp].items():
+                if k in cur[grp] and isinstance(v, bool):
+                    cur[grp][k] = v
+    if not any(cur["tabs"].values()):
+        raise HTTPException(400, "ต้องเปิดอย่างน้อย 1 แถบ")
+    if isinstance(d.get("banner"), dict):
+        b = d["banner"]
+        cur["banner"] = {"on": bool(b.get("on")), "text": " ".join(str(b.get("text") or "").split())[:300],
+                         "tone": b.get("tone") if b.get("tone") in SITE_TONES else "info"}
+    cur["updated_at"] = int(_time.time() * 1000)
+    cur["updated_by"] = "Admin"
+    tmp = SITE_PATH.with_suffix(".tmp")
+    tmp.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(SITE_PATH)
+    return cur
+
+
+_SIZE_CACHE = {"at": 0, "uploads": 0, "files": 0}
+
+
+def _dir_stats(p: Path):
+    tot = n = 0
+    for root, _dirs, files in os.walk(p):
+        for fn in files:
+            try:
+                tot += os.path.getsize(os.path.join(root, fn))
+                n += 1
+            except OSError:
+                pass
+    return tot, n
+
+
+@app.get("/api/uadmin/monitor")
+def api_uadmin_monitor(request: Request):
+    """ภาพรวมระบบสำหรับ Admin: ใครออนไลน์ · ตัวเลขรอบนี้ · กิจกรรมล่าสุด · สถานะเซิร์ฟเวอร์"""
+    _need_admin(request)
+    nowms = int(_time.time() * 1000)
+    rd = round_of(now()).isoformat()
+    with db() as con:
+        online = [dict(r) for r in con.execute(
+            """SELECT u.name, u.dept, MAX(s.last_seen) AS seen, COUNT(*) AS devices FROM user_sessions s JOIN users u ON u.emp_id=s.emp_id
+               WHERE u.active=1 GROUP BY u.emp_id HAVING MAX(s.last_seen) >= ? ORDER BY seen DESC""", (nowms - ONLINE_MS,))]
+        users = con.execute("SELECT COUNT(*) AS n, SUM(active) AS a FROM users").fetchone()
+        active7 = con.execute("SELECT COUNT(DISTINCT emp_id) AS n FROM user_sessions WHERE last_seen >= ?", (nowms - 7 * 864e5,)).fetchone()["n"]
+        sub = con.execute("SELECT COUNT(*) AS n, SUM(status='พบปัญหา') AS ng, COUNT(DISTINCT inspector) AS who FROM submissions WHERE round_date=?", (rd,)).fetchone()
+        recent = [dict(r) for r in con.execute(
+            "SELECT inspector, area_id, status, created_at, round_date FROM submissions ORDER BY created_at DESC LIMIT 15")]
+        fus = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups WHERE status!='done'")]
+        rp_today = con.execute("SELECT COUNT(*) AS n FROM retort_problems WHERE date=?", (rd,)).fetchone()["n"]
+        rp_all = con.execute("SELECT COUNT(*) AS n FROM retort_problems").fetchone()["n"]
+        runs_today = con.execute("SELECT COUNT(*) AS n, COALESCE(SUM(n),0) AS cyc FROM retort_runs WHERE date=?", (rd,)).fetchone()
+        cm_today = con.execute("SELECT COUNT(*) AS n FROM item_comments WHERE created_at >= ?", (int(datetime.combine(round_of(now()), CUTOFF, TZ).timestamp() * 1000),)).fetchone()["n"]
+        sv = con.execute("SELECT COUNT(*) AS n FROM retort_surveys").fetchone()["n"]
+    today = round_of(now())
+    over = sum(1 for x in fus if x.get("due") and str(x["due"]) < today.isoformat())
+    for r in recent:
+        it = ITEM_MAP.get(r["area_id"], {})
+        r["title"] = f'{it.get("no", "")} {it.get("name", r["area_id"])}'.strip()
+        r["zone"] = it.get("zone", "")
+    if nowms - _SIZE_CACHE["at"] > 600_000:
+        _SIZE_CACHE["uploads"], _SIZE_CACHE["files"] = _dir_stats(UPLOAD_DIR) if UPLOAD_DIR.exists() else (0, 0)
+        _SIZE_CACHE["at"] = nowms
+    du = shutil.disk_usage(DATA_DIR)
+    total_items = sum(len(z.get("items", [])) for z in AREAS.get("zones", []))
+    return {
+        "now": nowms, "round": rd, "cutoff": CUTOFF.strftime("%H:%M"),
+        "online": online, "users": {"total": users["n"] or 0, "active": users["a"] or 0, "active7": active7},
+        "round_stats": {"subs": sub["n"] or 0, "ng": sub["ng"] or 0, "inspectors": sub["who"] or 0, "items": total_items, "comments": cm_today},
+        "followups": {"open": len(fus), "over": over, "urgent": sum(1 for x in fus if x.get("urgent"))},
+        "retort": {"today": rp_today, "all": rp_all, "runs_rows": runs_today["n"], "cycles": runs_today["cyc"], "surveys": sv},
+        "recent": recent,
+        "server": {"started": START_MS, "db_bytes": DB_PATH.stat().st_size if DB_PATH.exists() else 0,
+                   "uploads_bytes": _SIZE_CACHE["uploads"], "uploads_files": _SIZE_CACHE["files"],
+                   "disk_total": du.total, "disk_free": du.free, "data_dir": str(DATA_DIR)},
+        "site": site_settings(),
+    }
+
+
 @app.get("/api/uadmin/users")
 def api_uadmin_users(request: Request):
     _need_admin(request)

@@ -804,6 +804,13 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 .fu-irow .btn.fu-done{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
 .fu-isort{display:flex;align-items:center;gap:10px;padding:8px 16px 10px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted);font-weight:700}
 .fu-isort .fu-seg{flex:0 1 260px}.fu-isort .fu-seg button{min-height:36px;padding:6px}.fu-isort .fu-seg button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+/* ตั้งค่าจากหน้า Admin: ซ่อนฟีเจอร์ + ประกาศ */
+body.no-bell #bellBtn,body.no-online #onBtn,body.no-search #srchBtn,body.no-install #installBtn,body.no-followbtn .fubtn,
+body.no-comments .igc,body.no-comments .cmb,body.no-comments #cmOpen,body.no-retort .zbtn.rt{display:none!important}
+.sitebn{display:flex;align-items:flex-start;gap:10px;margin:12px 0 0;padding:11px 14px;border-radius:14px;font-size:14.5px;font-weight:600;line-height:1.45;border:1px solid}
+.sitebn.info{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}.sitebn.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.sitebn.bad{background:#fef2f2;border-color:#fecaca;color:#991b1b}.sitebn.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+.sitebn svg{width:18px;height:18px;flex:none;margin-top:2px}
 .fu-dayh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:16px 4px 8px;padding-bottom:6px;border-bottom:2px solid var(--line)}
 .fu-dayh:first-child{margin-top:4px}
 .fu-dayh b{font-size:16px;color:var(--navy)}.fu-dayh span{font-size:13px;color:var(--muted)}
@@ -1087,6 +1094,7 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
 
 <main class="wrap">
   <div class="ios-tip" id="iosTip"><button id="iosTipX" aria-label="ปิด">×</button>ติดตั้งเป็นแอปบน iPhone: กดปุ่ม <b>แชร์</b> (สี่เหลี่ยมมีลูกศรขึ้น) ใน Safari → เลือก <b>"เพิ่มไปยังหน้าจอโฮม"</b></div>
+  <div class="sitebn" id="siteBanner" hidden></div>
   <nav class="tabs">
     <button data-tab="form" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>กรอกฟอร์ม</button>
     <button data-tab="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Checklist</button>
@@ -1301,15 +1309,12 @@ mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
       <div id="pagesWrap"></div>
       <button type="button" class="btn ghost addpage" id="addPage">＋ เพิ่มสไลด์</button>
       <div id="actionWrap" class="actionbox" style="margin-top:14px" hidden>
-        <label class="f">ใครตอบสาเหตุและการแก้ไข</label>
-        <div class="respseg" id="respSeg"><button type="button" data-r="QC" class="on">QC ตอบเอง<small>กรอกสาเหตุ/การแก้ไขตอนนี้</small></button><button type="button" data-r="PD">ให้ PD ตอบ<small>ส่งให้ Production</small></button></div>
         <div id="qcAns">
         <label class="f" for="cause">สาเหตุของปัญหา</label>
         <textarea id="cause" rows="2" placeholder="เกิดจากอะไร เช่น พนักงานไม่ทำตามขั้นตอน, อุปกรณ์ชำรุด"></textarea>
         <label class="f" for="action">การแก้ไข</label>
         <textarea id="action" rows="2" placeholder="แก้ไขอย่างไร / แจ้งใคร / ผลหลังแก้ไข"></textarea>
         </div>
-        <p class="resphint" id="pdHint" hidden>PD จะเป็นผู้กรอกสาเหตุและการแก้ไข · ระบบจะเพิ่มเรื่องนี้ใน <b>เรื่องที่ต้องติดตาม</b> และแจ้งเตือนทุกคนในแผนก PD ให้อัตโนมัติ</p>
       </div>
       <div class="status nastat" id="naSeg"><button type="button" class="na" data-s="ไม่มีกิจกรรม">– ไม่มีกิจกรรม</button></div>
       <small class="nahint">เลือกเมื่อไปตรวจแล้วแต่จุดนั้นไม่มีกิจกรรม · ไม่นำไปคิดในกราฟและการวิเคราะห์</small>
@@ -2009,9 +2014,8 @@ const qtyLine = s => { if(!s.qty || s.qty.total == null) return ""; const u = (s
   return `<p class="qty-l"><b>${esc((s.qty_cfg && s.qty_cfg.label) || "จำนวน")}:</b> ${parts.length ? parts.join(" · ") + " · " : ""}รวม <b>${s.qty.total}</b> ${esc(u)}</p>`; };
 const NO_ACT = "ไม่มีกิจกรรม";  // ไม่มีกิจกรรม: ไม่ต้องนับจำนวน และไม่นับในกราฟ/การวิเคราะห์
 let sheetResp = "QC";
-function setResp(r){ sheetResp = r === "PD" ? "PD" : "QC"; document.querySelectorAll("#respSeg button").forEach(b => b.classList.toggle("on", b.dataset.r === sheetResp));
-  $("#qcAns").hidden = sheetResp !== "QC"; $("#pdHint").hidden = sheetResp === "QC"; }
-$("#respSeg").addEventListener("click", e => { const b = e.target.closest("[data-r]"); if(b) setResp(b.dataset.r); });
+// ผู้ตรวจกรอกสาเหตุ/การแก้ไขเองเสมอ (เลิกใช้ตัวเลือก "ให้ PD ตอบ" แล้ว · ผลตรวจเก่าที่เคยส่งให้ PD ยังแสดงตามเดิม)
+function setResp(){ sheetResp = "QC"; }
 function setStatus(s){ sheetStatus=s; document.querySelectorAll("#statusSeg button, #naSeg button").forEach(b=>b.classList.toggle("on", b.dataset.s===s));
   $("#actionWrap").hidden = s !== "พบปัญหา";
   $("#qtyWrap").hidden = s === NO_ACT || !(sheetItem && sheetItem.qty); }
@@ -3959,6 +3963,21 @@ document.addEventListener("visibilitychange", () => { if(document.visibilityStat
 setInterval(tick, 1000);
 // ดึงข้อมูลใหม่อัตโนมัติทุก 60 วินาที เฉพาะตอนเปิดดูอยู่ (จอดับ/สลับแอป = หยุด ประหยัดเน็ตและเครื่อง server)
 setInterval(() => { if(document.visibilityState === "visible" && !$("#sheetBg").classList.contains("on")) refreshAll(); }, 60000);
+
+/* ---------- ตั้งค่าจากหน้า Admin: แถบที่เปิด · ฟีเจอร์ · ประกาศ (โหลดตอนเปิดและทุก 2 นาที) ---------- */
+let SITE = null;
+async function loadSite(){
+  try{ const r = await fetch("/api/site", {cache: "no-store"}); if(!r.ok) return; SITE = await r.json(); }catch{ return; }
+  const T = SITE.tabs || {}, F = SITE.feats || {};
+  document.querySelectorAll("nav.tabs button[data-tab]").forEach(b => { b.hidden = T[b.dataset.tab] === false; });
+  const cur = document.querySelector("nav.tabs button.on");
+  if(cur && cur.hidden){ const first = document.querySelector("nav.tabs button[data-tab]:not([hidden])"); if(first) first.click(); }
+  Object.keys(F).forEach(k => document.body.classList.toggle("no-" + k, F[k] === false));
+  const bn = $("#siteBanner"), B = SITE.banner || {};
+  bn.hidden = !(B.on && B.text); bn.className = "sitebn " + (B.tone || "info");
+  if(!bn.hidden) bn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>${esc(B.text)}</span>`;
+}
+loadSite(); setInterval(() => { if(!document.hidden) loadSite(); }, 120000);
 </script>
 </body>
 </html>
