@@ -1277,6 +1277,9 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .addcat-err{min-height:18px;margin-top:6px;font-size:13.5px;color:var(--bad)}
 @media(max-width:700px){.addcat-r{grid-template-columns:1fr 1fr}.addcat-r input{grid-column:1/-1}}
 #main.vset>.addcat{grid-column:1/-1}
+.addcat{position:sticky;bottom:12px;z-index:30;margin-top:4px;box-shadow:0 -6px 28px rgba(15,23,42,.18);background:linear-gradient(180deg,#fffbeb,#fff)}
+.addcat .sec{margin-bottom:8px}
+@media(max-width:900px){.addcat{bottom:84px;padding:10px 12px}.addcat .sec .sub{display:none}.addcat-r{grid-template-columns:1fr auto}.addcat-r select{grid-column:1;grid-row:2;width:100%}.addcat-r button{grid-row:1/3;grid-column:2;height:100%}}
 .card.flashnew{animation:flashNew 2.4s ease}
 @keyframes flashNew{0%,40%{box-shadow:0 0 0 4px rgba(245,158,11,.55);border-color:var(--amber)}100%{box-shadow:var(--sh)}}
 /* ปรับแต่ง: เพิ่มกลุ่มปัญหา */
@@ -1476,9 +1479,6 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
   .lc-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}.lc-chips::-webkit-scrollbar{display:none}.lc-chips button{flex:0 0 auto;min-height:34px;padding:2px 11px;font-size:13px}
   .lc-sel{flex-wrap:wrap}.lc-sel .lc-chips{flex:1 1 calc(100% - 60px)}.lc-sel .lc-dd{flex:1 1 40%;padding-left:8px}.lc-dd select{max-width:none;width:100%;min-height:36px;font-size:13px}
   .lc-reset{flex:0 0 auto;padding:0 6px}}
-.addcat-fab{position:fixed;right:24px;bottom:24px;z-index:40;display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:0 22px;border-radius:99px;font-size:16px;font-weight:800;background:var(--amber);border-color:var(--amber);color:#1b2a41;box-shadow:0 10px 28px rgba(15,23,42,.3)}
-.addcat-fab[hidden]{display:none}
-@media(max-width:900px){.addcat-fab{bottom:92px;right:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2004,8 +2004,7 @@ function render() {
   $("#main").classList.toggle("xwide", S.view === "analyze");
   $("#main").classList.toggle("vset", S.view === "settings" || S.view === "ui");
   S.charts = {}; $("#main").classList.remove("split");
-  document.body.classList.remove("svfull");
-  document.querySelectorAll(".addcat-fab").forEach(x => x.remove());  // ออกจากตาราง Survey แบบเต็มจอ เมื่อไปแท็บอื่น
+  document.body.classList.remove("svfull");  // ออกจากตาราง Survey แบบเต็มจอ เมื่อไปแท็บอื่น
   ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, runs: viewRuns, irlist: viewIRList, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
@@ -4310,10 +4309,7 @@ function viewSettings() {
   const ro = !S.canAdmin;
   let h = ro ? `<div class="alert a-warn">${I("info")}<div style="flex:1">ดูได้อย่างเดียว · ผู้ดูแลกดปลดล็อกเพื่อแก้หัวข้อ/สาเหตุ/รายชื่อ Retort</div><button class="pri sm" id="unlock">ปลดล็อกแก้ไข</button></div>` : "";
   h += `<div class="alert a-info">${I("info")}<div>เพิ่มหัวข้อปัญหาและสาเหตุได้ที่นี่ หัวข้อที่ปิดไว้จะไม่ขึ้นในหน้าบันทึก แต่ข้อมูลเก่ายังอยู่ในการวิเคราะห์</div></div>`;
-  if (!ro) h += `<div class="card addcat">${sec("plus", "เพิ่มหัวข้อปัญหาใหม่", `ตอนนี้มี ${S.config.categories.filter(c => !c.deleted).length} หัวข้อ · หัวข้อใหม่จะขึ้นในหน้าบันทึกทันที`)}
-    <div class="addcat-r"><input id="newCat" placeholder="ชื่อหัวข้อ เช่น Cooling ผิดปกติ, Flow rate ต่ำ" maxlength="120" autocomplete="off">
-      <select id="newCatGrp" aria-label="กลุ่ม">${Object.keys(GROUPS).map(g => `<option value="${g}" ${g === "other" ? "selected" : ""}>${esc(GROUPS[g].name)}</option>`).join("")}</select>
-      <button class="pri" id="addCat">${I("plus")}เพิ่มหัวข้อ</button></div><div class="addcat-err" id="newCatErr"></div></div>`;
+
   S.config.categories.forEach((c, ci) => {
     if (c.deleted) return;  // หัวข้อที่ลบแล้ว (เก็บไว้ให้ประวัติเก่าแสดงชื่อได้)
     h += `<div class="card" id="cat-${esc(c.id)}"><div class="sec"><span class="ic" style="background:${grpOf(c).color}1f;color:${grpOf(c).color}">${I(grpOf(c).icon)}</span><div class="t"><input data-cname="${ci}" value="${esc(c.name)}" ${ro ? "disabled" : ""} style="font-weight:600"></div></div>
@@ -4336,13 +4332,12 @@ function viewSettings() {
     <small class="hint">สร้าง Key ได้ที่ Google AI Studio (aistudio.google.com) · Key เก็บไว้ที่เครื่อง server เท่านั้น ไม่ส่งไปที่มือถือ · เว้นว่างแล้วกดบันทึก = ลบ Key</small></div>`;
   h += `<div class="card">${sec("grid", "หม้อของแต่ละพื้นที่", "ใช้แสดงในหน้าบันทึก (เลือกพื้นที่ → หม้อ) คั่นด้วยเครื่องหมายจุลภาค")}
     ${plantsList().map(pl => `<label class="f" style="margin-top:8px"><span class="lab">${pl}</span><input data-plret="${pl}" value="${esc(plantRetorts(pl).join(", "))}" ${ro ? "disabled" : ""}></label>`).join("")}</div>`;
+  const addBox = ro ? "" : `<div class="card addcat">${sec("plus", "เพิ่มหัวข้อปัญหาใหม่", `ตอนนี้มี ${S.config.categories.filter(c => !c.deleted).length} หัวข้อ · หัวข้อใหม่จะขึ้นในหน้าบันทึกทันที`)}
+    <div class="addcat-r"><input id="newCat" placeholder="ชื่อหัวข้อ เช่น Cooling ผิดปกติ, Flow rate ต่ำ" maxlength="120" autocomplete="off">
+      <select id="newCatGrp" aria-label="กลุ่ม">${Object.keys(GROUPS).map(g => `<option value="${g}" ${g === "other" ? "selected" : ""}>${esc(GROUPS[g].name)}</option>`).join("")}</select>
+      <button class="pri" id="addCat">${I("plus")}เพิ่มหัวข้อ</button></div><div class="addcat-err" id="newCatErr"></div></div>`;
+  h += addBox;  // กล่องเพิ่มหัวข้อ: ติดล่างจอเสมอ (หัวข้อใหม่ต่อท้ายรายการ)
   $("#main").innerHTML = h;
-  // ปุ่มลอย "เพิ่มหัวข้อ": ขึ้นเมื่อเลื่อนลงจนไม่เห็นกล่องเพิ่มหัวข้อ · แตะแล้วกลับไปที่กล่องพร้อมพิมพ์
-  document.querySelectorAll(".addcat-fab").forEach(x => x.remove());
-  const ac = $(".addcat");
-  if (ac) { const fab = document.createElement("button"); fab.className = "pri addcat-fab"; fab.innerHTML = `${I("plus")}<span>เพิ่มหัวข้อ</span>`; fab.hidden = true; document.body.appendChild(fab);
-    fab.onclick = () => { ac.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => $("#newCat") && $("#newCat").focus(), 350); };
-    const io = new IntersectionObserver(([en]) => { if (!fab.isConnected) return io.disconnect(); fab.hidden = en.isIntersecting || S.view !== "settings"; }); io.observe(ac); }
   if (!AI.status) aiStatus().then(() => { if (S.view === "settings") { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); } });
   $("#main").querySelectorAll("[data-catdel]").forEach(b => b.onclick = () => askDelete("category", b.dataset.catdel, () => { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); }));
   if (ro) { $("#unlock").onclick = async () => { if (await unlockAdmin()) viewSettings(); }; return; }
