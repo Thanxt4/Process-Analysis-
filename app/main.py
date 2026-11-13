@@ -2169,7 +2169,7 @@ def api_retort_logout():
     return resp
 _RP_TEXT = {"time": 5, "shift": 4, "plant": 10, "program": 20, "programDoc": 20, "retort": 20, "product": 120, "batch": 60, "code": 60, "category": 40, "cause": 200,
             "causeOther": 200, "duration": 12, "detail": 3000, "action": 3000, "impact": 8, "by": 60, "updatedBy": 60,
-            "holdQty": 12, "holdUnit": 20}
+            "holdQty": 12, "holdUnit": 20, "kind": 4}
 
 
 def _rp_bizdate(day: str, hm: str) -> str:
@@ -2224,6 +2224,7 @@ def _clean_rp(d: dict) -> dict:
     ph = d.get("photos") if isinstance(d.get("photos"), list) else []
     out["photos"] = [str(f) for f in ph if isinstance(f, str) and _RT_PHOTO_RE.match(f)][:8]
     out["impact"] = "hold" if out["impact"] == "hold" else "none"
+    out["kind"] = out["kind"] if out["kind"] in ("gen", "ir") else ""  # ปัญหาทั่วไป / IR
     if out["impact"] != "hold":  # จำนวน Hold ใช้เฉพาะเมื่อ Hold สินค้า
         out["holdQty"] = out["holdUnit"] = ""
     elif out["holdQty"]:

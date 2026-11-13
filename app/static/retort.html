@@ -1479,6 +1479,23 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
   .lc-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}.lc-chips::-webkit-scrollbar{display:none}.lc-chips button{flex:0 0 auto;min-height:34px;padding:2px 11px;font-size:13px}
   .lc-sel{flex-wrap:wrap}.lc-sel .lc-chips{flex:1 1 calc(100% - 60px)}.lc-sel .lc-dd{flex:1 1 40%;padding-left:8px}.lc-dd select{max-width:none;width:100%;min-height:36px;font-size:13px}
   .lc-reset{flex:0 0 auto;padding:0 6px}}
+.kpick{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.kp{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:22px 22px 20px;min-height:170px;border-radius:20px;background:#fff;border:2px solid #e2e8f0;box-shadow:0 4px 16px rgba(15,23,42,.06);transition:transform .12s,box-shadow .12s,border-color .12s}
+.kp:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(15,23,42,.12)}
+.kp .ic{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:6px}.kp .ic svg.i{width:26px;height:26px}
+.kp.gen .ic{background:#e0f2fe;color:#0369a1}.kp.ir .ic{background:#fee2e2;color:#b91c1c}
+.kp.gen:hover{border-color:#7dd3fc}.kp.ir:hover{border-color:#fca5a5}
+.kp b{font-size:21px;font-weight:800;color:var(--navy)}.kp small{font-size:14px;color:var(--mute);line-height:1.5}
+.kp .go{position:absolute;right:18px;top:22px;color:#94a3b8}
+.kseg{display:flex;align-items:center;gap:10px;margin:0 0 12px}.kseg>span{font-size:14px;font-weight:800;color:var(--navy)}.kseg .seg{flex:1;max-width:420px}
+.kseg .seg button{display:inline-flex;align-items:center;justify-content:center;gap:6px}.kseg .seg button svg.i{width:16px;height:16px}
+.lkind{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.lkind button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:16px;background:#fff;border:2px solid #e2e8f0;font-size:16px;font-weight:800;color:#475569}
+.lkind button svg.i{width:18px;height:18px}.lkind em{font-style:normal;font-size:12.5px;padding:2px 9px;border-radius:99px;background:#eef2f7;color:#334155}
+.lkind button.on{background:var(--navy);border-color:var(--navy);color:#fff}.lkind button.on em{background:rgba(255,255,255,.18);color:#fff}
+.lkind button.k-gen.on{background:#0369a1;border-color:#0369a1}.lkind button.k-ir.on{background:#b91c1c;border-color:#b91c1c}
+.kb{display:inline-block;font-size:11.5px;font-weight:800;border-radius:6px;padding:1px 7px;margin-right:7px;vertical-align:2px}.kb.ir{background:#fee2e2;color:#b91c1c}.kb.gen{background:#e0f2fe;color:#0369a1}
+@media(max-width:700px){.kpick{grid-template-columns:1fr}.kp{min-height:0;padding:16px}.lkind button{min-height:44px;font-size:13.5px;gap:5px}.lkind button svg.i{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2187,8 +2204,10 @@ function viewLog() {
     // Retort no./รอบหม้อ: เติม "หม้อ/" ให้ (เช่น RC02/) เหลือพิมพ์เลขรอบต่อท้าย · เปลี่ยนหม้อแล้วยังไม่ได้พิมพ์เลข → เปลี่ยนตาม
     if (!editing && d.retort && (!String(d.batch || "").trim() || /^[A-Za-z]+\d+\/$/.test(d.batch))) d.batch = d.retort + "/";
     const fields = []; cs.forEach(c => (c.fields || []).forEach(fl => { if (!fields.some(x => x.key === fl.key)) fields.push(fl); }));
-    h += catHead(d, `data-step="4"`) + `${editing ? `<div class="card">${sec("camera", "รูปถ่าย", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · เพิ่มรูปได้")}${photoPicker(d)}</div>` : d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
-      ${U.form.more ? pirCard(d, many, fields) : ""}
+    if (editing && !d.kind) d.kind = kindOf(d);
+    h += catHead(d, `data-step="4"`) + (!d.kind ? kindPick() : `${editing ? `<div class="card">${sec("camera", "รูปถ่าย", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · เพิ่มรูปได้")}${photoPicker(d)}</div>` : d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+      ${kindSeg(d)}
+      ${d.kind === "gen" ? genCard(d, many) : U.form.more ? pirCard(d, many, fields) : ""}
       ${!editing ? "" : cs.map((c, ci) => { const G = grpOf(c), pc = d.pc[c.id] || { cause: "", action: "" };
         return `<div class="card formcard pcard ${many ? "many" : ""}" data-cid="${c.id}" style="--gc:${G.color}">
         ${many ? `<div class="pchead"><span class="gic">${I(G.icon)}</span><div><small>ปัญหาที่ ${ci + 1} / ${cs.length}</small><b>${esc(c.name)}</b></div></div>` : ""}
@@ -2202,13 +2221,14 @@ function viewLog() {
           <div class="holdq" id="holdQ" ${d.impact === "hold" ? "" : "hidden"}><span class="lab">จำนวนที่ Hold <span class="req">*</span></span>
             <div class="holdq-r"><input id="holdQty" data-k="holdQty" inputmode="decimal" value="${esc(d.holdQty || "")}" placeholder="0" autocomplete="off"></div></div></div>` : ""}
         ${U.form.program ? `<label class="f" ${U.form.impact ? 'style="margin-top:14px"' : ""}><span class="lab">โปรแกรมที่ใช้ (ถ้ามี)</span>
-          <div class="row"><select id="progSel"><option value="">ไม่ระบุ</option>${progs.map(p => `<option value="${esc(progKey(p))}" ${sel && progKey(sel) === progKey(p) ? "selected" : ""}>โปรแกรม ${esc(p.no)}${progs.filter(x => x.no === p.no).length > 1 ? ` (${esc(p.doc)})` : ""}${p.note ? " · " + esc(p.note.replace(/^โปรแกรม \S+ /, "")) : ""}</option>`).join("")}</select>${sel ? `<button class="soft sm" id="progSpec" style="flex:0 0 auto">ดูค่าควบคุม</button>` : ""}</div></label>` : ""}
+          <div class="row"><input id="progIn" list="progList" value="${esc(d.program || "")}" placeholder="พิมพ์หรือเลือก เช่น 12, 121C/38" autocomplete="off" maxlength="20">
+            <datalist id="progList">${progs.map(p => `<option value="${esc(p.no)}">${p.note ? esc(p.note) : `โปรแกรม ${esc(p.no)}`}${progs.filter(x => x.no === p.no).length > 1 ? ` (${esc(p.doc)})` : ""}</option>`).join("")}</datalist>${sel ? `<button class="soft sm" id="progSpec" style="flex:0 0 auto">ดูค่าควบคุม</button>` : ""}</div></label>` : ""}
       </div>` : ""}
       <div class="card signcard"><span class="lab">ลงนามผู้บันทึก <span class="req">*</span></span>
         <input id="signIn" data-k="by" value="${esc(d.by || S.user)}" placeholder="ชื่อผู้บันทึก" autocomplete="off">
         <div class="signline"><span>(${esc(d.by || S.user || "................")})</span><small>วันที่ ${dmy(d.date)} เวลา ${esc(d.time)} น. กะ ${d.shift}</small></div></div>
       <div id="formErr"></div>
-      <button class="pri blk savebig" id="saveBtn">${I("check")}${editing ? "บันทึกการแก้ไข" : many ? `บันทึก ${cs.length} ปัญหา` : "บันทึก"}</button>`;
+      <button class="pri blk savebig" id="saveBtn">${I("check")}${editing ? "บันทึกการแก้ไข" : many ? `บันทึก ${cs.length} ปัญหา` : "บันทึก"}</button>`);
   }
   if (wide) {
     const side = logSide(all);
@@ -2512,7 +2532,8 @@ function wireLog() {
     else if (e.target.value.trim()) toast("กด เพิ่ม ถ้าต้องการเพิ่มเป็นสาเหตุถาวรในรายการ"); } };  // สาเหตุ: Enter ไม่เพิ่มเข้ารายการ (กันพิมพ์ผิด/ข้อความยาวหลุดเข้ารายการ)
   m.onchange = e => { const t = e.target; if (pirOnChange(d, t)) return;
     if (t.id === "camIn" || t.id === "galIn") { const fs = [...t.files]; t.value = ""; if (fs.length) addPhotos(fs, t.id === "camIn"); }
-    else if (t.id === "progSel") { const p = progByKey(t.value); d.program = p ? p.no : ""; d.programDoc = p ? p.doc : ""; const y = window.scrollY; viewLog(); window.scrollTo(0, y); } };
+    else if (t.id === "progIn") { const v = t.value.trim(), m = progsFor(d.retort).filter(p => String(p.no) === v); d.program = v; d.programDoc = m.length ? m[0].doc : "";
+      const y = window.scrollY; viewLog(); window.scrollTo(0, y); } };
   m.onclick = e => {
     const im = e.target.closest("[data-zoom]"); if (im) { zoomPhoto(im.dataset.zoom); return; }
     const b = e.target.closest("button"); if (!b) return; const ds = b.dataset; if (pirOnClick(d, b)) return;
@@ -2628,11 +2649,11 @@ function lsIRRow(x) {
     x.impact === "hold" ? holdTxt(x) : "", x.by].filter(Boolean).join(" · ");
   return `<div class="irl-r ${on ? "on" : ""}">
     <label class="irl-cb"><input type="checkbox" data-psel="${id}" ${on ? "checked" : ""} aria-label="เลือก"></label>
-    <div class="t" data-xview="${id}"><b>${esc(v.ir_irno || "(ยังไม่มีเลข IR)")} · ${esc(c ? c.name : "หัวข้อที่ถูกลบ")}</b><small>${esc(meta)}</small>
+    <div class="t" data-xview="${id}"><b>${kindOf(x) === "ir" ? `<span class="kb ir">IR</span>${esc(v.ir_irno || "(ยังไม่มีเลข IR)")} · ` : `<span class="kb gen">ทั่วไป</span>`}${esc(c ? c.name : "หัวข้อที่ถูกลบ")}</b><small>${esc(meta)}</small>
       ${causeText(x) || x.action ? `<small class="irl-ca">${causeText(x) ? `สาเหตุ: ${esc(causeText(x))}` : ""}${causeText(x) && x.action ? " · " : ""}${x.action ? `แก้ไข: ${esc(x.action)}` : ""}</small>` : ""}
       <span class="irl-tags">${v.ir_line ? `<span class="irln ${irLtCls(lt)}">${esc(v.ir_line)}</span>` : ""}${apprTag(x)}${v.ir_nrft === "Y" ? `<span class="tag hold">NRFT</span>` : ""}${(x.photos || []).length ? `<span class="tag">${I("camera")} ${x.photos.length}</span>` : ""}</span></div>
     <div class="acts">${sup ? (x.approvedBy ? `<button class="ghost sm" data-punap="${id}">${I("x")}ยกเลิกอนุมัติ</button>` : `<button class="soft sm irap" data-pap="${id}">${I("check")}อนุมัติ</button>`) : ""}
-      <button class="ghost sm" data-pcopy="${id}" title="คัดลอกรายการนี้เป็น IR">${I("list")}คัดลอก</button><button class="ghost sm" data-pedit="${id}">${I("pen")}แก้ไข</button>
+      ${kindOf(x) === "ir" ? `<button class="ghost sm" data-pcopy="${id}" title="คัดลอกรายการนี้เป็น IR">${I("list")}คัดลอก</button>` : ""}<button class="ghost sm" data-pedit="${id}">${I("pen")}แก้ไข</button>
       ${sup ? `<button class="ghost sm danger" data-pdel="${id}" aria-label="ลบ">${I("trash")}</button>` : ""}</div></div>`;
 }
 function viewList() {
@@ -2643,7 +2664,8 @@ function viewList() {
   const [from, to] = rangeOf();
   const inRange = filtered(from, to).sort(SORT_FN[f.sort]);
   const ap = f.appr || "all";
-  const all = inRange.filter(x => ap === "all" || (ap === "done") === !!x.approvedBy);
+  const kd = f.kind || "all", nKind = k => inRange.filter(x => kindOf(x) === k).length;
+  const all = inRange.filter(x => (ap === "all" || (ap === "done") === !!x.approvedBy) && (kd === "all" || kindOf(x) === kd));
   const nWait = inRange.filter(x => !x.approvedBy).length;
   S.q = S.q || "";
   const rLabel = (RANGE_OPTS.find(o => o[0] === f.range) || [])[1] || "";
@@ -2652,6 +2674,8 @@ function viewList() {
   const dLabel = f.range === "day" ? thDate(from) : f.range === "custom" ? `${dmy(from)} – ${dmy(to)}` : rLabel;
   let h = `<div class="lsearch-row"><div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>
     <button class="fbtn ${nAct ? "act" : ""}" id="fOpen" aria-label="ตัวกรองและการเรียงข้อมูล" title="ตัวกรอง / เรียงข้อมูล">${I("settings")}<span>ตัวกรอง</span>${nAct ? `<em>${nAct}</em>` : ""}</button></div>
+  <div class="lkind">${[["all", "list", "ทั้งหมด", inRange.length], ["gen", "list", "ปัญหาทั่วไป", nKind("gen")], ["ir", "alert", "รายการ IR", nKind("ir")]]
+    .map(([v, ic, l, n]) => `<button data-qkind="${v}" class="${kd === v ? "on" : ""} k-${v}">${I(ic)}<span>${l}</span><em>${n}</em></button>`).join("")}</div>
   <div class="card lctl">
     <div class="lc-row lc-sort"><span class="lc-lab">${I("list")}เรียงตาม</span><div class="lc-seg">${[["new", "clock", "ใหม่ → เก่า"], ["old", "clock", "เก่า → ใหม่"], ["plant", "factory", "Plant / หม้อ"], ["cat", "tag", "หัวข้อปัญหา"]]
       .map(([v, ic, l]) => `<button data-qsort="${v}" class="${f.sort === v ? "on" : ""}">${I(ic)}<span>${l}</span></button>`).join("")}</div></div>
@@ -2676,6 +2700,7 @@ function viewList() {
     if (!b) { const tr = e.target.closest("tr[data-xid]"); if (tr) showItem(tr.dataset.xid); return; }
     const ds = b.dataset;
     if (b.id === "fOpen") openListFilter();
+    else if (ds.qkind) { f.kind = ds.qkind; save(); }
     else if (ds.qsort) { f.sort = ds.qsort; f.sortV2 = 1; save(); }
     else if (ds.qrange) { if (ds.qrange === "pick") openListFilter(); else { f.range = ds.qrange; save(); } }
     else if (ds.qpl) { f.plant = ds.qpl; f.retort = "all"; save(); }
@@ -3340,8 +3365,29 @@ function pirOnInput(d, t, m) {
     const dl = $("#pMk"); if (dl) { const ks = irMarkets(d.code); dl.innerHTML = (ks.length ? ks : ["P", "N", "E", "X", "C", "S"]).map(v => `<option value="${esc(v)}">`).join(""); } }
   const h = $("#pCodeHint"); if (h) h.innerHTML = pirHint(d);
 }
+/* ขั้นที่ 5: เลือกประเภท · แจ้งปัญหาทั่วไป หรือ ออก IR */
+const kindOf = x => x.kind || (x.code || Object.keys(x.values || {}).some(k => k.startsWith("ir_") && x.values[k]) ? "ir" : "gen");
+const KIND_LAB = { gen: "ปัญหาทั่วไป", ir: "IR" };
+function kindPick() {
+  return `<h2 class="q">บันทึกเป็นแบบไหน?</h2><div class="kpick">
+    <button class="kp gen" data-pkind="gen"><span class="ic">${I("list")}</span><b>แจ้งปัญหาทั่วไป</b><small>ไลน์ · ระยะเวลา · สาเหตุ · การแก้ไข · ผลต่อสินค้า · โปรแกรม</small><span class="go">${I("right")}</span></button>
+    <button class="kp ir" data-pkind="ir"><span class="ic">${I("alert")}</span><b>ออก IR</b><small>กรอกตามแบบฟอร์ม IR Retort · คัดลอกไปวางใน Excel ได้</small><span class="go">${I("right")}</span></button></div>`;
+}
+const kindSeg = d => `<div class="kseg"><span>ประเภท</span><div class="seg">${["gen", "ir"].map(k => `<button data-pkind="${k}" class="${d.kind === k ? "on" : ""}">${k === "gen" ? I("list") + "ปัญหาทั่วไป" : I("alert") + "ออก IR"}</button>`).join("")}</div></div>`;
+function genCard(d, many) {
+  const cs = (d.cats || []).map(catById).filter(Boolean), pc = (d.pc || {})[d.cats[0]] || { cause: "", action: "" };
+  const sug = [...new Set([...cs.flatMap(c => c.causes || []), UNKNOWN])];
+  return `<div class="card detcard gencard">${sec("list", "รายละเอียดปัญหา", many ? "ใช้ร่วมกันทุกปัญหาที่เลือก" : "แจ้งปัญหาทั่วไป")}<div class="grid">
+    <div class="f full"><span class="lab">ไลน์</span>${pirLineField(d)}</div>
+    ${detailInput(detailFields().find(x => x.key === "duration") || DEFAULT_DETAILS[1], d)}
+    ${S.editingId ? "" : `<label class="f full"><span class="lab">สาเหตุ</span><input class="pCause" value="${esc(pc.cause)}" list="pcsAll" placeholder="กรอกสาเหตุ หรือเลือกจากรายการ" autocomplete="off"></label>
+      <datalist id="pcsAll">${sug.map(x => `<option value="${esc(x)}">`).join("")}</datalist>
+      <label class="f full"><span class="lab">การแก้ไข</span><textarea class="pAct" rows="2" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(pc.action)}</textarea></label>`}
+  </div></div>`;
+}
 function pirOnClick(d, b) {
   const ds = b.dataset; d.values = d.values || {};
+  if (ds.pkind) { const first = !d.kind; d.kind = ds.pkind; const y = window.scrollY; viewLog(); window.scrollTo(0, first ? 0 : y); return true; }
   if (ds.pcpick) { d.values.ir_pcode = ds.pcpick; const pc = document.querySelector('[data-v="ir_pcode"]'); if (pc) pc.value = ds.pcpick; const h = $("#pCodeHint"); if (h) h.innerHTML = pirHint(d); return true; }
   if (ds.pnrft) { d.values.ir_nrft = ds.pnrft; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); return true; }
   if (ds.ppsh) { d.values.ir_pshift = ds.ppsh; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); return true; }
