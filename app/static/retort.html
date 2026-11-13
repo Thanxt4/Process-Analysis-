@@ -1570,7 +1570,7 @@ const UI_DEFAULT = {
     { k: "progs", label: "โปรแกรม", show: true }, { k: "survey", label: "Survey", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
   defaultTab: "log",
   dsStart: "07:00", dsEnd: "17:30",
-  steps: ["เวลา", "พื้นที่", "หม้อ", "ปัญหา", "สาเหตุ"],
+  steps: ["เวลา", "พื้นที่", "หม้อ", "ปัญหา", "รายละเอียด"],
   form: { photo: true, action: true, impact: true, program: true, more: true, todaybar: true, recent: true, maxPhotos: 8 },
   dash: { insight: true, trend: true, groups: true, hours: true, heat: true, more: true, days: 14 },
   groups: {}, aiQuick: null
@@ -1599,7 +1599,7 @@ function uiCfg(raw) {
     brand: str(c.brand, D.brand, 60), title: str(c.title, D.title, 60), subtitle: str(c.subtitle, D.subtitle, 80), stamp: str(c.stamp, D.stamp, 60),
     navy: hex(c.navy, D.navy), amber: hex(c.amber, D.amber), scale: Math.min(130, Math.max(85, parseInt(c.scale, 10) || 100)),
     tabs, defaultTab: tabs.some(t => t.k === c.defaultTab && t.show) ? c.defaultTab : tabs.find(t => t.show).k,
-    dsStart, dsEnd, steps: D.steps.map((s, i) => str((c.steps || [])[i], s, 16)),
+    dsStart, dsEnd, steps: D.steps.map((s, i) => { const v = str((c.steps || [])[i], s, 16); return i === 4 && v === "สาเหตุ" ? s : v; }),  // ขั้นที่ 5 ไม่มีสาเหตุแล้ว
     form: Object.fromEntries(Object.entries(D.form).map(([k, v]) => [k, k === "maxPhotos" ? Math.min(8, Math.max(1, parseInt(f[k], 10) || v)) : bool(f[k], v)])),
     dash: Object.fromEntries(Object.entries(D.dash).map(([k, v]) => [k, k === "days" ? ([7, 14, 30, 90].includes(+ds[k]) ? +ds[k] : v) : bool(ds[k], v)])),
     groups, aiQuick: Array.isArray(c.aiQuick) ? c.aiQuick.map(q => str(q, "", 200)).filter(Boolean).slice(0, 12) : null
@@ -2135,10 +2135,10 @@ function viewLog() {
     const fields = []; cs.forEach(c => (c.fields || []).forEach(fl => { if (!fields.some(x => x.key === fl.key)) fields.push(fl); }));
     h += catHead(d, `data-step="4"`) + `${editing ? `<div class="card">${sec("camera", "รูปถ่าย", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · เพิ่มรูปได้")}${photoPicker(d)}</div>` : d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
       ${U.form.more ? pirCard(d, many, fields) : ""}
-      ${cs.map((c, ci) => { const G = grpOf(c), pc = d.pc[c.id] || { cause: "", action: "" };
+      ${!editing ? "" : cs.map((c, ci) => { const G = grpOf(c), pc = d.pc[c.id] || { cause: "", action: "" };
         return `<div class="card formcard pcard ${many ? "many" : ""}" data-cid="${c.id}" style="--gc:${G.color}">
         ${many ? `<div class="pchead"><span class="gic">${I(G.icon)}</span><div><small>ปัญหาที่ ${ci + 1} / ${cs.length}</small><b>${esc(c.name)}</b></div></div>` : ""}
-        <label class="f"><span class="lab">สาเหตุ <span class="req">*</span></span><textarea class="causeIn" data-cid="${c.id}" rows="2" placeholder="กรอกสาเหตุของปัญหา">${esc(pc.cause)}</textarea></label>
+        <label class="f"><span class="lab">สาเหตุ</span><textarea class="causeIn" data-cid="${c.id}" rows="2" placeholder="กรอกสาเหตุของปัญหา">${esc(pc.cause)}</textarea></label>
         <div style="margin-top:10px">${pickBar("cause", "ค้นหาสาเหตุ หรือเพิ่มสาเหตุใหม่เข้ารายการ", c.id)}</div>
         <div class="sugg">${[...(c.causes || []), UNKNOWN].map(x => `<button class="chip ${pc.cause === x ? "on" : ""}" data-sug="${esc(x)}" data-s="${esc(x.toLowerCase())}">${esc(x)}</button>`).join("")}</div>
         ${U.form.action ? `<label class="f" style="margin-top:14px"><span class="lab">การแก้ไข</span><textarea class="actIn" data-cid="${c.id}" rows="3" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(pc.action)}</textarea></label>` : ""}
@@ -2174,7 +2174,7 @@ function viewSaved() {
   $("#main").innerHTML = `<div class="card done-card"><div class="okic">${I("check")}</div><h2>${many ? `บันทึกแล้ว ${L.length} ปัญหา` : "บันทึกแล้ว"}</h2>
     ${many ? `<p class="sub" style="margin:6px 0 0">${esc(x.plant)} · ${esc(x.retort)}</p>
       <div class="savedlist">${L.map(r => `<div class="srow"><div><b>${esc(catById(r.category)?.name || "")}</b><small>${esc(causeText(r))}</small></div><button class="ghost sm" data-esaved="${esc(r.id)}">${I("pen")}แก้ไข</button></div>`).join("")}</div>`
-      : `<p class="sub" style="margin:6px 0 0">${esc(catById(x.category)?.name || "")} · ${esc(x.retort)}<br>${esc(causeText(x))}</p>`}
+      : `<p class="sub" style="margin:6px 0 0">${esc(catById(x.category)?.name || "")} · ${esc(x.retort)}${causeText(x) ? `<br>${esc(causeText(x))}` : ""}</p>`}
     <div class="meta2"><span>${dmy(x.date)} ${esc(x.time)} น.</span><span>กะ ${esc(x.shift)}</span>${x.plant ? `<span>${esc(x.plant)}</span>` : ""}${(x.photos || []).length ? `<span>รูป ${x.photos.length}</span>` : ""}${x.impact === "hold" ? `<span style="color:var(--warn)">${esc(holdTxt(x))}</span>` : ""}</div></div>
     <button class="pri blk savebig" id="again">${I("plus")}บันทึกปัญหาอื่น</button>
     <button class="blk" id="savedIR" style="margin-top:10px">${I("grid")}คัดลอกเป็นแบบฟอร์ม IR</button>
@@ -2191,6 +2191,7 @@ function viewSaved() {
 // จำนวนที่ Hold: "Hold 120 กระป๋อง" (รายการเก่าที่ไม่มีจำนวน = "Hold")
 const holdTxt = x => x.impact !== "hold" ? "" : "Hold" + (x.holdQty ? ` ${Number(x.holdQty).toLocaleString()} ${x.holdUnit || ""}`.trimEnd() : "");
 function causeText(x) { return x.cause === "__other" ? (x.causeOther || "อื่นๆ") : x.cause; }
+const itemTitle = x => causeText(x) || catById(x.category)?.name || "ไม่ระบุสาเหตุ";  // ไม่ได้กรอกสาเหตุ → ใช้ชื่อหัวข้อปัญหา
 const fmtTs = ms => { if (!ms) return ""; const d = new Date(ms); return `${dmy(bizISO(d))} ${pad(d.getHours())}:${pad(d.getMinutes())} น.`; };
 const apprTag = x => x.approvedBy
   ? `<span class="tag ok" title="อนุมัติเมื่อ ${esc(fmtTs(x.approvedAt))}">${I("check")} อนุมัติ · ${esc(x.approvedBy)}</span>`
@@ -2199,7 +2200,7 @@ function approveItem(id, undo) {
   const x = S.items[id]; if (!x) return;
   const last = lsGet("rt_approver", "") || S.user;
   modal(`<h2>${undo ? "ยกเลิกการอนุมัติ" : "อนุมัติรายการนี้"}</h2>
-    <p class="sub" style="margin:2px 0 12px">${esc(causeText(x))} · ${esc(x.retort || "")} · ${dmy(x.date)} ${esc(x.time)}</p>
+    <p class="sub" style="margin:2px 0 12px">${esc(itemTitle(x))} · ${esc(x.retort || "")} · ${dmy(x.date)} ${esc(x.time)}</p>
     ${undo ? "" : `<label class="f"><span class="lab">ชื่อผู้อนุมัติ <span class="req">*</span></span><input id="apName" value="${esc(last)}" placeholder="ชื่อผู้อนุมัติ" autocomplete="off"></label>`}
     <p class="sub" id="apErr" style="color:var(--bad);min-height:20px;margin:8px 0 0"></p>
     <div class="row" style="margin-top:6px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="apOk">${I("check")}${undo ? "ยืนยันยกเลิก" : "อนุมัติ"}</button></div>`, box => {
@@ -2219,7 +2220,7 @@ function approveItem(id, undo) {
 }
 function itemRow(x) {
   const c = catById(x.category);
-  return `<button class="item" data-edit="${x.id}"><span class="bar" style="background:${catColor(x.category)}"></span><span class="b"><b>${esc(causeText(x) || "ไม่ระบุสาเหตุ")}</b>
+  return `<button class="item" data-edit="${x.id}"><span class="bar" style="background:${catColor(x.category)}"></span><span class="b"><b>${esc(itemTitle(x) || "ไม่ระบุสาเหตุ")}</b>
     <span class="meta">${esc(c ? c.name : "หัวข้อที่ถูกลบ")} · ${esc([x.plant, x.retort || "-", x.program ? "P" + x.program : ""].filter(Boolean).join(" "))} · ${dmy(x.date)} ${esc(x.time)} ${x.shift}${x.duration ? ` · ${esc(fmtDur(x.duration))}` : ""}${x.by ? ` · บันทึก ${esc(x.by)}` : ""}</span></span><span class="tags">${apprTag(x)}<span>${(x.photos || []).length ? `<span class="tag">${I("camera")} ${x.photos.length}</span> ` : ""}${x.impact === "hold" ? `<span class="tag hold">${esc(holdTxt(x))}</span>` : ""}${x.demo ? ' <span class="tag">Demo</span>' : ""}</span></span></button>`;
 }
 /* ---------- รูปถ่าย + เวลาประทับ ---------- */
@@ -2494,9 +2495,6 @@ async function submitLog() {
   const d = S.draft; const cs = d.cats.map(catById).filter(Boolean);
   const err = msg => { $("#formErr").innerHTML = `<div class="alert a-bad" style="margin-top:12px">${I("alert")}<div>${msg}</div></div>`; $("#formErr").scrollIntoView({ block: "center" }); };
   if (!cs.length) return err("เลือกปัญหาอย่างน้อย 1 ข้อ");
-  for (const c of cs) { const txt = String(d.pc[c.id]?.cause || "").trim();
-    if (!txt) { const ta = $(`.pcard[data-cid="${c.id}"] .causeIn`); if (ta) { ta.classList.add("err"); ta.scrollIntoView({ block: "center" }); }
-      return err(`กรอกสาเหตุ${cs.length > 1 ? `ของ "${esc(c.name)}"` : ""} ถ้ายังไม่รู้ เลือก "${UNKNOWN}"`); } }
   if (d.impact === "hold" && U.form.impact) {
     const q = parseFloat(String(d.holdQty || "").replace(/,/g, ""));
     if (!(q > 0)) { $("#holdQty").classList.add("err"); return err("กรอกจำนวนที่ Hold สินค้า"); }
@@ -2508,10 +2506,10 @@ async function submitLog() {
   const wasEdit = !!S.editingId;
   const base = JSON.parse(JSON.stringify(d)); ["cats", "pc", "ids", "ptimes"].forEach(k => delete base[k]);
   d.ids = d.ids || [];  // รหัสของแต่ละรายการคงที่ → กดบันทึกซ้ำหลังเน็ตหลุดไม่เกิดรายการซ้ำ
-  const recs = cs.map((c, i) => { const pc = d.pc[c.id], txt = String(pc.cause).trim();
-    const match = [...(c.causes || []), UNKNOWN].find(x => x.toLowerCase() === txt.toLowerCase());
+  const recs = cs.map((c, i) => { const pc = d.pc[c.id] || { cause: "", action: "" }, txt = String(pc.cause || "").trim();
+    const match = txt ? [...(c.causes || []), UNKNOWN].find(x => x.toLowerCase() === txt.toLowerCase()) : "";
     const keys = new Set((c.fields || []).map(f => f.key));
-    return { ...base, id: i === 0 ? d.id : (d.ids[i] = d.ids[i] || uid("p")), category: c.id, cause: match || "__other", causeOther: match ? "" : txt,
+    return { ...base, id: i === 0 ? d.id : (d.ids[i] = d.ids[i] || uid("p")), category: c.id, cause: !txt ? "" : match || "__other", causeOther: match || !txt ? "" : txt,
       action: String(pc.action || ""), values: wasEdit ? base.values : Object.fromEntries(Object.entries(base.values || {}).filter(([k, v]) => (keys.has(k) || k.startsWith("x_") || k.startsWith("ir_")) && String(v).trim() !== "")),
       createdAt: (base.createdAt || Date.now()) + i }; });
   const btn = $("#saveBtn"); if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก…"; }
@@ -2687,7 +2685,7 @@ function showItem(id) {
   const x = S.items[id]; if (!x) return; const c = catById(x.category);
   const kv = (k, v) => v ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">${k}</span><span class="v" style="font-weight:500;white-space:pre-wrap">${esc(v)}</span></div>` : "";
   const vals = (c?.fields || []).map(fl => x.values?.[fl.key] ? kv(fl.label, `${x.values[fl.key]} ${fl.unit || ""}`) : "").join("");
-  modal(`<h2>${esc(causeText(x))}</h2><p class="sub" style="margin:2px 0 12px">${esc(c ? c.name : "")}</p>
+  modal(`<h2>${esc(itemTitle(x))}</h2><p class="sub" style="margin:2px 0 12px">${esc(c ? c.name : "")}${causeText(x) ? "" : " · ยังไม่ระบุสาเหตุ (กด แก้ไข เพื่อเพิ่มได้)"}</p>
     ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}
     ${(() => { const v = x.values || {}; return [["NRFT?", v.ir_nrft], ["ตลาด", v.ir_market], ["โค๊ตผลิตภัณฑ์", v.ir_pcode], ["ไลน์", v.ir_line], ["Shot Code", v.ir_shot],
       ["วันผลิต / กะผลิต", v.ir_pdate ? `${dmy(v.ir_pdate)} ${v.ir_pshift || ""}` : ""], ["จำนวน (NRFT)", v.ir_qnrft], ["หมายเลขเครื่อง INK", v.ir_ink], ["หมายเลข BSK", v.ir_bsk]].map(([k, val]) => kv(k, val)).join(""); })()}
