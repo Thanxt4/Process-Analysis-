@@ -2964,6 +2964,49 @@ IR_FIELDS = {  # key: ความยาวสูงสุด
 }
 
 
+IR_CODES_STATIC = BASE_DIR / "static" / "ir_codes.json"      # จากไฟล์ Excel (Code Ref)
+IR_CODES_CUSTOM = DATA_DIR / "ir_codes_custom.json"           # หน้างานเพิ่มเอง (จาก IR ที่บันทึก)
+_IR_CODE_RE = re.compile(r"^[A-Z0-9][A-Z0-9 ._/-]{0,39}$")
+
+
+def _ir_codes_load(p: Path) -> dict:
+    try:
+        d = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _ir_codes_learn(x: dict) -> bool:
+    """รหัสเอกสาร + ตลาด → โค๊ตผลิตภัณฑ์ ที่ยังไม่มีในระบบ: เพิ่มเข้า ir_codes_custom.json"""
+    doc, mk, code = (str(x.get(k) or "").strip().upper() for k in ("doc", "market", "productCode"))
+    if not (doc and code and _IR_CODE_RE.match(doc) and _IR_CODE_RE.match(code) and (not mk or _IR_CODE_RE.match(mk))):
+        return False
+    if mk in (_ir_codes_load(IR_CODES_STATIC).get(doc) or {}):
+        return False
+    cus = _ir_codes_load(IR_CODES_CUSTOM)
+    if mk in (cus.get(doc) or {}):
+        return False
+    cus.setdefault(doc, {})[mk] = code
+    tmp = IR_CODES_CUSTOM.with_suffix(".tmp")
+    tmp.write_text(json.dumps(cus, ensure_ascii=False, indent=0), encoding="utf-8")
+    tmp.replace(IR_CODES_CUSTOM)
+    return True
+
+
+@app.get("/api/retort/ir/codes")
+def api_rt_ir_codes(request: Request):
+    """ตารางรหัส: จาก Excel + ที่หน้างานเพิ่มเอง (custom แสดงเพิ่ม ไม่ทับของเดิม)"""
+    _rt_auth(request)
+    out = _ir_codes_load(IR_CODES_STATIC)
+    for doc, m in _ir_codes_load(IR_CODES_CUSTOM).items():
+        if isinstance(m, dict):
+            out.setdefault(doc, {})
+            for mk, code in m.items():
+                out[doc].setdefault(mk, code)
+    return out
+
+
 def _clean_ir(d: dict) -> dict:
     if not isinstance(d, dict):
         raise HTTPException(400, "ข้อมูลไม่ถูกต้อง")
@@ -2983,6 +3026,8 @@ def _clean_ir(d: dict) -> dict:
     out["nrft"] = out["nrft"].upper() if out["nrft"].upper() in ("Y", "N") else ""
     for k in ("prodShift", "repShift"):
         out[k] = out[k] if out[k] in ("DS", "NS") else ""
+    for k in ("doc", "market", "productCode"):
+        out[k] = out[k].upper()
     if not out["repDate"]:
         raise HTTPException(400, "ใส่วันรายงาน")
     if not (out["problem"] or out["detail"]):
@@ -3016,7 +3061,11 @@ async def api_rt_ir_save(request: Request):
         con.execute("INSERT INTO retort_ir(id, data, created_at, updated_at) VALUES(?,?,?,?) "
                     "ON CONFLICT(id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
                     (x["id"], json.dumps(x, ensure_ascii=False), x["createdAt"], ts))
-    return {"ok": True, "item": x}
+    try:
+        learned = _ir_codes_learn(x)
+    except OSError:
+        learned = False
+    return {"ok": True, "item": x, "learned": learned}
 
 
 @app.post("/api/retort/ir/{rid}/approve")

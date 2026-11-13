@@ -1417,6 +1417,11 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .irf-head>div{display:flex;flex-direction:column}.irf-head b{font-size:19px;font-weight:800}.irf-head span{font-size:13px;color:#cbd5e1}
 .irf-head .ghost{color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);min-height:40px}
 .irf-head .ghost svg.i{transform:rotate(90deg)}
+[data-ir="doc"],[data-ir="market"],[data-ir="productCode"]{text-transform:uppercase}
+.irhint{font-size:13px;min-height:0;margin-top:-4px}.irhint:empty{display:none}
+.irhint span{display:inline-flex;align-items:flex-start;gap:6px;padding:7px 11px;border-radius:10px;line-height:1.4}
+.irhint svg.i{width:15px;height:15px;flex:0 0 auto;margin-top:2px}
+.irhint .ok{background:#f0fdf4;color:#15803d}.irhint .new{background:#eff6ff;color:#1d4ed8}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2875,7 +2880,7 @@ const irNew = () => { const t = nowHM(), sh = shiftOf(t), last = lsGet("rt_irlas
 async function irLoad() {
   try { IR.items = (await api("/api/retort/ir")).items || []; } catch (e) { if (e.status === 401) showLock(true); else toast("โหลด IR ไม่สำเร็จ: " + e.message); IR.items = []; }
   IR.loaded = true;
-  if (!IR.codes) { try { IR.codes = await (await fetch("/ir_codes.json")).json(); } catch { IR.codes = {}; } }
+  if (!IR.codes) { try { IR.codes = await api("/api/retort/ir/codes"); } catch { try { IR.codes = await (await fetch("/ir_codes.json")).json(); } catch { IR.codes = {}; } } }
 }
 const irDMY = s => { if (!s) return ""; const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };  // วว/ดด/ปปปป (ค.ศ.) ให้ Excel อ่านเป็นวันที่
 // แถวสำหรับวางใน Excel (เริ่มที่คอลัมน์ D) · ช่องที่มีขึ้นบรรทัด/แท็บ ใส่ "…" ให้อยู่ในช่องเดียว
@@ -2893,6 +2898,15 @@ async function irCopy(txt, what) {
   if (!ok) { const ta = document.createElement("textarea"); ta.value = txt; ta.style.cssText = "position:fixed;left:-9999px;top:0"; document.body.appendChild(ta); ta.select();
     try { ok = document.execCommand("copy"); } catch {} ta.remove(); }
   if (ok) toast(`คัดลอก${what}แล้ว · ไปวางได้เลย`); else modal(`<h2>คัดลอกข้อความ</h2><p class="sub">กดค้างที่ข้อความ แล้วเลือกคัดลอก</p><textarea rows="10" style="width:100%">${esc(txt)}</textarea><button class="blk" data-close style="margin-top:10px">ปิด</button>`);
+}
+// สถานะรหัส: มีในระบบ / รหัสใหม่ (กรอกเอง แล้วระบบจำไว้ตอนบันทึก)
+function irCodeHint(d) {
+  const doc = String(d.doc || "").trim().toUpperCase(), mk = String(d.market || "").trim().toUpperCase(), m = (IR.codes || {})[doc];
+  if (!doc) return "";
+  if (m && m[mk] && m[mk] === String(d.productCode || "").toUpperCase()) return `<span class="ok">${I("check")}มีในระบบ · เติมโค๊ตผลิตภัณฑ์ให้แล้ว</span>`;
+  if (!m) return `<span class="new">${I("plus")}รหัส <b>${esc(doc)}</b> ยังไม่มีในระบบ · กรอกตลาดและโค๊ตผลิตภัณฑ์เอง แล้วกดบันทึก ระบบจะจำไว้ให้ครั้งหน้า</span>`;
+  if (mk && !m[mk]) return `<span class="new">${I("plus")}ตลาด <b>${esc(mk)}</b> ของรหัส ${esc(doc)} ยังไม่มีในระบบ · กรอกโค๊ตผลิตภัณฑ์เอง แล้วระบบจะจำไว้ให้</span>`;
+  return "";
 }
 const irMarkets = doc => Object.keys((IR.codes || {})[String(doc || "").trim().toUpperCase()] || {});
 function irFill(d) {  // รหัสเอกสาร + ตลาด → โค๊ตผลิตภัณฑ์ (SAP) จากตาราง Code Ref
@@ -2916,8 +2930,9 @@ async function viewIR() {
     <div class="card irc"><div class="irh"><span class="n">1</span><b>ข้อมูลผลิตภัณฑ์</b></div><div class="grid">
       ${seg("nrft", ["N", "Y"])}${seg("plant", ["PF1", "PF2"])}
       <label class="f"><span class="lab">รหัสเอกสาร</span><input data-ir="doc" value="${esc(d.doc)}" list="irDocs" placeholder="เช่น M022" autocapitalize="characters" autocomplete="off"></label>
-      <label class="f"><span class="lab">ตลาด</span><select data-ir="market"><option value="">${mk.length ? "— เลือก —" : "—"}</option>${[...new Set([...mk, d.market].filter(Boolean))].map(v => `<option ${v === d.market ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>
+      <label class="f"><span class="lab">ตลาด</span><input data-ir="market" value="${esc(d.market)}" list="irMk" placeholder="${mk.length ? "เลือก หรือพิมพ์ เช่น " + esc(mk.join(", ")) : "เช่น P, N, E"}" autocapitalize="characters" autocomplete="off"></label>
       <label class="f full"><span class="lab">โค๊ตผลิตภัณฑ์ <small class="sub">(เติมจากรหัสเอกสาร + ตลาด · แก้ได้)</small></span><input data-ir="productCode" value="${esc(d.productCode)}" autocapitalize="characters" autocomplete="off"></label>
+      <div class="full irhint" id="irCodeHint">${irCodeHint(d)}</div>
       ${fld("shotCode")}${fld("irNo", 'placeholder="เช่น IR-PF1-001"')}
     </div></div>
     <div class="card irc"><div class="irh"><span class="n">2</span><b>วัน · กะ · จุดที่พบ</b></div><div class="grid">
@@ -2938,7 +2953,7 @@ async function viewIR() {
     <div class="ir-save"><button class="pri blk savebig" id="irSave">${I("check")}${editing ? "บันทึกการแก้ไข IR" : "บันทึก IR"}</button>
     </div>
   </div>
-  ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", past("line"))}
+  ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irMk", mk.length ? mk : [...new Set(Object.values(IR.codes || {}).flatMap(o => Object.keys(o)))].slice(0, 30))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", past("line"))}
   ${dl("irProb", [...S.config.categories.filter(c => c.active && !c.deleted).map(c => c.name), ...past("problem")])}${dl("irDec", past("decision"))}${dl("irAppr", past("approver"))}`;
   m.innerHTML = `<div class="irf">${h}</div>`;
   markAnim("ir");
@@ -2946,9 +2961,12 @@ async function viewIR() {
   const more = $("#irMore"); if (more) more.ontoggle = () => { IR.open2 = more.open; };
   m.oninput = e => { const t = e.target;
     if (t.dataset.ir) { d[t.dataset.ir] = t.value; t.classList.remove("err");
-      if (t.dataset.ir === "doc") { const ks = irMarkets(t.value); if (ks.length) { if (!ks.includes(d.market)) d.market = ks.length === 1 ? ks[0] : ""; irFill(d); redo(); setTimeout(() => { const i = m.querySelector('[data-ir="doc"]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); } } }
+      if (t.dataset.ir === "doc" || t.dataset.ir === "market") d[t.dataset.ir] = t.value.trim().toUpperCase();
+      if (t.dataset.ir === "doc") { const ks = irMarkets(t.value); if (ks.length) { if (!ks.includes(d.market)) d.market = ks.length === 1 ? ks[0] : ""; irFill(d); const k = t.dataset.ir; redo(); setTimeout(() => { const i = m.querySelector(`[data-ir="${k}"]`); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); } }
+      if (t.dataset.ir === "market" && irFill(d)) { const pc = m.querySelector('[data-ir="productCode"]'); if (pc) pc.value = d.productCode; }
+      const hn = $("#irCodeHint"); if (hn && ["doc", "market", "productCode"].includes(t.dataset.ir)) hn.innerHTML = irCodeHint(d); } 
     else if (t.id === "irQ") { IR.q = t.value; const y = scrollY; viewIR(); scrollTo(0, y); setTimeout(() => { const i = $("#irQ"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 0); } };
-  m.onchange = e => { const t = e.target; if (t.dataset.ir === "market") { d.market = t.value; irFill(d); redo(); } else if (t.dataset.ir === "plant") redo(); };
+  m.onchange = e => { const t = e.target; if (t.dataset.ir === "market") { d.market = t.value.trim().toUpperCase(); if (irFill(d)) redo(); } else if (t.dataset.ir === "plant") redo(); };
   m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (b.id === "irBack" || b.id === "irCancel") { IRL.form = false; viewIRList(); window.scrollTo(0, 0); return; }
     if (b.id === "irExport") { irExportCsv(); return; }
@@ -2969,6 +2987,7 @@ async function viewIR() {
       b.disabled = true;
       try { const r = await jpost("/api/retort/ir", d); const i = IR.items.findIndex(x => x.id === r.item.id); if (i >= 0) IR.items[i] = r.item; else IR.items.unshift(r.item);
         lsSet("rt_irlast", { plant: d.plant, checkpoint: d.checkpoint, approver: d.approver });
+        if (r.learned) { const x = r.item; IR.codes = IR.codes || {}; (IR.codes[x.doc] = IR.codes[x.doc] || {})[x.market] = x.productCode; setTimeout(() => toast(`เพิ่มรหัส ${x.doc}${x.market} → ${x.productCode} เข้าระบบแล้ว · ครั้งหน้าเติมให้อัตโนมัติ`), 2600); }
         const saved = r.item; IR.d = irNew(); IRL.form = false; IRL.sel = new Set([saved.id]); IRL.flash = saved.id; IRL.q = ""; IRL.st = IRL.ap = IRL.pl = "all";
         S.view = "irlist"; render(); toast(`บันทึก IR ${saved.irNo || ""} แล้ว · เลือกไว้ให้แล้ว กด คัดลอก ได้เลย`); }
       catch (er) { b.disabled = false; if (er.status === 401) showLock(true); else err(esc(er.message)); } } };
