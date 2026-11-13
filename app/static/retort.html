@@ -1501,6 +1501,10 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .ksplit .ks button{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:8px 12px;border-radius:12px;background:#e0f2fe;border:0;color:#0369a1;min-height:0;box-shadow:none}
 .ksplit .ks button.ir{background:#fee2e2;color:#b91c1c}.ksplit .ks b{font-size:26px;line-height:1.1}.ksplit .ks span{font-size:12.5px;font-weight:700}
 .kb.n{background:#eef2f7;color:#334155}
+.irk-cols{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:12.5px}
+.irk-cols>div{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(0,1.3fr);gap:8px;align-items:center;padding:4px 10px;border-bottom:1px solid #f1f5f9}
+.irk-cols b{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--navy)}.irk-cols span{color:var(--mute)}.irk-cols em{font-style:normal;font-weight:700;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.irk-cols>div.e em{color:#cbd5e1;font-weight:400}.irk-cols>div.gap{background:#fff7ed}.irk-cols>div.gap span{color:#c2410c;font-weight:700}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3280,10 +3284,17 @@ function irShow(x) {
     ${IR_COLS.filter(([k]) => String(x[k] ?? "").trim()).map(([k, l, col]) => `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">${esc(l)} <small>(${col})</small></span><span class="v" style="font-weight:500;white-space:pre-wrap">${esc(/Date$/.test(k) ? irDMY(x[k]) : x[k])}</span></div>`).join("")}
     <div class="row" style="margin-top:14px"><button class="blk pri" id="isCopy">${I("list")}คัดลอก</button><button class="blk" data-close>ปิด</button></div>`, box => { box.querySelector("#isCopy").onclick = () => irCopyDlg([x]); });
 }
+// ตรวจก่อนวาง: แต่ละค่าจะลงคอลัมน์ไหนของไฟล์ (ตามแบบฟอร์ม PF1 / PF2)
+const colName = n => { let s = ""; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+function irColPreview(x, lay) {
+  const cells = []; IR_COLS.forEach(([k, l]) => { cells.push([l, String(x[k] ?? "")]); if (IR_LAYOUTS[lay].gaps.includes(k)) cells.push(["(คอลัมน์ว่างในไฟล์ " + lay + ")", ""]); });
+  return `<span class="lab" style="margin-top:14px">ตรวจคอลัมน์ก่อนวาง · แบบฟอร์ม ${lay} · ${esc(x.plant || "")}</span>
+    <div class="irk-cols">${cells.map(([l, v], i) => `<div class="${v ? "" : "e"} ${l.startsWith("(") ? "gap" : ""}"><b>${colName(i + 4)}</b><span>${esc(l)}</span><em>${esc(v.replace(/\n/g, " ↵ ").slice(0, 40)) || "–"}</em></div>`).join("")}</div>`;
+}
 // หน้าต่างคัดลอก: เลือกรูปแบบ (แถว Excel / ข้อความ) และเลือกช่องที่จะคัดลอก (จำไว้ในเครื่อง)
 function irCopyDlg(list) {
   if (!list.length) return;
-  const st = Object.assign({ fmt: "excel", all: true, keys: IR_COLS.map(c => c[0]), head: false, lay: "auto" }, lsGet("rt_ircopy", {}));
+  const st = Object.assign({ fmt: "excel", keys: IR_COLS.map(c => c[0]), head: false }, lsGet("rt_ircopy", {}), { all: true, lay: "auto" });  // เปิดทุกครั้ง = ทุกช่อง + แบบฟอร์มตามโรง (ไม่จำค่าเดิม กันวางเพี้ยน)
   st.keys = st.keys.filter(k => IR_LABEL[k]); if (!st.keys.length) st.keys = IR_COLS.map(c => c[0]);
   const keys = () => st.all ? IR_COLS.map(c => c[0]) : IR_COLS.map(c => c[0]).filter(k => st.keys.includes(k));
   const build = () => { const K = keys();
@@ -3303,7 +3314,8 @@ function irCopyDlg(list) {
       <small class="hint">ไฟล์ PF2 (ชีท IR Retort) มีคอลัมน์ว่างเพิ่ม 2 ช่อง (T และ AF) · ระบบเว้นช่องให้ตรงหัวข้ออัตโนมัติ</small>` : ""}
       ${st.fmt === "excel" ? `<label class="irl-ck" style="margin-top:10px"><input type="checkbox" id="cHead" ${st.head ? "checked" : ""}><span>ใส่หัวคอลัมน์บรรทัดแรก</span></label>
         <small class="hint">${st.all && !st.head ? "วางที่ <b>คอลัมน์ D</b> ของแถวว่างในไฟล์ IR · 1 IR = 1 แถว" : "วางที่ช่องแรกที่ต้องการ · ช่องจะเรียงตามลำดับในแบบฟอร์ม"}</small>` : ""}
-      <span class="lab" style="margin-top:12px">ตัวอย่าง</span><textarea class="irk-prev" rows="5" readonly>${esc(build())}</textarea>
+      ${st.fmt === "excel" && st.all ? irColPreview(list[0], irLay(st.lay, list[0])) : ""}
+      <span class="lab" style="margin-top:12px">ตัวอย่าง</span><textarea class="irk-prev" rows="${st.fmt === "excel" && st.all ? 2 : 5}" readonly>${esc(build())}</textarea>
       <div class="row" style="margin-top:10px"><button class="blk" data-close>ปิด</button><button class="blk pri" id="cGo" ${keys().length ? "" : "disabled"}>${I("list")}คัดลอก</button></div>`;
   };
   modal("", box => {
@@ -3416,7 +3428,7 @@ function pirOnChange(d, t) {
 }
 // รายการปัญหา → แถวตามแบบฟอร์ม IR (คอลัมน์ D–AM)
 // แจ้ง 1 ครั้ง (หลายปัญหา) → IR 1 แถว · ปัญหา = ทุกหัวข้อ
-function problemToIRG(G) { G = Array.isArray(G) ? G : [G]; const r = problemToIR(G[0]); r.problem = G.map(y => catById(y.category)?.name || "").filter(Boolean).join(" / "); return r; }
+function problemToIRG(G) { G = Array.isArray(G) ? G : [G]; const r = problemToIR(G[0]); r.problem = G.map(y => (catById(y.category)?.name || "").trim()).filter(Boolean).join(" / "); return r; }
 function problemToIR(x) {
   const v = x.values || {}, c = catById(x.category);
   return { nrft: v.ir_nrft || "N", doc: x.code || "", market: v.ir_market || "", irNo: v.ir_irno || "", plant: x.plant || "", prodDate: v.ir_pdate || x.date, prodShift: v.ir_pshift || x.shift,
