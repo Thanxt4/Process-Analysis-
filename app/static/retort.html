@@ -2298,7 +2298,7 @@ async function addPhotos(files, fromCamera) {
 const DEFAULT_DETAILS = [
   { key: "code", label: "Code", type: "text", ph: "เช่น D018", builtin: true },
   { key: "duration", label: "ระยะเวลาที่เกิดปัญหา", type: "number", builtin: true },  // กรอกเป็น ชั่วโมง + นาที · เก็บเป็นนาทีรวม
-  { key: "product", label: "สินค้า", type: "select", options: ["Can", "Cup", "Pouch", "Spout", "Sachet"], builtin: true },
+  { key: "product", label: "สินค้า", type: "select", options: ["Cup", "Can", "Pouch", "Freeze Dry"], builtin: true },
   { key: "batch", label: "Retort no./รอบหม้อ", type: "text", builtin: true },
   { key: "detail", label: "รายละเอียดเพิ่มเติม", type: "textarea", builtin: true }
 ];
@@ -2313,7 +2313,8 @@ function detailFields() {
     let label = String(x.label || (bi && bi.label) || "หัวข้อ").slice(0, 40);
     if (x.key === "batch" && /^(batch\s*)?รอบหม้อ$/i.test(label.trim())) label = "Retort no./รอบหม้อ";  // ชื่อเดิม → ชื่อใหม่
     let options = type === "select" ? (Array.isArray(x.options) ? x.options : []).map(o => String(o).trim().slice(0, 40)).filter(Boolean).slice(0, 30) : [];
-    if (x.key === "product" && (!options.length || options.every(o => PRODUCT_TH[o]))) options = bi.options;  // ตัวเลือกเดิม (ถ้วย/ถุง/กระป๋อง) → Can, Cup, Pouch, Spout, Sachet
+    // ตัวเลือกชุดเดิม (ถ้วย/ถุง/กระป๋อง หรือ Can/Cup/Pouch/Spout/Sachet) → ชุดปัจจุบัน Cup, Can, Pouch, Freeze Dry
+    if (x.key === "product" && (!options.length || options.every(o => PRODUCT_TH[o] || ["Can", "Cup", "Pouch", "Spout", "Sachet"].includes(o)))) options = bi.options;
     out.push({ key: x.key, builtin: !!bi, label, type, ph: String(x.ph || "").slice(0, 40), options, hide: !!x.hide }); });
   DEFAULT_DETAILS.forEach(d => { if (!seen.has(d.key)) out.push({ ...d, options: d.options || [], hide: true }); });  // ช่องเดิมที่หายไป = ซ่อนไว้
   return out;
@@ -2882,8 +2883,8 @@ const IR_COLS = [  // [key, ชื่อในแบบฟอร์ม, คอ�
   ["ncpNo", "NCP No.", "AH"], ["remark", "หมายเหตุ", "AI"], ["by3", "ผู้บันทึก3", "AJ"], ["approvedBy", "อนุมัติโดย", "AK"], ["ncpLevel", "NCP LEVEL", "AL"], ["trim", "TRIM", "AM"]];
 const IR_LABEL = Object.fromEntries(IR_COLS.map(c => [c[0], c[1]]));
 const IR = { items: [], loaded: false, codes: null, d: null, q: "", open2: false };
-// ประเภทไลน์: Cup · Can · Pouch · Spout · Freeze Dry · ช่อง "ไลน์" (คอลัมน์ R) = ประเภท + ไลน์ย่อย เช่น "Can Z"
-const IR_LINES = ["Cup", "Can", "Pouch", "Spout", "Freeze Dry"];
+// ประเภทไลน์: Cup · Can · Pouch · Freeze Dry · ช่อง "ไลน์" (คอลัมน์ R) = ประเภท + ไลน์ย่อย เช่น "Can Z"
+const IR_LINES = ["Cup", "Can", "Pouch", "Freeze Dry"];
 const irLtCls = t => t ? "t-" + t.toLowerCase().replace(/\s+/g, "-") : "";
 // รายชื่อไลน์ทั้งหมด (จากตารางไลน์ของโรงงาน) · ไลน์ใหม่ที่หน้างานพิมพ์เองใน IR จะขึ้นเป็นตัวเลือกให้ครั้งหน้าอัตโนมัติ
 const IR_LINE_MASTER = {
@@ -2891,7 +2892,7 @@ const IR_LINE_MASTER = {
   Can: ["B", "C", "D", "E", "F", "H", "J", "K", "P", "R", "T", "U", "Y", "Z"].map(x => "Can " + x),
   Pouch: ["Pouch PF1", "Pouch PF2", "Pouch VS", "Pouch Sachet", "Pouch Spout 1", "Pouch Spout 2", "Pouch Spout 3", "Big Spout", "Pouch Jerky",
     "Auto A", "Auto B", "Auto C", "Auto D", "Auto E", "Auto F", "Auto B+C", "Auto C+D"],
-  Spout: [], "Freeze Dry": [] };
+  "Freeze Dry": ["FD"] };
 const irNormLine = v => String(v || "").replace(/\s+/g, " ").trim().replace(/^cup\s+(\d+)$/i, "Cup$1");
 const irLineType = v => { const n = irNormLine(v).toLowerCase(); if (!n) return "";
   for (const t of IR_LINES) if (IR_LINE_MASTER[t].some(x => x.toLowerCase() === n)) return t;
