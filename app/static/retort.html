@@ -1325,7 +1325,7 @@ body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
 .siteoff h2{margin:10px 0 6px;color:var(--navy)}
 .holdq{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa}
 .holdq .lab{margin-bottom:6px}
-.holdq-r{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,40%);gap:8px}
+.holdq-r{display:grid;grid-template-columns:minmax(0,260px);gap:8px}
 .holdq-r input{font-size:20px;font-weight:800;text-align:center;color:#9a3412;background:#fff}
 .holdq-r select{background-color:#fff}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
@@ -2026,8 +2026,7 @@ function viewLog() {
       ${U.form.impact || U.form.program ? `<div class="card formcard sharedcard">
         ${U.form.impact ? `<div><span class="lab">ผลต่อสินค้า</span><div class="seg"><button data-impact="none" class="${d.impact === "none" ? "on" : ""}">ไม่กระทบสินค้า</button><button data-impact="hold" class="${d.impact === "hold" ? "on warnc" : ""}">Hold สินค้า</button></div>
           <div class="holdq" id="holdQ" ${d.impact === "hold" ? "" : "hidden"}><span class="lab">จำนวนที่ Hold <span class="req">*</span></span>
-            <div class="holdq-r"><input id="holdQty" data-k="holdQty" inputmode="decimal" value="${esc(d.holdQty || "")}" placeholder="0" autocomplete="off">
-              <select id="holdUnit" data-k="holdUnit"><option value="">เลือกหน่วย</option>${[...new Set([...HOLD_UNITS, d.holdUnit].filter(Boolean))].map(u => `<option ${u === (d.holdUnit || "") ? "selected" : ""}>${esc(u)}</option>`).join("")}</select></div></div></div>` : ""}
+            <div class="holdq-r"><input id="holdQty" data-k="holdQty" inputmode="decimal" value="${esc(d.holdQty || "")}" placeholder="0" autocomplete="off"></div></div></div>` : ""}
         ${U.form.program ? `<label class="f" ${U.form.impact ? 'style="margin-top:14px"' : ""}><span class="lab">โปรแกรมที่ใช้ (ถ้ามี)</span>
           <div class="row"><select id="progSel"><option value="">ไม่ระบุ</option>${progs.map(p => `<option value="${esc(progKey(p))}" ${sel && progKey(sel) === progKey(p) ? "selected" : ""}>โปรแกรม ${esc(p.no)}${progs.filter(x => x.no === p.no).length > 1 ? ` (${esc(p.doc)})` : ""}${p.note ? " · " + esc(p.note.replace(/^โปรแกรม \S+ /, "")) : ""}</option>`).join("")}</select>${sel ? `<button class="soft sm" id="progSpec" style="flex:0 0 auto">ดูค่าควบคุม</button>` : ""}</div></label>` : ""}
       </div>` : ""}
@@ -2078,7 +2077,6 @@ function viewSaved() {
   if ($("#seeList")) $("#seeList").onclick = () => go2("list");
 }
 // จำนวนที่ Hold: "Hold 120 กระป๋อง" (รายการเก่าที่ไม่มีจำนวน = "Hold")
-const HOLD_UNITS = ["กระป๋อง", "ถุง", "ถ้วย", "ถาด", "ตะกร้า", "กล่อง", "ชิ้น", "kg"];
 const holdTxt = x => x.impact !== "hold" ? "" : "Hold" + (x.holdQty ? ` ${Number(x.holdQty).toLocaleString()} ${x.holdUnit || ""}`.trimEnd() : "");
 function causeText(x) { return x.cause === "__other" ? (x.causeOther || "อื่นๆ") : x.cause; }
 const fmtTs = ms => { if (!ms) return ""; const d = new Date(ms); return `${dmy(bizISO(d))} ${pad(d.getHours())}:${pad(d.getMinutes())} น.`; };
@@ -2189,7 +2187,7 @@ const DEFAULT_DETAILS = [
   { key: "code", label: "Code", type: "text", ph: "เช่น D018", builtin: true },
   { key: "duration", label: "ระยะเวลาที่เกิดปัญหา", type: "number", builtin: true },  // กรอกเป็น ชั่วโมง + นาที · เก็บเป็นนาทีรวม
   { key: "product", label: "สินค้า", type: "select", options: ["ถ้วย", "ถุง", "กระป๋อง"], builtin: true },
-  { key: "batch", label: "Batch รอบหม้อ", type: "text", builtin: true },
+  { key: "batch", label: "Retort no./รอบหม้อ", type: "text", builtin: true },
   { key: "detail", label: "รายละเอียดเพิ่มเติม", type: "textarea", builtin: true }
 ];
 const DF_TYPES = [["text", "ข้อความ"], ["number", "ตัวเลข"], ["select", "ตัวเลือก (dropdown)"], ["textarea", "ข้อความยาว"]];
@@ -2200,7 +2198,9 @@ function detailFields() {
   raw.forEach(x => { if (!x || typeof x.key !== "string" || seen.has(x.key)) return; const bi = DEFAULT_DETAILS.find(d => d.key === x.key);
     if (!bi && !/^x_[a-z0-9]{1,20}$/.test(x.key)) return; seen.add(x.key);
     const type = (bi && DF_LOCKED[x.key]) || (DF_TYPES.some(t => t[0] === x.type) ? x.type : "text");
-    out.push({ key: x.key, builtin: !!bi, label: String(x.label || (bi && bi.label) || "หัวข้อ").slice(0, 40), type, ph: String(x.ph || "").slice(0, 40),
+    let label = String(x.label || (bi && bi.label) || "หัวข้อ").slice(0, 40);
+    if (x.key === "batch" && /^(batch\s*)?รอบหม้อ$/i.test(label.trim())) label = "Retort no./รอบหม้อ";  // ชื่อเดิม → ชื่อใหม่
+    out.push({ key: x.key, builtin: !!bi, label, type, ph: String(x.ph || "").slice(0, 40),
       options: type === "select" ? (Array.isArray(x.options) ? x.options : []).map(o => String(o).trim().slice(0, 40)).filter(Boolean).slice(0, 30) : [], hide: !!x.hide }); });
   DEFAULT_DETAILS.forEach(d => { if (!seen.has(d.key)) out.push({ ...d, options: d.options || [], hide: true }); });  // ช่องเดิมที่หายไป = ซ่อนไว้
   return out;
@@ -2326,7 +2326,7 @@ function wireLog() {
     const nb = $("#catNext"); if (nb) { nb.disabled = !d.cats.length; nb.innerHTML = catNextLabel(d); } };
   const stay = () => { const y = window.scrollY; viewLog(); window.scrollTo(0, y); };
   const setTime = () => { d.shift = shiftOf(d.time); const sb = $("#shiftBig"); if (sb) { sb.className = "shiftbig " + d.shift; sb.querySelector("b").textContent = d.shift; } const tt = $("#tcTime"); if (tt) tt.textContent = d.time + " น."; const td = $(".tc-date"); if (td) td.textContent = thDate(d.date); };
-  m.oninput = e => { const t = e.target; if (t.dataset.k) d[t.dataset.k] = t.value; if (t.id === "holdQty" || t.id === "holdUnit") t.classList.remove("err"); if (t.dataset.v) d.values[t.dataset.v] = t.value;
+  m.oninput = e => { const t = e.target; if (t.dataset.k) d[t.dataset.k] = t.value; if (t.id === "holdQty") t.classList.remove("err"); if (t.dataset.v) d.values[t.dataset.v] = t.value;
     if (t.dataset.k === "time" || t.dataset.k === "date") setTime();
     if (t.id === "signIn") { const s = m.querySelector(".signline span"); if (s) s.textContent = `(${t.value || "................"})`; }
     if (t.classList.contains("pickIn")) pickFilter(t);
@@ -2369,7 +2369,7 @@ function wireLog() {
       card.querySelectorAll("[data-sug]").forEach(x => x.classList.toggle("on", x === b)); $("#formErr").innerHTML = ""; }
     else if (b.id === "progSpec") { if (d.programDoc) showSpec(d.programDoc + "#" + d.program); }
     else if (ds.impact) { d.impact = ds.impact; m.querySelectorAll("[data-impact]").forEach(x => { x.classList.toggle("on", x === b); x.classList.toggle("warnc", x === b && ds.impact === "hold"); });
-      const hq = $("#holdQ"); if (hq) { hq.hidden = ds.impact !== "hold"; if (ds.impact === "hold") { if (!d.holdUnit) { d.holdUnit = lsGet("rt_holdunit", "") || ""; $("#holdUnit").value = d.holdUnit; } setTimeout(() => $("#holdQty").focus(), 30); } } }
+      const hq = $("#holdQ"); if (hq) { hq.hidden = ds.impact !== "hold"; if (ds.impact === "hold") setTimeout(() => $("#holdQty").focus(), 30); } }
     else if (b.id === "saveBtn") submitLog();
     else if (b.id === "cancelEdit") { S.editingId = null; S.draft = null; S.view = "list"; render(); }
     else if (ds.edit) showItem(ds.edit);
@@ -2386,8 +2386,7 @@ async function submitLog() {
   if (d.impact === "hold" && U.form.impact) {
     const q = parseFloat(String(d.holdQty || "").replace(/,/g, ""));
     if (!(q > 0)) { $("#holdQty").classList.add("err"); return err("กรอกจำนวนที่ Hold สินค้า"); }
-    if (!d.holdUnit) { $("#holdUnit").classList.add("err"); return err("เลือกหน่วยของจำนวนที่ Hold"); }
-    d.holdQty = String(q); lsSet("rt_holdunit", d.holdUnit);
+    d.holdQty = String(q); d.holdUnit = "";
   } else { d.holdQty = ""; d.holdUnit = ""; }
   d.by = String(d.by || "").trim(); if (!d.by) { $("#signIn").classList.add("err"); return err("ลงนามผู้บันทึก"); }
   d.retort = String(d.retort).trim().toUpperCase(); if (d.plant === "PF2") d.retort = toRC(d.retort); d.shift = shiftOf(d.time);
@@ -3410,8 +3409,8 @@ function viewAnalyze() {
     ${kpi("k2", "clock", "เวลาที่เสียไป", mins.toLocaleString(), "นาที", withDur.length ? `≈ ${(mins / 60).toFixed(1)} ชม. · เฉลี่ย ${Math.round(mins / withDur.length)} นาที/ครั้ง` : "ยังไม่มีการกรอกระยะเวลา")}
     ${kpi("k3", "grid", "หม้อที่มีปัญหา", byRet.length, "หม้อ", byRet[0] ? `มากสุด <b>${esc(byRet[0][0])}</b> ${dfmt(dv(byRet[0][1]))}` : "ไม่มี")}
     ${kpi("k4", "tag", "ปัญหาที่พบบ่อยสุด", topCat ? esc(topCat.name) : "–", "", byCat[0] ? `${dfmt(dv(byCat[0][1]))} · ${tot1 ? Math.round(byCat[0][1] / tot1 * 100) : 0}% ของทั้งหมด` : "")}
-    ${kpi(hold ? "k5 bad" : "k5", "alert", "Hold สินค้า", hold, "ครั้ง", (() => { const q = {}; L1.filter(x => x.impact === "hold" && x.holdQty).forEach(x => { const u = x.holdUnit || "หน่วย"; q[u] = (q[u] || 0) + (+x.holdQty || 0); });
-      const t = Object.entries(q).map(([u, v]) => `${v.toLocaleString()} ${esc(u)}`).join(" · "); return (t ? `รวม <b>${t}</b> · ` : "") + `รออนุมัติ ${wait} รายการ`; })())}
+    ${kpi(hold ? "k5 bad" : "k5", "alert", "Hold สินค้า", hold, "ครั้ง", (() => { const q = L1.filter(x => x.impact === "hold").reduce((a, x) => a + (+x.holdQty || 0), 0);
+      return (q ? `จำนวนรวม <b>${q.toLocaleString()}</b> · ` : "") + `รออนุมัติ ${wait} รายการ`; })())}
   </div>
   ${UD.trend ? `<div class="card dcard">${sec("trend", "แนวโน้มปัญหา", `${pr} · ชี้/แตะกราฟเพื่อดูตัวเลข`)}<div class="chart"><div class="svgc" id="cDash"></div></div><div class="legend" id="lDash"></div></div>` : ""}
   <div class="dgrid2">
@@ -3687,9 +3686,9 @@ function svgChart(el, B, series, fmt, area) {
 async function exportCsv(L, from, to) {
   const fieldsAll = []; S.config.categories.forEach(c => (c.fields || []).forEach(f => { if (!fieldsAll.some(x => x.key === f.key)) fieldsAll.push(f); }));
   const customDF = detailFields().filter(df => !df.builtin);
-  const head = ["วันที่", "เวลา", "กะ", "พื้นที่", "หม้อ", "โปรแกรม", "เอกสารโปรแกรม", "Code", "สินค้า", "Batch รอบหม้อ", "หัวข้อ", "สาเหตุ", ...fieldsAll.map(f => `${f.label}${f.unit ? ` (${f.unit})` : ""}`), "ระยะเวลา (นาที)", "รายละเอียด", ...customDF.map(df => df.label), "การแก้ไข", "ผลต่อสินค้า", "จำนวน Hold", "หน่วย Hold", "บันทึกโดย", "ผู้อนุมัติ", "เวลาอนุมัติ"];
+  const head = ["วันที่", "เวลา", "กะ", "พื้นที่", "หม้อ", "โปรแกรม", "เอกสารโปรแกรม", "Code", "สินค้า", "Retort no./รอบหม้อ", "หัวข้อ", "สาเหตุ", ...fieldsAll.map(f => `${f.label}${f.unit ? ` (${f.unit})` : ""}`), "ระยะเวลา (นาที)", "รายละเอียด", ...customDF.map(df => df.label), "การแก้ไข", "ผลต่อสินค้า", "จำนวน Hold", "บันทึกโดย", "ผู้อนุมัติ", "เวลาอนุมัติ"];
   const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const rows = L.map(x => [x.date, x.time, x.shift, x.plant, x.retort, x.program, x.programDoc, x.code, x.product, x.batch, catById(x.category)?.name || "", causeText(x), ...fieldsAll.map(f => x.values?.[f.key] ?? ""), x.duration, x.detail, ...customDF.map(df => x.values?.[df.key] ?? ""), x.action, x.impact === "hold" ? "Hold" : "ไม่กระทบ", x.impact === "hold" ? (x.holdQty || "") : "", x.impact === "hold" ? (x.holdUnit || "") : "", x.by, x.approvedBy || "", fmtTs(x.approvedAt)]);
+  const rows = L.map(x => [x.date, x.time, x.shift, x.plant, x.retort, x.program, x.programDoc, x.code, x.product, x.batch, catById(x.category)?.name || "", causeText(x), ...fieldsAll.map(f => x.values?.[f.key] ?? ""), x.duration, x.detail, ...customDF.map(df => x.values?.[df.key] ?? ""), x.action, x.impact === "hold" ? "Hold" : "ไม่กระทบ", x.impact === "hold" ? [x.holdQty, x.holdUnit].filter(Boolean).join(" ") : "", x.by, x.approvedBy || "", fmtTs(x.approvedAt)]);
   const csv = "﻿" + [head, ...rows].map(r => r.map(q).join(",")).join("\r\n");
   const name = `retort-problems_${from}_${to}.csv`;
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
