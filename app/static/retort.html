@@ -1288,6 +1288,32 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .grpadd-r button{min-height:50px;white-space:nowrap}
 @media(max-width:600px){.grpadd-r{grid-template-columns:56px 1fr}.grpadd-r #ugNewName,.grpadd-r button{grid-column:1/-1}}
 .grprow.flashnew{animation:flashNew 2.4s ease;border-radius:12px}
+/* รอบหม้อ: ตารางย้อนหลังวันต่อวัน */
+.rn{max-width:1100px}
+.rh{padding:14px}
+.rh-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.rh-h b{display:block;font-size:16px;color:var(--navy)}.rh-h .sub{font-size:12.5px}
+.rh-h .seg button{min-height:36px;padding:4px 12px;font-size:14px;flex:0 0 auto}
+.rh-h .seg button.on{background:var(--navy);color:#fff}
+.rh-t{border-collapse:separate;border-spacing:3px;font-size:13px;min-width:100%}
+.rh-t th{font-weight:700;color:var(--ink2);text-align:center;padding:4px 2px;white-space:nowrap}
+.rh-t thead th{background:#eef2f7;border-radius:8px;cursor:pointer;min-width:44px;line-height:1.15}
+.rh-t thead th small{display:block;font-size:10.5px;font-weight:600;color:var(--mute)}
+.rh-t thead th.sun{color:var(--bad)}
+.rh-t thead th.on{background:var(--navy);color:#fff}.rh-t thead th.on small{color:#cbd5e1}
+.rh-t th.r{position:sticky;left:0;z-index:1;background:#fff;text-align:left;padding-left:4px;color:var(--navy);cursor:default}
+.rh-t thead th.r{background:#fff}
+.rh-c{border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;padding:2px 3px;text-align:center;cursor:pointer;line-height:1.2;min-width:44px}
+.rh-c.e{color:#cbd5e1;background:#fff;border-style:dashed}
+.rh-c .d,.rh-c .n{display:block;font-weight:700;font-variant-numeric:tabular-nums}
+.rh-c .d{color:#b45309}.rh-c .n{color:#1e3a8a;border-top:1px solid #e2e8f0}
+.rh-c i{font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:var(--bad);border-radius:99px;padding:0 5px;margin-left:3px}
+.rh-c.bad{background:#fff5f5;border-color:#fecaca}
+.rh-c:hover{border-color:var(--navy)}
+.rh-t tfoot td{text-align:center;font-weight:800;color:var(--navy);padding:4px 2px;background:#f1f5f9;border-radius:6px;font-variant-numeric:tabular-nums}
+.rh-t tfoot tr:first-child td,.rh-t tfoot tr:first-child th{border-top:0}
+.rh-t tfoot tr:nth-child(1) td{color:#b45309}.rh-t tfoot tr:nth-child(2) td{color:#1e3a8a}
+.rh-t tfoot tr.p td{color:var(--bad)}.rh-t tfoot tr.pc td{background:var(--navy);color:#fff}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2571,7 +2597,31 @@ const isoBtn = (code, cls = "") => { const x = isoOf(code); return x ? `<a class
 /* ---------- จำนวนรอบที่หม้อใช้ (ต่อวัน ต่อกะ) · ใช้คำนวณ % รอบที่มีปัญหา ---------- */
 // วันที่ของกะ: กะ NS ที่ข้ามเที่ยงคืน (เช่น 02:00 น.) นับเป็นวันที่เริ่มกะ (คืนวันที่ 12 → เช้าวันที่ 13 = วันที่ 12)
 const prodDate = x => x.shift === "NS" && hmMin(x.time || "00:00") < hmMin(U.dsStart) ? addDays(x.date, -1) : x.date;
-const RN = { day: "", plant: "", data: {}, dirty: false, loading: false, by: "", at: 0 };
+const RN = { day: "", plant: "", data: {}, dirty: false, loading: false, by: "", at: 0, hn: lsGet("rt_rnhist", 7), hk: "", hist: [] };
+/* ตารางย้อนหลังวันต่อวัน: แถว = หม้อ · คอลัมน์ = วัน · ช่อง = รอบ DS / NS + จุดแดงถ้ามีปัญหา */
+function runsHist(rl) {
+  const days = dayList(addDays(todayISO(), -(RN.hn - 1)), todayISO()), H = {};
+  RN.hist.forEach(x => { H[x.date + "|" + x.retort + "|" + x.shift] = x.n; });
+  const P = {}; Object.values(S.items).forEach(x => { const d = prodDate(x); if (d >= days[0] && x.retort) { const k = d + "|" + x.retort + "|" + (x.shift === "DS" ? "DS" : "NS"); P[k] = (P[k] || 0) + 1; } });
+  const sum = (d, sh, src) => rl.reduce((a, r) => a + (src[d + "|" + r + "|" + sh] || 0), 0);
+  const cell = (d, r) => { const a = H[d + "|" + r + "|DS"], b = H[d + "|" + r + "|NS"], pa = P[d + "|" + r + "|DS"] || 0, pb = P[d + "|" + r + "|NS"] || 0;
+    if (a == null && b == null && !pa && !pb) return `<td class="rh-c e" data-rhd="${d}">·</td>`;
+    return `<td class="rh-c ${pa + pb ? "bad" : ""}" data-rhd="${d}" title="${esc(r)} · ${dmy(d)}&#10;DS ${a ?? "–"} รอบ${pa ? ` · ปัญหา ${pa}` : ""}&#10;NS ${b ?? "–"} รอบ${pb ? ` · ปัญหา ${pb}` : ""}">
+      <span class="d">${a ?? "–"}${pa ? `<i>${pa}</i>` : ""}</span><span class="n">${b ?? "–"}${pb ? `<i>${pb}</i>` : ""}</span></td>`; };
+  const pct = (p, n) => n ? `${Math.round(p / n * 1000) / 10}%` : "–";
+  return `<div class="card rh">
+    <div class="rh-h"><div><b>ย้อนหลังวันต่อวัน · ${esc(RN.plant)}</b><span class="sub">ในแต่ละช่อง: บน = กะ DS · ล่าง = กะ NS · ตัวเลขแดง = ปัญหา · แตะวันที่เพื่อไปกรอก/แก้</span></div>
+      <div class="seg">${[7, 14, 30].map(n => `<button data-rhn="${n}" class="${RN.hn === n ? "on" : ""}">${n} วัน</button>`).join("")}</div></div>
+    <div class="tscroll"><table class="rh-t"><thead><tr><th class="r">หม้อ</th>${days.map(d => { const dt = new Date(d + "T00:00:00");
+      return `<th class="${d === RN.day ? "on" : ""} ${dt.getDay() === 0 ? "sun" : ""}" data-rhd="${d}"><small>${TH_DOW[dt.getDay()]}</small>${dt.getDate()}/${dt.getMonth() + 1}</th>`; }).join("")}</tr></thead>
+      <tbody>${rl.map(r => `<tr><th class="r">${esc(r)}</th>${days.map(d => cell(d, r)).join("")}</tr>`).join("")}</tbody>
+      <tfoot>
+        <tr><th class="r">รอบ DS</th>${days.map(d => `<td>${sum(d, "DS", H) || "–"}</td>`).join("")}</tr>
+        <tr><th class="r">รอบ NS</th>${days.map(d => `<td>${sum(d, "NS", H) || "–"}</td>`).join("")}</tr>
+        <tr class="p"><th class="r">ปัญหา</th>${days.map(d => { const p = sum(d, "DS", P) + sum(d, "NS", P); return `<td>${p || "–"}</td>`; }).join("")}</tr>
+        <tr class="pc"><th class="r">% ปัญหา/รอบ</th>${days.map(d => `<td>${pct(sum(d, "DS", P) + sum(d, "NS", P), sum(d, "DS", H) + sum(d, "NS", H))}</td>`).join("")}</tr>
+      </tfoot></table></div></div>`;
+}
 const RUNS = { key: "", items: null, busy: false };  // ข้อมูลรอบสำหรับหน้าวิเคราะห์
 async function runsLoad(day) {
   RN.loading = true;
@@ -2584,6 +2634,8 @@ async function viewRuns() {
   if (!RN.day) RN.day = todayISO();
   if (!RN.plant || !plantsList().includes(RN.plant)) RN.plant = (lsGet("rt_last", {}) || {}).plant || plantsList()[0];
   const m = $("#main");
+  const hk = RN.hn + "|" + todayISO();
+  if (RN.hk !== hk) { RN.hk = hk; try { RN.hist = (await api(`/api/retort/runs?from=${addDays(todayISO(), -(RN.hn - 1))}&to=${todayISO()}`)).items || []; } catch { RN.hist = []; } if (S.view !== "runs") return; }
   if (RN.loadedDay !== RN.day) { RN.loadedDay = RN.day; m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await runsLoad(RN.day); if (S.view !== "runs") return; }
   const rl = plantRetorts(RN.plant), probs = Object.values(S.items).filter(x => prodDate(x) === RN.day);
   const pc = (r, sh) => probs.filter(x => x.retort === r && x.shift === sh).length;
@@ -2606,6 +2658,7 @@ async function viewRuns() {
     </div>
     <div class="rn-tools"><button class="ghost sm" id="rnCopy">${I("download")}คัดลอกจากวันก่อนหน้า</button><button class="ghost sm" id="rnZero">ช่องว่าง = 0 (หม้อไม่ได้ใช้)</button>
       <span class="sub" style="margin-left:auto">${RN.at ? `บันทึกล่าสุด ${esc(RN.by || "")} · ${fmtTs(RN.at)}` : `กรอกแล้ว ${filled}/${rl.length} หม้อ`}</span></div>
+    ${runsHist(rl)}
     <div class="svx-savebar"><button class="pri blk savebig" id="rnSave">${I("check")}บันทึกจำนวนรอบ ${esc(RN.plant)} · ${dmy(RN.day)}</button></div>
   </div>`;
   const sums = () => { ["DS", "NS"].forEach(sh => { $("#rnSum" + sh).textContent = tot(sh) + " รอบ"; }); };
@@ -2613,8 +2666,10 @@ async function viewRuns() {
   m.oninput = e => { const t = e.target; if (t.dataset.rn) { const v = t.value.replace(/[^0-9]/g, "").slice(0, 2); if (v !== t.value) t.value = v; if (v === "") delete RN.data[t.dataset.rn]; else RN.data[t.dataset.rn] = v; RN.dirty = true; sums(); } };
   m.onchange = e => { if (e.target.id === "rnDate" && e.target.value) go(e.target.value > todayISO() ? todayISO() : e.target.value); };
   m.onkeydown = e => { if (e.key === "Enter" && e.target.dataset.rn) { e.preventDefault(); const L = [...m.querySelectorAll("[data-rn]")], i = L.indexOf(e.target); (L[i + 1] || $("#rnSave")).focus(); } };
-  m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+  m.onclick = async e => { const hd = e.target.closest("[data-rhd]"); if (hd) { if (hd.dataset.rhd !== RN.day) { await go(hd.dataset.rhd); } window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (ds.rnd) go(addDays(RN.day, +ds.rnd));
+    else if (ds.rhn) { RN.hn = +ds.rhn; lsSet("rt_rnhist", RN.hn); RN.hk = ""; viewRuns(); }
     else if (ds.rnpl) { RN.plant = ds.rnpl; viewRuns(); }
     else if (b.id === "rnZero") { rl.forEach(r => ["DS", "NS"].forEach(sh => { if (RN.data[r + "|" + sh] == null) RN.data[r + "|" + sh] = "0"; })); RN.dirty = true; viewRuns(); }
     else if (b.id === "rnCopy") { const prev = addDays(RN.day, -1);
@@ -2624,7 +2679,7 @@ async function viewRuns() {
     else if (b.id === "rnSave") {
       const rows = rl.flatMap(r => ["DS", "NS"].map(sh => ({ retort: r, shift: sh, plant: RN.plant, n: RN.data[r + "|" + sh] ?? "" })));
       b.disabled = true;
-      try { await jpost("/api/retort/runs", { date: RN.day, rows, by: S.user }); toast(`บันทึกจำนวนรอบ ${RN.plant} วันที่ ${dmy(RN.day)} แล้ว`); RN.loadedDay = ""; RUNS.key = ""; viewRuns(); }
+      try { await jpost("/api/retort/runs", { date: RN.day, rows, by: S.user }); toast(`บันทึกจำนวนรอบ ${RN.plant} วันที่ ${dmy(RN.day)} แล้ว`); RN.loadedDay = ""; RN.hk = ""; RUNS.key = ""; viewRuns(); }
       catch (err) { b.disabled = false; if (err.status === 401) showLock(true); else toast("บันทึกไม่สำเร็จ: " + err.message); } } };
 }
 /* หน้าวิเคราะห์: รอบที่ใช้ vs รอบที่มีปัญหา แยกกะ DS / NS · % · ปัญหาหลัก */
