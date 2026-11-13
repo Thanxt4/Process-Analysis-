@@ -3135,7 +3135,8 @@ def api_rt_runs(request: Request, frm: str = Query("", alias="from"), to: str = 
 
 @app.post("/api/retort/runs")
 async def api_rt_runs_save(request: Request):
-    """บันทึกจำนวนรอบของวันหนึ่ง: rows = [{retort, shift: DS|NS, n, plant}] · n ว่าง/ติดลบ = ลบค่าของช่องนั้น"""
+    """บันทึกจำนวนรอบของวันหนึ่ง: rows = [{retort, shift: ALL (รวมทั้งวัน · กะ NS กรอก) | DS | NS (ข้อมูลเก่า), n, plant}]
+    n ว่าง/ติดลบ = ลบค่าของช่องนั้น · บันทึกแบบ ALL แทนค่าแยกกะเดิมของหม้อนั้นในวันนั้น (ไม่นับซ้ำ)"""
     _rt_auth(request)
     d = await request.json()
     try:
@@ -3151,13 +3152,15 @@ async def api_rt_runs_save(request: Request):
                 continue
             ret = str(r.get("retort") or "").strip().upper()
             sh = str(r.get("shift") or "").upper()
-            if not _RT_NAME_RE.match(ret) or sh not in ("DS", "NS"):
+            if not _RT_NAME_RE.match(ret) or sh not in ("DS", "NS", "ALL"):
                 continue
             v = r.get("n")
             try:
                 n = int(v) if v not in (None, "") else -1
             except (TypeError, ValueError):
                 raise HTTPException(400, f"จำนวนรอบของ {ret} กะ {sh} ไม่ถูกต้อง")
+            if sh == "ALL":
+                con.execute("DELETE FROM retort_runs WHERE date=? AND retort=? AND shift IN ('DS','NS')", (day, ret))
             if n > 99:
                 raise HTTPException(400, f"จำนวนรอบของ {ret} กะ {sh} มากเกินไป")
             if n < 0:

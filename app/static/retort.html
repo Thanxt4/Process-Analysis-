@@ -1446,6 +1446,13 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 @media(max-width:700px){.lsbar button span{display:none}.lsbar .lsall span{font-size:13px}}
 .irl-r .t small.irl-ca{color:#334155;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .lgrp+.irl-r,.irl-r+.irl-r{margin-top:0}
+.rn-th,.rn-r{grid-template-columns:minmax(70px,1fr) 1.6fr 1.2fr}
+.rn-th .all{color:var(--navy)}
+.rn-c.all input{width:110px;background:#f1f5f9;border-color:#cbd5e1}
+.rn-p{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rn-p em{font-style:normal;font-size:12px;font-weight:700;color:var(--bad);background:var(--badbg);border-radius:99px;padding:1px 9px}
+.rn-p small{font-size:12px;color:var(--mute)}
+.rh-c .d{display:block;font-weight:700}
+.rt-t td.n,.rt-t th.all{text-align:center}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2811,34 +2818,38 @@ const isoBtn = (code, cls = "") => { const x = isoOf(code); return x ? `<a class
 const prodDate = x => x.date;  // วันที่ของรายการเป็นแบบ i-Tail แล้ว (วันใหม่เริ่ม 07:00) จึงตรงกับวันที่เริ่มกะ NS
 const RN = { day: "", plant: "", data: {}, dirty: false, loading: false, by: "", at: 0, hn: lsGet("rt_rnhist", 7), hk: "", hist: [] };
 /* ตารางย้อนหลังวันต่อวัน: แถว = หม้อ · คอลัมน์ = วัน · ช่อง = รอบ DS / NS + จุดแดงถ้ามีปัญหา */
+// จำนวนรอบต่อวัน: ค่ารวมทั้งวัน (ALL · กะ NS กรอก) · ข้อมูลเก่าที่แยกกะ = DS + NS
+function runsDaily(items) {
+  const A = {}, S2 = {};
+  (items || []).forEach(x => { const k = x.date + "|" + x.retort; if (x.shift === "ALL") A[k] = x.n; else S2[k] = (S2[k] || 0) + x.n; });
+  return Object.assign(S2, A);
+}
 function runsHist(rl) {
-  const days = dayList(addDays(todayISO(), -(RN.hn - 1)), todayISO()), H = {};
-  RN.hist.forEach(x => { H[x.date + "|" + x.retort + "|" + x.shift] = x.n; });
-  const P = {}; Object.values(S.items).forEach(x => { const d = prodDate(x); if (d >= days[0] && x.retort) { const k = d + "|" + x.retort + "|" + (x.shift === "DS" ? "DS" : "NS"); P[k] = (P[k] || 0) + 1; } });
-  const sum = (d, sh, src) => rl.reduce((a, r) => a + (src[d + "|" + r + "|" + sh] || 0), 0);
-  const cell = (d, r) => { const a = H[d + "|" + r + "|DS"], b = H[d + "|" + r + "|NS"], pa = P[d + "|" + r + "|DS"] || 0, pb = P[d + "|" + r + "|NS"] || 0;
-    if (a == null && b == null && !pa && !pb) return `<td class="rh-c e" data-rhd="${d}">·</td>`;
-    return `<td class="rh-c ${pa + pb ? "bad" : ""}" data-rhd="${d}" title="${esc(r)} · ${dmy(d)}&#10;DS ${a ?? "–"} รอบ${pa ? ` · ปัญหา ${pa}` : ""}&#10;NS ${b ?? "–"} รอบ${pb ? ` · ปัญหา ${pb}` : ""}">
-      <span class="d">${a ?? "–"}${pa ? `<i>${pa}</i>` : ""}</span><span class="n">${b ?? "–"}${pb ? `<i>${pb}</i>` : ""}</span></td>`; };
+  const days = dayList(addDays(todayISO(), -(RN.hn - 1)), todayISO()), H = runsDaily(RN.hist);
+  const P = {}; Object.values(S.items).forEach(x => { const d = prodDate(x); if (d >= days[0] && x.retort) { const k = d + "|" + x.retort; P[k] = (P[k] || 0) + 1; } });
+  const sum = (d, src) => rl.reduce((a, r) => a + (src[d + "|" + r] || 0), 0);
+  const cell = (d, r) => { const a = H[d + "|" + r], p = P[d + "|" + r] || 0;
+    if (a == null && !p) return `<td class="rh-c e" data-rhd="${d}">·</td>`;
+    return `<td class="rh-c ${p ? "bad" : ""}" data-rhd="${d}" title="${esc(r)} · ${dmy(d)}&#10;${a ?? "–"} รอบ${p ? ` · ปัญหา ${p}` : ""}"><span class="d">${a ?? "–"}${p ? `<i>${p}</i>` : ""}</span></td>`; };
   const pct = (p, n) => n ? `${Math.round(p / n * 1000) / 10}%` : "–";
   return `<div class="card rh">
-    <div class="rh-h"><div><b>ย้อนหลังวันต่อวัน · ${esc(RN.plant)}</b><span class="sub">ในแต่ละช่อง: บน = กะ DS · ล่าง = กะ NS · ตัวเลขแดง = ปัญหา · แตะวันที่เพื่อไปกรอก/แก้</span></div>
+    <div class="rh-h"><div><b>ย้อนหลังวันต่อวัน · ${esc(RN.plant)}</b><span class="sub">ตัวเลข = จำนวนรอบทั้งวัน (DS + NS) · ตัวเลขแดง = ปัญหา · แตะวันที่เพื่อไปกรอก/แก้</span></div>
       <div class="seg">${[7, 14, 30].map(n => `<button data-rhn="${n}" class="${RN.hn === n ? "on" : ""}">${n} วัน</button>`).join("")}</div></div>
     <div class="tscroll"><table class="rh-t"><thead><tr><th class="r">หม้อ</th>${days.map(d => { const dt = new Date(d + "T00:00:00");
       return `<th class="${d === RN.day ? "on" : ""} ${dt.getDay() === 0 ? "sun" : ""}" data-rhd="${d}"><small>${TH_DOW[dt.getDay()]}</small>${dt.getDate()}/${dt.getMonth() + 1}</th>`; }).join("")}</tr></thead>
       <tbody>${rl.map(r => `<tr><th class="r">${esc(r)}</th>${days.map(d => cell(d, r)).join("")}</tr>`).join("")}</tbody>
       <tfoot>
-        <tr><th class="r">รอบ DS</th>${days.map(d => `<td>${sum(d, "DS", H) || "–"}</td>`).join("")}</tr>
-        <tr><th class="r">รอบ NS</th>${days.map(d => `<td>${sum(d, "NS", H) || "–"}</td>`).join("")}</tr>
-        <tr class="p"><th class="r">ปัญหา</th>${days.map(d => { const p = sum(d, "DS", P) + sum(d, "NS", P); return `<td>${p || "–"}</td>`; }).join("")}</tr>
-        <tr class="pc"><th class="r">% ปัญหา/รอบ</th>${days.map(d => `<td>${pct(sum(d, "DS", P) + sum(d, "NS", P), sum(d, "DS", H) + sum(d, "NS", H))}</td>`).join("")}</tr>
+        <tr><th class="r">รอบรวม</th>${days.map(d => `<td>${sum(d, H) || "–"}</td>`).join("")}</tr>
+        <tr class="p"><th class="r">ปัญหา</th>${days.map(d => `<td>${sum(d, P) || "–"}</td>`).join("")}</tr>
+        <tr class="pc"><th class="r">% ปัญหา/รอบ</th>${days.map(d => `<td>${pct(sum(d, P), sum(d, H))}</td>`).join("")}</tr>
       </tfoot></table></div></div>`;
 }
 const RUNS = { key: "", items: null, busy: false };  // ข้อมูลรอบสำหรับหน้าวิเคราะห์
 async function runsLoad(day) {
   RN.loading = true;
   try { const r = await api(`/api/retort/runs?from=${day}&to=${day}`); RN.data = {}; RN.by = ""; RN.at = 0;
-    (r.items || []).forEach(x => { RN.data[x.retort + "|" + x.shift] = String(x.n); if (x.updated_at > RN.at) { RN.at = x.updated_at; RN.by = x.by; } }); }
+    const D = runsDaily(r.items); Object.keys(D).forEach(k => { RN.data[k.split("|")[1]] = String(D[k]); });
+    (r.items || []).forEach(x => { if (x.updated_at > RN.at) { RN.at = x.updated_at; RN.by = x.by; } }); }
   catch (e) { if (e.status === 401) showLock(true); else toast("โหลดจำนวนรอบไม่สำเร็จ: " + e.message); }
   RN.loading = false; RN.dirty = false; RUNS.key = "";
 }
@@ -2850,11 +2861,11 @@ async function viewRuns() {
   if (RN.hk !== hk) { RN.hk = hk; try { RN.hist = (await api(`/api/retort/runs?from=${addDays(todayISO(), -(RN.hn - 1))}&to=${todayISO()}`)).items || []; } catch { RN.hist = []; } if (S.view !== "runs") return; }
   if (RN.loadedDay !== RN.day) { RN.loadedDay = RN.day; m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await runsLoad(RN.day); if (S.view !== "runs") return; }
   const rl = plantRetorts(RN.plant), probs = Object.values(S.items).filter(x => prodDate(x) === RN.day);
-  const pc = (r, sh) => probs.filter(x => x.retort === r && x.shift === sh).length;
-  const tot = sh => rl.reduce((a, r) => a + (+RN.data[r + "|" + sh] || 0), 0);
-  const filled = rl.filter(r => RN.data[r + "|DS"] != null || RN.data[r + "|NS"] != null).length;
+  const pc = (r, sh) => probs.filter(x => x.retort === r && (!sh || (sh === "DS") === (x.shift === "DS"))).length;
+  const tot = () => rl.reduce((a, r) => a + (+RN.data[r] || 0), 0);
+  const filled = rl.filter(r => RN.data[r] != null).length;
   m.innerHTML = `<div class="rn">
-    <div class="rn-head"><div class="t"><b>จำนวนรอบหม้อ</b><span>ใส่จำนวนรอบที่หม้อแต่ละใบใช้ในแต่ละกะ · ใช้คำนวณ % รอบที่มีปัญหา ในหน้าวิเคราะห์</span></div></div>
+    <div class="rn-head"><div class="t"><b>จำนวนรอบหม้อ</b><span>ใส่จำนวนรอบรวมทั้งวัน (DS + NS) ของหม้อแต่ละใบ · <b>กะ NS เป็นผู้กรอก</b> ก่อนจบกะ · ใช้คำนวณ % รอบที่มีปัญหา ในหน้าวิเคราะห์</span></div></div>
     <div class="card rn-bar">
       <div class="rn-day"><button class="ghost" data-rnd="-1" aria-label="วันก่อนหน้า">${I("down")}</button>
         <label><input type="date" id="rnDate" value="${RN.day}" max="${todayISO()}"><span>${thDate(RN.day)}</span></label>
@@ -2863,17 +2874,18 @@ async function viewRuns() {
     </div>
     <p class="sub rn-note">${I("info")} วันใหม่เริ่ม ${DAY_START} น. แบบ i-Tail · กะ NS คืนวันที่ 12 ถึงเช้าวันที่ 13 = วันที่ 12 (ทั้งจำนวนรอบและปัญหา)</p>
     <div class="card rn-card">
-      <div class="rn-th"><span>หม้อ</span><span class="ds">กะ DS<small>${U.dsStart}–${U.dsEnd}</small></span><span class="ns">กะ NS<small>${minHM(hmMin(U.dsEnd) + 1)}–${minHM(hmMin(U.dsStart) - 1)}</small></span></div>
-      ${rl.map(r => `<div class="rn-r"><b>${esc(r)}</b>${["DS", "NS"].map(sh => { const p = pc(r, sh);
-        return `<label class="rn-c ${sh.toLowerCase()}"><input type="number" inputmode="numeric" min="0" max="99" data-rn="${esc(r)}|${sh}" value="${esc(RN.data[r + "|" + sh] ?? "")}" placeholder="–"><span class="rn-u">รอบ</span>${p ? `<em title="ปัญหาที่บันทึกในกะนี้">ปัญหา ${p}</em>` : ""}</label>`; }).join("")}</div>`).join("") || `<p class="sub">ยังไม่มีหม้อในพื้นที่นี้</p>`}
-      <div class="rn-r rn-sum"><b>รวม</b><span id="rnSumDS">${tot("DS")} รอบ</span><span id="rnSumNS">${tot("NS")} รอบ</span></div>
+      <div class="rn-th"><span>หม้อ</span><span class="all">รอบรวมทั้งวัน<small>DS ${U.dsStart} – NS ${minHM(hmMin(U.dsStart) - 1)} · กะ NS กรอก</small></span><span>ปัญหาที่บันทึกวันนี้</span></div>
+      ${rl.map(r => { const pd = pc(r, "DS"), pn = pc(r, "NS");
+        return `<div class="rn-r"><b>${esc(r)}</b><label class="rn-c all"><input type="number" inputmode="numeric" min="0" max="99" data-rn="${esc(r)}" value="${esc(RN.data[r] ?? "")}" placeholder="–"><span class="rn-u">รอบ</span></label>
+          <span class="rn-p">${pd + pn ? `<em>ปัญหา ${pd + pn}</em><small>DS ${pd} · NS ${pn}</small>` : `<small class="mut">–</small>`}</span></div>`; }).join("") || `<p class="sub">ยังไม่มีหม้อในพื้นที่นี้</p>`}
+      <div class="rn-r rn-sum"><b>รวม</b><span id="rnSum">${tot()} รอบ</span><span>${probs.filter(x => rl.includes(x.retort)).length} ปัญหา</span></div>
     </div>
     <div class="rn-tools"><button class="ghost sm" id="rnCopy">${I("download")}คัดลอกจากวันก่อนหน้า</button><button class="ghost sm" id="rnZero">ช่องว่าง = 0 (หม้อไม่ได้ใช้)</button>
       <span class="sub" style="margin-left:auto">${RN.at ? `บันทึกล่าสุด ${esc(RN.by || "")} · ${fmtTs(RN.at)}` : `กรอกแล้ว ${filled}/${rl.length} หม้อ`}</span></div>
     ${runsHist(rl)}
     <div class="svx-savebar"><button class="pri blk savebig" id="rnSave">${I("check")}บันทึกจำนวนรอบ ${esc(RN.plant)} · ${dmy(RN.day)}</button></div>
   </div>`;
-  const sums = () => { ["DS", "NS"].forEach(sh => { $("#rnSum" + sh).textContent = tot(sh) + " รอบ"; }); };
+  const sums = () => { $("#rnSum").textContent = tot() + " รอบ"; };
   const go = async day => { if (RN.dirty && !confirm("ยังไม่ได้บันทึก เปลี่ยนวันที่?")) return; RN.day = day; viewRuns(); };
   m.oninput = e => { const t = e.target; if (t.dataset.rn) { const v = t.value.replace(/[^0-9]/g, "").slice(0, 2); if (v !== t.value) t.value = v; if (v === "") delete RN.data[t.dataset.rn]; else RN.data[t.dataset.rn] = v; RN.dirty = true; sums(); } };
   m.onchange = e => { if (e.target.id === "rnDate" && e.target.value) go(e.target.value > todayISO() ? todayISO() : e.target.value); };
@@ -2883,13 +2895,13 @@ async function viewRuns() {
     if (ds.rnd) go(addDays(RN.day, +ds.rnd));
     else if (ds.rhn) { RN.hn = +ds.rhn; lsSet("rt_rnhist", RN.hn); RN.hk = ""; viewRuns(); }
     else if (ds.rnpl) { RN.plant = ds.rnpl; viewRuns(); }
-    else if (b.id === "rnZero") { rl.forEach(r => ["DS", "NS"].forEach(sh => { if (RN.data[r + "|" + sh] == null) RN.data[r + "|" + sh] = "0"; })); RN.dirty = true; viewRuns(); }
+    else if (b.id === "rnZero") { rl.forEach(r => { if (RN.data[r] == null) RN.data[r] = "0"; }); RN.dirty = true; viewRuns(); }
     else if (b.id === "rnCopy") { const prev = addDays(RN.day, -1);
       try { const r = await api(`/api/retort/runs?from=${prev}&to=${prev}`); let n = 0;
-        (r.items || []).forEach(x => { if (rl.includes(x.retort) && RN.data[x.retort + "|" + x.shift] == null) { RN.data[x.retort + "|" + x.shift] = String(x.n); n++; } });
+        const D = runsDaily(r.items); Object.keys(D).forEach(k => { const ret = k.split("|")[1]; if (rl.includes(ret) && RN.data[ret] == null) { RN.data[ret] = String(D[k]); n++; } });
         RN.dirty = RN.dirty || n > 0; toast(n ? `คัดลอก ${n} ช่องจาก ${dmy(prev)} · ตรวจแล้วกดบันทึก` : `ไม่มีข้อมูลของ ${dmy(prev)}`); viewRuns(); } catch (err) { toast(err.message); } }
     else if (b.id === "rnSave") {
-      const rows = rl.flatMap(r => ["DS", "NS"].map(sh => ({ retort: r, shift: sh, plant: RN.plant, n: RN.data[r + "|" + sh] ?? "" })));
+      const rows = rl.map(r => ({ retort: r, shift: "ALL", plant: RN.plant, n: RN.data[r] ?? "" }));
       b.disabled = true;
       try { await jpost("/api/retort/runs", { date: RN.day, rows, by: S.user }); toast(`บันทึกจำนวนรอบ ${RN.plant} วันที่ ${dmy(RN.day)} แล้ว`); RN.loadedDay = ""; RN.hk = ""; RUNS.key = ""; viewRuns(); }
       catch (err) { b.disabled = false; if (err.status === 401) showLock(true); else toast("บันทึกไม่สำเร็จ: " + err.message); } } };
@@ -2900,37 +2912,35 @@ function runSection(R, plant) {
   if (RUNS.key !== key) {
     if (!RUNS.busy) { RUNS.busy = true; api(`/api/retort/runs?from=${R.f1}&to=${R.t1}`).then(r => { RUNS.items = r.items || []; RUNS.key = key; })
       .catch(() => { RUNS.items = []; RUNS.key = key; }).finally(() => { RUNS.busy = false; if (S.view === "analyze") { const el = $("#runSec"); if (el) el.outerHTML = runSection(dashRanges(), S.d.plant); } }); }
-    return `<div class="card dcard" id="runSec">${sec("target", "อัตราปัญหาต่อรอบ (แยกกะ)", "กำลังโหลดจำนวนรอบ…")}</div>`;
+    return `<div class="card dcard" id="runSec">${sec("target", "อัตราปัญหาต่อรอบ", "กำลังโหลดจำนวนรอบ…")}</div>`;
   }
   const inPl = r => plant === "all" || plantRetorts(plant).includes(r);
-  const runs = {}; (RUNS.items || []).forEach(x => { if (!inPl(x.retort)) return; const o = runs[x.retort] = runs[x.retort] || { DS: 0, NS: 0 }; o[x.shift] += x.n; });
+  const runs = {}; Object.entries(runsDaily(RUNS.items)).forEach(([k, n]) => { const r = k.split("|")[1]; if (inPl(r)) runs[r] = (runs[r] || 0) + n; });
   const P = Object.values(S.items).filter(x => x.retort && inPl(x.retort) && (plant === "all" || x.plant === plant) && prodDate(x) >= R.f1 && prodDate(x) <= R.t1);
   const rets = [...new Set([...Object.keys(runs), ...P.map(x => x.retort)])].sort(byRetort);
-  const head = sec("target", "อัตราปัญหาต่อรอบ (แยกกะ)", `รอบที่ใช้ vs ปัญหาที่พบ · ${thShort(R.f1)} – ${thShort(R.t1)} · แตะหม้อเพื่อดูแนวโน้ม`,
+  const head = sec("target", "อัตราปัญหาต่อรอบ", `รอบที่ใช้ (รวมทั้งวัน) vs ปัญหาที่พบ · ${thShort(R.f1)} – ${thShort(R.t1)} · แตะหม้อเพื่อดูแนวโน้ม`,
     `<button class="ghost sm" data-view-go2="runs">${I("pen")}ใส่จำนวนรอบ</button>`);
   if (!rets.length) return `<div class="card dcard" id="runSec">${head}<p class="sub">ไม่มีข้อมูลในช่วงนี้</p></div>`;
   const pct = (p, n) => n ? p / n * 100 : null;
   const pctTxt = v => v == null ? `<span class="rt-na">–</span>` : `<b class="${v >= 20 ? "hi" : v >= 10 ? "md" : v > 0 ? "lo" : "ok"}">${v < 10 && v > 0 ? v.toFixed(1) : Math.round(v)}%</b>`;
   const top = (L, f) => { const e = Object.entries(L.reduce((m, x) => { const k = f(x); if (k) m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1])[0]; return e || null; };
-  const rows = rets.map(r => { const L = P.filter(x => x.retort === r), ru = runs[r] || { DS: 0, NS: 0 };
-    const pd = L.filter(x => x.shift === "DS").length, pn = L.filter(x => x.shift !== "DS").length;
-    return { r, ru, pd, pn, pt: pd + pn, nt: ru.DS + ru.NS, L, tc: top(L, x => x.category), tz: top(L, x => causeText(x)) }; })
-    .sort((a, b) => (pct(b.pt, b.nt) ?? -1) - (pct(a.pt, a.nt) ?? -1) || b.pt - a.pt);
-  const T = rows.reduce((a, x) => ({ dn: a.dn + x.ru.DS, nn: a.nn + x.ru.NS, pd: a.pd + x.pd, pn: a.pn + x.pn }), { dn: 0, nn: 0, pd: 0, pn: 0 });
-  const noRuns = rows.filter(x => !x.nt && x.pt).length;
-  const cells = (n, p) => `<td class="n">${n || "–"}</td><td class="n p">${p || "–"}</td><td class="n">${pctTxt(pct(p, n))}</td>`;
+  const rows = rets.map(r => { const L = P.filter(x => x.retort === r), n = runs[r] || 0;
+    const pd = L.filter(x => x.shift === "DS").length, pn = L.length - pd;
+    return { r, n, pd, pn, pt: L.length, L, tc: top(L, x => x.category), tz: top(L, x => causeText(x)) }; })
+    .sort((a, b) => (pct(b.pt, b.n) ?? -1) - (pct(a.pt, a.n) ?? -1) || b.pt - a.pt);
+  const T = rows.reduce((a, x) => ({ n: a.n + x.n, pd: a.pd + x.pd, pn: a.pn + x.pn }), { n: 0, pd: 0, pn: 0 });
+  const noRuns = rows.filter(x => !x.n && x.pt).length;
   return `<div class="card dcard" id="runSec">${head}
-    <div class="rt-sum"><div class="ds"><small>กะ DS</small><b>${pctTxt(pct(T.pd, T.dn))}</b><span>${T.pd} ปัญหา / ${T.dn} รอบ</span></div>
-      <div class="ns"><small>กะ NS</small><b>${pctTxt(pct(T.pn, T.nn))}</b><span>${T.pn} ปัญหา / ${T.nn} รอบ</span></div>
-      <div class="all"><small>รวมทั้ง 2 กะ</small><b>${pctTxt(pct(T.pd + T.pn, T.dn + T.nn))}</b><span>${T.pd + T.pn} ปัญหา / ${T.dn + T.nn} รอบ</span></div></div>
+    <div class="rt-sum"><div class="all"><small>% ปัญหาต่อรอบ</small><b>${pctTxt(pct(T.pd + T.pn, T.n))}</b><span>${T.pd + T.pn} ปัญหา / ${T.n} รอบ</span></div>
+      <div class="ds"><small>ปัญหากะ DS</small><b>${T.pd}</b><span>ครั้ง</span></div>
+      <div class="ns"><small>ปัญหากะ NS</small><b>${T.pn}</b><span>ครั้ง</span></div></div>
     ${noRuns ? `<div class="rt-warn">${I("alert")}มี ${noRuns} หม้อที่พบปัญหาแต่ยังไม่ได้ใส่จำนวนรอบ จึงคำนวณ % ไม่ได้ · กด <b>ใส่จำนวนรอบ</b></div>` : ""}
     <div class="tscroll"><table class="rt-t"><thead>
-      <tr><th rowspan="2" class="l">หม้อ</th><th colspan="3" class="ds">กะ DS</th><th colspan="3" class="ns">กะ NS</th><th colspan="3" class="all">รวม</th><th rowspan="2" class="l">ปัญหาหลัก / สาเหตุหลัก</th></tr>
-      <tr><th class="ds s">รอบ</th><th class="ds s">ปัญหา</th><th class="ds s">%</th><th class="ns s">รอบ</th><th class="ns s">ปัญหา</th><th class="ns s">%</th><th class="all s">รอบ</th><th class="all s">ปัญหา</th><th class="all s">%</th></tr></thead><tbody>
-      ${rows.map(x => `<tr data-trend="${esc(x.r)}" data-tby="retort"><td class="l"><b>${esc(x.r)}</b></td>${cells(x.ru.DS, x.pd)}${cells(x.ru.NS, x.pn)}${cells(x.nt, x.pt)}
+      <tr><th class="l">หม้อ</th><th class="all">รอบ</th><th class="ds">ปัญหา DS</th><th class="ns">ปัญหา NS</th><th class="all">ปัญหารวม</th><th class="all">%</th><th class="l">ปัญหาหลัก / สาเหตุหลัก</th></tr></thead><tbody>
+      ${rows.map(x => `<tr data-trend="${esc(x.r)}" data-tby="retort"><td class="l"><b>${esc(x.r)}</b></td><td class="n">${x.n || "–"}</td><td class="n">${x.pd || "–"}</td><td class="n">${x.pn || "–"}</td><td class="n p">${x.pt || "–"}</td><td class="n">${pctTxt(pct(x.pt, x.n))}</td>
         <td class="l mc">${x.tc ? `<b>${esc(catById(x.tc[0])?.name || "-")}</b> <em>${x.tc[1]} ครั้ง</em>${x.tz ? `<small>สาเหตุ: ${esc(x.tz[0])} (${x.tz[1]})</small>` : ""}` : `<span class="rt-na">ไม่พบปัญหา</span>`}</td></tr>`).join("")}
-      </tbody><tfoot><tr><td class="l">รวม ${rows.length} หม้อ</td>${cells(T.dn, T.pd)}${cells(T.nn, T.pn)}${cells(T.dn + T.nn, T.pd + T.pn)}<td></td></tr></tfoot></table></div>
-    <p class="sub" style="margin:8px 2px 0">% = จำนวนปัญหาที่บันทึก ÷ จำนวนรอบ × 100 · ถ้ารอบเดียวมีหลายปัญหาจะนับทุกปัญหา · เรียงจาก % มากไปน้อย</p></div>`;
+      </tbody><tfoot><tr><td class="l">รวม ${rows.length} หม้อ</td><td class="n">${T.n || "–"}</td><td class="n">${T.pd || "–"}</td><td class="n">${T.pn || "–"}</td><td class="n p">${T.pd + T.pn || "–"}</td><td class="n">${pctTxt(pct(T.pd + T.pn, T.n))}</td><td></td></tr></tfoot></table></div>
+    <p class="sub" style="margin:8px 2px 0">% = จำนวนปัญหาที่บันทึก ÷ จำนวนรอบทั้งวัน × 100 · ถ้ารอบเดียวมีหลายปัญหาจะนับทุกปัญหา · เรียงจาก % มากไปน้อย</p></div>`;
 }
 /* ---------- IR (Incident Report) · ช่องตามแบบฟอร์ม Excel "IR Retort" คอลัมน์ D–AM · คัดลอกไปวางใน Excel / LINE ได้ ---------- */
 const IR_COLS = [  // [key, ชื่อในแบบฟอร์ม, คอลัมน์ Excel]
