@@ -1411,6 +1411,12 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .irk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 10px;margin-top:8px;max-height:240px;overflow:auto;padding:8px;border:1px solid var(--line);border-radius:12px}
 .irk-grid label{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:3px 0}.irk-grid small{color:var(--mute);font-size:11px}
 .irk-prev{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;white-space:pre;background:#f8fafc}
+.irf{max-width:960px;margin:0 auto}
+.irf .ir{max-width:none}
+.irf-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:12px 16px;border-radius:18px;color:#fff;background:radial-gradient(380px 120px at 92% -40px,rgba(239,68,68,.35),transparent 70%),linear-gradient(135deg,#14213a,#1b2a41 55%,#2a4a72)}
+.irf-head>div{display:flex;flex-direction:column}.irf-head b{font-size:19px;font-weight:800}.irf-head span{font-size:13px;color:#cbd5e1}
+.irf-head .ghost{color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);min-height:40px}
+.irf-head .ghost svg.i{transform:rotate(90deg)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1938,7 +1944,7 @@ function render() {
 /* เล่นแอนิเมชันเข้าหน้าเฉพาะตอนเปลี่ยนหน้า/ขั้นตอน (ไม่เล่นซ้ำตอนซิงก์ข้อมูลหรือเปลี่ยนตัวกรอง) */
 let animKey = "";
 function markAnim(k) { $("#main").classList.toggle("anim", k !== animKey); animKey = k; }
-$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
+$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; if (b.dataset.view === "irlist") IRL.form = false; S.view = b.dataset.view; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
 $("#userBtn").onclick = () => askName(false);
 document.addEventListener("pointerdown", () => { S.viewAuto = false; }, true);
 // กลับเข้าหน้านี้จากปุ่มย้อนกลับ (เบราว์เซอร์คืนหน้าเดิมจากแคช) ก็ให้กลับมาที่แท็บ บันทึก เหมือนเปิดใหม่
@@ -2033,7 +2039,6 @@ function logSide(all) {
   return side;
 }
 function viewLog() {
-  if (S.irMode && !S.editingId) return viewIR();
   if (!S.draft) { S.draft = newDraft(); S.step = 1; S.more = false; S.catPick = true; }
   if (S.justSaved) return viewSaved();
   const d = S.draft; d.photos = d.photos || []; if (!d.cats) setCats(d, d.category ? [d.category] : []);
@@ -2042,7 +2047,6 @@ function viewLog() {
   const cats = S.config.categories.filter(c => c.active || d.cats.includes(c.id));
   const editing = !!S.editingId;
   let h = editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไขรายการที่บันทึกไว้ <button class="ghost sm" id="cancelEdit">ยกเลิก</button></div></div>` : "";
-  if (!editing && S.step === 1) h += irPicker(false);
   h += stepHead(d);
   const all = Object.values(S.items), t0 = todayISO(), w0 = addDays(t0, -6);
   const stat = f => { const L = all.filter(f); return { today: L.filter(x => x.date === t0).length, week: L.filter(x => x.date >= w0 && x.date <= t0).length }; };
@@ -2414,7 +2418,6 @@ async function addOption(kind, name, catId) {
 }
 function wireLog() {
   const d = S.draft; const m = $("#main");
-  const ip = $("#irPick"); if (ip) ip.onclick = e => { const b = e.target.closest("[data-irmode]"); if (!b) return; e.stopPropagation(); S.irMode = b.dataset.irmode === "1"; render(); window.scrollTo(0, 0); };
   const go = n => { S.step = n; S.mg = ""; if (n === 4 && !d.cats.length) S.catPick = true; viewLog(); window.scrollTo(0, 0); };
   const refreshPick = () => { m.querySelectorAll(".big.cat.multi").forEach(el => { const i = d.cats.indexOf(el.dataset.cat); el.classList.toggle("on", i >= 0); el.querySelector(".ck").textContent = i >= 0 ? i + 1 : ""; });
     const nb = $("#catNext"); if (nb) { nb.disabled = !d.cats.length; nb.innerHTML = catNextLabel(d); } };
@@ -2893,8 +2896,8 @@ function irFill(d) {  // รหัสเอกสาร + ตลาด → โ�
   if (m[d.market]) { d.productCode = m[d.market]; return true; } return false;
 }
 async function viewIR() {
-  const m = $("#main"), wide = matchMedia("(min-width:1000px)").matches;
-  if (!IR.loaded) { m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await irLoad(); if (S.view !== "log" || !S.irMode) return; }
+  const m = $("#main"); m.classList.remove("split");
+  if (!IR.loaded) { m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await irLoad(); if (S.view !== "irlist" || !IRL.form) return; }
   if (!IR.d) IR.d = irNew();
   const d = IR.d, editing = IR.items.some(x => x.id === d.id), mk = irMarkets(d.doc);
   const fld = (k, attrs = "", wide = "") => `<label class="f ${wide}"><span class="lab">${esc(IR_LABEL[k])}</span><input data-ir="${k}" value="${esc(d[k] ?? "")}" ${attrs} autocomplete="off"></label>`;
@@ -2903,8 +2906,7 @@ async function viewIR() {
   const past = k => [...new Set(IR.items.map(x => x[k]).filter(Boolean))].slice(0, 30);
   const dl = (id, L) => `<datalist id="${id}">${L.map(v => `<option value="${esc(v)}">`).join("")}</datalist>`;
   const q = IR.q.trim().toLowerCase(), L = IR.items.filter(x => !q || IR_COLS.some(([k]) => String(x[k] || "").toLowerCase().includes(q))).slice(0, 40);
-  let h = `${irPicker(true)}
-  ${editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไข IR ${esc(d.irNo || "")} <button class="ghost sm" id="irCancel">ยกเลิก</button></div></div>` : ""}
+  let h = `<div class="irf-head"><button class="ghost" id="irBack">${I("down")}รายการ IR</button><div><b>${editing ? `แก้ไข IR ${esc(d.irNo || "")}` : "ออก IR ใหม่"}</b><span>กรอกตามแบบฟอร์ม IR Retort (คอลัมน์ D–AM)</span></div></div>
   <div class="ir">
     <div class="card irc"><div class="irh"><span class="n">1</span><b>ข้อมูลผลิตภัณฑ์</b></div><div class="grid">
       ${seg("nrft", ["N", "Y"])}${seg("plant", ["PF1", "PF2"])}
@@ -2931,12 +2933,10 @@ async function viewIR() {
     <div class="ir-save"><button class="pri blk savebig" id="irSave">${I("check")}${editing ? "บันทึกการแก้ไข IR" : "บันทึก IR"}</button>
       <div class="row" style="margin-top:8px"><button class="blk" id="irCopyRow">${I("grid")}คัดลอกแถวไปวางใน Excel</button><button class="blk" id="irCopyTxt">${I("list")}คัดลอกเป็นข้อความ</button></div>
       <small class="hint">แถว Excel: คลิกช่อง <b>คอลัมน์ D</b> ของแถวว่างในไฟล์ IR แล้ววาง (Ctrl+V) ข้อมูลจะลงตรงคอลัมน์ D–AM</small></div>
-    <button class="irgo" data-view-go="irlist">${I("list")}<span><b>รายการ IR</b><small>${IR.items.length} รายการ · รออนุมัติ ${IR.items.filter(x => !x.approvedAt).length} · อนุมัติ / คัดลอก / ส่งออก</small></span>${I("right")}</button>
   </div>
   ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", [...plantRetorts(d.plant || "PF1"), ...past("line")])}
   ${dl("irProb", [...S.config.categories.filter(c => c.active && !c.deleted).map(c => c.name), ...past("problem")])}${dl("irDec", past("decision"))}${dl("irAppr", past("approver"))}`;
-  m.classList.toggle("split", wide);
-  m.innerHTML = wide ? `<div class="logL">${h}</div><aside class="logR">${logSide(Object.values(S.items))}</aside>` : h;
+  m.innerHTML = `<div class="irf">${h}</div>`;
   markAnim("ir");
   const redo = () => { const y = scrollY; viewIR(); scrollTo(0, y); };
   const more = $("#irMore"); if (more) more.ontoggle = () => { IR.open2 = more.open; };
@@ -2946,7 +2946,7 @@ async function viewIR() {
     else if (t.id === "irQ") { IR.q = t.value; const y = scrollY; viewIR(); scrollTo(0, y); setTimeout(() => { const i = $("#irQ"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 0); } };
   m.onchange = e => { const t = e.target; if (t.dataset.ir === "market") { d.market = t.value; irFill(d); redo(); } else if (t.dataset.ir === "plant") redo(); };
   m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
-    if (ds.irmode != null) { S.irMode = ds.irmode === "1"; render(); window.scrollTo(0, 0); return; }
+    if (b.id === "irBack" || b.id === "irCancel") { IRL.form = false; viewIRList(); window.scrollTo(0, 0); return; }
     if (b.id === "irExport") { irExportCsv(); return; }
     if (ds.edit) { showItem(ds.edit); return; }
     if (ds.viewGo) { S.view = ds.viewGo; render(); window.scrollTo(0, 0); return; }
@@ -2957,7 +2957,6 @@ async function viewIR() {
     else if (ds.iredit) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit))); viewIR(); window.scrollTo(0, 0); }
     else if (ds.irdel) { const x = pick(ds.irdel); confirmBox(`ลบ IR ${x.irNo || ""} "${x.problem || ""}"?`, async () => {
       try { await api(`/api/retort/ir/${encodeURIComponent(x.id)}`, { method: "DELETE" }); IR.items = IR.items.filter(y => y.id !== x.id); toast("ลบ IR แล้ว"); redo(); } catch (err) { toast(err.message); } }); }
-    else if (b.id === "irCancel") { IR.d = irNew(); viewIR(); window.scrollTo(0, 0); }
     else if (b.id === "irCopyRow") irCopy(irRow(d), "แถว Excel");
     else if (b.id === "irCopyTxt") irCopy(irText(d), "ข้อความ");
     else if (b.id === "irSave") {
@@ -2968,25 +2967,9 @@ async function viewIR() {
       b.disabled = true;
       try { const r = await jpost("/api/retort/ir", d); const i = IR.items.findIndex(x => x.id === r.item.id); if (i >= 0) IR.items[i] = r.item; else IR.items.unshift(r.item);
         lsSet("rt_irlast", { plant: d.plant, checkpoint: d.checkpoint, approver: d.approver });
-        const saved = r.item; IR.d = irNew(); IRL.sel = new Set([saved.id]); IRL.flash = saved.id; IRL.q = ""; IRL.st = IRL.ap = IRL.pl = "all";
+        const saved = r.item; IR.d = irNew(); IRL.form = false; IRL.sel = new Set([saved.id]); IRL.flash = saved.id; IRL.q = ""; IRL.st = IRL.ap = IRL.pl = "all";
         S.view = "irlist"; render(); toast(`บันทึก IR ${saved.irNo || ""} แล้ว · เลือกไว้ให้แล้ว กด คัดลอก ได้เลย`); }
       catch (er) { b.disabled = false; if (er.status === 401) showLock(true); else err(esc(er.message)); } } };
-}
-// ตัวเลือกบนสุดของแท็บบันทึก: ไม่ออก IR (บันทึกปัญหา) / ออก IR
-function irPicker(on) {
-  const pick = `<div class="irpick ${on ? "isir" : ""}" id="irPick"><span class="ipk-ic" title="ประเภทการรายงาน">${I(on ? "alert" : "pen")}</span><span class="lab">ประเภทการรายงาน</span><div class="seg"><button data-irmode="0" class="${on ? "" : "on"}">${I("plus")}ไม่ออก IR</button><button data-irmode="1" class="${on ? "on ir" : ""}">${I("alert")}ออก IR</button></div></div>`;
-  const t = todayISO(), chip = (cls, ic, val, lab) => `<span class="irchip ${cls}" title="${lab} ${val}">${I(ic)}<b>${val}</b><small>${lab}</small></span>`;
-  let side;
-  if (on) {  // สถานะ IR + ส่งออก
-    const L = IR.items, open = L.filter(x => (x.status || "Open") !== "Close").length, mon = t.slice(0, 7);
-    side = chip(open ? "bad" : "ok", "alert", open, "IR เปิดอยู่") + chip("", "calendar", L.filter(x => x.repDate === t).length, "IR วันนี้") + chip("", "chart", L.filter(x => (x.repDate || "").slice(0, 7) === mon).length, "IR เดือนนี้")
-      + `<button class="irexp" id="irExport" title="ส่งออก IR ทั้งหมดเป็นไฟล์ CSV (เปิดใน Excel)" ${L.length ? "" : "disabled"}>${I("download")}ส่งออก CSV</button>`;
-  } else {  // วันนี้ · กะ · ตัวเลขวันนี้
-    const all = Object.values(S.items), sh = shiftOf(nowHM());
-    side = `<span class="irchip day">${I("clock")}<b>${dmy(t)}</b><small class="sh ${sh}">กะ ${sh}</small></span>`
-      + chip(all.some(x => x.date === t) ? "bad" : "ok", "alert", all.filter(x => x.date === t).length, "ปัญหาวันนี้") + chip("", "check", all.filter(x => !x.approvedBy).length, "รออนุมัติ");
-  }
-  return `<div class="irrow">${pick}<div class="irstat">${side}</div></div>`;
 }
 // ส่งออก IR ทั้งหมดเป็น CSV (หัวคอลัมน์ตามแบบฟอร์ม Excel · เปิดใน Excel ได้ภาษาไทยถูก)
 function irExportCsv() {
@@ -2997,10 +2980,11 @@ function irExportCsv() {
   toast(`ส่งออก IR ${IR.items.length} รายการแล้ว`);
 }
 /* ---------- หน้า "รายการ IR" (แยกจากรายการปัญหา): ค้นหา · กรอง · เลือกหลายรายการ · อนุมัติ · คัดลอก/ส่งออก ---------- */
-const IRL = { sel: new Set(), q: "", st: "all", ap: "all", pl: "all", flash: "" };
+const IRL = { sel: new Set(), q: "", st: "all", ap: "all", pl: "all", flash: "", form: false };
 const irApprTag = x => x.approvedAt ? `<span class="tag ok" title="อนุมัติเมื่อ ${esc(fmtTs(x.approvedAt))}">${I("check")} อนุมัติ · ${esc(x.approvedBy || "")}</span>` : `<span class="tag wait">รออนุมัติ</span>`;
 async function viewIRList() {
-  const m = $("#main");
+  if (IRL.form) return viewIR();  // ฟอร์มออก IR / แก้ไข IR อยู่ในหน้านี้
+  const m = $("#main"); m.classList.remove("split");
   if (!IR.loaded) { m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await irLoad(); if (S.view !== "irlist") return; }
   const q = IRL.q.trim().toLowerCase();
   const L = IR.items.filter(x => (IRL.st === "all" || (x.status || "Open") === IRL.st) && (IRL.ap === "all" || (IRL.ap === "done") === !!x.approvedAt)
@@ -3040,12 +3024,12 @@ async function viewIRList() {
     const v = e.target.closest("[data-irview]"); if (v && !e.target.closest("button,input,label")) { irShow(pick(v.dataset.irview)); return; }
     const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (ds.irlst) { IRL.st = ds.irlst; redo(); } else if (ds.irlap) { IRL.ap = ds.irlap; redo(); } else if (ds.irlpl) { IRL.pl = ds.irlpl; redo(); }
-    else if (b.id === "irlNew") { IR.d = irNew(); S.irMode = true; S.view = "log"; render(); window.scrollTo(0, 0); }
+    else if (b.id === "irlNew") { IR.d = irNew(); IRL.form = true; viewIR(); window.scrollTo(0, 0); }
     else if (b.id === "irlClr") { IRL.sel.clear(); redo(); }
     else if (b.id === "irlCopy") irCopyDlg(IR.items.filter(x => IRL.sel.has(x.id)));
     else if (b.id === "irlCsv") { const keep = IR.items; IR.items = nSel ? IR.items.filter(x => IRL.sel.has(x.id)) : L; irExportCsv(); IR.items = keep; }
     else if (ds.irone) irCopyDlg([pick(ds.irone)]);
-    else if (ds.iredit2) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit2))); S.irMode = true; S.view = "log"; render(); window.scrollTo(0, 0); }
+    else if (ds.iredit2) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit2))); IRL.form = true; viewIR(); window.scrollTo(0, 0); }
     else if (ds.irap || ds.irunap) irApprove(pick(ds.irap || ds.irunap), !!ds.irunap, redo);
     else if (ds.irdel2) { const x = pick(ds.irdel2); confirmBox(`ลบ IR ${x.irNo || ""} "${x.problem || ""}"?`, async () => {
       try { await api(`/api/retort/ir/${encodeURIComponent(x.id)}`, { method: "DELETE" }); IR.items = IR.items.filter(y => y.id !== x.id); IRL.sel.delete(x.id); toast("ลบ IR แล้ว"); redo(); } catch (err) { toast(err.message); } }); }
