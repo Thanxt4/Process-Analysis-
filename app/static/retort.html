@@ -1453,6 +1453,29 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .rn-p small{font-size:12px;color:var(--mute)}
 .rh-c .d{display:block;font-weight:700}
 .rt-t td.n,.rt-t th.all{text-align:center}
+.lctl{padding:12px 16px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px}
+.lc-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lc-lab{display:inline-flex;align-items:center;gap:6px;min-width:92px;font-size:14px;font-weight:800;color:var(--navy)}.lc-lab svg.i{width:17px;height:17px;color:var(--amber)}
+.lc-seg{display:flex;flex:1;gap:4px;padding:4px;border-radius:14px;background:#eef2f7;min-width:0;flex-wrap:wrap}
+.lc-seg button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border:0;border-radius:11px;background:transparent;color:#475569;font-size:15px;font-weight:700;box-shadow:none;white-space:nowrap;padding:0 12px}
+.lc-seg button svg.i{width:17px;height:17px}
+.lc-seg button:hover{background:rgba(255,255,255,.6)}
+.lc-seg button.on{background:var(--navy);color:#fff;box-shadow:0 3px 10px rgba(27,42,65,.3)}
+.lc-chips{display:flex;gap:6px;flex-wrap:wrap}
+.lc-chips button{min-height:38px;padding:4px 14px;border-radius:99px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid #d5deea;color:#334155;display:inline-flex;align-items:center;gap:6px}
+.lc-chips button svg.i{width:15px;height:15px}
+.lc-chips button.on{background:var(--amber);border-color:var(--amber);color:#1b2a41;font-weight:800}
+.lc-chips button.warn:not(.on){border-color:#fde68a;background:#fffbeb;color:#92400e}
+.lc-dd{display:inline-flex;align-items:center;gap:6px;padding:0 4px 0 12px;border-radius:12px;border:1.5px solid #d5deea;background:#fff}
+.lc-dd span{font-size:13px;font-weight:700;color:var(--mute)}
+.lc-dd select{border:0;background-color:transparent;min-height:38px;font-size:14px;font-weight:700;color:var(--navy);padding:0 26px 0 2px;max-width:220px;box-shadow:none}
+.lc-dd.on{border-color:var(--amber);background:#fffbeb}
+.lc-reset{margin-left:auto}
+@media(max-width:700px){.lctl{padding:10px;gap:8px}.lc-row{flex-wrap:nowrap;gap:6px}.lc-lab{min-width:52px;font-size:12.5px;gap:3px}.lc-lab svg.i{display:none}
+  .lc-seg{flex-wrap:nowrap;padding:3px;gap:2px}.lc-seg button{flex:1 1 0;font-size:12.5px;min-height:38px;padding:0 4px;gap:0}.lc-seg button svg.i{display:none}
+  .lc-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}.lc-chips::-webkit-scrollbar{display:none}.lc-chips button{flex:0 0 auto;min-height:34px;padding:2px 11px;font-size:13px}
+  .lc-sel{flex-wrap:wrap}.lc-sel .lc-chips{flex:1 1 calc(100% - 60px)}.lc-sel .lc-dd{flex:1 1 40%;padding-left:8px}.lc-dd select{max-width:none;width:100%;min-height:36px;font-size:13px}
+  .lc-reset{flex:0 0 auto;padding:0 6px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2624,13 +2647,19 @@ function viewList() {
   const nAct = ["plant", "retort", "cat", "range", "sort"].filter(k => f[k] !== LIST_DEF[k]).length;
   const dirty = nAct > 0 || ap !== "all";
   const dLabel = f.range === "day" ? thDate(from) : f.range === "custom" ? `${dmy(from)} – ${dmy(to)}` : rLabel;
-  const pills = [[f.plant === "all" ? "ทุก Plant" : f.plant, f.plant !== "all"], [f.retort === "all" ? "ทุกหม้อ" : f.retort, f.retort !== "all"], [dLabel, f.range !== "30"],
-    [f.cat === "all" ? "ทุกหัวข้อ" : (catById(f.cat)?.name || "หัวข้อที่ถูกลบ"), f.cat !== "all"], ["เรียง: " + (SORTS.find(o => o[0] === f.sort) || [])[1], f.sort !== "plant"]];
   let h = `<div class="lsearch-row"><div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>
     <button class="fbtn ${nAct ? "act" : ""}" id="fOpen" aria-label="ตัวกรองและการเรียงข้อมูล" title="ตัวกรอง / เรียงข้อมูล">${I("settings")}<span>ตัวกรอง</span>${nAct ? `<em>${nAct}</em>` : ""}</button></div>
-  <div class="fsum" id="fSum">${pills.map(([t, on]) => `<button class="${on ? "on" : ""}">${esc(t)}</button>`).join("")}</div>
-  <div class="lf-bot"><div class="seg">${[["all", "ทั้งหมด"], ["wait", `รออนุมัติ (${nWait})`], ["done", "อนุมัติแล้ว"]].map(([v, l]) => `<button data-appr="${v}" class="${ap === v ? "on" : ""}">${l}</button>`).join("")}</div>
-    ${dirty ? `<button class="ghost sm" id="fReset">${I("x")}ล้างตัวกรอง</button>` : ""}</div>
+  <div class="card lctl">
+    <div class="lc-row lc-sort"><span class="lc-lab">${I("list")}เรียงตาม</span><div class="lc-seg">${[["new", "clock", "ใหม่ → เก่า"], ["old", "clock", "เก่า → ใหม่"], ["plant", "factory", "Plant / หม้อ"], ["cat", "tag", "หัวข้อปัญหา"]]
+      .map(([v, ic, l]) => `<button data-qsort="${v}" class="${f.sort === v ? "on" : ""}">${I(ic)}<span>${l}</span></button>`).join("")}</div></div>
+    <div class="lc-row"><span class="lc-lab">${I("calendar")}วันที่</span><div class="lc-chips">${[["today", "วันนี้"], ["yesterday", "เมื่อวาน"], ["7", "7 วัน"], ["30", "30 วัน"], ["90", "90 วัน"], ["all", "ทั้งหมด"]]
+      .map(([v, l]) => `<button data-qrange="${v}" class="${f.range === v ? "on" : ""}">${l}</button>`).join("")}<button data-qrange="pick" class="${f.range === "day" || f.range === "custom" || f.range === "year" ? "on" : ""}">${I("calendar")}${f.range === "day" || f.range === "custom" || f.range === "year" ? esc(dLabel) : "เลือกวัน…"}</button></div></div>
+    <div class="lc-row lc-sel"><span class="lc-lab">${I("factory")}Plant</span><div class="lc-chips">${["all", ...listPlants()].map(pl => `<button data-qpl="${esc(pl)}" class="${f.plant === pl ? "on" : ""}">${pl === "all" ? "ทุก Plant" : esc(pl)}</button>`).join("")}</div>
+      <label class="lc-dd ${f.retort !== "all" ? "on" : ""}"><span>หม้อ</span><select id="qRet"><option value="all">ทุกหม้อ</option>${listRets(f.plant).map(r => `<option ${f.retort === r ? "selected" : ""}>${esc(r)}</option>`).join("")}</select></label>
+      <label class="lc-dd ${f.cat !== "all" ? "on" : ""}"><span>ปัญหา</span><select id="qCat"><option value="all">ทุกหัวข้อ</option>${S.config.categories.filter(c => !c.deleted).map(c => `<option value="${c.id}" ${f.cat === c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label></div>
+    <div class="lc-row"><span class="lc-lab">${I("check")}สถานะ</span><div class="lc-chips">${[["all", "ทั้งหมด"], ["wait", `รออนุมัติ (${nWait})`], ["done", "อนุมัติแล้ว"]].map(([v, l]) => `<button data-appr="${v}" class="${ap === v ? "on" : ""} ${v === "wait" && nWait ? "warn" : ""}">${l}</button>`).join("")}</div>
+      ${dirty ? `<button class="ghost sm lc-reset" id="fReset">${I("x")}ล้างตัวกรอง</button>` : ""}</div>
+  </div>
   <div class="card" id="listCard"></div>`;
   $("#main").innerHTML = h;
   const save = () => { lsSet("rt_filter", f); const y = window.scrollY; viewList(); window.scrollTo(0, y); };
@@ -2643,7 +2672,10 @@ function viewList() {
     const xv = e.target.closest("[data-xview]"); if (xv && !e.target.closest("button")) { showItem(xv.dataset.xview); return; }
     if (!b) { const tr = e.target.closest("tr[data-xid]"); if (tr) showItem(tr.dataset.xid); return; }
     const ds = b.dataset;
-    if (b.id === "fOpen" || b.closest("#fSum")) openListFilter();
+    if (b.id === "fOpen") openListFilter();
+    else if (ds.qsort) { f.sort = ds.qsort; f.sortV2 = 1; save(); }
+    else if (ds.qrange) { if (ds.qrange === "pick") openListFilter(); else { f.range = ds.qrange; save(); } }
+    else if (ds.qpl) { f.plant = ds.qpl; f.retort = "all"; save(); }
     else if (ds.appr) { f.appr = ds.appr; save(); }
     else if (b.id === "fReset") { Object.assign(f, LIST_DEF, { appr: "all" }); save(); }
     else if (b.id === "listQx") { S.q = ""; save(); }
@@ -2661,6 +2693,8 @@ function viewList() {
   const selItems = () => all.filter(x => LSEL.has(x.id));
   const redraw = () => { const y = window.scrollY; draw(); window.scrollTo(0, y); };
   m.onchange = e => { const t = e.target;
+    if (t.id === "qRet") { f.retort = t.value; save(); return; }
+    if (t.id === "qCat") { f.cat = t.value; save(); return; }
     if (t.dataset.psel) { t.checked ? LSEL.add(t.dataset.psel) : LSEL.delete(t.dataset.psel); redraw(); }
     else if (t.id === "lsAll" || t.id === "lsAll2") { L.slice(0, 300).forEach(x => t.checked ? LSEL.add(x.id) : LSEL.delete(x.id)); redraw(); } };
   let L = all;
