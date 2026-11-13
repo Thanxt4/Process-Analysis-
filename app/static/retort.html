@@ -2931,8 +2931,7 @@ async function viewIR() {
     </div></details>
     <div id="irErr"></div>
     <div class="ir-save"><button class="pri blk savebig" id="irSave">${I("check")}${editing ? "บันทึกการแก้ไข IR" : "บันทึก IR"}</button>
-      <div class="row" style="margin-top:8px"><button class="blk" id="irCopyRow">${I("grid")}คัดลอกแถวไปวางใน Excel</button><button class="blk" id="irCopyTxt">${I("list")}คัดลอกเป็นข้อความ</button></div>
-      <small class="hint">แถว Excel: คลิกช่อง <b>คอลัมน์ D</b> ของแถวว่างในไฟล์ IR แล้ววาง (Ctrl+V) ข้อมูลจะลงตรงคอลัมน์ D–AM</small></div>
+    </div>
   </div>
   ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", [...plantRetorts(d.plant || "PF1"), ...past("line")])}
   ${dl("irProb", [...S.config.categories.filter(c => c.active && !c.deleted).map(c => c.name), ...past("problem")])}${dl("irDec", past("decision"))}${dl("irAppr", past("approver"))}`;
@@ -2957,8 +2956,6 @@ async function viewIR() {
     else if (ds.iredit) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit))); viewIR(); window.scrollTo(0, 0); }
     else if (ds.irdel) { const x = pick(ds.irdel); confirmBox(`ลบ IR ${x.irNo || ""} "${x.problem || ""}"?`, async () => {
       try { await api(`/api/retort/ir/${encodeURIComponent(x.id)}`, { method: "DELETE" }); IR.items = IR.items.filter(y => y.id !== x.id); toast("ลบ IR แล้ว"); redo(); } catch (err) { toast(err.message); } }); }
-    else if (b.id === "irCopyRow") irCopy(irRow(d), "แถว Excel");
-    else if (b.id === "irCopyTxt") irCopy(irText(d), "ข้อความ");
     else if (b.id === "irSave") {
       const err = msg => { $("#irErr").innerHTML = `<div class="alert a-bad">${I("alert")}<div>${msg}</div></div>`; $("#irErr").scrollIntoView({ block: "center" }); };
       if (!d.problem.trim() && !d.detail.trim()) { m.querySelector('[data-ir="problem"]').classList.add("err"); return err("กรอกปัญหา"); }
@@ -3001,7 +2998,9 @@ async function viewIRList() {
         <span class="sep"></span>${chip("data-irlpl", "all", "ทุกโรง", IRL.pl === "all")}${chip("data-irlpl", "PF1", "PF1", IRL.pl === "PF1")}${chip("data-irlpl", "PF2", "PF2", IRL.pl === "PF2")}</div></div>
     <div class="irl-bar"><label class="irl-ck"><input type="checkbox" id="irlAll" ${allOn ? "checked" : ""}><span>เลือกทั้งหมด (${L.length})</span></label>
       <span class="irl-n">${nSel ? `เลือกแล้ว <b>${nSel}</b> รายการ` : "ติ๊กเลือก IR ที่ต้องการคัดลอก"}</span>
-      <button class="pri" id="irlCopy" ${nSel ? "" : "disabled"}>${I("list")}คัดลอก${nSel ? ` (${nSel})` : ""}</button>
+      <button class="pri" id="irlRow" ${nSel ? "" : "disabled"} title="วางที่คอลัมน์ D ของแถวว่างในไฟล์ IR · 1 IR = 1 แถว">${I("grid")}คัดลอกแถวไปวางใน Excel${nSel > 1 ? ` (${nSel})` : ""}</button>
+      <button id="irlTxt" ${nSel ? "" : "disabled"}>${I("list")}คัดลอกเป็นข้อความ</button>
+      <button id="irlCopy" ${nSel ? "" : "disabled"} title="เลือกรูปแบบ และเลือกช่องที่จะคัดลอก">${I("settings")}เลือกช่อง…</button>
       <button id="irlCsv" ${L.length ? "" : "disabled"}>${I("download")}CSV${nSel ? " (ที่เลือก)" : ""}</button>${nSel ? `<button class="ghost" id="irlClr">${I("x")}ล้าง</button>` : ""}</div>
     <div class="card irl-list">${L.length ? L.map(x => `<div class="irl-r ${IRL.sel.has(x.id) ? "on" : ""} ${IRL.flash === x.id ? "flashnew" : ""}" data-irid="${x.id}">
         <label class="irl-cb"><input type="checkbox" data-irsel="${x.id}" ${IRL.sel.has(x.id) ? "checked" : ""}></label>
@@ -3027,6 +3026,8 @@ async function viewIRList() {
     else if (b.id === "irlNew") { IR.d = irNew(); IRL.form = true; viewIR(); window.scrollTo(0, 0); }
     else if (b.id === "irlClr") { IRL.sel.clear(); redo(); }
     else if (b.id === "irlCopy") irCopyDlg(IR.items.filter(x => IRL.sel.has(x.id)));
+    else if (b.id === "irlRow") { const S2 = IR.items.filter(x => IRL.sel.has(x.id)); irCopy(S2.map(x => irRow(x)).join("\n"), S2.length > 1 ? `${S2.length} แถว Excel` : "แถว Excel"); }
+    else if (b.id === "irlTxt") irCopy(IR.items.filter(x => IRL.sel.has(x.id)).map(x => irText(x)).join("\n\n────────\n\n"), "ข้อความ");
     else if (b.id === "irlCsv") { const keep = IR.items; IR.items = nSel ? IR.items.filter(x => IRL.sel.has(x.id)) : L; irExportCsv(); IR.items = keep; }
     else if (ds.irone) irCopyDlg([pick(ds.irone)]);
     else if (ds.iredit2) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit2))); IRL.form = true; viewIR(); window.scrollTo(0, 0); }
