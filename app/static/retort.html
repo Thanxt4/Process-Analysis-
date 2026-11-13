@@ -2465,7 +2465,8 @@ function wireLog() {
     if (t.id === "signIn") { const s = m.querySelector(".signline span"); if (s) s.textContent = `(${t.value || "................"})`; }
     if (t.classList.contains("pickIn")) pickFilter(t);
     if (t.classList.contains("causeIn")) { d.pc[t.dataset.cid].cause = t.value; t.closest(".pcard").querySelectorAll("[data-sug]").forEach(b => b.classList.toggle("on", b.dataset.sug === t.value.trim())); t.classList.remove("err"); }
-    if (t.classList.contains("actIn")) d.pc[t.dataset.cid].action = t.value;
+    if (t.classList.contains("actIn") || t.classList.contains("pAct")) d.pc[t.dataset.cid].action = t.value;
+    if (t.classList.contains("pCause")) d.pc[t.dataset.cid].cause = t.value;
     if (t.dataset.dur) { const w = t.closest(".hm2"), h = num(w.querySelector('[data-dur="h"]').value) || 0, mm = num(w.querySelector('[data-dur="m"]').value) || 0;
       d.duration = h || mm ? String(Math.round((h * 60 + mm) * 100) / 100) : ""; } };
   m.onkeydown = e => { if (e.key === "Enter" && e.target.id === "mgIn") { e.preventDefault(); $("#mgAdd").click(); return; }
@@ -3236,6 +3237,10 @@ function pirCard(d, many, fields) {
     ${detailInput(detailFields().find(x => x.key === "duration") || DEFAULT_DETAILS[1], d)}
     ${custom.map(x => detailInput(x, d)).join("")}
     <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail" rows="2">${esc(d.detail || "")}</textarea></label>
+    ${S.editingId ? "" : (d.cats || []).map(catById).filter(Boolean).map(c => { const pc = (d.pc || {})[c.id] || { cause: "", action: "" }, nm = many ? ` <small class="sub">· ${esc(c.name)}</small>` : "";
+      return `<label class="f full"><span class="lab">สาเหตุ${nm}</span><input class="pCause" data-cid="${c.id}" value="${esc(pc.cause)}" list="pcs_${c.id}" placeholder="กรอกสาเหตุ หรือเลือกจากรายการ" autocomplete="off"></label>
+        <datalist id="pcs_${c.id}">${[...(c.causes || []), UNKNOWN].map(x => `<option value="${esc(x)}">`).join("")}</datalist>
+        <label class="f full"><span class="lab">การแก้ไข${nm}</span><textarea class="pAct" data-cid="${c.id}" rows="2" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(pc.action)}</textarea></label>`; }).join("")}
   </div></div>
   <datalist id="irDocs">${Object.keys(IR.codes || {}).map(v => `<option value="${esc(v)}">`).join("")}</datalist>
   <datalist id="pMk">${(mk.length ? mk : ["P", "N", "E", "X", "C", "S"]).map(v => `<option value="${esc(v)}">`).join("")}</datalist>`;
