@@ -1323,10 +1323,12 @@ body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
 .siteoff{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
 .siteoff>div{max-width:420px;text-align:center;background:#fff;border-radius:22px;padding:28px 24px;box-shadow:var(--sh);border:1px solid var(--line)}
 .siteoff h2{margin:10px 0 6px;color:var(--navy)}
-.holdq{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa}
-.holdq .lab{margin-bottom:6px}
-.holdq-r{display:grid;grid-template-columns:minmax(0,260px);gap:8px}
-.holdq-r input{font-size:20px;font-weight:800;text-align:center;color:#9a3412;background:#fff}
+.holdq{display:flex;align-items:center;gap:14px;margin-top:10px;padding:10px 12px 10px 14px;border-radius:14px;background:#fff7ed;border:1px solid #fed7aa}
+.holdq[hidden]{display:none}
+.holdq .lab{margin:0!important;white-space:nowrap;flex:0 0 auto}
+.holdq-r{flex:1;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.holdq-r input{font-size:20px;font-weight:800;text-align:center;color:#9a3412;background:#fff;border-color:#fed7aa}
+.holdq-r input:focus{border-color:#ea580c;box-shadow:0 0 0 3px rgba(234,88,12,.15)}
 .holdq-r select{background-color:#fff}
 /* IR (Incident Report) */
 .irrow{display:flex;align-items:center;gap:8px 12px;margin:0 0 14px;padding:6px;border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid #e2e8f0;
