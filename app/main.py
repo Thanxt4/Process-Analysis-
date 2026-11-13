@@ -3008,10 +3008,43 @@ async def api_rt_ir_save(request: Request):
         o = json.loads(old["data"]) if old else {}
         x["createdAt"] = o.get("createdAt") or ts
         x["createdBy"] = o.get("createdBy") or x["by"]
+        # การอนุมัติเปลี่ยนได้เฉพาะผ่าน /approve (หน้าเว็บส่งมาเองไม่ได้)
+        x["approvedBy"] = o.get("approvedBy", "") if o.get("approvedAt") else ""
+        if o.get("approvedAt"):
+            x["approvedAt"] = o["approvedAt"]
         x["updatedAt"] = ts
         con.execute("INSERT INTO retort_ir(id, data, created_at, updated_at) VALUES(?,?,?,?) "
                     "ON CONFLICT(id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
                     (x["id"], json.dumps(x, ensure_ascii=False), x["createdAt"], ts))
+    return {"ok": True, "item": x}
+
+
+@app.post("/api/retort/ir/{rid}/approve")
+async def api_rt_ir_approve(rid: str, request: Request):
+    """อนุมัติ / ยกเลิกอนุมัติ IR: {name, undo, pin} — เฉพาะหัวหน้า · ชื่อผู้อนุมัติลงช่อง "อนุมัติโดย" (คอลัมน์ AK)"""
+    _rt_auth(request)
+    data = await request.json()
+    if _rt_role(request) != "sup":
+        raise HTTPException(403, "อนุมัติได้เฉพาะหัวหน้า (Supervisor)")
+    if APPROVE_PIN and str(data.get("pin") or "").strip() != APPROVE_PIN:
+        raise HTTPException(403, "รหัสผู้อนุมัติไม่ถูกต้อง")
+    undo = bool(data.get("undo"))
+    name = " ".join(str(data.get("name") or "").split())[:60]
+    if not undo and not name:
+        raise HTTPException(400, "กรุณาใส่ชื่อผู้อนุมัติ")
+    ts = int(_time.time() * 1000)
+    with db() as con:
+        row = con.execute("SELECT data FROM retort_ir WHERE id=?", (rid,)).fetchone()
+        if not row:
+            raise HTTPException(404, "ไม่พบ IR นี้")
+        x = json.loads(row["data"])
+        if undo:
+            x["approvedBy"] = ""
+            x.pop("approvedAt", None)
+        else:
+            x["approvedBy"], x["approvedAt"] = name, ts
+        x["updatedAt"] = ts
+        con.execute("UPDATE retort_ir SET data=?, updated_at=? WHERE id=?", (json.dumps(x, ensure_ascii=False), ts, rid))
     return {"ok": True, "item": x}
 
 

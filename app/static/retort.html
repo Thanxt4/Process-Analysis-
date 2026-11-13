@@ -1377,6 +1377,35 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
   .irpick>.lab{display:none}
   #main.split{display:block}
 }
+/* หน้า รายการ IR */
+.irl{max-width:1100px;margin:0 auto}
+.irl-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:16px 20px;border-radius:20px;color:#fff;background:radial-gradient(380px 120px at 92% -40px,rgba(239,68,68,.35),transparent 70%),linear-gradient(135deg,#14213a,#1b2a41 55%,#2a4a72)}
+.irl-head>div{flex:1;display:flex;flex-direction:column}.irl-head b{font-size:21px;font-weight:800}.irl-head span{font-size:13.5px;color:#cbd5e1}
+.irl-head .pri{background:#dc2626;border-color:#dc2626}
+.irl-filt{padding:12px 14px}.irl-filt .addbar{margin-bottom:10px}
+.irl-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.irl-chips .chip{min-height:36px;padding:4px 12px;font-size:14px}
+.irl-chips .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.irl-bar{position:sticky;top:76px;z-index:3;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;border-radius:14px;background:#fff;border:1px solid var(--line);box-shadow:var(--sh)}
+.irl-bar .irl-n{flex:1;font-size:14px;color:var(--mute)}.irl-bar .irl-n b{color:var(--navy)}
+.irl-bar button{min-height:40px;padding:4px 14px;font-size:14.5px}
+.irl-ck{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600}
+.irl-ck input,.irl-cb input,.irk-grid input{-webkit-appearance:checkbox;appearance:auto;width:20px;height:20px;min-height:0;padding:0;margin:0;border:0;background:none;box-shadow:none;accent-color:#1b2a41;flex:0 0 auto;cursor:pointer}
+.irl-list{padding:4px 14px}
+.irl-r{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 4px;border-bottom:1px solid #f1f5f9;border-radius:12px}
+.irl-r:last-child{border-bottom:0}.irl-r.on{background:#fffbeb}
+.irl-cb{display:flex;align-items:center;padding:4px;cursor:pointer}
+.irl-r .t{flex:1;min-width:240px;display:flex;flex-direction:column;gap:3px;cursor:pointer}
+.irl-r .t b{font-size:15.5px}.irl-r .t small{color:var(--mute);font-size:12.5px}
+.irl-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.irl-r .acts{display:flex;gap:4px;flex-wrap:wrap}.irl-r .acts .ghost{border:1px solid var(--line);background:#fff}
+.irl-r .irap{background:#dcfce7;border-color:#bbf7d0;color:#15803d;font-weight:700}
+.irgo{width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;border-radius:16px;background:#fff;border:1px solid var(--line);text-align:left;margin-bottom:12px}
+.irgo>span{flex:1;display:flex;flex-direction:column}.irgo small{color:var(--mute);font-size:12.5px;font-weight:400}
+.iraprv{min-height:46px;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:12px;background:#f8fafc;border:1.5px dashed var(--line);font-size:14px;color:var(--mute)}
+.irkbox{max-width:620px}
+.irk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 10px;margin-top:8px;max-height:240px;overflow:auto;padding:8px;border:1px solid var(--line);border-radius:12px}
+.irk-grid label{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:3px 0}.irk-grid small{color:var(--mute);font-size:11px}
+.irk-prev{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;white-space:pre;background:#f8fafc}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1514,7 +1543,7 @@ const UI_DEFAULT = {
   brand: "LINE QC / RETORT ANALYSIS", title: "บันทึกปัญหา Retort", subtitle: "หาสาเหตุ · วิเคราะห์แนวโน้ม",
   stamp: "i-Tail Corporation: Retort Analysis",
   navy: "#1b2a41", amber: "#f59e0b", scale: 100,
-  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "runs", label: "รอบหม้อ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
+  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "irlist", label: "รายการ IR", show: true }, { k: "runs", label: "รอบหม้อ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
     { k: "progs", label: "โปรแกรม", show: true }, { k: "survey", label: "Survey", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
   defaultTab: "log",
   dsStart: "07:00", dsEnd: "17:30",
@@ -1523,7 +1552,7 @@ const UI_DEFAULT = {
   dash: { insight: true, trend: true, groups: true, hours: true, heat: true, more: true, days: 14 },
   groups: {}, aiQuick: null
 };
-const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", survey: "tool", runs: "target", ai: "spark", settings: "settings", ui: "palette" };
+const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", survey: "tool", runs: "target", irlist: "alert", ai: "spark", settings: "settings", ui: "palette" };
 let U = JSON.parse(JSON.stringify(UI_DEFAULT));
 /* รวมค่าตั้งต้นกับค่าที่บันทึกไว้ และตรวจทุกค่า (สี/เวลา/ข้อความ) ก่อนใช้ */
 function uiCfg(raw) {
@@ -1846,7 +1875,7 @@ async function syncAll(full) {
   } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
-const STAFF_TABS = ["log", "list", "runs"];
+const STAFF_TABS = ["log", "list", "irlist", "runs"];
 const ROLE_NAME = { sup: "หัวหน้า", staff: "พนักงาน" };
 function setRole(role) {
   S.role = role || ""; S.canAdmin = S.role === "sup"; lsSet("rt_role", S.role);
@@ -1891,12 +1920,12 @@ function render() {
   applyUI();
   $("#userBtn").textContent = initials(S.user);
   renderNav();
-  $("#main").classList.toggle("wide", S.view === "analyze" || S.view === "list" || S.view === "survey");
+  $("#main").classList.toggle("wide", S.view === "analyze" || S.view === "list" || S.view === "survey" || S.view === "irlist");
   $("#main").classList.toggle("xwide", S.view === "analyze");
   $("#main").classList.toggle("vset", S.view === "settings" || S.view === "ui");
   S.charts = {}; $("#main").classList.remove("split");
   document.body.classList.remove("svfull");  // ออกจากตาราง Survey แบบเต็มจอ เมื่อไปแท็บอื่น
-  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, runs: viewRuns, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
+  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, runs: viewRuns, irlist: viewIRList, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
   persistSoon();
@@ -2837,12 +2866,12 @@ async function irLoad() {
 }
 const irDMY = s => { if (!s) return ""; const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };  // วว/ดด/ปปปป (ค.ศ.) ให้ Excel อ่านเป็นวันที่
 // แถวสำหรับวางใน Excel (เริ่มที่คอลัมน์ D) · ช่องที่มีขึ้นบรรทัด/แท็บ ใส่ "…" ให้อยู่ในช่องเดียว
-function irRow(x) {
-  return IR_COLS.map(([k]) => { let v = String(x[k] ?? ""); if (/Date$/.test(k) && v) v = irDMY(v);
+function irRow(x, keys) {
+  return (keys ? IR_COLS.filter(c => keys.includes(c[0])) : IR_COLS).map(([k]) => { let v = String(x[k] ?? ""); if (/Date$/.test(k) && v) v = irDMY(v);
     return /[\t\n"]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }).join("\t");
 }
-function irText(x) {
-  const L = IR_COLS.filter(([k]) => String(x[k] ?? "").trim()).map(([k, l]) => `${l}: ${/Date$/.test(k) ? irDMY(x[k]) : x[k]}`);
+function irText(x, keys) {
+  const L = IR_COLS.filter(([k]) => (!keys || keys.includes(k)) && String(x[k] ?? "").trim()).map(([k, l]) => `${l}: ${/Date$/.test(k) ? irDMY(x[k]) : x[k]}`);
   return `IR Retort${x.irNo ? " " + x.irNo : ""}\n` + L.join("\n");
 }
 async function irCopy(txt, what) {
@@ -2891,21 +2920,13 @@ async function viewIR() {
     </div></div>
     <details class="card irc" ${IR.open2 || d.result || d.closeDate || d.ncpNo ? "open" : ""} id="irMore"><summary class="irh"><span class="n">4</span><b>ติดตาม / ปิด IR</b><small class="sub">กรอกภายหลังได้</small></summary><div class="grid" style="margin-top:10px">
       ${ta("result")}${seg("status", ["Open", "Close"])}${fld("closeDate", 'type="date"')}${fld("decision2", "", "full")}
-      ${fld("otr", 'inputmode="decimal"')}${fld("ots", 'inputmode="decimal"')}${fld("ncpNo")}${fld("ncpLevel")}${fld("by3")}${fld("approvedBy")}${fld("trim", "", "full")}${ta("remark")}
+      ${fld("otr", 'inputmode="decimal"')}${fld("ots", 'inputmode="decimal"')}${fld("ncpNo")}${fld("ncpLevel")}${fld("by3")}<div class="f"><span class="lab">อนุมัติโดย</span><div class="iraprv">${d.approvedAt ? `${I("check")} ${esc(d.approvedBy)} · ${esc(fmtTs(d.approvedAt))}` : "รออนุมัติ · อนุมัติได้ที่หน้า รายการ IR (หัวหน้า)"}</div></div>${fld("trim", "", "full")}${ta("remark")}
     </div></details>
     <div id="irErr"></div>
     <div class="ir-save"><button class="pri blk savebig" id="irSave">${I("check")}${editing ? "บันทึกการแก้ไข IR" : "บันทึก IR"}</button>
       <div class="row" style="margin-top:8px"><button class="blk" id="irCopyRow">${I("grid")}คัดลอกแถวไปวางใน Excel</button><button class="blk" id="irCopyTxt">${I("list")}คัดลอกเป็นข้อความ</button></div>
       <small class="hint">แถว Excel: คลิกช่อง <b>คอลัมน์ D</b> ของแถวว่างในไฟล์ IR แล้ววาง (Ctrl+V) ข้อมูลจะลงตรงคอลัมน์ D–AM</small></div>
-    <div class="card irc irlist"><div class="irh"><b>IR ที่บันทึกไว้</b><small class="sub">${IR.items.length} รายการ</small></div>
-      <input id="irQ" value="${esc(IR.q)}" placeholder="ค้นหา หมายเลข IR / รหัส / ปัญหา / ไลน์" autocomplete="off" style="margin-bottom:8px">
-      ${L.length ? L.map(x => `<div class="irr"><div class="t"><b>${esc(x.irNo || "(ยังไม่มีเลข IR)")} · ${esc(x.problem || "-")}</b>
-          <small>${esc([x.plant, x.line, x.doc && x.market ? x.doc + x.market : x.doc, irDMY(x.repDate) + " " + (x.repShift || ""), x.by].filter(Boolean).join(" · "))}</small>
-          <span class="irst ${x.status === "Close" ? "ok" : ""}">${esc(x.status || "Open")}</span></div>
-        <div class="acts"><button class="ghost sm" data-irrow="${x.id}" title="คัดลอกแถวไปวางใน Excel">${I("grid")}Excel</button><button class="ghost sm" data-irtxt="${x.id}" title="คัดลอกเป็นข้อความ">${I("list")}ข้อความ</button>
-          <button class="ghost sm" data-iredit="${x.id}">${I("pen")}แก้ไข</button>${S.role === "sup" ? `<button class="ghost sm danger" data-irdel="${x.id}">${I("trash")}</button>` : ""}</div></div>`).join("")
-        : `<p class="sub">${q ? "ไม่พบ IR ที่ค้นหา" : "ยังไม่มี IR"}</p>`}
-    </div>
+    <button class="irgo" data-view-go="irlist">${I("list")}<span><b>รายการ IR</b><small>${IR.items.length} รายการ · รออนุมัติ ${IR.items.filter(x => !x.approvedAt).length} · อนุมัติ / คัดลอก / ส่งออก</small></span>${I("right")}</button>
   </div>
   ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", [...plantRetorts(d.plant || "PF1"), ...past("line")])}
   ${dl("irProb", [...S.config.categories.filter(c => c.active && !c.deleted).map(c => c.name), ...past("problem")])}${dl("irDec", past("decision"))}${dl("irAppr", past("approver"))}`;
@@ -2942,10 +2963,8 @@ async function viewIR() {
       b.disabled = true;
       try { const r = await jpost("/api/retort/ir", d); const i = IR.items.findIndex(x => x.id === r.item.id); if (i >= 0) IR.items[i] = r.item; else IR.items.unshift(r.item);
         lsSet("rt_irlast", { plant: d.plant, checkpoint: d.checkpoint, approver: d.approver });
-        const saved = r.item; IR.d = irNew(); viewIR(); window.scrollTo(0, 0);
-        modal(`<div class="okic" style="margin:0 auto 10px">${I("check")}</div><h2 style="text-align:center">บันทึก IR แล้ว</h2><p class="sub" style="text-align:center;margin:4px 0 14px">${esc(saved.irNo || "")} · ${esc(saved.problem || "")}</p>
-          <button class="pri blk" id="mRow">${I("grid")}คัดลอกแถวไปวางใน Excel</button><button class="blk" id="mTxt" style="margin-top:8px">${I("list")}คัดลอกเป็นข้อความ</button><button class="ghost blk" data-close style="margin-top:6px">ปิด</button>`,
-          box => { box.querySelector("#mRow").onclick = () => irCopy(irRow(saved), "แถว Excel"); box.querySelector("#mTxt").onclick = () => irCopy(irText(saved), "ข้อความ"); }); }
+        const saved = r.item; IR.d = irNew(); IRL.sel = new Set([saved.id]); IRL.flash = saved.id; IRL.q = ""; IRL.st = IRL.ap = IRL.pl = "all";
+        S.view = "irlist"; render(); toast(`บันทึก IR ${saved.irNo || ""} แล้ว · เลือกไว้ให้แล้ว กด คัดลอก ได้เลย`); }
       catch (er) { b.disabled = false; if (er.status === 401) showLock(true); else err(esc(er.message)); } } };
 }
 // ตัวเลือกบนสุดของแท็บบันทึก: ไม่ออก IR (บันทึกปัญหา) / ออก IR
@@ -2971,6 +2990,116 @@ function irExportCsv() {
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" }));
   a.download = `IR_Retort_${todayISO()}.csv`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   toast(`ส่งออก IR ${IR.items.length} รายการแล้ว`);
+}
+/* ---------- หน้า "รายการ IR" (แยกจากรายการปัญหา): ค้นหา · กรอง · เลือกหลายรายการ · อนุมัติ · คัดลอก/ส่งออก ---------- */
+const IRL = { sel: new Set(), q: "", st: "all", ap: "all", pl: "all", flash: "" };
+const irApprTag = x => x.approvedAt ? `<span class="tag ok" title="อนุมัติเมื่อ ${esc(fmtTs(x.approvedAt))}">${I("check")} อนุมัติ · ${esc(x.approvedBy || "")}</span>` : `<span class="tag wait">รออนุมัติ</span>`;
+async function viewIRList() {
+  const m = $("#main");
+  if (!IR.loaded) { m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await irLoad(); if (S.view !== "irlist") return; }
+  const q = IRL.q.trim().toLowerCase();
+  const L = IR.items.filter(x => (IRL.st === "all" || (x.status || "Open") === IRL.st) && (IRL.ap === "all" || (IRL.ap === "done") === !!x.approvedAt)
+    && (IRL.pl === "all" || x.plant === IRL.pl) && (!q || IR_COLS.some(([k]) => String(x[k] || "").toLowerCase().includes(q))));
+  [...IRL.sel].forEach(id => { if (!IR.items.some(x => x.id === id)) IRL.sel.delete(id); });
+  const nSel = IRL.sel.size, allOn = L.length && L.every(x => IRL.sel.has(x.id)), nWait = IR.items.filter(x => !x.approvedAt).length;
+  const chip = (attr, v, lab, on) => `<button class="chip ${on ? "on" : ""}" ${attr}="${v}">${lab}</button>`;
+  m.innerHTML = `<div class="irl">
+    <div class="irl-head"><div><b>รายการ IR</b><span>${IR.items.length} รายการ · รออนุมัติ ${nWait}</span></div><button class="pri" id="irlNew">${I("plus")}ออก IR ใหม่</button></div>
+    <div class="card irl-filt">
+      <div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="irlQ" value="${esc(IRL.q)}" placeholder="ค้นหา หมายเลข IR / รหัส / ปัญหา / ไลน์ / ผู้บันทึก" autocomplete="off"></div>
+      <div class="irl-chips">${chip("data-irlst", "all", "ทุกสถานะ", IRL.st === "all")}${chip("data-irlst", "Open", "Open", IRL.st === "Open")}${chip("data-irlst", "Close", "Close", IRL.st === "Close")}
+        <span class="sep"></span>${chip("data-irlap", "all", "ทั้งหมด", IRL.ap === "all")}${chip("data-irlap", "wait", `รออนุมัติ (${nWait})`, IRL.ap === "wait")}${chip("data-irlap", "done", "อนุมัติแล้ว", IRL.ap === "done")}
+        <span class="sep"></span>${chip("data-irlpl", "all", "ทุกโรง", IRL.pl === "all")}${chip("data-irlpl", "PF1", "PF1", IRL.pl === "PF1")}${chip("data-irlpl", "PF2", "PF2", IRL.pl === "PF2")}</div></div>
+    <div class="irl-bar"><label class="irl-ck"><input type="checkbox" id="irlAll" ${allOn ? "checked" : ""}><span>เลือกทั้งหมด (${L.length})</span></label>
+      <span class="irl-n">${nSel ? `เลือกแล้ว <b>${nSel}</b> รายการ` : "ติ๊กเลือก IR ที่ต้องการคัดลอก"}</span>
+      <button class="pri" id="irlCopy" ${nSel ? "" : "disabled"}>${I("list")}คัดลอก${nSel ? ` (${nSel})` : ""}</button>
+      <button id="irlCsv" ${L.length ? "" : "disabled"}>${I("download")}CSV${nSel ? " (ที่เลือก)" : ""}</button>${nSel ? `<button class="ghost" id="irlClr">${I("x")}ล้าง</button>` : ""}</div>
+    <div class="card irl-list">${L.length ? L.map(x => `<div class="irl-r ${IRL.sel.has(x.id) ? "on" : ""} ${IRL.flash === x.id ? "flashnew" : ""}" data-irid="${x.id}">
+        <label class="irl-cb"><input type="checkbox" data-irsel="${x.id}" ${IRL.sel.has(x.id) ? "checked" : ""}></label>
+        <div class="t" data-irview="${x.id}"><b>${esc(x.irNo || "(ยังไม่มีเลข IR)")} · ${esc(x.problem || "-")}</b>
+          <small>${esc([x.plant, x.line, x.doc ? x.doc + (x.market || "") : "", x.productCode, `รายงาน ${irDMY(x.repDate)} ${x.repShift || ""}`, x.qtyHold ? `กัน ${x.qtyHold}` : "", x.by].filter(Boolean).join(" · "))}</small>
+          <span class="irl-tags"><span class="irst ${x.status === "Close" ? "ok" : ""}">${esc(x.status || "Open")}</span>${irApprTag(x)}${x.nrft === "Y" ? `<span class="tag hold">NRFT</span>` : ""}</span></div>
+        <div class="acts">${S.role === "sup" ? (x.approvedAt ? `<button class="ghost sm" data-irunap="${x.id}">${I("x")}ยกเลิกอนุมัติ</button>` : `<button class="soft sm irap" data-irap="${x.id}">${I("check")}อนุมัติ</button>`) : ""}
+          <button class="ghost sm" data-irone="${x.id}" title="คัดลอกรายการนี้">${I("list")}คัดลอก</button><button class="ghost sm" data-iredit2="${x.id}">${I("pen")}แก้ไข</button>
+          ${S.role === "sup" ? `<button class="ghost sm danger" data-irdel2="${x.id}" aria-label="ลบ">${I("trash")}</button>` : ""}</div></div>`).join("")
+      : `<p class="sub" style="padding:10px 4px">${IR.items.length ? "ไม่พบ IR ตามที่ค้นหา/กรอง" : "ยังไม่มี IR · กด ออก IR ใหม่"}</p>`}</div></div>`;
+  markAnim("irl");
+  if (IRL.flash) { const f = m.querySelector(".irl-r.flashnew"); if (f) f.scrollIntoView({ block: "center" }); IRL.flash = ""; }
+  const redo = () => { const y = scrollY; viewIRList(); scrollTo(0, y); };
+  const pick = id => IR.items.find(x => x.id === id);
+  m.oninput = e => { if (e.target.id === "irlQ") { IRL.q = e.target.value; redo(); setTimeout(() => { const i = $("#irlQ"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 0); } };
+  m.onchange = e => { const t = e.target;
+    if (t.dataset.irsel) { if (t.checked) IRL.sel.add(t.dataset.irsel); else IRL.sel.delete(t.dataset.irsel); redo(); }
+    else if (t.id === "irlAll") { L.forEach(x => t.checked ? IRL.sel.add(x.id) : IRL.sel.delete(x.id)); redo(); } };
+  m.onclick = async e => {
+    const v = e.target.closest("[data-irview]"); if (v && !e.target.closest("button,input,label")) { irShow(pick(v.dataset.irview)); return; }
+    const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (ds.irlst) { IRL.st = ds.irlst; redo(); } else if (ds.irlap) { IRL.ap = ds.irlap; redo(); } else if (ds.irlpl) { IRL.pl = ds.irlpl; redo(); }
+    else if (b.id === "irlNew") { IR.d = irNew(); S.irMode = true; S.view = "log"; render(); window.scrollTo(0, 0); }
+    else if (b.id === "irlClr") { IRL.sel.clear(); redo(); }
+    else if (b.id === "irlCopy") irCopyDlg(IR.items.filter(x => IRL.sel.has(x.id)));
+    else if (b.id === "irlCsv") { const keep = IR.items; IR.items = nSel ? IR.items.filter(x => IRL.sel.has(x.id)) : L; irExportCsv(); IR.items = keep; }
+    else if (ds.irone) irCopyDlg([pick(ds.irone)]);
+    else if (ds.iredit2) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit2))); S.irMode = true; S.view = "log"; render(); window.scrollTo(0, 0); }
+    else if (ds.irap || ds.irunap) irApprove(pick(ds.irap || ds.irunap), !!ds.irunap, redo);
+    else if (ds.irdel2) { const x = pick(ds.irdel2); confirmBox(`ลบ IR ${x.irNo || ""} "${x.problem || ""}"?`, async () => {
+      try { await api(`/api/retort/ir/${encodeURIComponent(x.id)}`, { method: "DELETE" }); IR.items = IR.items.filter(y => y.id !== x.id); IRL.sel.delete(x.id); toast("ลบ IR แล้ว"); redo(); } catch (err) { toast(err.message); } }); }
+  };
+}
+function irApprove(x, undo, after) {
+  modal(`<h2>${undo ? "ยกเลิกการอนุมัติ IR" : "อนุมัติ IR"}</h2><p class="sub" style="margin:2px 0 12px">${esc(x.irNo || "")} · ${esc(x.problem || "")}</p>
+    ${undo ? "" : `<label class="f"><span class="lab">ชื่อผู้อนุมัติ <span class="req">*</span></span><input id="irApN" value="${esc(lsGet("rt_approver", "") || S.user)}" autocomplete="off"></label><small class="hint">ชื่อนี้จะลงช่อง "อนุมัติโดย" (คอลัมน์ AK)</small>`}
+    <p class="sub" id="irApE" style="color:var(--bad);min-height:20px;margin:8px 0 0"></p>
+    <div class="row" style="margin-top:6px"><button class="blk" data-close>ยกเลิก</button><button class="blk pri" id="irApOk">${I("check")}${undo ? "ยืนยันยกเลิก" : "อนุมัติ"}</button></div>`, box => {
+    const nm = box.querySelector("#irApN"); setTimeout(() => (nm || box.querySelector("#irApOk")).focus(), 50);
+    if (nm) nm.onkeydown = e => { if (e.key === "Enter") box.querySelector("#irApOk").click(); };
+    box.querySelector("#irApOk").onclick = async () => { const name = nm ? nm.value.trim() : "";
+      if (!undo && !name) { box.querySelector("#irApE").textContent = "กรุณาใส่ชื่อผู้อนุมัติ"; return; }
+      try { const r = await jpost(`/api/retort/ir/${encodeURIComponent(x.id)}/approve`, { name, undo: !!undo }); const i = IR.items.findIndex(y => y.id === x.id); if (i >= 0) IR.items[i] = r.item;
+        if (name) lsSet("rt_approver", name); closeModal(); toast(undo ? "ยกเลิกการอนุมัติแล้ว" : `อนุมัติแล้ว · ${name}`); after && after(); }
+      catch (err) { if (err.status === 401) { closeModal(); showLock(true); return; } box.querySelector("#irApE").textContent = err.message; } };
+  });
+}
+function irShow(x) {
+  modal(`<h2>${esc(x.irNo || "IR")} · ${esc(x.problem || "")}</h2><div style="margin:8px 0 4px">${irApprTag(x)} <span class="irst ${x.status === "Close" ? "ok" : ""}">${esc(x.status || "Open")}</span></div>
+    ${IR_COLS.filter(([k]) => String(x[k] ?? "").trim()).map(([k, l, col]) => `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">${esc(l)} <small>(${col})</small></span><span class="v" style="font-weight:500;white-space:pre-wrap">${esc(/Date$/.test(k) ? irDMY(x[k]) : x[k])}</span></div>`).join("")}
+    <div class="row" style="margin-top:14px"><button class="blk pri" id="isCopy">${I("list")}คัดลอก</button><button class="blk" data-close>ปิด</button></div>`, box => { box.querySelector("#isCopy").onclick = () => irCopyDlg([x]); });
+}
+// หน้าต่างคัดลอก: เลือกรูปแบบ (แถว Excel / ข้อความ) และเลือกช่องที่จะคัดลอก (จำไว้ในเครื่อง)
+function irCopyDlg(list) {
+  if (!list.length) return;
+  const st = Object.assign({ fmt: "excel", all: true, keys: IR_COLS.map(c => c[0]), head: false }, lsGet("rt_ircopy", {}));
+  st.keys = st.keys.filter(k => IR_LABEL[k]); if (!st.keys.length) st.keys = IR_COLS.map(c => c[0]);
+  const keys = () => st.all ? IR_COLS.map(c => c[0]) : IR_COLS.map(c => c[0]).filter(k => st.keys.includes(k));
+  const build = () => { const K = keys();
+    if (st.fmt === "excel") return (st.head ? K.map(k => IR_LABEL[k]).join("\t") + "\n" : "") + list.map(x => irRow(x, K)).join("\n");
+    return list.map(x => irText(x, K)).join("\n\n────────\n\n"); };
+  const draw = box => {
+    box.innerHTML = `<h2>คัดลอก IR ${list.length} รายการ</h2>
+      <span class="lab" style="margin-top:10px">รูปแบบ</span>
+      <div class="seg"><button data-cf="excel" class="${st.fmt === "excel" ? "on" : ""}">${I("grid")}แถว Excel</button><button data-cf="text" class="${st.fmt === "text" ? "on" : ""}">${I("list")}ข้อความ (LINE / อีเมล)</button></div>
+      <span class="lab" style="margin-top:14px">ช่องที่จะคัดลอก</span>
+      <div class="seg"><button data-ca="1" class="${st.all ? "on" : ""}">ทุกช่องตามแบบฟอร์ม (D–AM)</button><button data-ca="0" class="${st.all ? "" : "on"}">เลือกช่องเอง</button></div>
+      ${st.all ? "" : `<div class="irk-grid">${IR_COLS.map(([k, l, col]) => `<label><input type="checkbox" data-ck="${k}" ${st.keys.includes(k) ? "checked" : ""}><span>${esc(l)} <small>${col}</small></span></label>`).join("")}</div>
+        <div class="row" style="gap:6px;margin-top:6px"><button class="ghost sm" data-cset="all">เลือกทั้งหมด</button><button class="ghost sm" data-cset="none">ล้าง</button></div>`}
+      ${st.fmt === "excel" ? `<label class="irl-ck" style="margin-top:10px"><input type="checkbox" id="cHead" ${st.head ? "checked" : ""}><span>ใส่หัวคอลัมน์บรรทัดแรก</span></label>
+        <small class="hint">${st.all && !st.head ? "วางที่ <b>คอลัมน์ D</b> ของแถวว่างในไฟล์ IR · 1 IR = 1 แถว" : "วางที่ช่องแรกที่ต้องการ · ช่องจะเรียงตามลำดับในแบบฟอร์ม"}</small>` : ""}
+      <span class="lab" style="margin-top:12px">ตัวอย่าง</span><textarea class="irk-prev" rows="5" readonly>${esc(build())}</textarea>
+      <div class="row" style="margin-top:10px"><button class="blk" data-close>ปิด</button><button class="blk pri" id="cGo" ${keys().length ? "" : "disabled"}>${I("list")}คัดลอก</button></div>`;
+  };
+  modal("", box => {
+    draw(box);
+    box.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+      if (b.hasAttribute("data-close")) { closeModal(); return; }
+      if (ds.cf) st.fmt = ds.cf; else if (ds.ca) st.all = ds.ca === "1"; else if (ds.cset) st.keys = ds.cset === "all" ? IR_COLS.map(c => c[0]) : [];
+      else if (b.id === "cGo") { irCopy(build(), st.fmt === "excel" ? `${list.length} แถว Excel` : "ข้อความ"); lsSet("rt_ircopy", st); return; }
+      else return;
+      lsSet("rt_ircopy", st); draw(box); };
+    box.onchange = e => { const t = e.target;
+      if (t.dataset.ck) { st.keys = t.checked ? [...st.keys, t.dataset.ck] : st.keys.filter(k => k !== t.dataset.ck); }
+      else if (t.id === "cHead") st.head = t.checked; else return;
+      lsSet("rt_ircopy", st); draw(box); };
+  }, "irkbox");
 }
 /* ---------- Retort Survey Filling Form: ข้อมูลอุปกรณ์ของหม้อแต่ละใบ (คอลัมน์ = เลขหม้อ) ---------- */
 const SV_TABLES = [
