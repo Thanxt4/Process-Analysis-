@@ -1435,6 +1435,19 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .irpickc small{display:flex;align-items:center;gap:6px;color:#92400e;font-size:13px}.irpickc small svg.i{width:15px;height:15px}
 .irpickc>div{display:flex;flex-wrap:wrap;gap:6px}.irpickc .chip{min-height:36px;padding:4px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;background:#fff}
 .irpickc .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.lswitch{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:8px;border-radius:20px;background:linear-gradient(135deg,#14213a,#1b2a41 55%,#2a4a72);box-shadow:0 6px 20px rgba(15,23,42,.18)}
+.lswitch .lsseg{flex:1;display:flex;gap:6px;padding:0;background:transparent;border:0;box-shadow:none}
+.lswitch .lsseg button{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;min-height:50px;border-radius:14px;border:0;background:rgba(255,255,255,.06);color:#cbd5e1;font-size:16px;font-weight:700;box-shadow:none}
+.lswitch .lsseg button:hover{background:rgba(255,255,255,.12);color:#fff}
+.lswitch .lsseg button.on{background:#fff;color:var(--navy);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.lswitch .lsseg svg.i{width:19px;height:19px}
+.lswitch em{font-style:normal;font-size:12.5px;font-weight:800;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.14);color:inherit}
+.lswitch .on em{background:#eef2f7;color:var(--navy)}
+.lswitch .lswait{font-style:normal;font-size:12px;font-weight:800;padding:2px 9px;border-radius:99px;background:#f59e0b;color:#1b2a41;margin-left:2px}
+.lswitch .lsnew{min-height:50px;border-radius:14px;padding:0 20px;white-space:nowrap;background:var(--amber);border-color:var(--amber);color:#1b2a41;font-weight:800}
+.lswitch .lsnew.irnew{background:#dc2626;border-color:#dc2626;color:#fff}
+@media(max-width:700px){.lswitch{gap:6px;padding:6px;border-radius:16px}.lswitch .lsseg button{min-height:44px;font-size:14px;gap:6px;padding:0 6px}.lswitch .lsseg button span{white-space:nowrap}.lswitch .lswait{display:none}
+  .lswitch .lsnew{min-height:44px;padding:0 12px}.lswitch .lsnew span{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1572,7 +1585,7 @@ const UI_DEFAULT = {
   brand: "LINE QC / RETORT ANALYSIS", title: "บันทึกปัญหา Retort", subtitle: "หาสาเหตุ · วิเคราะห์แนวโน้ม",
   stamp: "i-Tail Corporation: Retort Analysis",
   navy: "#1b2a41", amber: "#f59e0b", scale: 100,
-  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "irlist", label: "รายการ IR", show: true }, { k: "runs", label: "รอบหม้อ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
+  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "runs", label: "รอบหม้อ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
     { k: "progs", label: "โปรแกรม", show: true }, { k: "survey", label: "Survey", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
   defaultTab: "log",
   dsStart: "07:00", dsEnd: "17:30",
@@ -1904,8 +1917,8 @@ async function syncAll(full) {
   } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
-const STAFF_TABS = ["log", "list", "irlist", "runs", "survey"];
-const MOBILE_TABS = ["log", "list", "irlist", "runs", "survey"];
+const STAFF_TABS = ["log", "list", "runs", "survey"];
+const MOBILE_TABS = ["log", "list", "runs", "survey"];
 const MOBILE_MQ = matchMedia("(max-width:700px), (hover:none) and (pointer:coarse) and (max-height:500px)");
 MOBILE_MQ.addEventListener("change", () => { if (typeof renderNav === "function" && S.loaded !== undefined) { renderNav(); render(); } });
 const ROLE_NAME = { sup: "หัวหน้า", staff: "พนักงาน" };
@@ -1940,13 +1953,14 @@ function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAR
 function renderNav() {
   // พนักงาน: เห็นเฉพาะ บันทึก + รายการ เสมอ · หัวหน้า: ทุกแท็บตามที่ตั้งไว้ในแท็บ ปรับแต่ง
   let vis = S.role === "sup" ? U.tabs.filter(t => t.show) : U.tabs.filter(t => STAFF_TABS.includes(t.k));
-  // มือถือ (ทั้งหัวหน้าและพนักงาน): เหลือ บันทึก · รายการ · รายการ IR · รอบหม้อ · Survey ตามลำดับเดิม
+  // มือถือ (ทั้งหัวหน้าและพนักงาน): เหลือ บันทึก · รายการ (ปัญหา + IR) · รอบหม้อ · Survey ตามลำดับเดิม
   if (MOBILE_MQ.matches) { const mv = U.tabs.filter(t => MOBILE_TABS.includes(t.k) && (t.show || S.role !== "sup")); if (mv.length) vis = mv; }
   const dflt = vis.some(t => t.k === U.defaultTab) ? U.defaultTab : vis[0].k;
   // เครื่องที่ยังไม่เคยเลือกแท็บ: เปิดแท็บเริ่มต้นตามการตั้งค่า (เลิกทำทันทีที่ผู้ใช้กดอะไรก็ตาม)
   if (S.viewAuto) { if (!S.view || S.view === S.autoPick) S.view = S.autoPick = dflt; else S.viewAuto = false; }
-  if (!vis.some(t => t.k === S.view)) S.view = dflt;
-  $("#nav").innerHTML = vis.map(t => `<button data-view="${t.k}" class="${S.view === t.k ? "on" : ""}">${I(VIEW_ICON[t.k])}${esc(t.label)}</button>`).join("");
+  if (!vis.some(t => t.k === S.view) && !(S.view === "irlist" && vis.some(t => t.k === "list"))) S.view = dflt;
+  const cur = S.view === "irlist" ? "list" : S.view;
+  $("#nav").innerHTML = vis.map(t => `<button data-view="${t.k}" class="${cur === t.k ? "on" : ""}">${I(VIEW_ICON[t.k])}${esc(t.label)}</button>`).join("");
 }
 function render() {
   applyProgOverrides();
@@ -1967,7 +1981,7 @@ function render() {
 /* เล่นแอนิเมชันเข้าหน้าเฉพาะตอนเปลี่ยนหน้า/ขั้นตอน (ไม่เล่นซ้ำตอนซิงก์ข้อมูลหรือเปลี่ยนตัวกรอง) */
 let animKey = "";
 function markAnim(k) { $("#main").classList.toggle("anim", k !== animKey); animKey = k; }
-$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; if (b.dataset.view === "irlist") IRL.form = false; S.view = b.dataset.view; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
+$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view === "list" && lsGet("rt_listkind", "") === "ir" ? "irlist" : b.dataset.view; if (S.view === "irlist") IRL.form = false; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
 $("#userBtn").onclick = () => askName(false);
 document.addEventListener("pointerdown", () => { S.viewAuto = false; }, true);
 // กลับเข้าหน้านี้จากปุ่มย้อนกลับ (เบราว์เซอร์คืนหน้าเดิมจากแคช) ก็ให้กลับมาที่แท็บ บันทึก เหมือนเปิดใหม่
@@ -2572,6 +2586,21 @@ const listPlants = () => [...new Set([...plantsList(), ...Object.values(S.items)
 const listRets = pl => [...new Set([...(pl === "all" ? plantsList().flatMap(plantRetorts) : plantRetorts(pl)),
   ...Object.values(S.items).filter(x => pl === "all" || x.plant === pl).map(x => x.retort).filter(Boolean)])].sort(byRetort);
 const listCount = F => { const [a, b] = rangeOf(F); return filtered(a, b, false, F).filter(x => !F.appr || F.appr === "all" || (F.appr === "done") === !!x.approvedBy).length; };
+/* แท็บ รายการ = รายการปัญหา + รายการ IR (สลับด้วยแถบด้านบน · จำอันที่ใช้ล่าสุด) */
+function listSwitch(kind) {
+  if (!IR.loaded && !IR.loading) { IR.loading = true; irLoad().then(() => { IR.loading = false; const b = $("#lsIrN"); if (b) b.outerHTML = lsIrBadge(); }).catch(() => { IR.loading = false; }); }
+  const nP = Object.keys(S.items).length;
+  return `<div class="lswitch"><div class="seg lsseg">
+      <button data-lskind="prob" class="${kind === "prob" ? "on" : ""}">${I("list")}<span>รายการปัญหา</span><em>${nP}</em></button>
+      <button data-lskind="ir" class="${kind === "ir" ? "on" : ""}">${I("alert")}<span>รายการ IR</span>${lsIrBadge()}</button></div>
+    ${kind === "ir" ? `<button class="pri lsnew irnew" id="irlNew">${I("plus")}<span>ออก IR ใหม่</span></button>` : `<button class="pri lsnew" id="lsLog">${I("plus")}<span>บันทึกปัญหา</span></button>`}</div>`;
+}
+const lsIrBadge = () => { const w = IR.loaded ? IR.items.filter(x => !x.approvedAt).length : 0;
+  return `<span id="lsIrN" style="display:contents"><em>${IR.loaded ? IR.items.length : "…"}</em>${w ? `<i class="lswait" title="IR รออนุมัติ">${w} รออนุมัติ</i>` : ""}</span>`; };
+function lsGo(kind) { lsSet("rt_listkind", kind); S.view = kind === "ir" ? "irlist" : "list"; if (kind === "ir") IRL.form = false; render(); }
+document.addEventListener("click", e => { const b = e.target.closest("[data-lskind],#lsLog"); if (!b || !b.closest("#main")) return;
+  if (b.id === "lsLog") { S.view = "log"; S.viewAuto = false; lsSet("rt_view", "log"); if (!S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); return; }
+  const k = b.dataset.lskind; if ((k === "ir") !== (S.view === "irlist")) lsGo(k); }, true);
 function viewList() {
   const f = S.f; f.plant = f.plant || "all"; f.retort = f.retort || "all"; f.cat = f.cat || "all"; if (!f.sortV2) { f.sort = "plant"; f.sortV2 = 1; } f.sort = SORT_FN[f.sort] ? f.sort : "plant";
   if (!RANGE_OPTS.some(o => o[0] === f.range)) f.range = "30";
@@ -2589,7 +2618,7 @@ function viewList() {
   const dLabel = f.range === "day" ? thDate(from) : f.range === "custom" ? `${dmy(from)} – ${dmy(to)}` : rLabel;
   const pills = [[f.plant === "all" ? "ทุก Plant" : f.plant, f.plant !== "all"], [f.retort === "all" ? "ทุกหม้อ" : f.retort, f.retort !== "all"], [dLabel, f.range !== "30"],
     [f.cat === "all" ? "ทุกหัวข้อ" : (catById(f.cat)?.name || "หัวข้อที่ถูกลบ"), f.cat !== "all"], ["เรียง: " + (SORTS.find(o => o[0] === f.sort) || [])[1], f.sort !== "plant"]];
-  let h = `<div class="lsearch-row"><div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>
+  let h = listSwitch("prob") + `<div class="lsearch-row"><div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>
     <button class="fbtn ${nAct ? "act" : ""}" id="fOpen" aria-label="ตัวกรองและการเรียงข้อมูล" title="ตัวกรอง / เรียงข้อมูล">${I("settings")}<span>ตัวกรอง</span>${nAct ? `<em>${nAct}</em>` : ""}</button></div>
   <div class="fsum" id="fSum">${pills.map(([t, on]) => `<button class="${on ? "on" : ""}">${esc(t)}</button>`).join("")}</div>
   <div class="lf-bot"><div class="seg">${[["all", "ทั้งหมด"], ["wait", `รออนุมัติ (${nWait})`], ["done", "อนุมัติแล้ว"]].map(([v, l]) => `<button data-appr="${v}" class="${ap === v ? "on" : ""}">${l}</button>`).join("")}</div>
@@ -3073,7 +3102,7 @@ async function viewIRList() {
   const nSel = IRL.sel.size, allOn = L.length && L.every(x => IRL.sel.has(x.id)), nWait = IR.items.filter(x => !x.approvedAt).length;
   const chip = (attr, v, lab, on) => `<button class="chip ${on ? "on" : ""}" ${attr}="${v}">${lab}</button>`;
   m.innerHTML = `<div class="irl">
-    <div class="irl-head"><div><b>รายการ IR</b><span>${IR.items.length} รายการ · รออนุมัติ ${nWait}</span></div><button class="pri" id="irlNew">${I("plus")}ออก IR ใหม่</button></div>
+    ${listSwitch("ir")}
     <div class="card irl-filt">
       <div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="irlQ" value="${esc(IRL.q)}" placeholder="ค้นหา หมายเลข IR / รหัส / ปัญหา / ไลน์ / ผู้บันทึก" autocomplete="off"></div>
       <div class="irl-chips">${chip("data-irlst", "all", "ทุกสถานะ", IRL.st === "all")}${chip("data-irlst", "Open", "Open", IRL.st === "Open")}${chip("data-irlst", "Close", "Close", IRL.st === "Close")}
