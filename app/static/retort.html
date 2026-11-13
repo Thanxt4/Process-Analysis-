@@ -1328,6 +1328,27 @@ body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
 .holdq-r{display:grid;grid-template-columns:minmax(0,260px);gap:8px}
 .holdq-r input{font-size:20px;font-weight:800;text-align:center;color:#9a3412;background:#fff}
 .holdq-r select{background-color:#fff}
+/* IR (Incident Report) */
+.irpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+.irpick .seg{flex:1;min-width:260px}
+.irpick .seg button{gap:6px;font-weight:700}
+.irpick .seg button.on.ir{background:#b91c1c;color:#fff}
+.ir{max-width:900px}
+.irc{padding:16px}
+.irh{display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:default}
+.irh .n{width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:0 0 auto}
+.irh b{font-size:16.5px;color:var(--navy)}.irh small{margin-left:auto}
+details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary::-webkit-details-marker{display:none}
+.ir .seg button{min-height:44px}
+.ir-save{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:4;padding:10px 0 4px;background:linear-gradient(to top,var(--bg) 75%,rgba(241,245,249,0));margin-bottom:12px}
+@media(min-width:700px){.ir-save{bottom:0;padding-bottom:12px}}
+.ir-save .savebig{margin-top:0;background:#b91c1c;border-color:#b91c1c}
+.ir-save .row button{min-height:44px;font-weight:600}
+.irr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #f1f5f9}
+.irr .t{flex:1;min-width:220px;display:flex;flex-direction:column;gap:2px}
+.irr .t b{font-size:15px}.irr .t small{color:var(--mute);font-size:12.5px}
+.irst{align-self:flex-start;font-size:11.5px;font-weight:800;border-radius:99px;padding:1px 9px;background:#fee2e2;color:#b91c1c}.irst.ok{background:#dcfce7;color:#15803d}
+.irr .acts{display:flex;gap:4px;flex-wrap:wrap}.irr .acts .ghost{border:1px solid var(--line);background:#fff}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1935,6 +1956,7 @@ function askDelete(kind, key, after) {
   });
 }
 function viewLog() {
+  if (S.irMode && !S.editingId) return viewIR();
   if (!S.draft) { S.draft = newDraft(); S.step = 1; S.more = false; S.catPick = true; }
   if (S.justSaved) return viewSaved();
   const d = S.draft; d.photos = d.photos || []; if (!d.cats) setCats(d, d.category ? [d.category] : []);
@@ -1943,6 +1965,7 @@ function viewLog() {
   const cats = S.config.categories.filter(c => c.active || d.cats.includes(c.id));
   const editing = !!S.editingId;
   let h = editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไขรายการที่บันทึกไว้ <button class="ghost sm" id="cancelEdit">ยกเลิก</button></div></div>` : "";
+  if (!editing && S.step === 1) h += irPicker(false);
   h += stepHead(d);
   const all = Object.values(S.items), t0 = todayISO(), w0 = addDays(t0, -6);
   const stat = f => { const L = all.filter(f); return { today: L.filter(x => x.date === t0).length, week: L.filter(x => x.date >= w0 && x.date <= t0).length }; };
@@ -2324,6 +2347,7 @@ async function addOption(kind, name, catId) {
 }
 function wireLog() {
   const d = S.draft; const m = $("#main");
+  const ip = $("#irPick"); if (ip) ip.onclick = e => { const b = e.target.closest("[data-irmode]"); if (!b) return; e.stopPropagation(); S.irMode = b.dataset.irmode === "1"; render(); window.scrollTo(0, 0); };
   const go = n => { S.step = n; S.mg = ""; if (n === 4 && !d.cats.length) S.catPick = true; viewLog(); window.scrollTo(0, 0); };
   const refreshPick = () => { m.querySelectorAll(".big.cat.multi").forEach(el => { const i = d.cats.indexOf(el.dataset.cat); el.classList.toggle("on", i >= 0); el.querySelector(".ck").textContent = i >= 0 ? i + 1 : ""; });
     const nb = $("#catNext"); if (nb) { nb.disabled = !d.cats.length; nb.innerHTML = catNextLabel(d); } };
@@ -2756,6 +2780,139 @@ function runSection(R, plant) {
         <td class="l mc">${x.tc ? `<b>${esc(catById(x.tc[0])?.name || "-")}</b> <em>${x.tc[1]} ครั้ง</em>${x.tz ? `<small>สาเหตุ: ${esc(x.tz[0])} (${x.tz[1]})</small>` : ""}` : `<span class="rt-na">ไม่พบปัญหา</span>`}</td></tr>`).join("")}
       </tbody><tfoot><tr><td class="l">รวม ${rows.length} หม้อ</td>${cells(T.dn, T.pd)}${cells(T.nn, T.pn)}${cells(T.dn + T.nn, T.pd + T.pn)}<td></td></tr></tfoot></table></div>
     <p class="sub" style="margin:8px 2px 0">% = จำนวนปัญหาที่บันทึก ÷ จำนวนรอบ × 100 · ถ้ารอบเดียวมีหลายปัญหาจะนับทุกปัญหา · เรียงจาก % มากไปน้อย</p></div>`;
+}
+/* ---------- IR (Incident Report) · ช่องตามแบบฟอร์ม Excel "IR Retort" คอลัมน์ D–AM · คัดลอกไปวางใน Excel / LINE ได้ ---------- */
+const IR_COLS = [  // [key, ชื่อในแบบฟอร์ม, คอลัมน์ Excel]
+  ["nrft", "NRFT?", "D"], ["doc", "รหัสเอกสาร", "E"], ["market", "ตลาด", "F"], ["irNo", "หมายเลข IR", "G"], ["plant", "โรง", "H"],
+  ["prodDate", "วันผลิต", "I"], ["prodShift", "กะผลิต", "J"], ["repDate", "วันรายงาน", "K"], ["repShift", "กะรายงาน", "L"], ["checkpoint", "จุดตรวจสอบ", "M"],
+  ["productCode", "โค๊ตผลิตภัณฑ์", "N"], ["shotCode", "Shot Code", "O"], ["qtyHold", "จำนวนกันของ", "P"], ["qtyNrft", "จำนวน (NRFT)", "Q"], ["line", "ไลน์", "R"],
+  ["problem", "ปัญหา", "S"], ["detail", "รายละเอียดของปัญหา", "T"], ["cause", "สาเหตุของปัญหา", "U"], ["inkNo", "หมายเลขเครื่อง INK", "V"], ["fix", "วิธีการแก้ไขปัญหา", "W"],
+  ["decision", "การตัดสินใจดำเนินการ", "X"], ["bsk", "หมายเลข BSK", "Y"], ["by", "ผู้บันทึก", "Z"], ["approver", "ผู้อนุมัติ", "AA"], ["result", "ผลการแก้ไข/ติดตาม/ตรวจสอบ", "AB"],
+  ["status", "Status", "AC"], ["closeDate", "วันปิด IR", "AD"], ["decision2", "การตัดสินใจดำเนินการ2", "AE"], ["otr", "ยอด OTR สโตร์", "AF"], ["ots", "ยอด OTS สโตร์", "AG"],
+  ["ncpNo", "NCP No.", "AH"], ["remark", "หมายเหตุ", "AI"], ["by3", "ผู้บันทึก3", "AJ"], ["approvedBy", "อนุมัติโดย", "AK"], ["ncpLevel", "NCP LEVEL", "AL"], ["trim", "TRIM", "AM"]];
+const IR_LABEL = Object.fromEntries(IR_COLS.map(c => [c[0], c[1]]));
+const IR = { items: [], loaded: false, codes: null, d: null, q: "", open2: false };
+const irNew = () => { const t = nowHM(), sh = shiftOf(t), last = lsGet("rt_irlast", {}) || {};
+  return { id: "ir" + Math.random().toString(36).slice(2, 12), nrft: "N", doc: "", market: "", irNo: "", plant: last.plant || (lsGet("rt_last", {}) || {}).plant || "PF1",
+    prodDate: todayISO(), prodShift: sh, repDate: todayISO(), repShift: sh, checkpoint: last.checkpoint || "Retort", productCode: "", shotCode: "", qtyHold: "", qtyNrft: "",
+    line: "", problem: "", detail: "", cause: "", inkNo: "", fix: "", decision: "", bsk: "", by: S.user, approver: last.approver || "", result: "", status: "Open", closeDate: "",
+    decision2: "", otr: "", ots: "", ncpNo: "", remark: "", by3: "", approvedBy: "", ncpLevel: "", trim: "" }; };
+async function irLoad() {
+  try { IR.items = (await api("/api/retort/ir")).items || []; } catch (e) { if (e.status === 401) showLock(true); else toast("โหลด IR ไม่สำเร็จ: " + e.message); IR.items = []; }
+  IR.loaded = true;
+  if (!IR.codes) { try { IR.codes = await (await fetch("/ir_codes.json")).json(); } catch { IR.codes = {}; } }
+}
+const irDMY = s => { if (!s) return ""; const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };  // วว/ดด/ปปปป (ค.ศ.) ให้ Excel อ่านเป็นวันที่
+// แถวสำหรับวางใน Excel (เริ่มที่คอลัมน์ D) · ช่องที่มีขึ้นบรรทัด/แท็บ ใส่ "…" ให้อยู่ในช่องเดียว
+function irRow(x) {
+  return IR_COLS.map(([k]) => { let v = String(x[k] ?? ""); if (/Date$/.test(k) && v) v = irDMY(v);
+    return /[\t\n"]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }).join("\t");
+}
+function irText(x) {
+  const L = IR_COLS.filter(([k]) => String(x[k] ?? "").trim()).map(([k, l]) => `${l}: ${/Date$/.test(k) ? irDMY(x[k]) : x[k]}`);
+  return `IR Retort${x.irNo ? " " + x.irNo : ""}\n` + L.join("\n");
+}
+async function irCopy(txt, what) {
+  let ok = false;
+  try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(txt); ok = true; } } catch {}
+  if (!ok) { const ta = document.createElement("textarea"); ta.value = txt; ta.style.cssText = "position:fixed;left:-9999px;top:0"; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand("copy"); } catch {} ta.remove(); }
+  if (ok) toast(`คัดลอก${what}แล้ว · ไปวางได้เลย`); else modal(`<h2>คัดลอกข้อความ</h2><p class="sub">กดค้างที่ข้อความ แล้วเลือกคัดลอก</p><textarea rows="10" style="width:100%">${esc(txt)}</textarea><button class="blk" data-close style="margin-top:10px">ปิด</button>`);
+}
+const irMarkets = doc => Object.keys((IR.codes || {})[String(doc || "").trim().toUpperCase()] || {});
+function irFill(d) {  // รหัสเอกสาร + ตลาด → โค๊ตผลิตภัณฑ์ (SAP) จากตาราง Code Ref
+  const m = (IR.codes || {})[String(d.doc || "").trim().toUpperCase()]; if (!m) return false;
+  if (!d.market || !m[d.market]) { const ks = Object.keys(m); if (ks.length === 1) d.market = ks[0]; }
+  if (m[d.market]) { d.productCode = m[d.market]; return true; } return false;
+}
+async function viewIR() {
+  const m = $("#main"); $("#main").classList.remove("split");
+  if (!IR.loaded) { m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await irLoad(); if (S.view !== "log" || !S.irMode) return; }
+  if (!IR.d) IR.d = irNew();
+  const d = IR.d, editing = IR.items.some(x => x.id === d.id), mk = irMarkets(d.doc);
+  const fld = (k, attrs = "", wide = "") => `<label class="f ${wide}"><span class="lab">${esc(IR_LABEL[k])}</span><input data-ir="${k}" value="${esc(d[k] ?? "")}" ${attrs} autocomplete="off"></label>`;
+  const ta = (k, rows = 2) => `<label class="f full"><span class="lab">${esc(IR_LABEL[k])}</span><textarea data-ir="${k}" rows="${rows}">${esc(d[k] ?? "")}</textarea></label>`;
+  const seg = (k, opts) => `<div class="f"><span class="lab">${esc(IR_LABEL[k])}</span><div class="seg">${opts.map(o => `<button type="button" data-irk="${k}" data-v="${o}" class="${d[k] === o ? "on" : ""}">${o}</button>`).join("")}</div></div>`;
+  const past = k => [...new Set(IR.items.map(x => x[k]).filter(Boolean))].slice(0, 30);
+  const dl = (id, L) => `<datalist id="${id}">${L.map(v => `<option value="${esc(v)}">`).join("")}</datalist>`;
+  const q = IR.q.trim().toLowerCase(), L = IR.items.filter(x => !q || IR_COLS.some(([k]) => String(x[k] || "").toLowerCase().includes(q))).slice(0, 40);
+  m.innerHTML = `${irPicker(true)}
+  ${editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไข IR ${esc(d.irNo || "")} <button class="ghost sm" id="irCancel">ยกเลิก</button></div></div>` : ""}
+  <div class="ir">
+    <div class="card irc"><div class="irh"><span class="n">1</span><b>ข้อมูลผลิตภัณฑ์</b></div><div class="grid">
+      ${seg("nrft", ["N", "Y"])}${seg("plant", ["PF1", "PF2"])}
+      <label class="f"><span class="lab">รหัสเอกสาร</span><input data-ir="doc" value="${esc(d.doc)}" list="irDocs" placeholder="เช่น M022" autocapitalize="characters" autocomplete="off"></label>
+      <label class="f"><span class="lab">ตลาด</span><select data-ir="market"><option value="">${mk.length ? "— เลือก —" : "—"}</option>${[...new Set([...mk, d.market].filter(Boolean))].map(v => `<option ${v === d.market ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>
+      <label class="f full"><span class="lab">โค๊ตผลิตภัณฑ์ <small class="sub">(เติมจากรหัสเอกสาร + ตลาด · แก้ได้)</small></span><input data-ir="productCode" value="${esc(d.productCode)}" autocapitalize="characters" autocomplete="off"></label>
+      ${fld("shotCode")}${fld("irNo", 'placeholder="เช่น IR-PF1-001"')}
+    </div></div>
+    <div class="card irc"><div class="irh"><span class="n">2</span><b>วัน · กะ · จุดที่พบ</b></div><div class="grid">
+      ${fld("prodDate", 'type="date"')}${seg("prodShift", ["DS", "NS"])}${fld("repDate", 'type="date"')}${seg("repShift", ["DS", "NS"])}
+      ${fld("checkpoint", 'list="irCk"')}${fld("line", 'list="irLine" placeholder="เช่น RP12"')}
+      ${fld("qtyHold", 'inputmode="decimal"')}${fld("qtyNrft", 'inputmode="decimal"')}
+    </div></div>
+    <div class="card irc"><div class="irh"><span class="n">3</span><b>ปัญหา และการแก้ไข</b></div><div class="grid">
+      <label class="f full"><span class="lab">ปัญหา <span class="req">*</span></span><input data-ir="problem" value="${esc(d.problem)}" list="irProb" autocomplete="off"></label>
+      ${ta("detail", 3)}${ta("cause")}${fld("inkNo")}${fld("bsk")}${ta("fix")}${fld("decision", 'list="irDec"', "full")}
+      ${fld("by")}${fld("approver", 'list="irAppr"')}
+    </div></div>
+    <details class="card irc" ${IR.open2 || d.result || d.closeDate || d.ncpNo ? "open" : ""} id="irMore"><summary class="irh"><span class="n">4</span><b>ติดตาม / ปิด IR</b><small class="sub">กรอกภายหลังได้</small></summary><div class="grid" style="margin-top:10px">
+      ${ta("result")}${seg("status", ["Open", "Close"])}${fld("closeDate", 'type="date"')}${fld("decision2", "", "full")}
+      ${fld("otr", 'inputmode="decimal"')}${fld("ots", 'inputmode="decimal"')}${fld("ncpNo")}${fld("ncpLevel")}${fld("by3")}${fld("approvedBy")}${fld("trim", "", "full")}${ta("remark")}
+    </div></details>
+    <div id="irErr"></div>
+    <div class="ir-save"><button class="pri blk savebig" id="irSave">${I("check")}${editing ? "บันทึกการแก้ไข IR" : "บันทึก IR"}</button>
+      <div class="row" style="margin-top:8px"><button class="blk" id="irCopyRow">${I("grid")}คัดลอกแถวไปวางใน Excel</button><button class="blk" id="irCopyTxt">${I("list")}คัดลอกเป็นข้อความ</button></div>
+      <small class="hint">แถว Excel: คลิกช่อง <b>คอลัมน์ D</b> ของแถวว่างในไฟล์ IR แล้ววาง (Ctrl+V) ข้อมูลจะลงตรงคอลัมน์ D–AM</small></div>
+    <div class="card irc irlist"><div class="irh"><b>IR ที่บันทึกไว้</b><small class="sub">${IR.items.length} รายการ</small></div>
+      <input id="irQ" value="${esc(IR.q)}" placeholder="ค้นหา หมายเลข IR / รหัส / ปัญหา / ไลน์" autocomplete="off" style="margin-bottom:8px">
+      ${L.length ? L.map(x => `<div class="irr"><div class="t"><b>${esc(x.irNo || "(ยังไม่มีเลข IR)")} · ${esc(x.problem || "-")}</b>
+          <small>${esc([x.plant, x.line, x.doc && x.market ? x.doc + x.market : x.doc, irDMY(x.repDate) + " " + (x.repShift || ""), x.by].filter(Boolean).join(" · "))}</small>
+          <span class="irst ${x.status === "Close" ? "ok" : ""}">${esc(x.status || "Open")}</span></div>
+        <div class="acts"><button class="ghost sm" data-irrow="${x.id}" title="คัดลอกแถวไปวางใน Excel">${I("grid")}Excel</button><button class="ghost sm" data-irtxt="${x.id}" title="คัดลอกเป็นข้อความ">${I("list")}ข้อความ</button>
+          <button class="ghost sm" data-iredit="${x.id}">${I("pen")}แก้ไข</button>${S.role === "sup" ? `<button class="ghost sm danger" data-irdel="${x.id}">${I("trash")}</button>` : ""}</div></div>`).join("")
+        : `<p class="sub">${q ? "ไม่พบ IR ที่ค้นหา" : "ยังไม่มี IR"}</p>`}
+    </div>
+  </div>
+  ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", [...plantRetorts(d.plant || "PF1"), ...past("line")])}
+  ${dl("irProb", [...S.config.categories.filter(c => c.active && !c.deleted).map(c => c.name), ...past("problem")])}${dl("irDec", past("decision"))}${dl("irAppr", past("approver"))}`;
+  markAnim("ir");
+  const redo = () => { const y = scrollY; viewIR(); scrollTo(0, y); };
+  const more = $("#irMore"); if (more) more.ontoggle = () => { IR.open2 = more.open; };
+  m.oninput = e => { const t = e.target;
+    if (t.dataset.ir) { d[t.dataset.ir] = t.value; t.classList.remove("err");
+      if (t.dataset.ir === "doc") { const ks = irMarkets(t.value); if (ks.length) { if (!ks.includes(d.market)) d.market = ks.length === 1 ? ks[0] : ""; irFill(d); redo(); setTimeout(() => { const i = m.querySelector('[data-ir="doc"]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); } } }
+    else if (t.id === "irQ") { IR.q = t.value; const y = scrollY; viewIR(); scrollTo(0, y); setTimeout(() => { const i = $("#irQ"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 0); } };
+  m.onchange = e => { const t = e.target; if (t.dataset.ir === "market") { d.market = t.value; irFill(d); redo(); } else if (t.dataset.ir === "plant") redo(); };
+  m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (ds.irmode != null) { S.irMode = ds.irmode === "1"; render(); window.scrollTo(0, 0); return; }
+    if (ds.irk) { d[ds.irk] = ds.v; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); if (ds.irk === "plant") redo(); return; }
+    const pick = id => IR.items.find(x => x.id === id);
+    if (ds.irrow) irCopy(irRow(pick(ds.irrow)), "แถว Excel");
+    else if (ds.irtxt) irCopy(irText(pick(ds.irtxt)), "ข้อความ");
+    else if (ds.iredit) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit))); viewIR(); window.scrollTo(0, 0); }
+    else if (ds.irdel) { const x = pick(ds.irdel); confirmBox(`ลบ IR ${x.irNo || ""} "${x.problem || ""}"?`, async () => {
+      try { await api(`/api/retort/ir/${encodeURIComponent(x.id)}`, { method: "DELETE" }); IR.items = IR.items.filter(y => y.id !== x.id); toast("ลบ IR แล้ว"); redo(); } catch (err) { toast(err.message); } }); }
+    else if (b.id === "irCancel") { IR.d = irNew(); viewIR(); window.scrollTo(0, 0); }
+    else if (b.id === "irCopyRow") irCopy(irRow(d), "แถว Excel");
+    else if (b.id === "irCopyTxt") irCopy(irText(d), "ข้อความ");
+    else if (b.id === "irSave") {
+      const err = msg => { $("#irErr").innerHTML = `<div class="alert a-bad">${I("alert")}<div>${msg}</div></div>`; $("#irErr").scrollIntoView({ block: "center" }); };
+      if (!d.problem.trim() && !d.detail.trim()) { m.querySelector('[data-ir="problem"]').classList.add("err"); return err("กรอกปัญหา"); }
+      if (!d.repDate) return err("ใส่วันรายงาน");
+      if (!String(d.by || "").trim()) { m.querySelector('[data-ir="by"]').classList.add("err"); return err("กรอกชื่อผู้บันทึก"); }
+      b.disabled = true;
+      try { const r = await jpost("/api/retort/ir", d); const i = IR.items.findIndex(x => x.id === r.item.id); if (i >= 0) IR.items[i] = r.item; else IR.items.unshift(r.item);
+        lsSet("rt_irlast", { plant: d.plant, checkpoint: d.checkpoint, approver: d.approver });
+        const saved = r.item; IR.d = irNew(); viewIR(); window.scrollTo(0, 0);
+        modal(`<div class="okic" style="margin:0 auto 10px">${I("check")}</div><h2 style="text-align:center">บันทึก IR แล้ว</h2><p class="sub" style="text-align:center;margin:4px 0 14px">${esc(saved.irNo || "")} · ${esc(saved.problem || "")}</p>
+          <button class="pri blk" id="mRow">${I("grid")}คัดลอกแถวไปวางใน Excel</button><button class="blk" id="mTxt" style="margin-top:8px">${I("list")}คัดลอกเป็นข้อความ</button><button class="ghost blk" data-close style="margin-top:6px">ปิด</button>`,
+          box => { box.querySelector("#mRow").onclick = () => irCopy(irRow(saved), "แถว Excel"); box.querySelector("#mTxt").onclick = () => irCopy(irText(saved), "ข้อความ"); }); }
+      catch (er) { b.disabled = false; if (er.status === 401) showLock(true); else err(esc(er.message)); } } };
+}
+// ตัวเลือกบนสุดของแท็บบันทึก: ไม่ออก IR (บันทึกปัญหา) / ออก IR
+function irPicker(on) {
+  return `<div class="irpick" id="irPick"><span class="lab" style="margin:0">ประเภทการรายงาน</span><div class="seg"><button data-irmode="0" class="${on ? "" : "on"}">${I("plus")}ไม่ออก IR</button><button data-irmode="1" class="${on ? "on ir" : ""}">${I("alert")}ออก IR</button></div></div>`;
 }
 /* ---------- Retort Survey Filling Form: ข้อมูลอุปกรณ์ของหม้อแต่ละใบ (คอลัมน์ = เลขหม้อ) ---------- */
 const SV_TABLES = [

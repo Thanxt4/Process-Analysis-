@@ -600,6 +600,12 @@ with db() as con:
             updated_at INTEGER NOT NULL,
             PRIMARY KEY(date, retort, shift)
         );
+        CREATE TABLE IF NOT EXISTS retort_ir(
+            id TEXT PRIMARY KEY,
+            data TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS retort_surveys(
             id TEXT PRIMARY KEY,
             data TEXT NOT NULL,
@@ -2947,6 +2953,74 @@ _SV_KEY = re.compile(r"^[a-z0-9_]{1,40}$")
 
 def _sv_txt(v, n: int) -> str:
     return " ".join(str(v or "").split())[:n]
+
+
+# ---------------------------------------------------------------- IR (Incident Report) จากหน้า Retort · ช่องตามแบบฟอร์ม Excel "IR Retort" คอลัมน์ D–AM
+IR_FIELDS = {  # key: ความยาวสูงสุด
+    "nrft": 1, "doc": 20, "market": 20, "irNo": 40, "plant": 10, "prodDate": 10, "prodShift": 2, "repDate": 10, "repShift": 2,
+    "checkpoint": 60, "productCode": 40, "shotCode": 60, "qtyHold": 20, "qtyNrft": 20, "line": 40, "problem": 200, "detail": 3000,
+    "cause": 3000, "inkNo": 60, "fix": 3000, "decision": 200, "bsk": 60, "by": 60, "approver": 60, "result": 3000, "status": 20,
+    "closeDate": 10, "decision2": 200, "otr": 20, "ots": 20, "ncpNo": 60, "remark": 1000, "by3": 60, "approvedBy": 60, "ncpLevel": 20, "trim": 200,
+}
+
+
+def _clean_ir(d: dict) -> dict:
+    if not isinstance(d, dict):
+        raise HTTPException(400, "ข้อมูลไม่ถูกต้อง")
+    rid = str(d.get("id") or "")
+    if not re.fullmatch(r"ir[a-z0-9]{6,20}", rid):
+        raise HTTPException(400, "รหัสรายการไม่ถูกต้อง")
+    out = {"id": rid}
+    for k, n in IR_FIELDS.items():
+        v = str(d.get(k) if d.get(k) is not None else "").replace("\r", "").strip()
+        out[k] = v[:n] if n > 200 else " ".join(v.split())[:n]
+    for k in ("prodDate", "repDate", "closeDate"):
+        if out[k]:
+            try:
+                out[k] = date.fromisoformat(out[k]).isoformat()
+            except ValueError:
+                raise HTTPException(400, "วันที่ไม่ถูกต้อง")
+    out["nrft"] = out["nrft"].upper() if out["nrft"].upper() in ("Y", "N") else ""
+    for k in ("prodShift", "repShift"):
+        out[k] = out[k] if out[k] in ("DS", "NS") else ""
+    if not out["repDate"]:
+        raise HTTPException(400, "ใส่วันรายงาน")
+    if not (out["problem"] or out["detail"]):
+        raise HTTPException(400, "ใส่ปัญหา หรือรายละเอียดของปัญหา")
+    return out
+
+
+@app.get("/api/retort/ir")
+def api_rt_ir_list(request: Request):
+    _rt_auth(request)
+    with db() as con:
+        rows = con.execute("SELECT data FROM retort_ir ORDER BY created_at DESC LIMIT 2000").fetchall()
+    return {"items": [json.loads(r["data"]) for r in rows]}
+
+
+@app.post("/api/retort/ir")
+async def api_rt_ir_save(request: Request):
+    _rt_auth(request)
+    x = _clean_ir(await request.json())
+    ts = int(_time.time() * 1000)
+    with db() as con:
+        old = con.execute("SELECT data, created_at FROM retort_ir WHERE id=?", (x["id"],)).fetchone()
+        o = json.loads(old["data"]) if old else {}
+        x["createdAt"] = o.get("createdAt") or ts
+        x["createdBy"] = o.get("createdBy") or x["by"]
+        x["updatedAt"] = ts
+        con.execute("INSERT INTO retort_ir(id, data, created_at, updated_at) VALUES(?,?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
+                    (x["id"], json.dumps(x, ensure_ascii=False), x["createdAt"], ts))
+    return {"ok": True, "item": x}
+
+
+@app.delete("/api/retort/ir/{rid}")
+def api_rt_ir_delete(rid: str, request: Request, pin: str = ""):
+    _rt_sup(request, pin or None)
+    with db() as con:
+        con.execute("DELETE FROM retort_ir WHERE id=?", (rid,))
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------- จำนวนรอบที่หม้อใช้ (ต่อวัน ต่อกะ) → คำนวณ % รอบที่มีปัญหา
