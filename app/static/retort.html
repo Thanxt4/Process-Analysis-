@@ -1955,6 +1955,21 @@ function askDelete(kind, key, after) {
     };
   });
 }
+/* แผงด้านข้างบนจอคอม: สรุปเร็ว + บันทึกล่าสุด (ใช้ทั้งหน้าบันทึกปกติ และหน้าออก IR) */
+function logSide(all) {
+    const t = todayISO(), w7 = addDays(t, -6);
+    const today = all.filter(x => x.date === t), week = all.filter(x => x.date >= w7 && x.date <= t);
+    const topW = groupSum(week.map(x => ({ ...x })), x => x.category)[0];
+    const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 6);
+    const d7 = dayList(w7, t).map(d => [d, week.filter(x => x.date === d).length]); const mx7 = Math.max(1, ...d7.map(r => r[1]));
+    const nWait = all.filter(x => !x.approvedBy).length;
+    const side = `<div class="card">${sec("chart", "สรุปเร็ว", nWait ? `รออนุมัติ ${nWait} รายการ` : "อนุมัติครบแล้ว")}
+        <div class="cmpbox"><div><b>${today.length}</b><span>ปัญหาวันนี้</span></div><div><b>${week.length}</b><span>7 วันล่าสุด</span></div></div>
+        <div class="mini7">${d7.map(([d, v]) => `<div class="${d === t ? "td" : ""}" title="${thLong(d)} · ${v} ครั้ง"><b>${v || ""}</b><span class="bw"><span class="${v ? "on" : ""}" style="height:${v ? Math.max(8, v / mx7 * 100) : 0}%"></span></span><small>${TH_DOW[new Date(d + "T00:00:00").getDay()]}</small></div>`).join("")}</div>
+        ${topW ? `<div class="sub">เกิดบ่อยสุดใน 7 วัน: <b style="color:var(--ink)">${esc(catById(topW[0])?.name || "-")}</b> (${topW[1]} ครั้ง)</div>` : `<div class="sub">7 วันล่าสุดยังไม่มีปัญหา</div>`}</div>
+      ${U.form.recent ? `<div class="card">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.length ? recent.map(itemRow).join("") : `<p class="sub">ยังไม่มีบันทึก</p>`}</div>` : ""}`;
+  return side;
+}
 function viewLog() {
   if (S.irMode && !S.editingId) return viewIR();
   if (!S.draft) { S.draft = newDraft(); S.step = 1; S.more = false; S.catPick = true; }
@@ -2062,17 +2077,7 @@ function viewLog() {
       <button class="pri blk savebig" id="saveBtn">${I("check")}${editing ? "บันทึกการแก้ไข" : many ? `บันทึก ${cs.length} ปัญหา` : "บันทึก"}</button>`;
   }
   if (wide) {
-    const t = todayISO(), w7 = addDays(t, -6);
-    const today = all.filter(x => x.date === t), week = all.filter(x => x.date >= w7 && x.date <= t);
-    const topW = groupSum(week.map(x => ({ ...x })), x => x.category)[0];
-    const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 6);
-    const d7 = dayList(w7, t).map(d => [d, week.filter(x => x.date === d).length]); const mx7 = Math.max(1, ...d7.map(r => r[1]));
-    const nWait = all.filter(x => !x.approvedBy).length;
-    const side = `<div class="card">${sec("chart", "สรุปเร็ว", nWait ? `รออนุมัติ ${nWait} รายการ` : "อนุมัติครบแล้ว")}
-        <div class="cmpbox"><div><b>${today.length}</b><span>ปัญหาวันนี้</span></div><div><b>${week.length}</b><span>7 วันล่าสุด</span></div></div>
-        <div class="mini7">${d7.map(([d, v]) => `<div class="${d === t ? "td" : ""}" title="${thLong(d)} · ${v} ครั้ง"><b>${v || ""}</b><span class="bw"><span class="${v ? "on" : ""}" style="height:${v ? Math.max(8, v / mx7 * 100) : 0}%"></span></span><small>${TH_DOW[new Date(d + "T00:00:00").getDay()]}</small></div>`).join("")}</div>
-        ${topW ? `<div class="sub">เกิดบ่อยสุดใน 7 วัน: <b style="color:var(--ink)">${esc(catById(topW[0])?.name || "-")}</b> (${topW[1]} ครั้ง)</div>` : `<div class="sub">7 วันล่าสุดยังไม่มีปัญหา</div>`}</div>
-      ${U.form.recent ? `<div class="card">${sec("list", "บันทึกล่าสุด", "", `<button class="ghost sm" data-view-go="list">ดูทั้งหมด</button>`)}${recent.length ? recent.map(itemRow).join("") : `<p class="sub">ยังไม่มีบันทึก</p>`}</div>` : ""}`;
+    const side = logSide(all);
     h = `<div class="logL">${h}</div><aside class="logR">${side}</aside>`;
   } else if (S.step <= 2 && !editing) {
     const recent = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
@@ -2826,7 +2831,7 @@ function irFill(d) {  // รหัสเอกสาร + ตลาด → โ�
   if (m[d.market]) { d.productCode = m[d.market]; return true; } return false;
 }
 async function viewIR() {
-  const m = $("#main"); $("#main").classList.remove("split");
+  const m = $("#main"), wide = matchMedia("(min-width:1000px)").matches;
   if (!IR.loaded) { m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await irLoad(); if (S.view !== "log" || !S.irMode) return; }
   if (!IR.d) IR.d = irNew();
   const d = IR.d, editing = IR.items.some(x => x.id === d.id), mk = irMarkets(d.doc);
@@ -2836,7 +2841,7 @@ async function viewIR() {
   const past = k => [...new Set(IR.items.map(x => x[k]).filter(Boolean))].slice(0, 30);
   const dl = (id, L) => `<datalist id="${id}">${L.map(v => `<option value="${esc(v)}">`).join("")}</datalist>`;
   const q = IR.q.trim().toLowerCase(), L = IR.items.filter(x => !q || IR_COLS.some(([k]) => String(x[k] || "").toLowerCase().includes(q))).slice(0, 40);
-  m.innerHTML = `${irPicker(true)}
+  let h = `${irPicker(true)}
   ${editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไข IR ${esc(d.irNo || "")} <button class="ghost sm" id="irCancel">ยกเลิก</button></div></div>` : ""}
   <div class="ir">
     <div class="card irc"><div class="irh"><span class="n">1</span><b>ข้อมูลผลิตภัณฑ์</b></div><div class="grid">
@@ -2876,6 +2881,8 @@ async function viewIR() {
   </div>
   ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", [...plantRetorts(d.plant || "PF1"), ...past("line")])}
   ${dl("irProb", [...S.config.categories.filter(c => c.active && !c.deleted).map(c => c.name), ...past("problem")])}${dl("irDec", past("decision"))}${dl("irAppr", past("approver"))}`;
+  m.classList.toggle("split", wide);
+  m.innerHTML = wide ? `<div class="logL">${h}</div><aside class="logR">${logSide(Object.values(S.items))}</aside>` : h;
   markAnim("ir");
   const redo = () => { const y = scrollY; viewIR(); scrollTo(0, y); };
   const more = $("#irMore"); if (more) more.ontoggle = () => { IR.open2 = more.open; };
@@ -2886,6 +2893,8 @@ async function viewIR() {
   m.onchange = e => { const t = e.target; if (t.dataset.ir === "market") { d.market = t.value; irFill(d); redo(); } else if (t.dataset.ir === "plant") redo(); };
   m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (ds.irmode != null) { S.irMode = ds.irmode === "1"; render(); window.scrollTo(0, 0); return; }
+    if (ds.edit) { showItem(ds.edit); return; }
+    if (ds.viewGo) { S.view = ds.viewGo; render(); window.scrollTo(0, 0); return; }
     if (ds.irk) { d[ds.irk] = ds.v; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); if (ds.irk === "plant") redo(); return; }
     const pick = id => IR.items.find(x => x.id === id);
     if (ds.irrow) irCopy(irRow(pick(ds.irrow)), "แถว Excel");
