@@ -1423,7 +1423,7 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .irhint span{display:inline-flex;align-items:flex-start;gap:6px;padding:7px 11px;border-radius:10px;line-height:1.4}
 .irhint svg.i{width:15px;height:15px;flex:0 0 auto;margin-top:2px}
 .irhint .ok{background:#f0fdf4;color:#15803d}.irhint .new{background:#eff6ff;color:#1d4ed8}
-.irline{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:8px;align-items:center}
+.irline{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:8px;align-items:center}
 .irline .seg button{min-width:0;padding:4px 6px}
 @media(max-width:560px){.irline{grid-template-columns:1fr}}
 .irln{font-size:12px;font-weight:800;border-radius:7px;padding:2px 9px;background:#e2e8f0;color:#334155}
@@ -2881,12 +2881,28 @@ const IR_LABEL = Object.fromEntries(IR_COLS.map(c => [c[0], c[1]]));
 const IR = { items: [], loaded: false, codes: null, d: null, q: "", open2: false };
 // ประเภทไลน์: Cup · Can · Pouch · Spout · Sachet · ช่อง "ไลน์" (คอลัมน์ R) = ประเภท + ไลน์ย่อย เช่น "Can Z"
 const IR_LINES = ["Cup", "Can", "Pouch", "Spout", "Sachet"];
-const irLineType = v => { const w = String(v || "").trim().split(/\s+/)[0].toLowerCase(); return IR_LINES.find(t => t.toLowerCase() === w) || ""; };
-const irLineSub = v => { const t = irLineType(v); return t ? String(v).trim().slice(t.length).trim() : String(v || "").trim(); };
+// รายชื่อไลน์ทั้งหมด (จากตารางไลน์ของโรงงาน) · ไลน์ใหม่ที่หน้างานพิมพ์เองใน IR จะขึ้นเป็นตัวเลือกให้ครั้งหน้าอัตโนมัติ
+const IR_LINE_MASTER = {
+  Cup: Array.from({ length: 14 }, (_, i) => "Cup" + (i + 1)),
+  Can: ["B", "C", "D", "E", "F", "H", "J", "K", "P", "R", "T", "U", "Y", "Z"].map(x => "Can " + x),
+  Pouch: ["Pouch PF1", "Pouch VS", "Pouch Spout 2", "Pouch Spout 3", "Big Spout", "Auto A", "Auto B", "Auto C", "Auto D", "Auto E", "Auto F"],
+  Spout: [], Sachet: [] };
+const irNormLine = v => String(v || "").replace(/\s+/g, " ").trim().replace(/^cup\s+(\d+)$/i, "Cup$1");
+const irLineType = v => { const n = irNormLine(v).toLowerCase(); if (!n) return "";
+  for (const t of IR_LINES) if (IR_LINE_MASTER[t].some(x => x.toLowerCase() === n)) return t;
+  const w = n.split(" ")[0]; return IR_LINES.find(t => n.startsWith(t.toLowerCase()) || t.toLowerCase() === w) || ""; };
+const irLT = x => x.lineType || irLineType(x.line);  // ประเภทไลน์ของ IR (เก็บไว้ หรือเดาจากชื่อไลน์)
+const irLinesOf = t => [...new Set([...(IR_LINE_MASTER[t] || []), ...IR.items.filter(x => irLT(x) === t && x.line).map(x => irNormLine(x.line))])];
+function irLineField(d) {
+  const t = d.lineType || irLineType(d.line), L = t ? irLinesOf(t) : [], cur = irNormLine(d.line), other = IR.lineNew || (cur && !L.includes(cur));
+  return `<div class="irline"><div class="seg">${IR_LINES.map(x => `<button type="button" data-irlt="${x}" class="${t === x ? "on" : ""}">${x}</button>`).join("")}</div>
+    <select id="irLineSel" ${t ? "" : "disabled"}><option value="">${t ? "— เลือกไลน์ —" : "เลือกประเภทก่อน"}</option>${L.map(x => `<option ${x === cur && !other ? "selected" : ""}>${esc(x)}</option>`).join("")}<option value="__new" ${other && t ? "selected" : ""}>＋ ไลน์อื่น (พิมพ์เอง)</option></select></div>
+    ${t && other ? `<input id="irLineNew" value="${esc(cur)}" placeholder="พิมพ์ชื่อไลน์ เช่น ${t === "Can" ? "Can Z" : t === "Cup" ? "Cup15" : t + " 1"}" autocomplete="off" style="margin-top:8px"><small class="hint">ไลน์ใหม่จะขึ้นเป็นตัวเลือกให้ครั้งหน้าอัตโนมัติ</small>` : ""}`;
+}
 const irNew = () => { const t = nowHM(), sh = shiftOf(t), last = lsGet("rt_irlast", {}) || {};
   return { id: "ir" + Math.random().toString(36).slice(2, 12), nrft: "N", doc: "", market: "", irNo: "", plant: last.plant || (lsGet("rt_last", {}) || {}).plant || "PF1",
     prodDate: todayISO(), prodShift: sh, repDate: todayISO(), repShift: sh, checkpoint: last.checkpoint || "Retort", productCode: "", shotCode: "", qtyHold: "", qtyNrft: "",
-    line: "", problem: "", detail: "", cause: "", inkNo: "", fix: "", decision: "", bsk: "", by: S.user, approver: last.approver || "", result: "", status: "Open", closeDate: "",
+    line: "", lineType: "", problem: "", detail: "", cause: "", inkNo: "", fix: "", decision: "", bsk: "", by: S.user, approver: last.approver || "", result: "", status: "Open", closeDate: "",
     decision2: "", otr: "", ots: "", ncpNo: "", remark: "", by3: "", approvedBy: "", ncpLevel: "", trim: "" }; };
 async function irLoad() {
   try { IR.items = (await api("/api/retort/ir")).items || []; } catch (e) { if (e.status === 401) showLock(true); else toast("โหลด IR ไม่สำเร็จ: " + e.message); IR.items = []; }
@@ -2948,9 +2964,7 @@ async function viewIR() {
     </div></div>
     <div class="card irc"><div class="irh"><span class="n">2</span><b>วัน · กะ · จุดที่พบ</b></div><div class="grid">
       ${fld("prodDate", 'type="date"')}${seg("prodShift", ["DS", "NS"])}${fld("repDate", 'type="date"')}${seg("repShift", ["DS", "NS"])}
-      ${fld("checkpoint", 'list="irCk"')}<div class="f full"><span class="lab">ไลน์ <small class="sub">(คอลัมน์ R · เช่น Can Z)</small></span>
-        <div class="irline"><div class="seg">${IR_LINES.map(t => `<button type="button" data-irlt="${t}" class="${irLineType(d.line) === t ? "on" : ""}">${t}</button>`).join("")}</div>
-          <input id="irLineSub" value="${esc(irLineSub(d.line))}" placeholder="ไลน์ย่อย เช่น Z" list="irLine" autocomplete="off" autocapitalize="characters"></div></div>
+      ${fld("checkpoint", 'list="irCk"')}<div class="f full"><span class="lab">ไลน์ <small class="sub">(เลือกประเภท แล้วเลือกไลน์ · คอลัมน์ R)</small></span>${irLineField(d)}</div>
       ${fld("qtyHold", 'inputmode="decimal"')}${fld("qtyNrft", 'inputmode="decimal"')}
     </div></div>
     <div class="card irc"><div class="irh"><span class="n">3</span><b>ปัญหา และการแก้ไข</b></div><div class="grid">
@@ -2966,7 +2980,7 @@ async function viewIR() {
     <div class="ir-save"><button class="pri blk savebig" id="irSave">${I("check")}${editing ? "บันทึกการแก้ไข IR" : "บันทึก IR"}</button>
     </div>
   </div>
-  ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irMk", mk.length ? mk : [...new Set(Object.values(IR.codes || {}).flatMap(o => Object.keys(o)))].slice(0, 30))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", [...new Set(IR.items.map(x => irLineSub(x.line)).filter(Boolean))].slice(0, 30))}
+  ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irMk", mk.length ? mk : [...new Set(Object.values(IR.codes || {}).flatMap(o => Object.keys(o)))].slice(0, 30))}${dl("irCk", ["Retort", ...past("checkpoint")])}
   ${dl("irProb", [...S.config.categories.filter(c => c.active && !c.deleted).map(c => c.name), ...past("problem")])}${dl("irDec", past("decision"))}${dl("irAppr", past("approver"))}`;
   m.innerHTML = `<div class="irf">${h}</div>`;
   markAnim("ir");
@@ -2978,16 +2992,19 @@ async function viewIR() {
       if (t.dataset.ir === "doc") { const ks = irMarkets(t.value); if (ks.length) { if (!ks.includes(d.market)) d.market = ks.length === 1 ? ks[0] : ""; irFill(d); const k = t.dataset.ir; redo(); setTimeout(() => { const i = m.querySelector(`[data-ir="${k}"]`); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); } }
       if (t.dataset.ir === "market" && irFill(d)) { const pc = m.querySelector('[data-ir="productCode"]'); if (pc) pc.value = d.productCode; }
       const hn = $("#irCodeHint"); if (hn && ["doc", "market", "productCode"].includes(t.dataset.ir)) hn.innerHTML = irCodeHint(d); } 
-    else if (t.id === "irLineSub") { const ty = irLineType(d.line); d.line = `${ty} ${t.value.trim()}`.trim(); }
+    else if (t.id === "irLineNew") { d.line = irNormLine(t.value); d.lineType = d.lineType || irLineType(d.line); }
     else if (t.id === "irQ") { IR.q = t.value; const y = scrollY; viewIR(); scrollTo(0, y); setTimeout(() => { const i = $("#irQ"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 0); } };
-  m.onchange = e => { const t = e.target; if (t.dataset.ir === "market") { d.market = t.value.trim().toUpperCase(); if (irFill(d)) redo(); } else if (t.dataset.ir === "plant") redo(); };
+  m.onchange = e => { const t = e.target;
+    if (t.id === "irLineSel") { IR.lineNew = t.value === "__new"; if (!IR.lineNew) d.line = t.value; else d.line = "";
+      const box = t.closest(".f"); box.innerHTML = box.querySelector(".lab").outerHTML + irLineField(d); const ni = $("#irLineNew"); if (ni) ni.focus(); return; }
+    if (t.dataset.ir === "market") { d.market = t.value.trim().toUpperCase(); if (irFill(d)) redo(); } else if (t.dataset.ir === "plant") redo(); };
   m.onclick = async e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (b.id === "irBack" || b.id === "irCancel") { IRL.form = false; viewIRList(); window.scrollTo(0, 0); return; }
     if (b.id === "irExport") { irExportCsv(); return; }
     if (ds.edit) { showItem(ds.edit); return; }
     if (ds.viewGo) { S.view = ds.viewGo; render(); window.scrollTo(0, 0); return; }
-    if (ds.irlt) { const sub = ($("#irLineSub") || {}).value || ""; const on = irLineType(d.line) === ds.irlt;
-      d.line = (on ? sub : `${ds.irlt} ${sub}`).trim(); b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", !on && x === b)); return; }
+    if (ds.irlt) { if ((d.lineType || irLineType(d.line)) !== ds.irlt) { d.lineType = ds.irlt; if (irLineType(d.line) !== ds.irlt) d.line = ""; IR.lineNew = false; }
+      const box = b.closest(".f"); box.innerHTML = box.querySelector(".lab").outerHTML + irLineField(d); const sel = $("#irLineSel"); if (sel && !d.line) sel.focus(); return; }
     if (ds.irk) { d[ds.irk] = ds.v; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); if (ds.irk === "plant") redo(); return; }
     const pick = id => IR.items.find(x => x.id === id);
     if (ds.irrow) irCopy(irRow(pick(ds.irrow)), "แถว Excel");
@@ -2997,6 +3014,7 @@ async function viewIR() {
       try { await api(`/api/retort/ir/${encodeURIComponent(x.id)}`, { method: "DELETE" }); IR.items = IR.items.filter(y => y.id !== x.id); toast("ลบ IR แล้ว"); redo(); } catch (err) { toast(err.message); } }); }
     else if (b.id === "irSave") {
       const err = msg => { $("#irErr").innerHTML = `<div class="alert a-bad">${I("alert")}<div>${msg}</div></div>`; $("#irErr").scrollIntoView({ block: "center" }); };
+      d.line = irNormLine(d.line); d.lineType = d.line ? (d.lineType || irLineType(d.line)) : "";
       if (!d.problem.trim() && !d.detail.trim()) { m.querySelector('[data-ir="problem"]').classList.add("err"); return err("กรอกปัญหา"); }
       if (!d.repDate) return err("ใส่วันรายงาน");
       if (!String(d.by || "").trim()) { m.querySelector('[data-ir="by"]').classList.add("err"); return err("กรอกชื่อผู้บันทึก"); }
@@ -3025,7 +3043,7 @@ async function viewIRList() {
   if (!IR.loaded) { m.innerHTML = `<div class="card"><p class="sub">กำลังโหลด…</p></div>`; await irLoad(); if (S.view !== "irlist") return; }
   const q = IRL.q.trim().toLowerCase();
   const L = IR.items.filter(x => (IRL.st === "all" || (x.status || "Open") === IRL.st) && (IRL.ap === "all" || (IRL.ap === "done") === !!x.approvedAt)
-    && (IRL.pl === "all" || x.plant === IRL.pl) && (IRL.ln === "all" || irLineType(x.line) === IRL.ln || (IRL.ln === "other" && !irLineType(x.line))) && (!q || IR_COLS.some(([k]) => String(x[k] || "").toLowerCase().includes(q))));
+    && (IRL.pl === "all" || x.plant === IRL.pl) && (IRL.ln === "all" || irLT(x) === IRL.ln || (IRL.ln === "other" && !irLT(x))) && (!q || IR_COLS.some(([k]) => String(x[k] || "").toLowerCase().includes(q))));
   [...IRL.sel].forEach(id => { if (!IR.items.some(x => x.id === id)) IRL.sel.delete(id); });
   const nSel = IRL.sel.size, allOn = L.length && L.every(x => IRL.sel.has(x.id)), nWait = IR.items.filter(x => !x.approvedAt).length;
   const chip = (attr, v, lab, on) => `<button class="chip ${on ? "on" : ""}" ${attr}="${v}">${lab}</button>`;
@@ -3036,7 +3054,7 @@ async function viewIRList() {
       <div class="irl-chips">${chip("data-irlst", "all", "ทุกสถานะ", IRL.st === "all")}${chip("data-irlst", "Open", "Open", IRL.st === "Open")}${chip("data-irlst", "Close", "Close", IRL.st === "Close")}
         <span class="sep"></span>${chip("data-irlap", "all", "ทั้งหมด", IRL.ap === "all")}${chip("data-irlap", "wait", `รออนุมัติ (${nWait})`, IRL.ap === "wait")}${chip("data-irlap", "done", "อนุมัติแล้ว", IRL.ap === "done")}
         <span class="sep"></span>${chip("data-irlpl", "all", "ทุกโรง", IRL.pl === "all")}${chip("data-irlpl", "PF1", "PF1", IRL.pl === "PF1")}${chip("data-irlpl", "PF2", "PF2", IRL.pl === "PF2")}</div>
-      <div class="irl-chips irl-ln"><span class="irl-lab">ไลน์</span>${chip("data-irlln", "all", "ทุกไลน์", IRL.ln === "all")}${IR_LINES.map(t => { const n = IR.items.filter(x => irLineType(x.line) === t).length; return chip("data-irlln", t, `${t}${n ? ` (${n})` : ""}`, IRL.ln === t); }).join("")}${IR.items.some(x => !irLineType(x.line)) ? chip("data-irlln", "other", "อื่นๆ", IRL.ln === "other") : ""}</div></div>
+      <div class="irl-chips irl-ln"><span class="irl-lab">ไลน์</span>${chip("data-irlln", "all", "ทุกไลน์", IRL.ln === "all")}${IR_LINES.map(t => { const n = IR.items.filter(x => irLT(x) === t).length; return chip("data-irlln", t, `${t}${n ? ` (${n})` : ""}`, IRL.ln === t); }).join("")}${IR.items.some(x => !irLT(x)) ? chip("data-irlln", "other", "อื่นๆ", IRL.ln === "other") : ""}</div></div>
     <div class="irl-bar"><label class="irl-ck"><input type="checkbox" id="irlAll" ${allOn ? "checked" : ""}><span>เลือกทั้งหมด (${L.length})</span></label>
       <span class="irl-n">${nSel ? `เลือกแล้ว <b>${nSel}</b> รายการ` : "ติ๊กเลือก IR ที่ต้องการคัดลอก"}</span>
       <button class="pri" id="irlRow" ${nSel ? "" : "disabled"} title="วางที่คอลัมน์ D ของแถวว่างในไฟล์ IR · 1 IR = 1 แถว">${I("grid")}คัดลอกแถวไปวางใน Excel${nSel > 1 ? ` (${nSel})` : ""}</button>
@@ -3047,7 +3065,7 @@ async function viewIRList() {
         <label class="irl-cb"><input type="checkbox" data-irsel="${x.id}" ${IRL.sel.has(x.id) ? "checked" : ""}></label>
         <div class="t" data-irview="${x.id}"><b>${esc(x.irNo || "(ยังไม่มีเลข IR)")} · ${esc(x.problem || "-")}</b>
           <small>${esc([x.plant, x.doc ? x.doc + (x.market || "") : "", x.productCode, `รายงาน ${irDMY(x.repDate)} ${x.repShift || ""}`, x.qtyHold ? `กัน ${x.qtyHold}` : "", x.by].filter(Boolean).join(" · "))}</small>
-          <span class="irl-tags">${x.line ? `<span class="irln ${irLineType(x.line) ? "t-" + irLineType(x.line).toLowerCase() : ""}">${esc(x.line)}</span>` : ""}<span class="irst ${x.status === "Close" ? "ok" : ""}">${esc(x.status || "Open")}</span>${irApprTag(x)}${x.nrft === "Y" ? `<span class="tag hold">NRFT</span>` : ""}</span></div>
+          <span class="irl-tags">${x.line ? `<span class="irln ${irLT(x) ? "t-" + irLT(x).toLowerCase() : ""}">${esc(x.line)}</span>` : ""}<span class="irst ${x.status === "Close" ? "ok" : ""}">${esc(x.status || "Open")}</span>${irApprTag(x)}${x.nrft === "Y" ? `<span class="tag hold">NRFT</span>` : ""}</span></div>
         <div class="acts">${S.role === "sup" ? (x.approvedAt ? `<button class="ghost sm" data-irunap="${x.id}">${I("x")}ยกเลิกอนุมัติ</button>` : `<button class="soft sm irap" data-irap="${x.id}">${I("check")}อนุมัติ</button>`) : ""}
           <button class="ghost sm" data-irone="${x.id}" title="คัดลอกรายการนี้">${I("list")}คัดลอก</button><button class="ghost sm" data-iredit2="${x.id}">${I("pen")}แก้ไข</button>
           ${S.role === "sup" ? `<button class="ghost sm danger" data-irdel2="${x.id}" aria-label="ลบ">${I("trash")}</button>` : ""}</div></div>`).join("")
@@ -3065,14 +3083,14 @@ async function viewIRList() {
     const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (ds.irlln) { IRL.ln = ds.irlln; redo(); }
     else if (ds.irlst) { IRL.st = ds.irlst; redo(); } else if (ds.irlap) { IRL.ap = ds.irlap; redo(); } else if (ds.irlpl) { IRL.pl = ds.irlpl; redo(); }
-    else if (b.id === "irlNew") { IR.d = irNew(); IRL.form = true; viewIR(); window.scrollTo(0, 0); }
+    else if (b.id === "irlNew") { IR.d = irNew(); IR.lineNew = false; IRL.form = true; viewIR(); window.scrollTo(0, 0); }
     else if (b.id === "irlClr") { IRL.sel.clear(); redo(); }
     else if (b.id === "irlCopy") irCopyDlg(IR.items.filter(x => IRL.sel.has(x.id)));
     else if (b.id === "irlRow") { const S2 = IR.items.filter(x => IRL.sel.has(x.id)); irCopy(S2.map(x => irRow(x)).join("\n"), S2.length > 1 ? `${S2.length} แถว Excel` : "แถว Excel"); }
     else if (b.id === "irlTxt") irCopy(IR.items.filter(x => IRL.sel.has(x.id)).map(x => irText(x)).join("\n\n────────\n\n"), "ข้อความ");
     else if (b.id === "irlCsv") { const keep = IR.items; IR.items = nSel ? IR.items.filter(x => IRL.sel.has(x.id)) : L; irExportCsv(); IR.items = keep; }
     else if (ds.irone) irCopyDlg([pick(ds.irone)]);
-    else if (ds.iredit2) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit2))); IRL.form = true; viewIR(); window.scrollTo(0, 0); }
+    else if (ds.iredit2) { IR.d = JSON.parse(JSON.stringify(pick(ds.iredit2))); IR.lineNew = false; IRL.form = true; viewIR(); window.scrollTo(0, 0); }
     else if (ds.irap || ds.irunap) irApprove(pick(ds.irap || ds.irunap), !!ds.irunap, redo);
     else if (ds.irdel2) { const x = pick(ds.irdel2); confirmBox(`ลบ IR ${x.irNo || ""} "${x.problem || ""}"?`, async () => {
       try { await api(`/api/retort/ir/${encodeURIComponent(x.id)}`, { method: "DELETE" }); IR.items = IR.items.filter(y => y.id !== x.id); IRL.sel.delete(x.id); toast("ลบ IR แล้ว"); redo(); } catch (err) { toast(err.message); } }); }

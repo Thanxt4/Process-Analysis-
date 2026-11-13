@@ -2961,6 +2961,7 @@ IR_FIELDS = {  # key: ความยาวสูงสุด
     "checkpoint": 60, "productCode": 40, "shotCode": 60, "qtyHold": 20, "qtyNrft": 20, "line": 40, "problem": 200, "detail": 3000,
     "cause": 3000, "inkNo": 60, "fix": 3000, "decision": 200, "bsk": 60, "by": 60, "approver": 60, "result": 3000, "status": 20,
     "closeDate": 10, "decision2": 200, "otr": 20, "ots": 20, "ncpNo": 60, "remark": 1000, "by3": 60, "approvedBy": 60, "ncpLevel": 20, "trim": 200,
+    "lineType": 20,  # ประเภทไลน์ (Cup/Can/Pouch/Spout/Sachet) · ไม่อยู่ในแบบฟอร์ม Excel
 }
 
 
