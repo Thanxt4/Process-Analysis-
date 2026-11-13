@@ -1886,7 +1886,10 @@ async function syncAll(full) {
   } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
-const STAFF_TABS = ["log", "list", "irlist", "runs"];
+const STAFF_TABS = ["log", "list", "irlist", "runs", "survey"];
+const MOBILE_TABS = ["log", "list", "irlist", "runs", "survey"];
+const MOBILE_MQ = matchMedia("(max-width:700px), (hover:none) and (pointer:coarse) and (max-height:500px)");
+MOBILE_MQ.addEventListener("change", () => { if (typeof renderNav === "function" && S.loaded !== undefined) { renderNav(); render(); } });
 const ROLE_NAME = { sup: "หัวหน้า", staff: "พนักงาน" };
 function setRole(role) {
   S.role = role || ""; S.canAdmin = S.role === "sup"; lsSet("rt_role", S.role);
@@ -1918,7 +1921,9 @@ function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAR
 /* ---------- shell ---------- */
 function renderNav() {
   // พนักงาน: เห็นเฉพาะ บันทึก + รายการ เสมอ · หัวหน้า: ทุกแท็บตามที่ตั้งไว้ในแท็บ ปรับแต่ง
-  const vis = S.role === "sup" ? U.tabs.filter(t => t.show) : U.tabs.filter(t => STAFF_TABS.includes(t.k));
+  let vis = S.role === "sup" ? U.tabs.filter(t => t.show) : U.tabs.filter(t => STAFF_TABS.includes(t.k));
+  // มือถือ (ทั้งหัวหน้าและพนักงาน): เหลือ บันทึก · รายการ · รายการ IR · รอบหม้อ · Survey ตามลำดับเดิม
+  if (MOBILE_MQ.matches) { const mv = U.tabs.filter(t => MOBILE_TABS.includes(t.k) && (t.show || S.role !== "sup")); if (mv.length) vis = mv; }
   const dflt = vis.some(t => t.k === U.defaultTab) ? U.defaultTab : vis[0].k;
   // เครื่องที่ยังไม่เคยเลือกแท็บ: เปิดแท็บเริ่มต้นตามการตั้งค่า (เลิกทำทันทีที่ผู้ใช้กดอะไรก็ตาม)
   if (S.viewAuto) { if (!S.view || S.view === S.autoPick) S.view = S.autoPick = dflt; else S.viewAuto = false; }
