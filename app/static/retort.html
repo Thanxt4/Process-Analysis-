@@ -3435,7 +3435,7 @@ function problemToIR(x) {
     repDate: x.date, repShift: x.shift, checkpoint: "Retort", productCode: v.ir_pcode || "", shotCode: v.ir_shot || "",
     qtyHold: x.impact === "hold" ? (x.holdQty || "") : "", qtyNrft: v.ir_qnrft || "", line: v.ir_line || "", problem: c ? c.name : "", detail: [x.batch, x.detail].filter(Boolean).join(" "),
     cause: causeText(x) || "", inkNo: v.ir_ink || "", fix: x.action || "", decision: v.ir_decision || (x.impact === "hold" ? "Hold" : ""), bsk: v.ir_bsk || "", by: x.by || "",
-    approver: x.approvedBy || "", result: "", status: "", closeDate: "", decision2: "", otr: "", ots: "", ncpNo: "", remark: "",
+    approver: x.approvedBy || "", result: "", status: "เปิด", closeDate: "", decision2: "", otr: "", ots: "", ncpNo: "", remark: "",
     by3: "", approvedBy: "", /* ผู้อนุมัติใส่ช่อง AA ช่องเดียว */ ncpLevel: "", trim: "" };
 }
 /* ---------- Retort Survey Filling Form: ข้อมูลอุปกรณ์ของหม้อแต่ละใบ (คอลัมน์ = เลขหม้อ) ---------- */
