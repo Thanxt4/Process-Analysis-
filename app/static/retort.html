@@ -1329,11 +1329,19 @@ body.no-bell #bellBtn,body.no-online #onBtn{display:none!important}
 .holdq-r input{font-size:20px;font-weight:800;text-align:center;color:#9a3412;background:#fff}
 .holdq-r select{background-color:#fff}
 /* IR (Incident Report) */
-.irpick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
-.irpick>.lab{font-size:13px;font-weight:600;color:var(--mute)}
-.irpick .seg{flex:0 0 auto;padding:3px;border-radius:99px;background:#e9eef5}
-.irpick .seg button{flex:0 0 auto;gap:5px;font-weight:700;font-size:13.5px;min-height:32px;padding:3px 14px;border-radius:99px}
+.irpick{display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:100%;margin:0 0 14px;padding:6px 6px 6px 8px;border-radius:18px;
+  background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(15,23,42,.05),0 6px 16px -10px rgba(15,23,42,.18)}
+.irpick .ipk-ic{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fef3c7;color:#b45309;flex:0 0 auto}
+.irpick .ipk-ic svg.i{width:17px;height:17px}
+.irpick>.lab{margin:0;font-size:13.5px;font-weight:700;color:var(--navy)}
+.irpick .seg{flex:0 0 auto;padding:3px;border-radius:14px;background:#eef2f7;gap:3px;box-shadow:inset 0 1px 2px rgba(15,23,42,.06)}
+.irpick .seg button{flex:0 0 auto;gap:6px;font-weight:700;font-size:13.5px;min-height:34px;padding:3px 16px;border-radius:11px;color:var(--mute);transition:background .18s,color .18s,box-shadow .18s}
 .irpick .seg button svg.i{width:15px;height:15px}
+.irpick .seg button:hover:not(.on){color:var(--navy);background:rgba(255,255,255,.7)}
+.irpick .seg button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,23,42,.14)}
+.irpick .seg button.on.ir{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;box-shadow:0 4px 12px -2px rgba(185,28,28,.45)}
+.irpick .seg button.on.ir svg.i{color:#fff}
+.irpick.isir{border-color:#fecaca;background:linear-gradient(180deg,#fff,#fff5f5)}.irpick.isir .ipk-ic{background:#fee2e2;color:#b91c1c}
 .irpick .seg button.on.ir{background:#b91c1c;color:#fff}
 .ir{max-width:900px}
 .irc{padding:16px}
@@ -2923,7 +2931,7 @@ async function viewIR() {
 }
 // ตัวเลือกบนสุดของแท็บบันทึก: ไม่ออก IR (บันทึกปัญหา) / ออก IR
 function irPicker(on) {
-  return `<div class="irpick" id="irPick"><span class="lab" style="margin:0">ประเภทการรายงาน</span><div class="seg"><button data-irmode="0" class="${on ? "" : "on"}">${I("plus")}ไม่ออก IR</button><button data-irmode="1" class="${on ? "on ir" : ""}">${I("alert")}ออก IR</button></div></div>`;
+  return `<div class="irpick ${on ? "isir" : ""}" id="irPick"><span class="ipk-ic">${I(on ? "alert" : "pen")}</span><span class="lab">ประเภทการรายงาน</span><div class="seg"><button data-irmode="0" class="${on ? "" : "on"}">${I("plus")}ไม่ออก IR</button><button data-irmode="1" class="${on ? "on ir" : ""}">${I("alert")}ออก IR</button></div></div>`;
 }
 /* ---------- Retort Survey Filling Form: ข้อมูลอุปกรณ์ของหม้อแต่ละใบ (คอลัมน์ = เลขหม้อ) ---------- */
 const SV_TABLES = [
