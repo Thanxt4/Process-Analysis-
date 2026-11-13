@@ -390,6 +390,23 @@ def _migrate_proc_order_v1():
     AREAS, ITEM_MAP = load_areas()
 
 
+APP_TITLE = "PROCESS CONTROL & GMP"
+
+
+def _migrate_title_v1():
+    """ครั้งเดียว: เปลี่ยนชื่อแอปจาก "LINE QC / PROCESS CONTROL" (ค่าเดิม) เป็น "PROCESS CONTROL & GMP" (สำรองไฟล์ก่อนบันทึก)"""
+    global AREAS, ITEM_MAP
+    if AREAS.get("title_v1"):
+        return
+    old = AREAS.get("title")
+    if str(old or "").strip().upper() in ("", "LINE QC / PROCESS CONTROL"):
+        AREAS["title"] = APP_TITLE
+        print(f"[areas] เปลี่ยนชื่อแอป: {old} → {APP_TITLE}", flush=True)
+    AREAS["title_v1"] = True
+    _save_areas(AREAS, "title_v1")
+    AREAS, ITEM_MAP = load_areas()
+
+
 def clean_qty_cfg(q):
     """ตั้งค่าช่องนับจำนวนของหัวข้อ: {unit, label, rooms[]}"""
     if not isinstance(q, dict):
@@ -858,6 +875,7 @@ def _start():
         _migrate_cust_list()
         _migrate_new_items_v1()
         _migrate_proc_order_v1()
+        _migrate_title_v1()
     except Exception as e:  # noqa
         print("[areas] backfill error:", e, flush=True)
     try:
