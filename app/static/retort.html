@@ -2134,10 +2134,7 @@ function viewLog() {
     const cs = d.cats.map(catById).filter(Boolean), many = cs.length > 1;
     const fields = []; cs.forEach(c => (c.fields || []).forEach(fl => { if (!fields.some(x => x.key === fl.key)) fields.push(fl); }));
     h += catHead(d, `data-step="4"`) + `${editing ? `<div class="card">${sec("camera", "รูปถ่าย", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · เพิ่มรูปได้")}${photoPicker(d)}</div>` : d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
-      ${U.form.more ? `<div class="card detcard">${sec("list", "รายละเอียด", (many ? "ใช้ร่วมกันทุกปัญหา · " : "") + detailFields().filter(x => !x.hide).slice(0, 4).map(x => esc(x.label)).join(" · "), `<button class="ghost sm" id="detEdit">${I("pen")}แก้ไขหัวข้อ</button>`)}<div class="grid">
-        ${fields.map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
-        ${detailFields().filter(x => !x.hide).map(x => detailInput(x, d)).join("")}
-      </div></div>` : ""}
+      ${U.form.more ? pirCard(d, many, fields) : ""}
       ${cs.map((c, ci) => { const G = grpOf(c), pc = d.pc[c.id] || { cause: "", action: "" };
         return `<div class="card formcard pcard ${many ? "many" : ""}" data-cid="${c.id}" style="--gc:${G.color}">
         ${many ? `<div class="pchead"><span class="gic">${I(G.icon)}</span><div><small>ปัญหาที่ ${ci + 1} / ${cs.length}</small><b>${esc(c.name)}</b></div></div>` : ""}
@@ -2180,8 +2177,10 @@ function viewSaved() {
       : `<p class="sub" style="margin:6px 0 0">${esc(catById(x.category)?.name || "")} · ${esc(x.retort)}<br>${esc(causeText(x))}</p>`}
     <div class="meta2"><span>${dmy(x.date)} ${esc(x.time)} น.</span><span>กะ ${esc(x.shift)}</span>${x.plant ? `<span>${esc(x.plant)}</span>` : ""}${(x.photos || []).length ? `<span>รูป ${x.photos.length}</span>` : ""}${x.impact === "hold" ? `<span style="color:var(--warn)">${esc(holdTxt(x))}</span>` : ""}</div></div>
     <button class="pri blk savebig" id="again">${I("plus")}บันทึกปัญหาอื่น</button>
+    <button class="blk" id="savedIR" style="margin-top:10px">${I("grid")}คัดลอกเป็นแบบฟอร์ม IR</button>
     <div class="row" style="margin-top:10px">${many ? "" : `<button class="blk" id="editSaved">${I("pen")}แก้ไขรายการนี้</button>`}${S.role === "sup" ? `<button class="blk" id="seeAn">${I("chart")}ดูสรุป</button>` : `<button class="blk" id="seeList">${I("list")}ดูรายการ</button>`}</div>
     <p class="sub" style="text-align:center;margin:12px 0 0">แก้ไขรายการที่บันทึกไว้ก่อนหน้าได้ที่แท็บ <b>${esc((U.tabs.find(t => t.k === "list") || {}).label || "รายการ")}</b> → แตะรายการ → แก้ไข</p>`;
+  $("#savedIR").onclick = () => irCopyDlg(L.map(problemToIR));
   $("#again").onclick = () => { S.justSaved = null; S.draft = null; render(); };
   if ($("#editSaved")) $("#editSaved").onclick = () => { S.justSaved = null; S.draft = null; openEdit(x.id); };
   document.querySelectorAll("[data-esaved]").forEach(b => b.onclick = () => { S.justSaved = null; S.draft = null; openEdit(b.dataset.esaved); });
@@ -2440,7 +2439,7 @@ function wireLog() {
     const nb = $("#catNext"); if (nb) { nb.disabled = !d.cats.length; nb.innerHTML = catNextLabel(d); } };
   const stay = () => { const y = window.scrollY; viewLog(); window.scrollTo(0, y); };
   const setTime = () => { d.shift = shiftOf(d.time); const sb = $("#shiftBig"); if (sb) { sb.className = "shiftbig " + d.shift; sb.querySelector("b").textContent = d.shift; } const tt = $("#tcTime"); if (tt) tt.textContent = d.time + " น."; const td = $(".tc-date"); if (td) td.textContent = thDate(d.date); };
-  m.oninput = e => { const t = e.target; if (t.dataset.k) d[t.dataset.k] = t.value; if (t.id === "holdQty") t.classList.remove("err"); if (t.dataset.v) d.values[t.dataset.v] = t.value;
+  m.oninput = e => { const t = e.target; if (t.dataset.k) d[t.dataset.k] = t.value; if (t.id === "holdQty") t.classList.remove("err"); if (t.dataset.v) d.values[t.dataset.v] = t.value; pirOnInput(d, t, m);
     if (t.dataset.k === "time" || t.dataset.k === "date") setTime();
     if (t.id === "signIn") { const s = m.querySelector(".signline span"); if (s) s.textContent = `(${t.value || "................"})`; }
     if (t.classList.contains("pickIn")) pickFilter(t);
@@ -2453,12 +2452,12 @@ function wireLog() {
     const bar = e.target.closest(".addbar");
     if (t) t.click(); else if (e.target.value.trim() && bar.dataset.kind !== "cause") addOption(bar.dataset.kind, e.target.value, bar.dataset.cat);
     else if (e.target.value.trim()) toast("กด เพิ่ม ถ้าต้องการเพิ่มเป็นสาเหตุถาวรในรายการ"); } };  // สาเหตุ: Enter ไม่เพิ่มเข้ารายการ (กันพิมพ์ผิด/ข้อความยาวหลุดเข้ารายการ)
-  m.onchange = e => { const t = e.target;
+  m.onchange = e => { const t = e.target; if (pirOnChange(d, t)) return;
     if (t.id === "camIn" || t.id === "galIn") { const fs = [...t.files]; t.value = ""; if (fs.length) addPhotos(fs, t.id === "camIn"); }
     else if (t.id === "progSel") { const p = progByKey(t.value); d.program = p ? p.no : ""; d.programDoc = p ? p.doc : ""; const y = window.scrollY; viewLog(); window.scrollTo(0, y); } };
   m.onclick = e => {
     const im = e.target.closest("[data-zoom]"); if (im) { zoomPhoto(im.dataset.zoom); return; }
-    const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    const b = e.target.closest("button"); if (!b) return; const ds = b.dataset; if (pirOnClick(d, b)) return;
     if (ds.mg != null) { S.mg = ds.mg; stay(); return; }
     if (b.id === "mgAdd") { const v = $("#mgIn").value; if (v.trim()) addOption(ds.kind, v); else $("#mgIn").focus(); return; }
     if (ds.del) { askDelete(ds.del, ds.key, stay); return; }
@@ -2512,7 +2511,7 @@ async function submitLog() {
     const match = [...(c.causes || []), UNKNOWN].find(x => x.toLowerCase() === txt.toLowerCase());
     const keys = new Set((c.fields || []).map(f => f.key));
     return { ...base, id: i === 0 ? d.id : (d.ids[i] = d.ids[i] || uid("p")), category: c.id, cause: match || "__other", causeOther: match ? "" : txt,
-      action: String(pc.action || ""), values: wasEdit ? base.values : Object.fromEntries(Object.entries(base.values || {}).filter(([k, v]) => (keys.has(k) || k.startsWith("x_")) && String(v).trim() !== "")),
+      action: String(pc.action || ""), values: wasEdit ? base.values : Object.fromEntries(Object.entries(base.values || {}).filter(([k, v]) => (keys.has(k) || k.startsWith("x_") || k.startsWith("ir_")) && String(v).trim() !== "")),
       createdAt: (base.createdAt || Date.now()) + i }; });
   const btn = $("#saveBtn"); if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก…"; }
   for (const r of recs) {
@@ -2689,18 +2688,22 @@ function showItem(id) {
   const vals = (c?.fields || []).map(fl => x.values?.[fl.key] ? kv(fl.label, `${x.values[fl.key]} ${fl.unit || ""}`) : "").join("");
   modal(`<h2>${esc(causeText(x))}</h2><p class="sub" style="margin:2px 0 12px">${esc(c ? c.name : "")}</p>
     ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}
+    ${(() => { const v = x.values || {}; return [["NRFT?", v.ir_nrft], ["ตลาด", v.ir_market], ["โค๊ตผลิตภัณฑ์", v.ir_pcode], ["ไลน์", v.ir_line], ["Shot Code", v.ir_shot],
+      ["วันผลิต / กะผลิต", v.ir_pdate ? `${dmy(v.ir_pdate)} ${v.ir_pshift || ""}` : ""], ["จำนวน (NRFT)", v.ir_qnrft], ["หมายเลขเครื่อง INK", v.ir_ink], ["หมายเลข BSK", v.ir_bsk]].map(([k, val]) => kv(k, val)).join(""); })()}
     ${vals}${detailFields().map(df => kv(df.label, detailVal(x, df) ? (df.key === "duration" ? fmtDur(detailVal(x, df)) : detailVal(x, df)) : "")).join("")}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? holdTxt(x).replace(/^Hold/, "Hold สินค้า") : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${x.approvedBy
   ? `<div class="apprbox ok">${I("check")}<div><b>อนุมัติแล้ว · ${esc(x.approvedBy)}</b><small>${esc(fmtTs(x.approvedAt))}</small></div></div>`
   : `<div class="apprbox wait">${I("clock")}<div><b>รออนุมัติ</b><small>${S.role === "sup" ? "กดปุ่ม อนุมัติ ด้านล่าง" : "รอหัวหน้า (Supervisor) อนุมัติ"}</small></div></div>`}${(x.photos || []).length ? `<div class="photos" style="margin-top:12px">${x.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-mzoom="${esc(f)}"></div>`).join("")}</div>` : ""}
     ${S.role !== "sup" ? "" : x.approvedBy
       ? `<button class="blk" id="mUnappr" style="margin-top:16px">${I("x")}ยกเลิกอนุมัติ</button>`
       : `<button class="blk pri savebig" id="mAppr" style="margin-top:16px">${I("check")}อนุมัติ</button>`}
+    <button class="blk" id="mIR" style="margin-top:10px">${I("grid")}คัดลอกเป็นแบบฟอร์ม IR</button>
     <div class="row" style="margin-top:10px">${S.role === "sup" ? `<button class="blk danger" id="mDel">${I("trash")}ลบ</button>` : ""}<button class="blk ${S.role === "sup" ? "" : "pri"}" id="mEdit">${I("pen")}แก้ไข</button></div>
     <button class="ghost blk" data-close style="margin-top:6px">ปิด</button>`, box => {
     box.querySelector("#mEdit").onclick = () => { closeModal(); openEdit(id); };
     const ap = box.querySelector("#mAppr"); if (ap) ap.onclick = () => approveItem(id, false);
     const un = box.querySelector("#mUnappr"); if (un) un.onclick = () => approveItem(id, true);
     box.querySelectorAll("[data-mzoom]").forEach(im => im.onclick = () => window.open(photoUrl(im.dataset.mzoom), "_blank"));
+    box.querySelector("#mIR").onclick = () => irCopyDlg([problemToIR(x)]);
     const sp = box.querySelector("#mSpec"); if (sp) sp.onclick = () => showSpec(x.programDoc + "#" + x.program, () => showItem(id));
     const dl = box.querySelector("#mDel"); if (dl) dl.onclick = () => confirmBox("ลบรายการนี้?", async () => { if (await deleteItem(id)) { toast("ลบแล้ว"); render(); } });
   });
@@ -3152,6 +3155,77 @@ function irCopyDlg(list) {
       else if (t.id === "cHead") st.head = t.checked; else return;
       lsSet("rt_ircopy", st); draw(box); };
   }, "irkbox");
+}
+/* ---------- ขั้นที่ 5: การ์ดรายละเอียดแบบ IR · ข้อมูลเก็บใน code / product / batch / duration / detail + values.ir_* ---------- */
+const PIR = { lineNew: false };
+const pv = (d, k) => (d.values || {})["ir_" + k] ?? "";
+function pirLineField(d) {
+  const t = d.product && IR_LINES.includes(d.product) ? d.product : irLineType(pv(d, "line")), L = t ? irLinesOf(t) : [], cur = irNormLine(pv(d, "line")), other = PIR.lineNew || (cur && !L.includes(cur));
+  return `<div class="irline"><div class="seg">${IR_LINES.map(x => `<button type="button" data-plt="${x}" class="${t === x ? "on" : ""}">${x}</button>`).join("")}</div>
+    <select id="pLineSel" ${t ? "" : "disabled"}><option value="">${t ? "— เลือกไลน์ —" : "เลือกประเภทก่อน"}</option>${L.map(x => `<option ${x === cur && !other ? "selected" : ""}>${esc(x)}</option>`).join("")}<option value="__new" ${other && t ? "selected" : ""}>＋ ไลน์อื่น (พิมพ์เอง)</option></select></div>
+    ${t && other ? `<input id="pLineNew" value="${esc(cur)}" placeholder="พิมพ์ชื่อไลน์" autocomplete="off" style="margin-top:8px">` : ""}`;
+}
+function pirHint(d) { return irCodeHint({ doc: d.code, market: pv(d, "market"), productCode: pv(d, "pcode") }); }
+function pirCard(d, many, fields) {
+  if (!IR.codes && !PIR.loading) { PIR.loading = true; irLoad().then(() => { PIR.loading = false; if (S.view === "log" && S.step === 5) { const y = scrollY; viewLog(); scrollTo(0, y); } }); }
+  const mk = irMarkets(d.code), inp = (k, lab, attrs = "", wide = "") => `<label class="f ${wide}"><span class="lab">${lab}</span><input data-v="ir_${k}" value="${esc(pv(d, k))}" ${attrs} autocomplete="off"></label>`;
+  const custom = detailFields().filter(x => !x.hide && !x.builtin);
+  return `<div class="card detcard pircard">${sec("list", "รายละเอียด (แบบ IR)", (many ? "ใช้ร่วมกันทุกปัญหา · " : "") + "คัดลอกเป็นแบบฟอร์ม IR ได้หลังบันทึก")}<div class="grid">
+    <div class="f"><span class="lab">NRFT?</span><div class="seg">${["N", "Y"].map(v => `<button type="button" data-pnrft="${v}" class="${(pv(d, "nrft") || "N") === v ? "on" : ""}">${v}</button>`).join("")}</div></div>
+    <label class="f"><span class="lab">Retort no./รอบหม้อ</span><input data-k="batch" value="${esc(d.batch || "")}" autocomplete="off"></label>
+    <label class="f"><span class="lab">รหัสเอกสาร</span><input data-k="code" value="${esc(d.code || "")}" list="irDocs" placeholder="เช่น M022" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase"></label>
+    <label class="f"><span class="lab">ตลาด</span><input data-v="ir_market" value="${esc(pv(d, "market"))}" list="pMk" placeholder="${mk.length ? "เช่น " + esc(mk.join(", ")) : "เช่น P, N, E"}" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase"></label>
+    ${inp("pcode", "โค๊ตผลิตภัณฑ์ <small class=\"sub\">(เติมจากรหัสเอกสาร + ตลาด · แก้ได้)</small>", 'autocapitalize="characters" style="text-transform:uppercase"', "full")}
+    <div class="full irhint" id="pCodeHint">${pirHint(d)}</div>
+    <div class="f full"><span class="lab">ไลน์</span>${pirLineField(d)}</div>
+    ${inp("shot", "Shot Code")}${inp("qnrft", "จำนวน (NRFT)", 'inputmode="decimal"')}
+    <label class="f"><span class="lab">วันผลิต</span><input type="date" data-v="ir_pdate" value="${esc(pv(d, "pdate") || d.date)}"></label>
+    <div class="f"><span class="lab">กะผลิต</span><div class="seg">${["DS", "NS"].map(v => `<button type="button" data-ppsh="${v}" class="${(pv(d, "pshift") || d.shift) === v ? "on" : ""}">${v}</button>`).join("")}</div></div>
+    ${inp("ink", "หมายเลขเครื่อง INK")}${inp("bsk", "หมายเลข BSK")}
+    ${fields.map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
+    ${detailInput(detailFields().find(x => x.key === "duration") || DEFAULT_DETAILS[1], d)}
+    ${custom.map(x => detailInput(x, d)).join("")}
+    <label class="f full"><span class="lab">รายละเอียดเพิ่มเติม</span><textarea data-k="detail" rows="2">${esc(d.detail || "")}</textarea></label>
+  </div></div>
+  <datalist id="irDocs">${Object.keys(IR.codes || {}).map(v => `<option value="${esc(v)}">`).join("")}</datalist>
+  <datalist id="pMk">${(mk.length ? mk : ["P", "N", "E", "X", "C", "S"]).map(v => `<option value="${esc(v)}">`).join("")}</datalist>`;
+}
+// ช่อง code / ตลาด เปลี่ยน → เติมโค๊ตผลิตภัณฑ์ (ถ้ามีในตาราง)
+function pirOnInput(d, t, m) {
+  const k = t.dataset.k === "code" ? "code" : t.dataset.v === "ir_market" ? "market" : t.dataset.v === "ir_pcode" ? "pcode" : t.id === "pLineNew" ? "line" : "";
+  if (!k) return;
+  d.values = d.values || {};
+  if (k === "code") d.code = t.value.trim().toUpperCase();
+  if (k === "market") d.values.ir_market = t.value.trim().toUpperCase();
+  if (k === "line") { d.values.ir_line = irNormLine(t.value); return; }
+  if (k !== "pcode") { const mm = (IR.codes || {})[d.code];
+    if (mm) { if (!d.values.ir_market || !mm[d.values.ir_market]) { const ks = Object.keys(mm); if (ks.length === 1) { d.values.ir_market = ks[0]; const mi = m.querySelector('[data-v="ir_market"]'); if (mi && mi !== t) mi.value = ks[0]; } }
+      if (mm[d.values.ir_market]) { d.values.ir_pcode = mm[d.values.ir_market]; const pc = m.querySelector('[data-v="ir_pcode"]'); if (pc) pc.value = d.values.ir_pcode; } }
+    const dl = $("#pMk"); if (dl) { const ks = irMarkets(d.code); dl.innerHTML = (ks.length ? ks : ["P", "N", "E", "X", "C", "S"]).map(v => `<option value="${esc(v)}">`).join(""); } }
+  const h = $("#pCodeHint"); if (h) h.innerHTML = pirHint(d);
+}
+function pirOnClick(d, b) {
+  const ds = b.dataset; d.values = d.values || {};
+  if (ds.pnrft) { d.values.ir_nrft = ds.pnrft; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); return true; }
+  if (ds.ppsh) { d.values.ir_pshift = ds.ppsh; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); return true; }
+  if (ds.plt) { if (d.product !== ds.plt) { d.product = ds.plt; if (irLineType(d.values.ir_line) !== ds.plt) d.values.ir_line = ""; PIR.lineNew = false; }
+    const box = b.closest(".f"); box.innerHTML = box.querySelector(".lab").outerHTML + pirLineField(d); return true; }
+  return false;
+}
+function pirOnChange(d, t) {
+  if (t.id !== "pLineSel") return false; d.values = d.values || {};
+  PIR.lineNew = t.value === "__new"; d.values.ir_line = PIR.lineNew ? "" : t.value;
+  const box = t.closest(".f"); box.innerHTML = box.querySelector(".lab").outerHTML + pirLineField(d); const ni = $("#pLineNew"); if (ni) ni.focus(); return true;
+}
+// รายการปัญหา → แถวตามแบบฟอร์ม IR (คอลัมน์ D–AM)
+function problemToIR(x) {
+  const v = x.values || {}, c = catById(x.category);
+  return { nrft: v.ir_nrft || "N", doc: x.code || "", market: v.ir_market || "", irNo: "", plant: x.plant || "", prodDate: v.ir_pdate || x.date, prodShift: v.ir_pshift || x.shift,
+    repDate: x.date, repShift: x.shift, checkpoint: "Retort" + (x.retort ? " " + x.retort : ""), productCode: v.ir_pcode || "", shotCode: v.ir_shot || "",
+    qtyHold: x.impact === "hold" ? (x.holdQty || "") : "", qtyNrft: v.ir_qnrft || "", line: v.ir_line || "", problem: c ? c.name : "", detail: x.detail || "",
+    cause: causeText(x) || "", inkNo: v.ir_ink || "", fix: x.action || "", decision: x.impact === "hold" ? "Hold" : "", bsk: v.ir_bsk || "", by: x.by || "",
+    approver: x.approvedBy || "", result: "", status: "", closeDate: "", decision2: "", otr: "", ots: "", ncpNo: "", remark: x.batch ? `Retort no./รอบหม้อ ${x.batch}` : "",
+    by3: "", approvedBy: x.approvedBy || "", ncpLevel: "", trim: "" };
 }
 /* ---------- Retort Survey Filling Form: ข้อมูลอุปกรณ์ของหม้อแต่ละใบ (คอลัมน์ = เลขหม้อ) ---------- */
 const SV_TABLES = [

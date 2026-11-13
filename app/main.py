@@ -2280,6 +2280,11 @@ async def api_retort_save(request: Request):
         con.execute("INSERT INTO retort_problems(id, date, data, updated_at) VALUES(?,?,?,?) "
                     "ON CONFLICT(id) DO UPDATE SET date=excluded.date, data=excluded.data, updated_at=excluded.updated_at",
                     (x["id"], x["date"], json.dumps(x, ensure_ascii=False), x["updatedAt"]))
+    try:  # รหัสเอกสาร + ตลาด → โค๊ตผลิตภัณฑ์ ที่กรอกเองในขั้นที่ 5 (แบบ IR) จำไว้ให้ครั้งหน้า
+        v = x.get("values") or {}
+        _ir_codes_learn({"doc": x.get("code"), "market": v.get("ir_market"), "productCode": v.get("ir_pcode")})
+    except OSError:
+        pass
     return {"ok": True, "item": x}
 
 
