@@ -2922,7 +2922,7 @@ async function viewIR() {
     </div></div>
     <div class="card irc"><div class="irh"><span class="n">2</span><b>วัน · กะ · จุดที่พบ</b></div><div class="grid">
       ${fld("prodDate", 'type="date"')}${seg("prodShift", ["DS", "NS"])}${fld("repDate", 'type="date"')}${seg("repShift", ["DS", "NS"])}
-      ${fld("checkpoint", 'list="irCk"')}${fld("line", 'list="irLine" placeholder="เช่น RP12"')}
+      ${fld("checkpoint", 'list="irCk"')}${fld("line", 'list="irLine" placeholder="เช่น Can Z"')}
       ${fld("qtyHold", 'inputmode="decimal"')}${fld("qtyNrft", 'inputmode="decimal"')}
     </div></div>
     <div class="card irc"><div class="irh"><span class="n">3</span><b>ปัญหา และการแก้ไข</b></div><div class="grid">
@@ -2938,7 +2938,7 @@ async function viewIR() {
     <div class="ir-save"><button class="pri blk savebig" id="irSave">${I("check")}${editing ? "บันทึกการแก้ไข IR" : "บันทึก IR"}</button>
     </div>
   </div>
-  ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", [...plantRetorts(d.plant || "PF1"), ...past("line")])}
+  ${dl("irDocs", Object.keys(IR.codes || {}))}${dl("irCk", ["Retort", ...past("checkpoint")])}${dl("irLine", past("line"))}
   ${dl("irProb", [...S.config.categories.filter(c => c.active && !c.deleted).map(c => c.name), ...past("problem")])}${dl("irDec", past("decision"))}${dl("irAppr", past("approver"))}`;
   m.innerHTML = `<div class="irf">${h}</div>`;
   markAnim("ir");
