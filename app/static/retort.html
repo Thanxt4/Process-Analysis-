@@ -2132,6 +2132,8 @@ function viewLog() {
   } else {
     const progs = progsFor(d.retort); const sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
     const cs = d.cats.map(catById).filter(Boolean), many = cs.length > 1;
+    // Retort no./รอบหม้อ: เติม "หม้อ/" ให้ (เช่น RC02/) เหลือพิมพ์เลขรอบต่อท้าย · เปลี่ยนหม้อแล้วยังไม่ได้พิมพ์เลข → เปลี่ยนตาม
+    if (!editing && d.retort && (!String(d.batch || "").trim() || /^[A-Za-z]+\d+\/$/.test(d.batch))) d.batch = d.retort + "/";
     const fields = []; cs.forEach(c => (c.fields || []).forEach(fl => { if (!fields.some(x => x.key === fl.key)) fields.push(fl); }));
     h += catHead(d, `data-step="4"`) + `${editing ? `<div class="card">${sec("camera", "รูปถ่าย", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · เพิ่มรูปได้")}${photoPicker(d)}</div>` : d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
       ${U.form.more ? pirCard(d, many, fields) : ""}
@@ -2325,7 +2327,7 @@ const fmtDur = v => { const n = num(v); if (n == null) return String(v || ""); c
   return h ? `${h} ชม.${m ? ` ${m} นาที` : ""}` : `${m} นาที`; };
 const detailVal = (x, df) => df.builtin ? (x[df.key] ?? "") : (x.values || {})[df.key] ?? "";
 function detailInput(df, d) {
-  const v = String(detailVal(d, df) || ""), attr = df.builtin ? `data-k="${df.key}"` : `data-v="${df.key}"`, lab = `<span class="lab">${esc(df.label)}</span>`;
+  const v = String(detailVal(d, df) || ""), attr = (df.builtin ? `data-k="${df.key}"` : `data-v="${df.key}"`) + (df.key === "batch" ? ` onfocus="const n=this.value.length;setTimeout(()=>this.setSelectionRange(n,n),0)"` : ""), lab = `<span class="lab">${esc(df.label)}</span>`;
   if (df.key === "duration") { const n = num(v), h = n == null ? "" : Math.floor(n / 60), m = n == null ? (v || "") : Math.round((n - Math.floor(n / 60) * 60) * 100) / 100;
     return `<div class="f full">${lab}<div class="hm2"><label><input data-dur="h" inputmode="numeric" value="${h || ""}" placeholder="0" aria-label="ชั่วโมง"><span>ชม.</span></label><label><input data-dur="m" inputmode="decimal" value="${m === 0 && !h ? "" : m === 0 ? "0" : esc(m)}" placeholder="0" aria-label="นาที"><span>นาที</span></label></div></div>`; }
   if (df.type === "textarea") return `<label class="f full">${lab}<textarea ${attr} rows="2" placeholder="${esc(df.ph)}">${esc(v)}</textarea></label>`;
@@ -2502,6 +2504,7 @@ async function submitLog() {
   } else { d.holdQty = ""; d.holdUnit = ""; }
   d.by = String(d.by || "").trim(); if (!d.by) { $("#signIn").classList.add("err"); return err("ลงนามผู้บันทึก"); }
   d.retort = String(d.retort).trim().toUpperCase(); if (d.plant === "PF2") d.retort = toRC(d.retort); d.shift = shiftOf(d.time);
+  if (/^[A-Za-z]+\d+\/$/.test(String(d.batch || "").trim())) d.batch = "";  // มีแค่ "หม้อ/" ไม่ได้ใส่เลขรอบ = ไม่บันทึก
   lsSet("rt_last", { ...lsGet("rt_last", {}), category: d.category, plant: d.plant });
   const wasEdit = !!S.editingId;
   const base = JSON.parse(JSON.stringify(d)); ["cats", "pc", "ids", "ptimes"].forEach(k => delete base[k]);
