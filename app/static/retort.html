@@ -2686,8 +2686,6 @@ function viewList() {
     else if (ds.pcopy) irCopyDlg([problemToIR(S.items[ds.pcopy])]);
     else if (ds.pedit) openEdit(ds.pedit);
     else if (ds.pdel) { const id = ds.pdel; confirmBox("ลบรายการนี้?", async () => { if (await deleteItem(id)) { LSEL.delete(id); toast("ลบแล้ว"); render(); } }); }
-    else if (b.id === "lsRow") { const P = selItems(); irCopy(P.map(x => irRow(problemToIR(x))).join("\n"), P.length > 1 ? `${P.length} แถว Excel` : "แถว Excel"); }
-    else if (b.id === "lsTxt") irCopy(selItems().map(x => irText(problemToIR(x))).join("\n\n────────\n\n"), "ข้อความ");
     else if (b.id === "lsPick") irCopyDlg(selItems().map(problemToIR));
     else if (ds.edit) showItem(ds.edit); };
   const selItems = () => all.filter(x => LSEL.has(x.id));
@@ -2710,8 +2708,6 @@ function viewList() {
     const rows = lay === "table" ? xlsTable(L.slice(0, 300), cnt) : L.slice(0, 300).map(x => { const g = GROUP_OF[f.sort](x); const head = g !== last ? `<div class="lgrp"><b>${esc(f.sort === "new" || f.sort === "old" ? thDate(g) : g)}</b><span>${cnt[g]} รายการ</span></div>` : ""; last = g; return head + lsIRRow(x); }).join("");
     const bar = `<div class="lsbar"><label class="lcb lsall"><input type="checkbox" id="lsAll" ${allOn ? "checked" : ""}><span>เลือกทั้งหมด (${vis.length})</span></label>
       <span class="lsn">${nSel ? `เลือกแล้ว <b>${nSel}</b> รายการ` : "ติ๊กเลือกรายการเพื่อคัดลอกเป็น IR"}</span>
-      <button class="pri sm" id="lsRow" ${nSel ? "" : "disabled"} title="วางที่คอลัมน์ D ของแถวว่างในไฟล์ IR · 1 รายการ = 1 แถว">${I("grid")}<span>คัดลอกแถวไปวางใน Excel</span></button>
-      <button class="sm" id="lsTxt" ${nSel ? "" : "disabled"}>${I("list")}<span>คัดลอกเป็นข้อความ</span></button>
       <button class="sm" id="lsPick" ${nSel ? "" : "disabled"} title="เลือกรูปแบบ และเลือกช่องที่จะคัดลอก">${I("settings")}<span>เลือกช่อง…</span></button>
       ${nSel ? `<button class="ghost sm" id="lsClr">${I("x")}<span>ล้าง</span></button>` : ""}</div>`;
     $("#listCard").innerHTML = sec("list", `รายการปัญหา (${L.length}${words.length ? ` จาก ${all.length}` : ""})`, `${esc(where)} · ${esc(rLabel.replace("…", ""))}${words.length ? ` · ค้นหา "${esc(S.q.trim())}"` : ""}`,
