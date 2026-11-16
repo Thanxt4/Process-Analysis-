@@ -210,9 +210,10 @@ a.zbtn{text-decoration:none;color:inherit}
 .sheet-bg.on{display:flex}
 .sheet{background:#fff;width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom))}
 @media(min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:20px}}
-.sheet .top{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.sheet .top{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;position:sticky;top:-18px;z-index:6;background:#fff;margin:-18px -16px 12px;padding:18px 16px 10px;transition:box-shadow .15s}
+.sheet .top.stuck{box-shadow:0 6px 14px -8px rgba(15,23,42,.35);border-bottom:1px solid #e5e7eb}
 .sheet .top .t{flex:1}
-.sheet .top small{color:var(--amber);font-weight:700;font-size:12.5px}
+.sheet .top small{color:var(--amber);font-weight:700;font-size:12.5px;display:block}
 .sheet h2{margin:2px 0 0;font-size:19px;line-height:1.3}
 .sheet.wide{max-width:1200px;width:96vw;max-height:96vh}
 .sheet.wide .thumbs{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
@@ -1284,7 +1285,7 @@ body.no-comments .igc,body.no-comments .cmb,body.no-comments #cmOpen,body.no-ret
 
 <!-- entry sheet -->
 <div class="sheet-bg" id="sheetBg">
-  <div class="sheet" role="dialog" aria-modal="true">
+  <div class="sheet" role="dialog" aria-modal="true" onscroll="this.querySelector('.top').classList.toggle('stuck',this.scrollTop>4)">
     <div class="top">
       <div class="t"><small id="shZone"></small><h2 id="shTitle"></h2><button type="button" class="cmjump" id="shCm" hidden></button></div>
       <button class="x xw" id="shWide" aria-label="ขยายหน้าต่าง" title="ขยาย / ย่อหน้าต่าง"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
