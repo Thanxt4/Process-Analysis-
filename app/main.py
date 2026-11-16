@@ -71,9 +71,23 @@ for d in (UPLOAD_DIR, SLIDE_DIR):
     d.mkdir(parents=True, exist_ok=True)
 
 
-CUSTOMERS = ("Weruva", "Smucker")  # ลูกค้าที่เลือกให้แต่ละ Checklist ได้
+CUSTOMERS = ("Weruva", "Smucker", "MARS")  # ลูกค้าที่เลือกให้แต่ละ Checklist ได้ (เลือกได้หลายลูกค้า)
 BOTH_CUST = "both"  # Checklist ที่ใช้กับทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)
-CUST_FILTERS = CUSTOMERS + ("any", "none")  # ตัวเลือกลูกค้าใน Dashboard: any = ลูกค้าทั้งหมด · none = ไม่มีลูกค้า
+CUST_FILTERS = CUSTOMERS + ("any", "none")
+
+
+def _cust_list(v) -> list:
+    """ค่า cust ของหัวข้อ → รายชื่อลูกค้า: both = Weruva + Smucker (ค่าเดิม) · หลายลูกค้าคั่นด้วย ,"""
+    v = str(v or "").strip()
+    if v == BOTH_CUST:
+        return ["Weruva", "Smucker"]
+    got = {x.strip().upper() for x in v.split(",") if x.strip()}
+    return [c for c in CUSTOMERS if c.upper() in got]
+
+
+def _cust_norm(v) -> str:
+    L = _cust_list(v)
+    return BOTH_CUST if L == ["Weruva", "Smucker"] else ",".join(L)  # ตัวเลือกลูกค้าใน Dashboard: any = ลูกค้าทั้งหมด · none = ไม่มีลูกค้า
 NO_ACT = "ไม่มีกิจกรรม"  # ผลการตรวจแบบที่ 3: ไปตรวจแล้วแต่จุดนั้นไม่มีกิจกรรม → ไม่นับในกราฟ/การวิเคราะห์
 STATUSES = ("ปกติ", "พบปัญหา", NO_ACT)
 
@@ -1753,10 +1767,10 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
             pass
     # เลือกลูกค้า: นับเฉพาะหัวข้อของลูกค้านั้น (รวมหัวข้อที่เป็นของทั้งสองลูกค้า)
     # any = ลูกค้าทั้งหมด (ไม่รวมหัวข้อที่ไม่มีลูกค้า) · none = เฉพาะหัวข้อที่ไม่มีลูกค้า
-    has_cust = lambda it: it.get("cust") in CUSTOMERS + (BOTH_CUST,)
+    has_cust = lambda it: bool(_cust_list(it.get("cust")))
     cust_ok = (lambda it: True) if cust not in CUST_FILTERS else \
         has_cust if cust == "any" else (lambda it: not has_cust(it)) if cust == "none" else \
-        (lambda it: it.get("cust") in (cust, BOTH_CUST))
+        (lambda it: cust in _cust_list(it.get("cust")))
     zones = []
     for z in AREAS["zones"]:
         visible = not z.get("hidden")
@@ -1964,8 +1978,8 @@ async def api_admin_save(request: Request):
                 base["proc"] = proc  # ป้ายกระบวนการ เช่น จุดเตรียม / บรรจุ
             else:
                 base.pop("proc", None)
-            cust = str(it.get("cust") or "").strip()
-            if (cust in CUSTOMERS or cust == BOTH_CUST) and not base.get("extra"):
+            cust = _cust_norm(it.get("cust"))
+            if cust and not base.get("extra"):
                 base["cust"] = cust  # Checklist ของลูกค้า · both = ทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)
             else:
                 base.pop("cust", None)

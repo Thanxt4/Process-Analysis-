@@ -311,10 +311,13 @@ textarea{min-height:96px;resize:vertical}
 .er select.e-cust.c-weruva{background:#ecfdf5;border-color:#6ee7b7;color:#065f46;font-weight:700}
 .er select.e-cust.c-smucker{background:#fff1f2;border-color:#fda4af;color:#9f1239;font-weight:700}
 .er select.e-cust.c-both{background:#eff6ff;border-color:#93c5fd;color:#1e40af;font-weight:700}
+.er select.e-cust.c-mars{background:#f5f3ff;border-color:#c4b5fd;color:#5b21b6;font-weight:700}
+.er select.e-cust.c-multi{background:#fff7ed;border-color:#fdba74;color:#9a3412;font-weight:700}
 .er select.e-cust.c-none{background:#f8fafc;border-color:var(--line);color:var(--muted)}
 .ctag{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;font-size:11px;font-weight:700;line-height:18px;vertical-align:1px;white-space:nowrap;border:1px solid}
 .ctag.c-weruva{background:#ecfdf5;color:#065f46;border-color:#6ee7b7}.ctag.c-smucker{background:#fff1f2;color:#9f1239;border-color:#fda4af}
 .ctag.c-both{background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
+.ctag.c-mars{background:#f5f3ff;color:#5b21b6;border-color:#c4b5fd}.ctag.c-multi{background:#fff7ed;color:#9a3412;border-color:#fdba74}
 .ptag{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;font-size:11px;font-weight:700;line-height:18px;vertical-align:1px;white-space:nowrap}
 .ptag.pt0{background:#ede9fe;color:#5b21b6}
 .ptag.pt1{background:#dbeafe;color:#1e40af}
@@ -1148,7 +1151,7 @@ body.no-comments .igc,body.no-comments .cmb,body.no-comments #cmOpen,body.no-ret
       <div class="note dsnote" id="dashSearchNote" hidden></div>
       <div class="dash-cust">
         <label for="hmCust" class="dash-lbl cu">Customer</label>
-        <select id="hmCust" aria-label="เลือกลูกค้า"><option value="">ทุกหัวข้อ (รวมไม่มีลูกค้า)</option><option value="any">ลูกค้าทั้งหมด (Weruva, Smucker)</option><option value="Weruva">Weruva</option><option value="Smucker">Smucker</option><option value="none">ไม่มีลูกค้า</option></select>
+        <select id="hmCust" aria-label="เลือกลูกค้า"><option value="">ทุกหัวข้อ (รวมไม่มีลูกค้า)</option><option value="any">ลูกค้าทั้งหมด (Weruva, Smucker, MARS)</option><option value="Weruva">Weruva</option><option value="Smucker">Smucker</option><option value="MARS">MARS</option><option value="none">ไม่มีลูกค้า</option></select>
         <span class="dash-cust-note" id="hmCustNote"></span>
       </div>
       <div class="dash-h">
@@ -1474,10 +1477,13 @@ const canEdit = r => { const d = daysBetween(r, CFG.current_round); return d >= 
 const FS = () => (formRound && formRound !== CFG.current_round && FSTATUS) ? FSTATUS : STATUS;
 const isG = z => z && z.deck === "gmp";
 /* ป้ายกระบวนการของรายการ (Rawmat / จุดเตรียม / บรรจุ / Retort&Store) */
-const CUSTS = ["Weruva", "Smucker"];
-const BOTH = "both", BOTH_CUST = CUSTS.join(", ");  // ทั้งสองลูกค้า = "Weruva, Smucker" · ไม่ระบุ (ค่าว่าง) = ไม่มีลูกค้า
-const custKey = it => !it || it.extra ? "none" : it.cust === BOTH ? "both" : CUSTS.includes(it.cust) ? it.cust : "none";
-const custText = it => { const k = custKey(it); return k === "none" ? "" : k === "both" ? BOTH_CUST : k; };
+const CUSTS = ["Weruva", "Smucker", "MARS"];
+const BOTH = "both", BOTH_CUST = "Weruva, Smucker";  // ค่าเดิม both = Weruva + Smucker · หลายลูกค้า = คั่นด้วย , · ไม่ระบุ (ค่าว่าง) = ไม่มีลูกค้า
+const custList = v => { v = String(v || "").trim(); if(v === BOTH) return ["Weruva", "Smucker"]; const g = v.split(",").map(x => x.trim().toUpperCase()); return CUSTS.filter(c => g.includes(c.toUpperCase())); };
+const custVal = L => L.join(",") === "Weruva,Smucker" ? BOTH : L.join(",");  // ค่าที่เก็บ
+const CUST_OPTS = [["Weruva"], ["Smucker"], ["MARS"], ["Weruva", "Smucker"], ["Weruva", "MARS"], ["Smucker", "MARS"], ["Weruva", "Smucker", "MARS"]];
+const custKey = it => { if(!it || it.extra) return "none"; const L = custList(it.cust); return !L.length ? "none" : L.length === 1 ? L[0] : custVal(L) === BOTH ? "both" : "multi"; };
+const custText = it => it && !it.extra ? custList(it.cust).join(", ") : "";
 const custTag = it => { const k = custKey(it); if(k === "none") return "";
   return `<span class="ctag c-${k.toLowerCase()}" title="Checklist ของลูกค้า ${esc(custText(it))}">${esc(custText(it))}</span>`; };
 // ★ หัวข้อทดลอง (pilot): แสดงในฟอร์ม/Dashboard แต่ยังไม่นับใน % ของ Dashboard
@@ -2863,7 +2869,7 @@ async function loadHeatmap(){
   // ดึงย้อนไปอีกเท่าตัว เพื่อใช้เป็น "ช่วงก่อนหน้า" ในกราฟแท่งเปรียบเทียบ (API ดึงได้สูงสุด 200 วัน)
   const from = shiftDay(end, -(Math.min(2 * span, 200) - 1));
   $("#hmCust").value = hmCust;
-  $("#hmCustNote").textContent = hmCust === "none" ? "แสดงเฉพาะหัวข้อที่ไม่มีลูกค้า" : hmCust === "any" ? "แสดงเฉพาะหัวข้อที่มีลูกค้า (Weruva, Smucker) · ไม่รวมหัวข้อที่ไม่มีลูกค้า" : hmCust ? `แสดงเฉพาะหัวข้อของ ${hmCust} (รวมหัวข้อที่เป็นของทั้ง Weruva, Smucker)` : "";
+  $("#hmCustNote").textContent = hmCust === "none" ? "แสดงเฉพาะหัวข้อที่ไม่มีลูกค้า" : hmCust === "any" ? "แสดงเฉพาะหัวข้อที่มีลูกค้า (Weruva, Smucker, MARS) · ไม่รวมหัวข้อที่ไม่มีลูกค้า" : hmCust ? `แสดงเฉพาะหัวข้อของ ${hmCust} (รวมหัวข้อที่ใช้ร่วมกับลูกค้าอื่น)` : "";
   $("#dashBox").classList.toggle("cust-on", !!hmCust);
   try{ HM = await api(`/api/heatmap?start=${from}&end=${end}${custQ()}`); }catch(err){ toast(err.message, true); return; }
   for(const k in hotSel) delete hotSel[k];  // เปลี่ยนช่วงวัน → กลับไปเริ่มที่ 5 อันดับแรกของช่วงใหม่
@@ -2990,7 +2996,7 @@ function renderEditor(){
         <input type="text" class="e-no" value="${esc(it.no)}" ${it.extra?"disabled":""} placeholder="ลำดับ">
         <input type="text" class="e-name" value="${esc(it.name)}" placeholder="ชื่อรายการตรวจ">
         ${it.extra ? `<span></span>` : `<select class="e-proc" title="อยู่ในกระบวนการไหน"><option value="">— กระบวนการ —</option>${(CFG.process_tags||[]).map(t=>`<option ${t===it.proc?"selected":""}>${esc(t)}</option>`).join("")}</select>`}
-        ${it.extra ? `<span></span>` : `<select class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน"><option value="">ไม่มีลูกค้า</option><option value="${BOTH}" ${custKey(it)==="both"?"selected":""}>${BOTH_CUST}</option>${CUSTS.map(c => `<option value="${c}" ${c===it.cust?"selected":""}>${c}</option>`).join("")}</select>`}
+        ${it.extra ? `<span></span>` : `<select class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน"><option value="">ไม่มีลูกค้า</option>${CUST_OPTS.map(L => `<option value="${custVal(L)}" ${custVal(L)===custVal(custList(it.cust))?"selected":""}>${L.join(", ")}</option>`).join("")}</select>`}
         <div class="acts">${movable?`<button type="button" class="pilt ${it.pilot?"on":""}" title="★ หัวข้อใหม่/ทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน % (กดอีกครั้งเพื่อเริ่มนับ)">★</button>`:""}${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
         <button type="button" class="down" ${ii>=z.items.filter(x=>!x.extra).length-1?"disabled":""} title="เลื่อนลง">▼</button>
         <button type="button" class="del" title="ลบรายการ"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:`<span class="note">หัวข้อเพิ่มเติม</span>`}</div>
@@ -3004,7 +3010,7 @@ function renderEditor(){
       <button type="button" class="del zdel" title="ลบพื้นที่นี้"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>
       ${rows}<button type="button" class="additem">＋ เพิ่มรายการ</button></div>`;
   };
-  const sect = (deck, title) => `<div class="ed-grp"><span>${title}</span><span class="ed-bulk">ลูกค้าทุกหัวข้อ: <button type="button" data-bulk="${deck}" data-v="">ไม่มีลูกค้า</button><button type="button" data-bulk="${deck}" data-v="${BOTH}">${BOTH_CUST}</button></span><span class="ed-bulk"><button type="button" data-psort="${deck}" title="${esc((CFG.process_tags || []).join(" → "))}">เรียงตามกระบวนการ</button></span></div>` +
+  const sect = (deck, title) => `<div class="ed-grp"><span>${title}</span><span class="ed-bulk">ลูกค้าทุกหัวข้อ: <button type="button" data-bulk="${deck}" data-v="">ไม่มีลูกค้า</button><button type="button" data-bulk="${deck}" data-v="${BOTH}">${BOTH_CUST}</button><button type="button" data-bulk="${deck}" data-v="Weruva,Smucker,MARS">Weruva, Smucker, MARS</button></span><span class="ed-bulk"><button type="button" data-psort="${deck}" title="${esc((CFG.process_tags || []).join(" → "))}">เรียงตามกระบวนการ</button></span></div>` +
     editZones.map((z, zi) => ((z.deck || "pc") === deck ? block(z, zi) : "")).join("") +
     `<button type="button" class="btn ghost addpage addzone" data-deck="${deck}">＋ เพิ่มพื้นที่${deck==="pc"?"":" " + deckName(deck)}</button>`;
   $("#editZones").innerHTML = sect("pc", "Process Control") + sect("gmp", "GMP") + (editZones.some(z => z.deck === "retort") ? sect("retort", "Retort Analysis (แบบเก่า)") : "");
@@ -3026,7 +3032,7 @@ $("#editZones").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
   if(b.dataset.bulk != null){  // ตั้งลูกค้าของทุกหัวข้อในกลุ่มนี้ (ยังไม่บันทึกจนกว่าจะกด บันทึกการแก้ไข)
     let n = 0; editZones.forEach(z => { if((z.deck || "pc") === b.dataset.bulk) z.items.forEach(it => { if(!it.extra){ it.cust = b.dataset.v; n++; } }); });
-    renderEditor(); toast(`ตั้ง ${n} หัวข้อเป็น "${b.dataset.v ? BOTH_CUST : "ไม่มีลูกค้า"}" แล้ว · กด บันทึกการแก้ไข เพื่อยืนยัน`); return;
+    renderEditor(); toast(`ตั้ง ${n} หัวข้อเป็น "${b.dataset.v ? custList(b.dataset.v).join(", ") : "ไม่มีลูกค้า"}" แล้ว · กด บันทึกการแก้ไข เพื่อยืนยัน`); return;
   }
   if(b.dataset.psort){  // เรียงหัวข้อในทุกพื้นที่ของชุดนี้ตามลำดับกระบวนการ (ตัวที่อยู่กระบวนการเดียวกันคงลำดับเดิม)
     const order = CFG.process_tags || [], rk = it => it.extra ? 2e3 : order.includes(it.proc) ? order.indexOf(it.proc) : 1e3;
