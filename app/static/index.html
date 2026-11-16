@@ -307,13 +307,23 @@ textarea{min-height:96px;resize:vertical}
 .ez-h input{font-weight:700}
 .ez input[type=text]{padding:8px 10px;border-radius:9px}
 .er{display:grid;grid-template-columns:62px 1fr 140px 128px auto;gap:6px;align-items:center;margin-bottom:6px}
-.er select.e-proc,.er select.e-cust{border:1px solid var(--line);border-radius:10px;padding:8px 6px;font:inherit;font-size:13px;background:#fff;min-width:0}
-.er select.e-cust.c-weruva{background:#ecfdf5;border-color:#6ee7b7;color:#065f46;font-weight:700}
-.er select.e-cust.c-smucker{background:#fff1f2;border-color:#fda4af;color:#9f1239;font-weight:700}
-.er select.e-cust.c-both{background:#eff6ff;border-color:#93c5fd;color:#1e40af;font-weight:700}
-.er select.e-cust.c-mars{background:#f5f3ff;border-color:#c4b5fd;color:#5b21b6;font-weight:700}
-.er select.e-cust.c-multi{background:#fff7ed;border-color:#fdba74;color:#9a3412;font-weight:700}
-.er select.e-cust.c-none{background:#f8fafc;border-color:var(--line);color:var(--muted)}
+.er select.e-proc,.er .e-cust{border:1px solid var(--line);border-radius:10px;padding:8px 6px;font:inherit;font-size:13px;background:#fff;min-width:0}
+.er .e-cust.c-weruva{background:#ecfdf5;border-color:#6ee7b7;color:#065f46;font-weight:700}
+.er .e-cust.c-smucker{background:#fff1f2;border-color:#fda4af;color:#9f1239;font-weight:700}
+.er .e-cust.c-both{background:#eff6ff;border-color:#93c5fd;color:#1e40af;font-weight:700}
+.er .e-cust.c-mars{background:#f5f3ff;border-color:#c4b5fd;color:#5b21b6;font-weight:700}
+.er .e-cust.c-multi{background:#fff7ed;border-color:#fdba74;color:#9a3412;font-weight:700}
+.er .e-cust{display:flex;align-items:center;gap:4px;text-align:left;cursor:pointer;min-height:38px}
+.er .e-cust span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.er .e-cust i{font-style:normal;font-size:11px;opacity:.7}
+#custPop{position:fixed;z-index:9999;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 12px 32px rgba(15,23,42,.22);padding:6px;min-width:210px;font-size:14px}
+#custPop label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600}
+#custPop label:hover{background:#f1f5f9}
+#custPop input{width:18px;height:18px;margin:0;accent-color:#1b2a41;appearance:auto;-webkit-appearance:checkbox;flex:0 0 auto}
+#custPop .cp-sep{height:1px;background:#e5e7eb;margin:4px 2px}
+#custPop .cp-b{display:flex;gap:6px;padding:4px 2px 2px}#custPop .cp-b button{flex:1;border:1px solid #e5e7eb;background:#f8fafc;border-radius:8px;padding:7px 8px;font:inherit;font-size:13px;cursor:pointer}
+#custPop .cp-b button.ok{background:#1b2a41;color:#fff;border-color:#1b2a41}
+#custPop .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.er .e-cust.c-none{background:#f8fafc;border-color:var(--line);color:var(--muted)}
 .ctag{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;font-size:11px;font-weight:700;line-height:18px;vertical-align:1px;white-space:nowrap;border:1px solid}
 .ctag.c-weruva{background:#ecfdf5;color:#065f46;border-color:#6ee7b7}.ctag.c-smucker{background:#fff1f2;color:#9f1239;border-color:#fda4af}
 .ctag.c-both{background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
@@ -338,7 +348,7 @@ textarea{min-height:96px;resize:vertical}
 .editbar .btn{flex:1}
 @media(max-width:699px){.hm .rh{min-width:96px;max-width:118px;font-size:12px;padding:3px 4px}.hm thead th{min-width:28px;font-size:10.5px}.hm td.cell{width:24px;height:24px}.hm td.z{font-size:11px}}
 @media(max-width:560px){.er .e-qty{grid-column:1/3;grid-row:4;flex-wrap:wrap}}
-@media(max-width:560px){.ez-h{grid-template-columns:1fr auto auto}.ez-h input:nth-child(2){grid-column:1/2;grid-row:2}.ez-h input.e-sub{grid-column:1/2;grid-row:3}.er{grid-template-columns:48px 1fr}.er select.e-proc,.er>span:empty{grid-column:1/3;grid-row:2;justify-self:start;max-width:46%}.er select.e-cust{grid-column:1/3;grid-row:3;justify-self:start;max-width:46%}.er>span:empty+span:empty{display:none}.er .acts{grid-column:1/3;grid-row:2;justify-self:end}}
+@media(max-width:560px){.ez-h{grid-template-columns:1fr auto auto}.ez-h input:nth-child(2){grid-column:1/2;grid-row:2}.ez-h input.e-sub{grid-column:1/2;grid-row:3}.er{grid-template-columns:48px 1fr}.er select.e-proc,.er>span:empty{grid-column:1/3;grid-row:2;justify-self:start;max-width:46%}.er .e-cust{grid-column:1/3;grid-row:3;justify-self:start;max-width:46%}.er>span:empty+span:empty{display:none}.er .acts{grid-column:1/3;grid-row:2;justify-self:end}}
 .me{margin-top:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;padding:3px 12px;font-size:13px;font-weight:600;display:inline-flex;gap:4px;align-items:center;max-width:100%}
 .me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
 .me em{font-style:normal;color:var(--amber);font-size:12px;margin-left:4px}
@@ -2996,7 +3006,7 @@ function renderEditor(){
         <input type="text" class="e-no" value="${esc(it.no)}" ${it.extra?"disabled":""} placeholder="ลำดับ">
         <input type="text" class="e-name" value="${esc(it.name)}" placeholder="ชื่อรายการตรวจ">
         ${it.extra ? `<span></span>` : `<select class="e-proc" title="อยู่ในกระบวนการไหน"><option value="">— กระบวนการ —</option>${(CFG.process_tags||[]).map(t=>`<option ${t===it.proc?"selected":""}>${esc(t)}</option>`).join("")}</select>`}
-        ${it.extra ? `<span></span>` : `<select class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน"><option value="">ไม่มีลูกค้า</option>${CUST_OPTS.map(L => `<option value="${custVal(L)}" ${custVal(L)===custVal(custList(it.cust))?"selected":""}>${L.join(", ")}</option>`).join("")}</select>`}
+        ${it.extra ? `<span></span>` : `<button type="button" class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน · แตะเพื่อติ๊กเลือก"><span>${esc(custText(it) || "ไม่มีลูกค้า")}</span><i>▾</i></button>`}
         <div class="acts">${movable?`<button type="button" class="pilt ${it.pilot?"on":""}" title="★ หัวข้อใหม่/ทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน % (กดอีกครั้งเพื่อเริ่มนับ)">★</button>`:""}${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
         <button type="button" class="down" ${ii>=z.items.filter(x=>!x.extra).length-1?"disabled":""} title="เลื่อนลง">▼</button>
         <button type="button" class="del" title="ลบรายการ"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:`<span class="note">หัวข้อเพิ่มเติม</span>`}</div>
@@ -3023,13 +3033,36 @@ $("#editZones").addEventListener("input", e => {
   else { const er = e.target.closest(".er"); const it = z.items[+er.dataset.i];
     if(e.target.classList.contains("e-no")) it.no = e.target.value;
     else if(e.target.classList.contains("e-proc")) it.proc = e.target.value;
-    else if(e.target.classList.contains("e-cust")){ it.cust = e.target.value; e.target.className = "e-cust c-" + custKey(it).toLowerCase(); }
     else if(e.target.classList.contains("e-rooms")) it.qty = {...it.qty, rooms: e.target.value.split(/[,，]/).map(x => x.trim()).filter(Boolean)};
     else if(e.target.classList.contains("e-unit")) it.qty = {...it.qty, unit: e.target.value.trim() || "คัน"};
     else it.name = e.target.value; }
 });
+// ช่องลูกค้า: ติ๊กเลือกได้หลายลูกค้า (แบบตัวกรองใน Excel)
+const CUST_DOT = {Weruva: "#10b981", Smucker: "#f43f5e", MARS: "#8b5cf6"};
+function custPopClose(){ const p = $("#custPop"); if(p) p.remove(); }
+function custPopOpen(btn, it){
+  custPopClose();
+  const p = document.createElement("div"); p.id = "custPop"; const cur = custList(it.cust);
+  p.innerHTML = CUSTS.map(c => `<label><input type="checkbox" value="${c}" ${cur.includes(c) ? "checked" : ""}><span class="dot" style="background:${CUST_DOT[c]}"></span>${c}</label>`).join("") +
+    `<div class="cp-sep"></div><label><input type="checkbox" class="cp-all" ${cur.length === CUSTS.length ? "checked" : ""}>(เลือกทั้งหมด)</label>
+    <div class="cp-b"><button type="button" class="cp-none">ไม่มีลูกค้า</button><button type="button" class="ok">ตกลง</button></div>`;
+  document.body.appendChild(p);
+  const r = btn.getBoundingClientRect(), h = p.offsetHeight, w = Math.max(r.width, p.offsetWidth);
+  p.style.minWidth = w + "px"; p.style.left = Math.min(r.left, innerWidth - w - 8) + "px";
+  p.style.top = (r.bottom + h + 8 > innerHeight ? Math.max(8, r.top - h - 6) : r.bottom + 6) + "px";
+  const apply = () => { const L = [...p.querySelectorAll("input[value]")].filter(x => x.checked).map(x => x.value);
+    it.cust = custVal(L); btn.className = "e-cust c-" + custKey(it).toLowerCase(); btn.querySelector("span").textContent = custText(it) || "ไม่มีลูกค้า";
+    p.querySelector(".cp-all").checked = L.length === CUSTS.length; };
+  p.addEventListener("change", e => { if(e.target.classList.contains("cp-all")) p.querySelectorAll("input[value]").forEach(x => x.checked = e.target.checked); apply(); });
+  p.addEventListener("click", e => { if(e.target.closest(".cp-none")){ p.querySelectorAll("input").forEach(x => x.checked = false); apply(); custPopClose(); } else if(e.target.closest(".ok")) custPopClose(); });
+}
+document.addEventListener("pointerdown", e => { if($("#custPop") && !e.target.closest("#custPop,.e-cust")) custPopClose(); }, true);
+document.addEventListener("scroll", e => { if($("#custPop") && !(e.target.closest && e.target.closest("#custPop"))) custPopClose(); }, true);
+document.addEventListener("keydown", e => { if(e.key === "Escape") custPopClose(); });
 $("#editZones").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
+  if(b.classList.contains("e-cust")){ const z = editZones[+b.closest(".ez").dataset.z], it = z.items[+b.closest(".er").dataset.i];
+    if($("#custPop") && $("#custPop")._btn === b) custPopClose(); else { custPopOpen(b, it); $("#custPop")._btn = b; } return; }
   if(b.dataset.bulk != null){  // ตั้งลูกค้าของทุกหัวข้อในกลุ่มนี้ (ยังไม่บันทึกจนกว่าจะกด บันทึกการแก้ไข)
     let n = 0; editZones.forEach(z => { if((z.deck || "pc") === b.dataset.bulk) z.items.forEach(it => { if(!it.extra){ it.cust = b.dataset.v; n++; } }); });
     renderEditor(); toast(`ตั้ง ${n} หัวข้อเป็น "${b.dataset.v ? custList(b.dataset.v).join(", ") : "ไม่มีลูกค้า"}" แล้ว · กด บันทึกการแก้ไข เพื่อยืนยัน`); return;
