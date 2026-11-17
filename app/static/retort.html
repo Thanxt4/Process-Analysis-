@@ -3357,7 +3357,10 @@ function pirHint(d) { return irCodeHint({ doc: d.code, market: pv(d, "market"), 
 const irRowsOf = x => { try { const L = JSON.parse(x.irRows || "[]"); if (Array.isArray(L) && L.length) return L.map(r => ({ b: String(r.b || ""), t: String(r.t || "") })); } catch {} return [{ b: x.batch || "", t: x.detail || "" }]; };
 function irRowsBlock(d) {
   if (!d._rows) d._rows = irRowsOf(d);
-  if (!S.editingId && d.retort && d._rows.length === 1 && (!d._rows[0].b.trim() || /^[A-Za-z]+\d+\/$/.test(d._rows[0].b))) d._rows[0].b = d.batch || d.retort + "/";
+  // แถวแรก: ใส่เลขหม้อเดิมให้ (เช่น RC09/) · มีแค่เลขรอบ (เช่น 2) → RC09/2
+  if (d.retort) { const r0 = d._rows[0], b0 = String(r0.b || "").trim();
+    if (!b0 || (/^[A-Za-z]+\d+\/$/.test(b0) && b0 !== d.retort + "/")) r0.b = String(d.batch || "").trim() && !/^[A-Za-z]+\d+\/$/.test(d.batch) ? d.batch : d.retort + "/";
+    if (/^\d+$/.test(String(r0.b).trim())) r0.b = d.retort + "/" + String(r0.b).trim(); }
   const n = d._rows.length;
   return `<span class="lab">หม้อ / รายละเอียดของปัญหา <small class="sub">(${n} หม้อ · แต่ละหม้อรายละเอียดต่างกันได้)</small></span>
     <div class="irrows">${d._rows.map((r, i) => `<div class="irrow2"><em>${i + 1}</em>
