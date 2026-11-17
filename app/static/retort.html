@@ -1512,6 +1512,11 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .irr-b{display:flex;flex-direction:column;gap:4px}.irr-b button{min-height:38px;padding:0 10px}
 .irr-add{margin-top:8px;min-height:46px;display:flex;align-items:center;justify-content:center;gap:6px}.irr-add small{font-weight:400;color:var(--mute)}
 @media(max-width:700px){.irrow2{grid-template-columns:26px minmax(0,1fr) auto}.irrow2 textarea{grid-column:2/3}.irr-b{grid-row:1/3;grid-column:3}.irr-add small{display:none}}
+.laysel{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.laysel button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:9px 11px;border-radius:12px;border:1.5px solid var(--line);background:#fff;min-height:0;box-shadow:none}
+.laysel b{font-size:13.5px;color:var(--navy)}.laysel small{font-size:12px;color:var(--mute);font-weight:500}
+.laysel button.on{border-color:var(--navy);background:#eef2f7;box-shadow:inset 0 0 0 1px var(--navy)}
+@media(max-width:600px){.laysel{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3072,7 +3077,11 @@ async function irLoad() {
 const irDMY = s => { if (!s) return ""; const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };  // วว/ดด/ปปปป (ค.ศ.) ให้ Excel อ่านเป็นวันที่
 // แถวสำหรับวางใน Excel (เริ่มที่คอลัมน์ D) · ช่องที่มีขึ้นบรรทัด/แท็บ ใส่ "…" ให้อยู่ในช่องเดียว
 // แบบฟอร์มไฟล์ IR: PF1 = D–AM · PF2 (ชีท IR Retort) มีคอลัมน์ว่างเพิ่ม 2 ช่อง: T (หลัง ปัญหา) และ AF (หลัง วันปิด IR) → D–AO
-const IR_LAYOUTS = { PF1: { gaps: [], end: "AM" }, PF2: { gaps: ["problem", "closeDate"], end: "AO" } };
+// แบบฟอร์มตามชีทที่จะวาง: แต่ละชีทในไฟล์ IR มีคอลัมน์ว่างไม่เหมือนกัน
+const IR_LAYOUTS = {
+  PF2: { gaps: ["problem", "closeDate"], end: "AO", name: "ไฟล์ PF2 · ชีท IR Retort", note: "เว้นคอลัมน์ T และ AF" },
+  PF1: { gaps: [], end: "AM", name: "ไฟล์ PF1 / ชีทอื่น (เช่น บรรจุ PF2)", note: "ไม่มีคอลัมน์ว่าง · D–AM" },
+  STORE: { gaps: ["cause"], end: "AN", name: "ชีท IR STORE", note: "เว้นคอลัมน์ V" } };
 const irLay = (lay, x) => IR_LAYOUTS[lay] ? lay : (x && x.plant === "PF2" ? "PF2" : "PF1");
 // เรียงช่องตามแบบฟอร์ม (ทุกช่อง = ใส่คอลัมน์ว่างตามแบบฟอร์มของไฟล์ · เลือกช่องเอง = เรียงต่อกันไม่เว้น)
 function irCells(keys, lay, fn) {
@@ -3298,8 +3307,8 @@ function irShow(x) {
 // ตรวจก่อนวาง: แต่ละค่าจะลงคอลัมน์ไหนของไฟล์ (ตามแบบฟอร์ม PF1 / PF2)
 const colName = n => { let s = ""; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
 function irColPreview(x, lay) {
-  const cells = []; IR_COLS.forEach(([k, l]) => { cells.push([l, String(x[k] ?? "")]); if (IR_LAYOUTS[lay].gaps.includes(k)) cells.push(["(คอลัมน์ว่างในไฟล์ " + lay + ")", ""]); });
-  return `<span class="lab" style="margin-top:14px">ตรวจคอลัมน์ก่อนวาง · แบบฟอร์ม ${lay} · ${esc(x.plant || "")}</span>
+  const cells = []; IR_COLS.forEach(([k, l]) => { cells.push([l, String(x[k] ?? "")]); if (IR_LAYOUTS[lay].gaps.includes(k)) cells.push(["(คอลัมน์ว่างในชีทนี้)", ""]); });
+  return `<span class="lab" style="margin-top:14px">ตรวจคอลัมน์ก่อนวาง · ${esc(IR_LAYOUTS[lay].name)}</span>
     <div class="irk-cols">${cells.map(([l, v], i) => `<div class="${v ? "" : "e"} ${l.startsWith("(") ? "gap" : ""}"><b>${colName(i + 4)}</b><span>${esc(l)}</span><em>${esc(v.replace(/\n/g, " ↵ ").slice(0, 40)) || "–"}</em></div>`).join("")}</div>`;
 }
 // หน้าต่างคัดลอก: เลือกรูปแบบ (แถว Excel / ข้อความ) และเลือกช่องที่จะคัดลอก (จำไว้ในเครื่อง)
@@ -3320,9 +3329,9 @@ function irCopyDlg(list) {
       <div class="seg"><button data-ca="1" class="${st.all ? "on" : ""}">ทุกช่องตามแบบฟอร์ม</button><button data-ca="0" class="${st.all ? "" : "on"}">เลือกช่องเอง</button></div>
       ${st.all ? "" : `<div class="irk-grid">${IR_COLS.map(([k, l, col]) => `<label><input type="checkbox" data-ck="${k}" ${st.keys.includes(k) ? "checked" : ""}><span>${esc(l)} <small>${col}</small></span></label>`).join("")}</div>
         <div class="row" style="gap:6px;margin-top:6px"><button class="ghost sm" data-cset="all">เลือกทั้งหมด</button><button class="ghost sm" data-cset="none">ล้าง</button></div>`}
-      ${st.fmt === "excel" && st.all ? `<span class="lab" style="margin-top:14px">แบบฟอร์มไฟล์ Excel</span>
-      <div class="seg">${[["auto", "อัตโนมัติตามโรง"], ["PF1", "PF1 (D–AM)"], ["PF2", "PF2 (D–AO)"]].map(([v, l]) => `<button data-clay="${v}" class="${st.lay === v ? "on" : ""}">${l}</button>`).join("")}</div>
-      <small class="hint">ไฟล์ PF2 (ชีท IR Retort) มีคอลัมน์ว่างเพิ่ม 2 ช่อง (T และ AF) · ระบบเว้นช่องให้ตรงหัวข้ออัตโนมัติ</small>` : ""}
+      ${st.fmt === "excel" && st.all ? `<span class="lab" style="margin-top:14px">จะวางในชีทไหน?</span>
+      <div class="laysel">${["PF2", "PF1", "STORE"].map(v => `<button data-clay="${v}" class="${irLay(st.lay, list[0]) === v ? "on" : ""}"><b>${esc(IR_LAYOUTS[v].name)}</b><small>${esc(IR_LAYOUTS[v].note)}</small></button>`).join("")}</div>
+      <small class="hint">เลือกให้ตรงกับ<b>ชีทที่จะวาง</b> · แต่ละชีทมีคอลัมน์ว่างไม่เหมือนกัน · ค่าเริ่มต้น: PF2 = ชีท IR Retort · PF1 = ไม่มีคอลัมน์ว่าง</small>` : ""}
       ${st.fmt === "excel" ? `<label class="irl-ck" style="margin-top:10px"><input type="checkbox" id="cHead" ${st.head ? "checked" : ""}><span>ใส่หัวคอลัมน์บรรทัดแรก</span></label>
         <small class="hint">${st.all && !st.head ? "วางที่ <b>คอลัมน์ D</b> ของแถวว่างในไฟล์ IR · 1 IR = 1 แถว" : "วางที่ช่องแรกที่ต้องการ · ช่องจะเรียงตามลำดับในแบบฟอร์ม"}</small>` : ""}
       ${st.fmt === "excel" && st.all ? irColPreview(list[0], irLay(st.lay, list[0])) : ""}
