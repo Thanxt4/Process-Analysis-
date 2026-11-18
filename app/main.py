@@ -3417,6 +3417,22 @@ def api_retort_ai_status(request: Request):
             "from_env": bool(os.environ.get("GEMINI_API_KEY", "").strip())}
 
 
+# รูปแบบคำตอบ: JSON → หน้าเว็บวาดเป็นรายงาน (ตัวเลขสรุป · กราฟแท่ง · ตาราง · แผนงาน)
+AI_JSON_SPEC = """รูปแบบคำตอบ: ตอบเป็น JSON อย่างเดียว (ไม่มีข้อความอื่นนอก JSON) โครงสร้าง
+{"title": "หัวข้อสั้น ๆ ของคำตอบ",
+ "summary": "สรุปใจความ 1-2 ประโยค ใช้ **ตัวหนา** เน้นคำสำคัญได้",
+ "kpis": [{"label": "ชื่อตัวเลข", "value": "81", "unit": "ครั้ง", "sub": "คำอธิบายสั้น", "tone": "bad|warn|ok|info"}],
+ "sections": [ ...ส่วนเนื้อหา เรียงตามลำดับที่ควรอ่าน... ]}
+ชนิดของ section (เลือกใช้ตามที่เหมาะ):
+- {"type": "bars", "title": "...", "items": [{"label": "PF2 RC21", "value": 12, "unit": "ครั้ง"}]}  ใช้กับการจัดอันดับ/เปรียบเทียบ (ไม่เกิน 8 แถว เรียงมากไปน้อย)
+- {"type": "table", "title": "...", "columns": ["วันที่ / เวลา", "กะ", "พื้นที่", "หม้อ", "ปัญหา", "สาเหตุ"], "rows": [["2026-11-07 02:13", "NS", "PF2", "RC21", "...", "..."]]}  ไม่เกิน 15 แถว
+- {"type": "actions", "title": "...", "items": [{"title": "สิ่งที่ต้องทำ", "detail": "รายละเอียด", "owner": "ผู้รับผิดชอบ", "priority": "high|medium|low"}]}  ใช้กับแผนแก้ไข/ข้อเสนอแนะ
+- {"type": "text", "title": "...", "body": "ข้อความอธิบาย ใช้ - ขึ้นต้นบรรทัดเป็นรายการได้"}
+- {"type": "list", "title": "...", "items": ["ข้อ 1", "ข้อ 2"]}
+กติกา: kpis 0-4 อัน · ใช้ตัวเลขจากข้อมูลที่ให้มาเท่านั้น ห้ามแต่งตัวเลข · ถ้าข้อมูลไม่พอให้บอกใน summary
+คำถามสั้น/ทั่วไป ตอบแค่ title + summary + section แบบ text ก็พอ · ทั้งหมดเป็นภาษาไทย"""
+
+
 @app.post("/api/retort/ai/key")
 async def api_retort_ai_key(request: Request):
     data = await request.json()
@@ -3447,15 +3463,16 @@ async def api_retort_ai(request: Request):
                 {"role": "model", "parts": [{"text": "รับทราบข้อมูลแล้ว พร้อมวิเคราะห์ครับ"}]}]
     for m in msgs:
         contents.append({"role": "model" if m.get("role") == "ai" else "user", "parts": [{"text": str(m["text"])[:4000]}]})
-    body = {"systemInstruction": {"parts": [{"text": RETORT_AI_SYSTEM}]}, "contents": contents,
-            "generationConfig": {"temperature": 0.4, "maxOutputTokens": 4096}}
+    body = {"systemInstruction": {"parts": [{"text": RETORT_AI_SYSTEM + "\n\n" + AI_JSON_SPEC}]}, "contents": contents,
+            "generationConfig": {"temperature": 0.4, "maxOutputTokens": 16384, "responseMimeType": "application/json"}}
     r = await run_in_threadpool(_gemini_call, key, body)
     cands = r["data"].get("candidates") or []
     text = "".join(p.get("text", "") for c in cands[:1] for p in (c.get("content") or {}).get("parts", []) if not p.get("thought"))
     if not text.strip():
         reason = (cands[0].get("finishReason") if cands else "") or (r["data"].get("promptFeedback") or {}).get("blockReason", "")
         raise HTTPException(502, f"AI ไม่ได้ตอบกลับ ({reason or 'ไม่ทราบสาเหตุ'})")
-    return {"text": text.strip(), "model": "AI"}  # ไม่ส่งชื่อรุ่นไปที่หน้าเว็บ
+    trunc = bool(cands) and cands[0].get("finishReason") == "MAX_TOKENS"
+    return {"text": text.strip(), "model": "AI", "truncated": trunc}  # ไม่ส่งชื่อรุ่นไปที่หน้าเว็บ
 
 
 # ---------------------------------------------------------------- ถาม-ตอบ / ความคิดเห็น ในแต่ละหัวข้อ Checklist (Process Control / GMP)
