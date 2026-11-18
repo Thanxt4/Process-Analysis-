@@ -147,6 +147,8 @@ header{background:linear-gradient(135deg,#0f1a2e,#1b2a41 60%,#24395a);color:#fff
 .savebar .pri:disabled{opacity:.5;cursor:default}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:11px 18px;border-radius:12px;font-size:14.5px;opacity:0;transition:.2s;z-index:80;pointer-events:none;max-width:calc(100vw - 32px)}
 .toast.on{opacity:1;transform:translateX(-50%)}.toast.err{background:var(--red)}
+.fac{display:inline-block;font-size:11px;font-weight:800;border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+.fac.sk{background:#e0f2fe;color:#075985}.fac.ss{background:#fce7f3;color:#9d174d}
 </style>
 </head>
 <body>
@@ -188,7 +190,10 @@ header{background:linear-gradient(135deg,#0f1a2e,#1b2a41 60%,#24395a);color:#fff
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const toast = (m, err) => { const t = $("#toast"); t.textContent = m; t.className = "toast on" + (err ? " err" : ""); clearTimeout(t._h); t._h = setTimeout(() => t.className = "toast", 2600); };
-const S = { users: [], depts: ["QC", "PD", "TP"], f: "all", q: "" };
+const S = { users: [], depts: ["QC", "PD", "TP"], facs: ["ITC-SK", "ITC-SS"], f: "all", q: "" };
+const facOf = u => u.factory || "ITC-SK";  // สังกัดโรงงาน (สมาชิกเดิม = ITC-SK)
+const facTag = u => `<span class="fac ${facOf(u) === "ITC-SS" ? "ss" : "sk"}">${esc(facOf(u))}</span>`;
+const facSel = v => `<select name="factory" required>${S.facs.map(d => `<option ${d === v ? "selected" : ""}>${d}</option>`).join("")}</select>`;
 async function api(url, opt){ const r = await fetch(url, opt); const j = await r.json().catch(() => ({}));
   if(r.status === 401 && j.detail === "ADMIN_REQUIRED"){ showGate(); throw new Error("ต้องเข้าสู่ระบบ Admin"); }
   if(!r.ok) throw new Error(j.detail || "ไม่สำเร็จ"); return j; }
@@ -205,19 +210,19 @@ const avColor = s => COLORS[[...String(s)].reduce((a, c) => a + c.charCodeAt(0),
 const ini = n => { const w = String(n).trim().split(/\s+/); return (w[0] || "?").slice(0, 2).toUpperCase(); };
 const ago = ms => { if(!ms) return "ยังไม่เคยเข้า"; const m = Math.round((Date.now() - ms) / 6e4); return m < 60 ? "ใช้งานเมื่อสักครู่" : m < 1440 ? `${Math.round(m / 60)} ชม.ที่แล้ว` : m < 43200 ? `${Math.round(m / 1440)} วันที่แล้ว` : new Date(ms).toLocaleDateString("th-TH"); };
 async function load(){
-  const r = await api("/api/uadmin/users"); S.users = r.users; S.depts = r.depts || S.depts;
+  const r = await api("/api/uadmin/users"); S.users = r.users; S.depts = r.depts || S.depts; S.facs = r.factories || S.facs;
   const first = $("#app").hidden; $("#gate").hidden = true; $("#app").hidden = false;
   if(first) showView(VIEW); else render();
 }
 function render(){
-  const U = S.users, cnt = k => k === "all" ? U.length : k === "off" ? U.filter(u => !u.active).length : U.filter(u => u.dept === k).length;
-  $("#stats").innerHTML = [["all", "ทั้งหมด"], ...S.depts.map(d => [d, d]), ["off", "ระงับ"]].map(([k, l]) => `<div class="st ${S.f === k ? "on" : ""}" data-f="${k}"><b>${cnt(k)}</b><span>${l}</span></div>`).join("");
+  const U = S.users, cnt = k => k === "all" ? U.length : k === "off" ? U.filter(u => !u.active).length : k.startsWith("fac:") ? U.filter(u => facOf(u) === k.slice(4)).length : U.filter(u => u.dept === k).length;
+  $("#stats").innerHTML = [["all", "ทั้งหมด"], ...S.facs.map(d => ["fac:" + d, d]), ...S.depts.map(d => [d, d]), ["off", "ระงับ"]].map(([k, l]) => `<div class="st ${S.f === k ? "on" : ""}" data-f="${k}"><b>${cnt(k)}</b><span>${l}</span></div>`).join("");
   const q = S.q.trim().toLowerCase();
-  const L = U.filter(u => (S.f === "all" || (S.f === "off" ? !u.active : u.dept === S.f)) && (!q || `${u.name} ${u.emp_id}`.toLowerCase().includes(q)));
+  const L = U.filter(u => (S.f === "all" || (S.f === "off" ? !u.active : S.f.startsWith("fac:") ? facOf(u) === S.f.slice(4) : u.dept === S.f)) && (!q || `${u.name} ${u.emp_id} ${facOf(u)}`.toLowerCase().includes(q)));
   $("#list").innerHTML = L.length ? `<div class="row head"><span></span><span>ชื่อ / รหัสพนักงาน</span><span>แผนก</span><span>สถานะ</span><span>ใช้งานล่าสุด</span><span>ผลตรวจ</span><span></span></div>` + L.map(u => `
     <div class="row ${u.active ? "" : "off"}" data-emp="${esc(u.emp_id)}">
       <div class="av" style="background:${avColor(u.name)}">${esc(ini(u.name))}</div>
-      <div class="nm"><b>${esc(u.name)}</b><small>${esc(u.emp_id)}</small></div>
+      <div class="nm"><b>${esc(u.name)}</b><small>${esc(u.emp_id)} ${facTag(u)}</small></div>
       <div class="c-dp"><span class="dp ${esc(u.dept)}">${esc(u.dept)}</span></div>
       <div class="c-st"><span class="stt ${u.active ? "on" : "off"}">${u.active ? "ใช้งาน" : "ระงับ"}</span></div>
       <div class="c-seen mut">${ago(u.last_seen)}${u.devices ? ` · ${u.devices} เครื่อง` : ""}</div>
@@ -235,14 +240,14 @@ const pwFld = (n, ph) => `<div class="fld" style="margin:0"><input type="passwor
 const submit = (f, fn) => f.onsubmit = async e => { e.preventDefault(); const b = f.querySelector(".pri,.danger"); if(b) b.disabled = true; try{ await fn(new FormData(f)); close(); await load(); }catch(err){ toast(err.message, true); if(b) b.disabled = false; } };
 $("#addBtn").onclick = () => modal(`<h2>เพิ่มผู้ใช้</h2><p class="mut">ผู้ใช้เปลี่ยนรหัสผ่านเองได้ภายหลัง (ผ่านหัวหน้า/Admin)</p>
   <label class="lab">ชื่อ</label><input name="name" required maxlength="60"><label class="lab">รหัสพนักงาน</label><input name="emp_id" required maxlength="20" autocapitalize="off">
-  <label class="lab">แผนก</label>${deptSel("QC")}<label class="lab">รหัสผ่านเริ่มต้น</label>${pwFld("password", "อย่างน้อย 6 ตัว")}
+  <label class="lab">สังกัดโรงงาน</label>${facSel("ITC-SK")}<label class="lab">แผนก</label>${deptSel("QC")}<label class="lab">รหัสผ่านเริ่มต้น</label>${pwFld("password", "อย่างน้อย 6 ตัว")}
   <div class="mrow"><button type="button" data-close>ยกเลิก</button><button class="pri" type="submit">เพิ่มผู้ใช้</button></div>`,
   f => submit(f, async fd => { await jpost("/api/uadmin/users", Object.fromEntries(fd)); toast("เพิ่มผู้ใช้แล้ว"); }));
 $("#stats").addEventListener("click", e => { const c = e.target.closest("[data-f]"); if(c){ S.f = c.dataset.f; render(); } });
 $("#q").addEventListener("input", e => { S.q = e.target.value; render(); });
 $("#list").addEventListener("click", async e => {
   const b = e.target.closest("[data-a]"); if(!b) return; const emp = b.closest("[data-emp]").dataset.emp, u = S.users.find(x => x.emp_id === emp), url = `/api/uadmin/users/${encodeURIComponent(emp)}`;
-  if(b.dataset.a === "edit") modal(`<h2>แก้ไขผู้ใช้</h2><p class="mut">รหัสพนักงาน ${esc(u.emp_id)}</p><label class="lab">ชื่อ</label><input name="name" value="${esc(u.name)}" required maxlength="60"><label class="lab">แผนก</label>${deptSel(u.dept)}
+  if(b.dataset.a === "edit") modal(`<h2>แก้ไขผู้ใช้</h2><p class="mut">รหัสพนักงาน ${esc(u.emp_id)}</p><label class="lab">ชื่อ</label><input name="name" value="${esc(u.name)}" required maxlength="60"><label class="lab">สังกัดโรงงาน</label>${facSel(facOf(u))}<label class="lab">แผนก</label>${deptSel(u.dept)}
       <div class="mrow"><button type="button" data-close>ยกเลิก</button><button class="pri" type="submit">บันทึก</button></div>`, f => submit(f, async fd => { await jpost(url, Object.fromEntries(fd)); toast("บันทึกแล้ว"); }));
   else if(b.dataset.a === "pw") modal(`<h2>ตั้งรหัสผ่านใหม่</h2><p class="mut">${esc(u.name)} · ${esc(u.emp_id)} · จะออกจากระบบทุกเครื่องของคนนี้</p>${pwFld("password", "รหัสผ่านใหม่ อย่างน้อย 6 ตัว")}
       <div class="mrow"><button type="button" data-close>ยกเลิก</button><button class="pri" type="submit">ตั้งรหัสใหม่</button></div>`, f => submit(f, async fd => { await jpost(url, {password: fd.get("password")}); toast("ตั้งรหัสผ่านใหม่แล้ว"); }));

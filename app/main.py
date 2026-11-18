@@ -9,6 +9,7 @@ import hashlib
 import re
 import secrets
 import io
+import contextvars
 import json
 import mimetypes
 import os
@@ -92,13 +93,42 @@ NO_ACT = "ไม่มีกิจกรรม"  # ผลการตรวจ�
 STATUSES = ("ปกติ", "พบปัญหา", NO_ACT)
 
 
+# ---- โรงงาน (สังกัด): แต่ละโรงงานมี Checklist ของตัวเอง · สมาชิกเดิม/พื้นที่เดิม = ITC-SK
+FACTORIES = ("ITC-SK", "ITC-SS")
+FAC_DEFAULT = "ITC-SK"
+_CUR_FAC = contextvars.ContextVar("cur_fac", default=FAC_DEFAULT)  # โรงงานของผู้ใช้ที่เรียกอยู่ (ตั้งใน middleware)
+
+
+def cur_fac() -> str:
+    return _CUR_FAC.get()
+
+
+def zone_fac(z) -> str:
+    return z.get("factory") or FAC_DEFAULT
+
+
+def fac_zones():
+    """พื้นที่ทั้งหมด (รวมที่ลบแล้ว) ของโรงงานผู้ใช้ปัจจุบัน"""
+    f = cur_fac()
+    return [z for z in AREAS["zones"] if zone_fac(z) == f]
+
+
+def item_in_fac(aid) -> bool:
+    return (ITEM_MAP.get(aid) or {}).get("factory", FAC_DEFAULT) == cur_fac()
+
+
+def fu_in_fac(x) -> bool:
+    """เรื่องที่ต้องติดตาม: ของโรงงานไหน (เรื่องเดิมที่ไม่ได้ระบุ = ITC-SK)"""
+    return (x.get("factory") or FAC_DEFAULT) == cur_fac()
+
+
 def load_areas():
     with open(AREAS_PATH, encoding="utf-8") as f:
         cfg = json.load(f)
     item_map = {}
     for z in cfg["zones"]:
         for it in z["items"]:
-            item_map[it["id"]] = {**it, "zone_id": z["id"], "zone": z["name"], "owner": z["owner"]}
+            item_map[it["id"]] = {**it, "zone_id": z["id"], "zone": z["name"], "owner": z["owner"], "factory": zone_fac(z)}
     return cfg, item_map
 
 
@@ -117,7 +147,7 @@ def process_tags():
 def visible_zones():
     """พื้นที่/รายการที่ใช้งานอยู่ (ไม่รวมที่ถูกลบ = hidden) — ของที่ลบยังเก็บไว้ให้ข้อมูลย้อนหลังอ่านชื่อได้"""
     out = []
-    for z in AREAS["zones"]:
+    for z in fac_zones():
         if z.get("hidden"):
             continue
         out.append({**z, "deck": zone_deck(z), "items": [it for it in z["items"] if not it.get("hidden")]})
@@ -146,7 +176,7 @@ def item_active(it, rd: str, checked: bool) -> bool:
 def zones_for_round(rd: str, checked_ids: set):
     """โครงสร้าง Checklist ตามที่เป็นในรอบ rd"""
     out = []
-    for z in AREAS["zones"]:
+    for z in fac_zones():
         items = [it for it in z["items"] if item_active(it, rd, it["id"] in checked_ids)]
         if not items or (z.get("hidden") and not any(it["id"] in checked_ids for it in items)):
             continue
@@ -652,6 +682,9 @@ with db() as con:
     for c in ("remark", "action", "cause", "resp", "resp_by", "resp_at"):  # หมายเหตุ / การแก้ไข / สาเหตุ / ฝ่ายที่ตอบ (QC/PD) และผู้ตอบ
         if c not in cols:
             con.execute(f"ALTER TABLE submissions ADD COLUMN {c} TEXT")
+    ucols = {r[1] for r in con.execute("PRAGMA table_info(users)")}
+    if "factory" not in ucols:  # สังกัดโรงงาน · สมาชิกเดิมทั้งหมด = ITC-SK
+        con.execute("ALTER TABLE users ADD COLUMN factory TEXT NOT NULL DEFAULT 'ITC-SK'")
     cols = {r[1] for r in con.execute("PRAGMA table_info(images)")}
     if "page" not in cols:
         con.execute("ALTER TABLE images ADD COLUMN page INTEGER NOT NULL DEFAULT 0")
@@ -706,6 +739,7 @@ def fetch_submissions(rd: date, area_id: Optional[str] = None):
         for s in subs:
             s["_img"] = [(r["page"], r["filename"]) for r in con.execute(
                 "SELECT page, filename FROM images WHERE submission_id=? ORDER BY page, seq", (s["id"],))]
+    subs = [s for s in subs if item_in_fac(s["area_id"])]  # เฉพาะ Checklist ของโรงงานผู้ใช้
     for s in subs:
         it = ITEM_MAP.get(s["area_id"], {})
         s["area_name"] = it.get("name", s["area_id"])
@@ -972,10 +1006,10 @@ def _me(request: Request):
     u = None
     if t:
         with db() as con:
-            r = con.execute("SELECT u.emp_id, u.name, u.dept, u.active, s.last_seen FROM user_sessions s JOIN users u ON u.emp_id=s.emp_id "
+            r = con.execute("SELECT u.emp_id, u.name, u.dept, u.factory, u.active, s.last_seen FROM user_sessions s JOIN users u ON u.emp_id=s.emp_id "
                             "WHERE s.token=?", (_tok_hash(t),)).fetchone()
             if r and r["active"]:
-                u = {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"]}
+                u = {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"], "factory": r["factory"] or FAC_DEFAULT}
                 nowms = int(_time.time() * 1000)
                 if nowms - r["last_seen"] > 45_000:  # อัปเดตบ่อยพอให้รู้ว่าใครออนไลน์
                     con.execute("UPDATE user_sessions SET last_seen=? WHERE token=?", (nowms, _tok_hash(t)))
@@ -1005,9 +1039,10 @@ _USER_FREE = ("/api/auth/", "/api/retort", "/api/login", "/api/admin/check", "/a
 @app.middleware("http")
 async def user_gate(request: Request, call_next):
     path = request.url.path
-    if (path.startswith(("/api/", "/uploads/", "/t/")) and not path.startswith(_USER_FREE)
-            and not await run_in_threadpool(_me, request)):
+    u = await run_in_threadpool(_me, request) if path.startswith(("/api/", "/uploads/", "/t/")) and request.cookies.get(USER_COOKIE) else None
+    if path.startswith(("/api/", "/uploads/", "/t/")) and not path.startswith(_USER_FREE) and not u:
         return JSONResponse({"detail": "LOGIN_REQUIRED"}, status_code=401)
+    _CUR_FAC.set((u or {}).get("factory") or FAC_DEFAULT)  # Checklist ของโรงงานผู้ใช้
     return await call_next(request)
 
 
@@ -1020,13 +1055,13 @@ def _set_session(resp, emp_id: str):
 
 
 def _user_out(r) -> dict:
-    return {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"]}
+    return {"emp_id": r["emp_id"], "name": r["name"], "dept": r["dept"], "factory": (r["factory"] if "factory" in r.keys() else "") or FAC_DEFAULT}
 
 
 @app.get("/api/auth/me")
 def api_auth_me(request: Request):
     u = _me(request)
-    resp = JSONResponse({"user": u, "depts": DEPTS})
+    resp = JSONResponse({"user": u, "depts": DEPTS, "factories": FACTORIES})
     t = request.cookies.get(USER_COOKIE)
     if u and t:  # ต่ออายุ cookie ทุกครั้งที่เปิดแอป → ไม่หลุดเอง
         resp.set_cookie(USER_COOKIE, t, max_age=FOREVER, httponly=True, samesite="lax")
@@ -1039,9 +1074,12 @@ async def api_auth_register(request: Request):
     name = " ".join(str(d.get("name") or "").split())[:60]
     emp = str(d.get("emp_id") or "").strip()
     dept = str(d.get("dept") or "").strip().upper()
+    fac = str(d.get("factory") or "").strip().upper()
     pw = str(d.get("password") or "")
     if not name:
         raise HTTPException(400, "กรอกชื่อ")
+    if fac not in FACTORIES:
+        raise HTTPException(400, "เลือกสังกัดโรงงาน")
     if not _EMP_RE.match(emp):
         raise HTTPException(400, "รหัสพนักงานใช้ตัวอักษร/ตัวเลข 2–20 ตัว")
     if dept not in DEPTS:
@@ -1051,9 +1089,9 @@ async def api_auth_register(request: Request):
     with db() as con:
         if con.execute("SELECT 1 FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone():
             raise HTTPException(409, "รหัสพนักงานนี้สมัครไว้แล้ว · ไปที่ เข้าสู่ระบบ")
-        con.execute("INSERT INTO users(emp_id, name, dept, pw, created_at) VALUES(?,?,?,?,?)",
-                    (emp, name, dept, await run_in_threadpool(_pw_hash, pw), int(_time.time() * 1000)))
-    resp = JSONResponse({"ok": True, "user": {"emp_id": emp, "name": name, "dept": dept}})
+        con.execute("INSERT INTO users(emp_id, name, dept, factory, pw, created_at) VALUES(?,?,?,?,?,?)",
+                    (emp, name, dept, fac, await run_in_threadpool(_pw_hash, pw), int(_time.time() * 1000)))
+    resp = JSONResponse({"ok": True, "user": {"emp_id": emp, "name": name, "dept": dept, "factory": fac}})
     _set_session(resp, emp)
     return resp
 
@@ -1319,12 +1357,12 @@ def api_uadmin_monitor(request: Request):
 def api_uadmin_users(request: Request):
     _need_admin(request)
     with db() as con:
-        rows = con.execute("""SELECT u.emp_id, u.name, u.dept, u.active, u.created_at,
+        rows = con.execute("""SELECT u.emp_id, u.name, u.dept, u.factory, u.active, u.created_at,
                                      (SELECT MAX(last_seen) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS last_seen,
                                      (SELECT COUNT(*) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS devices,
                                      (SELECT COUNT(*) FROM submissions b WHERE b.inspector=u.name) AS subs
                               FROM users u ORDER BY u.created_at DESC""").fetchall()
-    return {"users": [dict(r) for r in rows], "depts": DEPTS}
+    return {"users": [dict(r) for r in rows], "depts": DEPTS, "factories": FACTORIES}
 
 
 def _uadmin_user(con, emp: str):
@@ -1340,13 +1378,16 @@ async def api_uadmin_create(request: Request):
     d = await request.json()
     name, emp = " ".join(str(d.get("name") or "").split())[:60], str(d.get("emp_id") or "").strip()
     dept, pw = str(d.get("dept") or "").upper(), str(d.get("password") or "")
+    fac = str(d.get("factory") or FAC_DEFAULT).upper()
+    if fac not in FACTORIES:
+        raise HTTPException(400, "สังกัดโรงงานไม่ถูกต้อง")
     if not name or not _EMP_RE.match(emp) or dept not in DEPTS or len(pw) < 6:
         raise HTTPException(400, "กรอกชื่อ รหัสพนักงาน (2–20 ตัว) แผนก และรหัสผ่านอย่างน้อย 6 ตัว")
     with db() as con:
         if con.execute("SELECT 1 FROM users WHERE lower(emp_id)=lower(?)", (emp,)).fetchone():
             raise HTTPException(409, "รหัสพนักงานนี้มีอยู่แล้ว")
-        con.execute("INSERT INTO users(emp_id, name, dept, pw, created_at) VALUES(?,?,?,?,?)",
-                    (emp, name, dept, await run_in_threadpool(_pw_hash, pw), int(_time.time() * 1000)))
+        con.execute("INSERT INTO users(emp_id, name, dept, factory, pw, created_at) VALUES(?,?,?,?,?,?)",
+                    (emp, name, dept, fac, await run_in_threadpool(_pw_hash, pw), int(_time.time() * 1000)))
     return {"ok": True}
 
 
@@ -1366,6 +1407,10 @@ async def api_uadmin_update(emp: str, request: Request):
             if str(d["dept"]).upper() not in DEPTS:
                 raise HTTPException(400, "แผนกไม่ถูกต้อง")
             con.execute("UPDATE users SET dept=? WHERE emp_id=?", (str(d["dept"]).upper(), r["emp_id"]))
+        if "factory" in d:
+            if str(d["factory"]).upper() not in FACTORIES:
+                raise HTTPException(400, "สังกัดโรงงานไม่ถูกต้อง")
+            con.execute("UPDATE users SET factory=? WHERE emp_id=?", (str(d["factory"]).upper(), r["emp_id"]))
         if "active" in d:
             con.execute("UPDATE users SET active=? WHERE emp_id=?", (1 if d["active"] else 0, r["emp_id"]))
             if not d["active"]:
@@ -1409,6 +1454,7 @@ def api_config():
     start, end = round_window(rd)
     return {
         "title": AREAS["title"],
+        "factory": cur_fac(),
         "zones": visible_zones(),
         "cutoff": CUTOFF.strftime("%H:%M"),
         "server_time": n.isoformat(),
@@ -1542,7 +1588,7 @@ async def api_create(request: Request):
     remark = _clean(str(form.get("remark") or ""))[:1000]
     action = _clean(str(form.get("action") or ""))[:2000]
     cause = _clean(str(form.get("cause") or ""))[:2000]
-    if area_id not in ITEM_MAP or ITEM_MAP[area_id].get("hidden"):
+    if area_id not in ITEM_MAP or ITEM_MAP[area_id].get("hidden") or not item_in_fac(area_id):
         raise HTTPException(400, "ไม่พบพื้นที่นี้")
     if status not in STATUSES:
         status = "ปกติ"
@@ -1775,7 +1821,7 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
         has_cust if cust == "any" else (lambda it: not has_cust(it)) if cust == "none" else \
         (lambda it: cust in _cust_list(it.get("cust")))
     zones = []
-    for z in AREAS["zones"]:
+    for z in fac_zones():
         visible = not z.get("hidden")
         items, done, totals = [], [0] * len(rounds), [0] * len(rounds)
         for it in z["items"]:
@@ -1937,8 +1983,8 @@ async def api_admin_check(request: Request):
     _check_edit_pin(data.get("pin"))
     # หน้าแก้ไข: แสดงหัวข้อที่ซ่อนไว้ (paused) ด้วย เพื่อให้กดเปิดกลับได้
     zs = [{**z, "deck": zone_deck(z), "items": [it for it in z["items"] if not it.get("hidden") or it.get("paused")]}
-          for z in AREAS["zones"] if not z.get("hidden")]
-    return {"ok": True, "zones": zs}
+          for z in fac_zones() if not z.get("hidden")]
+    return {"ok": True, "zones": zs, "factory": cur_fac()}
 
 
 @app.post("/api/admin/areas")
@@ -1947,12 +1993,14 @@ async def api_admin_save(request: Request):
     data = await request.json()
     _check_edit_pin(data.get("pin"))
     new_zones = data.get("zones")
-    if not isinstance(new_zones, list) or not new_zones:
+    if not isinstance(new_zones, list) or (not new_zones and cur_fac() == FAC_DEFAULT):
         raise HTTPException(400, "ข้อมูลไม่ถูกต้อง")
 
-    old_zones = {z["id"]: z for z in AREAS["zones"]}
-    old_items = {it["id"]: it for z in AREAS["zones"] for it in z["items"]}
-    used_ids = set(old_zones) | set(old_items)
+    fac = cur_fac()  # แก้ได้เฉพาะ Checklist ของโรงงานตัวเอง · ของโรงงานอื่นคงไว้ตามเดิม
+    others = [z for z in AREAS["zones"] if zone_fac(z) != fac]
+    old_zones = {z["id"]: z for z in AREAS["zones"] if zone_fac(z) == fac}
+    old_items = {it["id"]: it for z in old_zones.values() for it in z["items"]}
+    used_ids = {z["id"] for z in AREAS["zones"]} | {it["id"] for z in AREAS["zones"] for it in z["items"]}
     result, seen_zone = [], set()
 
     def new_id(prefix):
@@ -2039,6 +2087,8 @@ async def api_admin_save(request: Request):
         zbase = {k: v for k, v in old_zones.get(zid, {}).items() if k not in ("hidden", "items")}
         items = _proc_sort_items(items, process_tags())  # บันทึกแล้วเรียงตามกระบวนการอัตโนมัติ
         zbase.update({"id": zid, "name": name, "owner": str(z.get("owner") or "").strip()[:80], "items": items})
+        if fac != FAC_DEFAULT:
+            zbase["factory"] = fac
         if zid not in old_zones and z.get("deck") in DECKS and z.get("deck") != "pc":
             zbase["deck"] = z["deck"]  # พื้นที่ใหม่ที่เพิ่มในกลุ่ม GMP
         sub = str(z.get("sub") or "").strip()[:30]  # กลุ่มย่อย เช่น WH → WH1, WH5 ... รวมเป็นการ์ดเดียว
@@ -2053,7 +2103,7 @@ async def api_admin_save(request: Request):
                 {**it, "removed": it.get("removed") or round_of(now()).isoformat()} if not it.get("hidden") else it
                 for it in z["items"]]})
 
-    cfg = {**AREAS, "zones": result}
+    cfg = {**AREAS, "zones": result + others if fac == FAC_DEFAULT else others + result}
     backup_dir = DATA_DIR / "areas_backup"
     backup_dir.mkdir(exist_ok=True)
     stamp = now().strftime("%Y%m%d_%H%M%S")
@@ -3440,7 +3490,8 @@ def api_comments_summary():
     per, open_q = {}, []
     groups = {}
     for x in items:
-        groups.setdefault(x["area_id"], []).append(x)
+        if item_in_fac(x["area_id"]):
+            groups.setdefault(x["area_id"], []).append(x)
     for aid, L in groups.items():
         th = _cm_threads(L)
         per[aid] = {"n": len(L), "open": sum(1 for t in th if t["open"]), "last": max(x["at"] for x in L)}
@@ -3534,13 +3585,15 @@ def api_search(q: str = "", days: int = Query(90, ge=1, le=400)):
     zdeck = {z["id"]: zone_deck(z) for z in AREAS["zones"]}
     items = [{"id": aid, "no": it.get("no", ""), "name": it.get("name", ""), "zone": it.get("zone", ""), "deck": zdeck.get(it.get("zone_id"), "pc"),
               "proc": it.get("proc", ""), "cust": it.get("cust", "")}
-             for aid, it in ITEM_MAP.items() if not it.get("hidden") and not it.get("extra")
+             for aid, it in ITEM_MAP.items() if not it.get("hidden") and not it.get("extra") and item_in_fac(aid)
              and hit(it.get("no"), it.get("name"), it.get("zone"), it.get("proc"), it.get("cust"))][:30]
     since = (round_of(now()) - timedelta(days=days)).isoformat()
     subs = []
     with db() as con:
         for r in con.execute("SELECT * FROM submissions WHERE round_date>=? ORDER BY created_at DESC", (since,)):
             r = dict(r)
+            if not item_in_fac(r["area_id"]):
+                continue
             it = ITEM_MAP.get(r["area_id"], {})
             try:
                 pages = json.loads(r.get("pages") or "null") or []
@@ -3562,12 +3615,12 @@ def api_search(q: str = "", days: int = Query(90, ge=1, le=400)):
         cms = _cm_rows(con)
     fu = [{"id": x["id"], "title": x.get("title", ""), "status": x.get("status", ""), "zone": x.get("zone", ""), "owner": x.get("owner", ""),
            "due": x.get("due", ""), "text": (x.get("detail") or "")[:300]}
-          for x in fus if hit(x.get("title"), x.get("detail"), x.get("zone"), x.get("owner"), x.get("created_by"),
+          for x in fus if fu_in_fac(x) and hit(x.get("title"), x.get("detail"), x.get("zone"), x.get("owner"), x.get("created_by"),
                               " ".join(n.get("text", "") for n in x.get("notes") or []))][:30]
     tops = {c["id"]: c for c in cms if not c.get("parent")}
     cm = []
     for c in reversed(cms):
-        if c.get("deleted") or not hit(c.get("text"), c.get("by")):
+        if c.get("deleted") or not item_in_fac(c["area_id"]) or not hit(c.get("text"), c.get("by")):
             continue
         it = ITEM_MAP.get(c["area_id"], {})
         sid = c.get("sid") or (tops.get(c.get("parent")) or {}).get("sid")
@@ -3599,9 +3652,9 @@ def api_notifications(request: Request, name: str = "", days: int = Query(14, ge
             r = con.execute("SELECT inspector, round_date, status FROM submissions WHERE id=?", (sid,)).fetchone()
             if r:
                 insp[sid] = (r["inspector"], r["round_date"], r["status"])
-        fus = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups WHERE updated_at>=?", (since,))]
+        fus = [x for x in (json.loads(r["data"]) for r in con.execute("SELECT data FROM followups WHERE updated_at>=?", (since,))) if fu_in_fac(x)]
     for x in cms:
-        if x.get("deleted"):
+        if x.get("deleted") or not item_in_fac(x.get("area_id")):
             continue
         top = tops.get(x.get("parent")) if x.get("parent") else x
         sid = (top or {}).get("sid")
@@ -3693,7 +3746,8 @@ def _fu_for_resp(con, sid: str) -> str:
     x = {"id": "f" + uuid.uuid4().hex[:10], "created_by": s["inspector"], "created_at": ts, "notes": [],
          "title": title[:200], "detail": _fu_txt(s.get("note"), 3000), "zone_id": zone["id"] if zone else "",
          "zone": zone["name"] if zone else "", "owner": DEPT_NAMES.get(dept, dept), "due": "", "urgent": False, "photos": [],
-         "src": {"sid": sid}, "dept": dept, "auto": True, "status": "open", "updated_at": ts, "updated_by": s["inspector"]}
+         "src": {"sid": sid}, "dept": dept, "auto": True, "status": "open", "updated_at": ts, "updated_by": s["inspector"],
+         "factory": it.get("factory", FAC_DEFAULT)}
     con.execute("INSERT INTO followups(id, data, status, created_at, updated_at) VALUES(?,?,?,?,?)",
                 (x["id"], json.dumps(x, ensure_ascii=False), "open", ts, ts))
     return x["id"]
@@ -3706,7 +3760,7 @@ DEPT_NAMES = {"PD": "PD (Production)", "QC": "QC", "TP": "TP"}
 def api_followups():
     """รายการเรื่องที่ต้องติดตาม + ปัญหาที่พบล่าสุดที่ยังไม่ได้เปิดเรื่องติดตาม"""
     with db() as con:
-        items = [json.loads(r["data"]) for r in con.execute("SELECT data FROM followups ORDER BY created_at DESC")]
+        items = [x for x in (json.loads(r["data"]) for r in con.execute("SELECT data FROM followups ORDER BY created_at DESC")) if fu_in_fac(x)]
         linked = {(x.get("src") or {}).get("sid") for x in items} - {None, ""}
         for x in items:
             sid = (x.get("src") or {}).get("sid")
@@ -3721,6 +3775,8 @@ def api_followups():
     zdeck = {z["id"]: zone_deck(z) for z in AREAS["zones"]}
     issues = []
     for r in rows:  # แสดงทั้งที่ติดตามแล้วและยังไม่ติดตาม (linked = ติดตามแล้ว)
+        if not item_in_fac(r["area_id"]):
+            continue
         it = ITEM_MAP.get(r["area_id"], {})
         issues.append({"sid": r["id"], "round": r["round_date"], "area_id": r["area_id"], "no": it.get("no", ""),
                        "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""), "zone_id": it.get("zone_id", ""),
@@ -3761,7 +3817,7 @@ async def api_followup_save(request: Request):
         old = json.loads(old["data"]) if old else None
         if fid and not old:
             raise HTTPException(404, "ไม่พบเรื่องนี้ (อาจถูกลบไปแล้ว)")
-        x = old or {"id": "f" + uuid.uuid4().hex[:10], "created_by": by, "created_at": ts, "notes": []}
+        x = old or {"id": "f" + uuid.uuid4().hex[:10], "created_by": by, "created_at": ts, "notes": [], "factory": cur_fac()}
         src = data.get("src") if not old else old.get("src")
         if src and isinstance(src, dict) and src.get("sid"):
             ok = con.execute("SELECT 1 FROM submissions WHERE id=?", (str(src["sid"]),)).fetchone()
