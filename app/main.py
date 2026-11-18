@@ -9,6 +9,7 @@ import hashlib
 import re
 import secrets
 import io
+import asyncio
 import contextvars
 import json
 import mimetypes
@@ -24,7 +25,7 @@ from pathlib import Path
 from typing import List, Optional
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -3431,6 +3432,82 @@ AI_JSON_SPEC = """รูปแบบคำตอบ: ตอบเป็น JSON 
 - {"type": "list", "title": "...", "items": ["ข้อ 1", "ข้อ 2"]}
 กติกา: kpis 0-4 อัน · ใช้ตัวเลขจากข้อมูลที่ให้มาเท่านั้น ห้ามแต่งตัวเลข · ถ้าข้อมูลไม่พอให้บอกใน summary
 คำถามสั้น/ทั่วไป ตอบแค่ title + summary + section แบบ text ก็พอ · ทั้งหมดเป็นภาษาไทย"""
+
+
+# ---- คุยด้วยเสียง (Gemini Live) · เฉพาะหัวหน้า · เบราว์เซอร์ ↔ เซิร์ฟเวอร์นี้ ↔ Google (API Key อยู่ที่เซิร์ฟเวอร์เท่านั้น)
+GEMINI_LIVE_MODEL = os.environ.get("GEMINI_LIVE_MODEL", "").strip() or "gemini-3.8-live-extended-thinking"
+LIVE_URL = os.environ.get("GEMINI_LIVE_URL", "").strip() or "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
+LIVE_SYSTEM = ("คุณคือผู้ช่วยหัวหน้างาน Retort ที่คุยกันด้วยเสียงภาษาไทย ตอบสั้น กระชับ เป็นภาษาพูด "
+               "ไม่ต้องอ่านตารางหรือสัญลักษณ์ ใช้ตัวเลขจากข้อมูลที่ให้มาเท่านั้น ถ้าไม่มีข้อมูลให้บอกตรง ๆ "
+               "ถ้าคำตอบยาว ให้สรุปประเด็นสำคัญ 2-3 ข้อก่อน แล้วถามว่าต้องการรายละเอียดเพิ่มไหม")
+
+
+@app.websocket("/api/retort/live")
+async def ws_retort_live(ws: WebSocket):
+    if not (EDIT_PIN and ws.cookies.get("rt_access") == RT_SUP_TOKEN):  # เฉพาะรหัสหัวหน้า
+        await ws.close(code=4403)
+        return
+    await ws.accept()
+    key = gemini_key()
+    if not key:
+        await ws.send_text(json.dumps({"error": "ยังไม่ได้ตั้งค่า API Key ของ AI (ตั้งได้ที่หน้า ตั้งค่า)"}))
+        await ws.close()
+        return
+    try:
+        import websockets
+    except ImportError:
+        await ws.send_text(json.dumps({"error": "เซิร์ฟเวอร์ยังไม่มีโมดูล websockets · รัน pip install -r requirements.txt แล้วรีสตาร์ท"}))
+        await ws.close()
+        return
+    try:
+        first = json.loads(await ws.receive_text())  # {context, voice}
+    except (WebSocketDisconnect, ValueError):
+        return
+    ctx = str(first.get("context") or "")[:60000]
+    setup = {"setup": {
+        "model": "models/" + GEMINI_LIVE_MODEL,
+        "generationConfig": {"responseModalities": ["AUDIO"]},
+        "systemInstruction": {"parts": [{"text": LIVE_SYSTEM + "\n\n" + RETORT_AI_SYSTEM + "\n\nข้อมูลปัญหา Retort ล่าสุด:\n" + ctx}]},
+        "inputAudioTranscription": {}, "outputAudioTranscription": {}}}
+    try:
+        async with websockets.connect(LIVE_URL + "?key=" + key, max_size=None, open_timeout=20) as g:
+            await g.send(json.dumps(setup))
+
+            async def up():  # เบราว์เซอร์ → Google (รับเฉพาะเสียง/ข้อความ ไม่ให้เปลี่ยน setup)
+                while True:
+                    m = json.loads(await ws.receive_text())
+                    if isinstance(m, dict) and ("realtimeInput" in m or "clientContent" in m):
+                        await g.send(json.dumps({k: m[k] for k in ("realtimeInput", "clientContent") if k in m}))
+
+            async def down():  # Google → เบราว์เซอร์
+                async for raw in g:
+                    await ws.send_text(raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else raw)
+
+            tasks = [asyncio.create_task(up()), asyncio.create_task(down())]
+            done, pend = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            for t in pend:
+                t.cancel()
+            for t in done:
+                ex = t.exception()
+                if ex and not isinstance(ex, (WebSocketDisconnect, asyncio.CancelledError)):
+                    raise ex
+            reason = getattr(g, "close_reason", "") or ""
+            if g.close_code and g.close_code != 1000:
+                await ws.send_text(json.dumps({"error": f"AI ปิดการเชื่อมต่อ ({g.close_code}) {reason}".strip()}))
+    except WebSocketDisconnect:
+        return
+    except Exception as e:  # noqa
+        msg = str(e)
+        if "1008" in msg or "not found" in msg.lower() or "not supported" in msg.lower():
+            msg = f"ใช้รุ่น {GEMINI_LIVE_MODEL} ไม่ได้ (Key นี้อาจยังไม่เปิดใช้รุ่นนี้): {msg}"
+        try:
+            await ws.send_text(json.dumps({"error": msg[:300]}))
+        except Exception:  # noqa
+            pass
+    try:
+        await ws.close()
+    except Exception:  # noqa
+        pass
 
 
 @app.post("/api/retort/ai/key")

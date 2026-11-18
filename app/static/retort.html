@@ -1568,6 +1568,27 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .air-warn{display:flex;gap:8px;align-items:center;padding:10px 14px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:13.5px}
 .air-foot{font-size:12px;color:var(--mute);border-top:1px dashed #e5e7eb;padding-top:10px}
 @media(max-width:700px){.air{padding:14px}.air-bar{grid-template-columns:90px 1fr auto}.air-kpi b{font-size:22px}}
+.ai-vbtn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#7c3aed,#2563eb);border-color:transparent;color:#fff}.ai-vbtn svg.i{width:17px;height:17px}
+#voiceP{position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px}
+.vp-card{width:min(560px,100%);max-height:92vh;display:flex;flex-direction:column;gap:12px;background:linear-gradient(180deg,#0f172a,#1e293b);color:#e2e8f0;border-radius:26px;padding:20px 22px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.vp-h{display:flex;align-items:flex-start;gap:10px}.vp-h>div{flex:1;display:flex;flex-direction:column}.vp-h small{color:#94a3b8;font-size:12.5px}.vp-h b{font-size:19px;color:#fff}
+.vp-x{background:rgba(255,255,255,.08);border:0;color:#cbd5e1;min-height:38px;width:38px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center}
+.vp-orb{--lv:0;position:relative;width:150px;height:150px;margin:6px auto 0;display:flex;align-items:center;justify-content:center}
+.vp-orb i{position:absolute;inset:calc(18px - var(--lv)*18px);border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.55),rgba(37,99,235,.15) 70%,transparent);transition:inset .08s}
+.vp-orb i+i{inset:calc(34px - var(--lv)*10px);background:radial-gradient(circle,rgba(56,189,248,.5),transparent 70%)}
+.vp-orb span{position:relative;width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#2563eb);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 26px rgba(37,99,235,.5)}
+.vp-orb span svg.i{width:34px;height:34px}
+#voiceP[data-st="speak"] .vp-orb i{animation:vpPulse 1.1s ease-in-out infinite}#voiceP[data-st="conn"] .vp-orb span{animation:vpSpin 1.4s linear infinite}
+#voiceP[data-st="mute"] .vp-orb span,#voiceP[data-st="err"] .vp-orb span,#voiceP[data-st="end"] .vp-orb span{background:#475569;box-shadow:none}
+@keyframes vpPulse{50%{inset:4px}}@keyframes vpSpin{to{transform:rotate(360deg)}}
+.vp-st{text-align:center;font-weight:700;color:#c4b5fd;min-height:22px}
+.vp-log{flex:1;min-height:120px;max-height:36vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.vl{display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-radius:12px;max-width:88%}.vl b{font-size:11.5px;opacity:.7}.vl span{font-size:14.5px;line-height:1.5;white-space:pre-wrap}
+.vl.u{align-self:flex-end;background:#2563eb;color:#fff}.vl.a{align-self:flex-start;background:rgba(255,255,255,.08)}.vl.e{align-self:stretch;background:rgba(245,158,11,.15);color:#fcd34d;max-width:none}
+.vp-hint{margin:auto;text-align:center;color:#94a3b8;font-size:13.5px}
+.vp-b{display:flex;gap:10px}.vp-b button{flex:1;min-height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;border:0}
+.vp-b svg.i{width:18px;height:18px}.vp-mute{background:rgba(255,255,255,.1);color:#e2e8f0}.vp-mute.on{background:#f59e0b;color:#1b2a41}.vp-end{background:#dc2626;color:#fff}
+.vp-note{text-align:center;color:#64748b;font-size:12px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -4120,7 +4141,8 @@ function viewAI() {
   h += `<div class="card ai-head">${sec("spark", "ผู้ช่วย AI วิเคราะห์ปัญหา Retort", `วิเคราะห์จากข้อมูลที่บันทึกในช่วงที่เลือก (${ctx.count} รายการ)`)}
     <div class="ai-opts"><div class="seg">${[["7", "7 วัน"], ["30", "30 วัน"], ["90", "90 วัน"]].map(([v, l]) => `<button data-airng="${v}" class="${AI.range === v ? "on" : ""}">${l}</button>`).join("")}</div>
       <div class="seg">${[["all", "ทุกพื้นที่"], ...plantsList().map(p => [p, p])].map(([v, l]) => `<button data-aiplant="${v}" class="${AI.plant === v ? "on" : ""}">${l}</button>`).join("")}</div>
-      ${AI.msgs.length ? `<button class="ghost sm" id="aiClear">${I("trash")}เริ่มใหม่</button>` : ""}</div>
+      ${AI.msgs.length ? `<button class="ghost sm" id="aiClear">${I("trash")}เริ่มใหม่</button>` : ""}
+      ${S.role === "sup" ? `<button class="pri sm ai-vbtn" id="aiVoice">${MIC_SVG}พูดคุยด้วยเสียง</button>` : ""}</div>
     ${AI.msgs.length ? "" : aiHome()}</div>
     <div class="ai-chat" id="aiChat">${AI.msgs.map(m => `<div class="ai-msg ${m.role}">${m.role === "ai" ? `<div class="ai-av">${I("spark")}</div>` : ""}<div class="ai-b ${m.role === "ai" && aiParse(m.text) ? "rich" : ""}">${m.role === "ai" ? aiMsgHtml(m) : esc(m.text)}</div></div>`).join("")}
       ${AI.busy ? `<div class="ai-msg ai"><div class="ai-av">${I("spark")}</div><div class="ai-b"><span class="ai-dots"><i></i><i></i><i></i></span> กำลังวิเคราะห์…</div></div>` : ""}</div>
@@ -4132,10 +4154,91 @@ function viewAI() {
     else if (b.dataset.aiplant) { AI.plant = b.dataset.aiplant; lsSet("rt_ai_plant", AI.plant); viewAI(); }
     else if (b.dataset.aip != null) askAI((AI.qp || [])[+b.dataset.aip]);
     else if (b.id === "aiClear") { AI.msgs = []; viewAI(); }
+    else if (b.id === "aiVoice") voiceOpen();
     else if (b.dataset.viewGo2) { S.view = b.dataset.viewGo2; lsSet("rt_view", S.view); render(); } };
   $("#aiForm").onsubmit = e => { e.preventDefault(); const q = $("#aiQ").value.trim(); if (q) askAI(q); };
   $("#aiQ").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#aiForm").requestSubmit(); } };
   const ch = $("#aiChat"); if (AI.msgs.length) ch.lastElementChild?.scrollIntoView({ block: "nearest" });
+}
+/* ---------- คุยด้วยเสียง (Gemini Live) · เฉพาะหัวหน้า · เสียงผ่านเซิร์ฟเวอร์ (API Key ไม่ออกจากเซิร์ฟเวอร์) ---------- */
+const MIC_SVG = `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+const V = { ws: null, ac: null, oc: null, stream: null, node: null, playT: 0, srcs: [], st: "", lines: [], muted: false, lvl: 0, cur: { u: "", a: "" } };
+const b64 = buf => { let s = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+function voiceDraw() {
+  const p = $("#voiceP"); if (!p) return;
+  const lab = { conn: "กำลังเชื่อมต่อ…", listen: "ฟังอยู่ · พูดได้เลย", speak: "AI กำลังพูด · พูดแทรกได้", mute: "ปิดไมค์อยู่", err: "เชื่อมต่อไม่ได้", end: "จบการสนทนา" }[V.st] || "";
+  p.querySelector(".vp-st").textContent = lab; p.dataset.st = V.st;
+  p.querySelector(".vp-mute").classList.toggle("on", V.muted); p.querySelector(".vp-mute span").textContent = V.muted ? "เปิดไมค์" : "ปิดไมค์";
+  const L = [...V.lines, ...(V.cur.u ? [{ r: "u", t: V.cur.u }] : []), ...(V.cur.a ? [{ r: "a", t: V.cur.a }] : [])];
+  const box = p.querySelector(".vp-log"); box.innerHTML = L.length ? L.map(x => `<div class="vl ${x.r}"><b>${x.r === "u" ? "คุณ" : x.r === "e" ? "แจ้งเตือน" : "AI"}</b><span>${esc(x.t)}</span></div>`).join("") : `<p class="vp-hint">ลองถาม เช่น "สัปดาห์นี้หม้อไหนมีปัญหามากที่สุด" หรือ "สรุปการ Hold สินค้าให้หน่อย"</p>`;
+  box.scrollTop = box.scrollHeight;
+}
+function voiceOpen() {
+  if ($("#voiceP")) return;
+  const p = document.createElement("div"); p.id = "voiceP";
+  p.innerHTML = `<div class="vp-card"><div class="vp-h"><div><small>ผู้ช่วย AI · ${esc(AI.plant === "all" ? "ทุกพื้นที่" : AI.plant)} · ${esc(AI.range)} วัน</small><b>พูดคุยด้วยเสียง</b></div><button class="vp-x" aria-label="ปิด">${I("x")}</button></div>
+    <div class="vp-orb"><i></i><i></i><span>${MIC_SVG}</span></div><div class="vp-st"></div>
+    <div class="vp-log"></div>
+    <div class="vp-b"><button class="vp-mute">${MIC_SVG}<span>ปิดไมค์</span></button><button class="vp-end">${I("x")}จบการสนทนา</button></div>
+    <small class="vp-note">ใช้ข้อมูลช่วงและพื้นที่ที่เลือกในหน้า AI · AI อาจผิดพลาดได้</small></div>`;
+  document.body.appendChild(p);
+  p.querySelector(".vp-x").onclick = p.querySelector(".vp-end").onclick = () => voiceClose(true);
+  p.querySelector(".vp-mute").onclick = () => { V.muted = !V.muted; V.st = V.muted ? "mute" : "listen"; voiceDraw(); };
+  V.lines = []; V.cur = { u: "", a: "" }; V.muted = false; V.st = "conn"; voiceDraw(); voiceStart();
+}
+function voiceErr(msg) { V.lines.push({ r: "e", t: msg }); V.st = "err"; voiceDraw(); voiceStop(); }
+async function voiceStart() {
+  if (!window.isSecureContext || !navigator.mediaDevices) return voiceErr("เบราว์เซอร์ไม่ให้ใช้ไมโครโฟนบนลิงก์นี้ · ต้องเปิดผ่านลิงก์ https (เช่น ลิงก์ Tailscale Funnel) หรือเปิดที่เครื่อง Server ผ่าน localhost");
+  try { V.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } }); }
+  catch (e) { return voiceErr("ใช้ไมโครโฟนไม่ได้: " + (e.name === "NotAllowedError" ? "ยังไม่ได้อนุญาตไมโครโฟน · กดอนุญาตที่แถบที่อยู่ของเบราว์เซอร์" : e.message)); }
+  const ws = V.ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/api/retort/live");
+  ws.onopen = () => ws.send(JSON.stringify({ context: buildAiContext().text }));
+  ws.onclose = e => { if (V.ws !== ws) return; if (e.code === 4403) return voiceErr("เฉพาะหัวหน้า · เข้าหน้า Retort ด้วยรหัสหัวหน้าก่อน"); if (V.st !== "err" && V.st !== "end") { V.st = "end"; voiceDraw(); } voiceStop(); };
+  ws.onerror = () => {};
+  ws.onmessage = async ev => { let m; try { m = JSON.parse(typeof ev.data === "string" ? ev.data : await ev.data.text()); } catch { return; }
+    if (m.error) return voiceErr(m.error);
+    if (m.setupComplete) { V.st = "listen"; voiceDraw(); await voiceMic(); return; }
+    const sc = m.serverContent; if (!sc) return;
+    if (sc.interrupted) { V.srcs.forEach(x => { try { x.stop(); } catch {} }); V.srcs = []; V.playT = 0; }
+    if (sc.inputTranscription && sc.inputTranscription.text) { V.cur.u += sc.inputTranscription.text; voiceDraw(); }
+    if (sc.outputTranscription && sc.outputTranscription.text) { if (V.cur.u) { V.lines.push({ r: "u", t: V.cur.u.trim() }); V.cur.u = ""; } V.cur.a += sc.outputTranscription.text; voiceDraw(); }
+    (sc.modelTurn && sc.modelTurn.parts || []).forEach(pt => { const d = pt.inlineData; if (d && /audio/.test(d.mimeType || "")) voicePlay(d.data, +((d.mimeType.match(/rate=(\d+)/) || [])[1] || 24000)); });
+    if (sc.turnComplete) { if (V.cur.u) V.lines.push({ r: "u", t: V.cur.u.trim() }); if (V.cur.a) V.lines.push({ r: "a", t: V.cur.a.trim() }); V.cur = { u: "", a: "" }; voiceDraw(); } };
+}
+async function voiceMic() {
+  try {
+    V.ac = new AudioContext({ sampleRate: 16000 });
+    const code = "class C extends AudioWorkletProcessor{process(i){const c=i[0]&&i[0][0];if(c)this.port.postMessage(c.slice(0));return true}}registerProcessor('cap',C)";
+    await V.ac.audioWorklet.addModule(URL.createObjectURL(new Blob([code], { type: "application/javascript" })));
+    const src = V.ac.createMediaStreamSource(V.stream); V.node = new AudioWorkletNode(V.ac, "cap"); src.connect(V.node);
+    let acc = new Int16Array(1600), n = 0;
+    V.node.port.onmessage = e => { const f = e.data; let s2 = 0;
+      for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); s2 += v * v; acc[n++] = v < 0 ? v * 0x8000 : v * 0x7fff;
+        if (n === acc.length) { if (!V.muted && V.ws && V.ws.readyState === 1) V.ws.send(JSON.stringify({ realtimeInput: { audio: { data: b64(acc.buffer), mimeType: "audio/pcm;rate=16000" } } })); acc = new Int16Array(1600); n = 0; } }
+      V.lvl = V.muted ? 0 : Math.sqrt(s2 / f.length); const o = document.querySelector("#voiceP .vp-orb"); if (o) o.style.setProperty("--lv", Math.min(1, V.lvl * 6).toFixed(2)); };
+  } catch (e) { voiceErr("เริ่มไมโครโฟนไม่ได้: " + e.message); }
+}
+function voicePlay(data, rate) {
+  if (!V.oc) V.oc = new AudioContext({ sampleRate: rate });
+  const bin = atob(data), i16 = new Int16Array(bin.length / 2);
+  for (let i = 0; i < i16.length; i++) i16[i] = bin.charCodeAt(i * 2) | (bin.charCodeAt(i * 2 + 1) << 8);
+  const buf = V.oc.createBuffer(1, i16.length, rate), ch = buf.getChannelData(0); for (let i = 0; i < i16.length; i++) ch[i] = i16[i] / 32768;
+  const src = V.oc.createBufferSource(); src.buffer = buf; src.connect(V.oc.destination);
+  const t = Math.max(V.oc.currentTime + 0.03, V.playT); src.start(t); V.playT = t + buf.duration; V.srcs.push(src);
+  if (V.st !== "speak" && !V.muted) { V.st = "speak"; voiceDraw(); }
+  src.onended = () => { V.srcs = V.srcs.filter(x => x !== src); if (!V.srcs.length && V.st === "speak") { V.st = V.muted ? "mute" : "listen"; voiceDraw(); } };
+}
+function voiceStop() {
+  try { V.node && V.node.disconnect(); } catch {} try { V.stream && V.stream.getTracks().forEach(t => t.stop()); } catch {}
+  try { V.ac && V.ac.close(); } catch {} V.srcs.forEach(x => { try { x.stop(); } catch {} }); try { V.oc && V.oc.close(); } catch {}
+  const w = V.ws; V.ws = null; try { w && w.readyState <= 1 && w.close(); } catch {}
+  Object.assign(V, { ac: null, oc: null, stream: null, node: null, srcs: [], playT: 0 });
+}
+function voiceClose(keep) {
+  voiceStop(); const p = $("#voiceP"); if (p) p.remove();
+  // เก็บบทสนทนาไว้ในแชท AI ด้วย
+  const L = V.lines.filter(x => x.r !== "e" && x.t); if (keep && L.length) { L.forEach(x => AI.msgs.push({ role: x.r === "u" ? "user" : "ai", text: (x.r === "u" ? "🎤 " : "") + x.t })); if (S.view === "ai") viewAI(); }
+  V.lines = [];
 }
 async function askAI(q) {
   if (AI.busy) return;
