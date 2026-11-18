@@ -1517,6 +1517,19 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .laysel b{font-size:13.5px;color:var(--navy)}.laysel small{font-size:12px;color:var(--mute);font-weight:500}
 .laysel button.on{border-color:var(--navy);background:#eef2f7;box-shadow:inset 0 0 0 1px var(--navy)}
 @media(max-width:600px){.laysel{grid-template-columns:1fr}}
+.aiq-home{display:flex;flex-direction:column;gap:18px;margin-top:14px}
+.aiq-h{display:flex;align-items:center;gap:8px;margin:0 2px 10px}.aiq-h::after{content:"";flex:1;height:1px;background:#e5e7eb;margin-left:6px}
+.aiq-h b{font-size:15px;font-weight:800;color:var(--navy)}.aiq-h span{font-size:13.5px;color:var(--mute)}.aiq-h svg.i{width:18px;height:18px;color:#d97706}
+.aiq-sec.hot .aiq-h b{color:#92400e}.aiq-sec.hot .aiq-h::after{background:#fde68a}
+.aiq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.aiq{position:relative;display:flex;align-items:center;gap:14px;text-align:left;padding:16px 18px;min-height:86px;border-radius:18px;background:#fff;border:1px solid #e5e7eb;box-shadow:none;transition:transform .12s,box-shadow .12s,border-color .12s}
+.aiq:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(15,23,42,.1);border-color:#cbd5e1}
+.aiq-ic{flex:0 0 auto;width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#eef2f7;color:var(--navy)}.aiq-ic svg.i{width:22px;height:22px}
+.aiq-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.aiq-t b{font-size:16.5px;font-weight:800;color:var(--navy);line-height:1.35}.aiq-t small{font-size:13.5px;color:var(--mute);line-height:1.45}
+.aiq em{align-self:flex-start;flex:0 0 auto;font-style:normal;font-size:13px;font-weight:800;color:#92400e;background:#fff;border:1px solid #fcd34d;border-radius:99px;padding:3px 11px;white-space:nowrap}
+.aiq-go{flex:0 0 auto;color:#94a3b8;opacity:0;transition:opacity .12s}.aiq-go svg.i{width:18px;height:18px}.aiq:hover .aiq-go{opacity:1}
+.aiq.hot{background:#fffbeb;border-color:#fde68a}.aiq.hot .aiq-ic{background:#fef3c7;color:#b45309}.aiq.hot:hover{border-color:#f59e0b}
+@media(max-width:760px){.aiq-grid{grid-template-columns:1fr}.aiq{min-height:0;padding:12px 14px}.aiq-t b{font-size:15px}.aiq-go{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3907,6 +3920,59 @@ const AI_QUICK = [
   "หม้อ / โปรแกรม / กะ ไหนมีปัญหามากผิดปกติ",
   "ร่างสรุปสั้น ๆ สำหรับรายงานหัวหน้าประจำสัปดาห์"
 ];
+/* หน้า AI: คำถามสำเร็จรูป (ใช้ในที่ประชุม) แบ่งหมวด · [ไอคอน, หัวข้อ, คำอธิบาย, คำถามที่ส่งให้ AI] */
+const AI_SECTIONS = [
+  ["ภาพรวมและแผนงาน", [
+    ["pie", "ภาพรวมช่วงนี้", "เทียบกับช่วงก่อนหน้า พร้อมแผนจัดการ", "สรุปภาพรวมปัญหา Retort ในช่วงนี้ เทียบกับช่วงก่อนหน้า (จำนวน หัวข้อ หม้อ กะ Hold) บอกว่าอะไรดีขึ้น อะไรแย่ลง และเสนอแผนจัดการเป็นข้อ ๆ"],
+    ["target", "จัดลำดับปัญหา", "3 อันดับที่น่าห่วงที่สุด + แผนแก้ไข", "จัดลำดับ 3 ปัญหาที่น่าห่วงที่สุดในช่วงนี้ โดยดูจากความถี่ แนวโน้ม เวลาที่เสีย และผลต่อสินค้า (Hold) อธิบายเหตุผลของแต่ละอันดับ และเสนอแผนแก้ไขที่ทำได้จริง พร้อมผู้รับผิดชอบและกำหนดเวลา"],
+    ["calendar", "แผนสัปดาห์หน้า", "แยกตามวัน จันทร์–ศุกร์ สำหรับรายงานหัวหน้า", "จากข้อมูลช่วงนี้ ร่างแผนงานสัปดาห์หน้าแยกตามวัน จันทร์–ศุกร์ ว่าควรตรวจ/แก้/ติดตามเรื่องอะไร ที่หม้อไหน เขียนกระชับสำหรับรายงานหัวหน้า"]]],
+  ["หาสาเหตุ", [
+    ["search", "สาเหตุรากแบบ 5 Why", "ปัญหาอันดับ 1 + แผนป้องกันไม่ให้เกิดซ้ำ", "วิเคราะห์สาเหตุรากของปัญหาที่เกิดบ่อยที่สุดในช่วงนี้แบบ 5 Why โดยอ้างอิงข้อมูลที่บันทึก (หม้อ โปรแกรม กะ ค่าที่วัด สาเหตุ การแก้ไข) แล้วเสนอแผนป้องกันไม่ให้เกิดซ้ำ"],
+    ["bars", "สาเหตุที่พบบ่อยสุด", "3 อันดับ พร้อมมาตรการป้องกัน", "สาเหตุที่พบบ่อยที่สุด 3 อันดับในช่วงนี้คืออะไร เกิดกับปัญหา/หม้อไหน และควรมีมาตรการป้องกันอย่างไร"],
+    ["gauge", "ค่าวัดเทียบค่าควบคุม", "ค่าที่วัดได้เบี่ยงจากโปรแกรมตรงไหน", "เทียบค่าที่วัดได้ในรายการปัญหากับค่าควบคุมของโปรแกรม (Thermal Process Specification) ว่าเบี่ยงที่ขั้นไหน มากน้อยเท่าไร เกิดซ้ำที่หม้อ/โปรแกรมไหน และควรตรวจอะไร"],
+    ["alert", "ปัญหาที่เกิดซ้ำ", "แก้แล้วแต่ยังเกิด · เสนอแผนใหม่", "หาปัญหาที่เกิดซ้ำที่หม้อเดิมหรือสาเหตุเดิม ทั้งที่มีบันทึกการแก้ไขแล้ว วิเคราะห์ว่าทำไมการแก้ไขเดิมยังไม่ได้ผล และเสนอแผนใหม่"]]],
+  ["หม้อ · กะ · ผลกระทบ", [
+    ["factory", "หม้อ / โปรแกรมผิดปกติ", "ควรตรวจอะไร ใครทำ เมื่อไร", "หม้อหรือโปรแกรมไหนมีปัญหามากผิดปกติเมื่อเทียบกับตัวอื่น ควรตรวจอะไร ใครควรเป็นคนทำ และควรทำเมื่อไร"],
+    ["clock", "เทียบกะ DS / NS", "ปัญหาต่างกันอย่างไร ควรปรับอะไร", "เทียบปัญหาระหว่างกะ DS และ NS ทั้งจำนวน หัวข้อ สาเหตุ และเวลาที่เกิด ต่างกันอย่างไร และแต่ละกะควรปรับอะไร"],
+    ["tag", "เหตุการณ์ Hold สินค้า", "สรุปทั้งหมด + แผนลดการ Hold", "สรุปเหตุการณ์ Hold สินค้าทั้งหมดในช่วงนี้ (วันที่ หม้อ ปัญหา จำนวนที่ Hold) หารูปแบบที่ซ้ำ และเสนอแผนลดการ Hold"],
+    ["trend", "เวลาสูญเสีย (Downtime)", "ปัญหาที่ใช้เวลาแก้นานที่สุด", "ปัญหาไหนทำให้เสียเวลามากที่สุด (รวมนาทีและเฉลี่ยต่อครั้ง) เกิดที่หม้อไหน และควรทำอะไรเพื่อลดเวลาสูญเสีย"]]]
+];
+// คำถามจากข้อมูลจริงของช่วงและพื้นที่ที่เลือก
+function aiDataCards() {
+  const { from, to, pFrom, pTo } = aiRange(), okP = x => AI.plant === "all" || x.plant === AI.plant, all = Object.values(S.items).filter(okP);
+  const L = all.filter(x => x.date >= from && x.date <= to), P = all.filter(x => x.date >= pFrom && x.date <= pTo);
+  const cnt = (arr, k) => { const m = {}; arr.forEach(x => { const v = k(x); if (v) m[v] = (m[v] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const cn = id => catById(id)?.name || "หัวข้อที่ถูกลบ", out = [];
+  const byCat = cnt(L, x => x.category);
+  byCat.slice(0, 2).forEach(([id, n]) => out.push(["alert", `ปัญหา "${cn(id)}"`, "เกิดที่หม้อ/โปรแกรม/กะไหนบ่อย สาเหตุคืออะไร", `${n} ครั้ง`,
+    `วิเคราะห์ปัญหา "${cn(id)}" (${n} ครั้งในช่วงนี้): เกิดที่หม้อ โปรแกรม และกะไหนบ่อย สาเหตุหลักคืออะไร การแก้ไขที่เคยทำได้ผลไหม และควรแก้อย่างไรต่อ`]));
+  const pc = Object.fromEntries(cnt(P, x => x.category)), up = byCat.map(([id, n]) => [id, n - (pc[id] || 0)]).filter(r => r[1] > 0).sort((a, b) => b[1] - a[1])[0];
+  if (up) out.push(["up", `"${cn(up[0])}" เพิ่มขึ้น`, "ทำไมถึงเพิ่มจากช่วงก่อนหน้า", `+${up[1]} ครั้ง`,
+    `ปัญหา "${cn(up[0])}" เพิ่มขึ้น ${up[1]} ครั้งจากช่วงก่อนหน้า วิเคราะห์ว่าทำไมถึงเพิ่ม (หม้อ โปรแกรม กะ สาเหตุ ที่เปลี่ยนไป) และควรทำอะไร`]);
+  const r1 = cnt(L, x => x.retort)[0];
+  if (r1) out.push(["factory", `หม้อ ${r1[0]}`, "ปัญหาอะไรบ้าง สาเหตุ และการแก้ไขที่เคยทำ", `${r1[1]} ครั้ง`,
+    `หม้อ ${r1[0]} มีปัญหาอะไรบ้างในช่วงนี้ (${r1[1]} ครั้ง) สาเหตุคืออะไร การแก้ไขที่เคยทำมีอะไรบ้าง และควรตรวจ/ซ่อมอะไรเพิ่ม`]);
+  const p1 = cnt(L, x => x.program ? "P" + x.program : "")[0];
+  if (p1) out.push(["gauge", `โปรแกรม ${p1[0]}`, "ค่าที่วัดได้เทียบกับค่าควบคุม", `${p1[1]} ครั้ง`,
+    `โปรแกรม ${p1[0]} มีปัญหา ${p1[1]} ครั้งในช่วงนี้ เทียบค่าที่วัดได้กับค่าควบคุมของโปรแกรมว่าเบี่ยงตรงไหน และเกิดกับหม้อไหน`]);
+  const H = L.filter(x => x.impact === "hold");
+  if (H.length) out.push(["tag", "Hold สินค้า", "หม้อ วันที่ ปริมาณ และแผนลดการ Hold", `${H.length} ครั้ง`,
+    `สรุปการ Hold สินค้า ${H.length} ครั้งในช่วงนี้ แยกตามหม้อ วันที่ ปัญหา และจำนวนที่ Hold แล้วเสนอแผนลดการ Hold`]);
+  const lg = L.filter(x => num(x.duration) > 0).sort((a, b) => num(b.duration) - num(a.duration))[0];
+  if (lg) out.push(["clock", "เหตุการณ์ที่นานที่สุด", `${dmy(lg.date)} · หม้อ ${lg.retort || "-"} · ${cn(lg.category)}`, `${Math.round(num(lg.duration)).toLocaleString()} นาที`,
+    `เหตุการณ์ที่ใช้เวลานานที่สุดในช่วงนี้คือ ${cn(lg.category)} ที่หม้อ ${lg.retort || "-"} วันที่ ${dmy(lg.date)} (${Math.round(num(lg.duration))} นาที) วิเคราะห์ว่าทำไมใช้เวลานาน และควรทำอย่างไรให้แก้ได้เร็วขึ้นครั้งหน้า`]);
+  return out;
+}
+function aiHome() {
+  const D = aiDataCards(), Q = []; const card = ([ic, t, sub, badge, q], hot) => { Q.push(q);
+    return `<button class="aiq ${hot ? "hot" : ""}" data-aip="${Q.length - 1}"><span class="aiq-ic">${I(ic)}</span><span class="aiq-t"><b>${esc(t)}</b><small>${esc(sub)}</small></span>${badge ? `<em>${esc(badge)}</em>` : ""}<span class="aiq-go">${I("right")}</span></button>`; };
+  const head = (t, sub, ic) => `<div class="aiq-h">${ic ? I(ic) : ""}<b>${t}</b>${sub ? `<span>${sub}</span>` : ""}</div>`;
+  let h = "";
+  if (D.length) h += `<div class="aiq-sec hot">${head("คำถามจากข้อมูลของคุณ", "ตามช่วงและพื้นที่ที่เลือก", "spark")}<div class="aiq-grid">${D.map(c => card(c, true)).join("")}</div></div>`;
+  AI_SECTIONS.forEach(([t, L]) => { h += `<div class="aiq-sec">${head(t)}<div class="aiq-grid">${L.map(([ic, tt, sub, q]) => card([ic, tt, sub, "", q])).join("")}</div></div>`; });
+  if (U.aiQuick && U.aiQuick.length) h += `<div class="aiq-sec">${head("คำถามที่ตั้งไว้")}<div class="aiq-grid">${U.aiQuick.map(q => card(["spark", q, "", "", q])).join("")}</div></div>`;
+  AI.qp = Q; return `<div class="aiq-home">${h}</div>`;
+}
 function aiRange() { const n = parseInt(AI.range, 10) || 30, t = todayISO(), from = addDays(t, -(n - 1)); return { n, from, to: t, pFrom: addDays(from, -n), pTo: addDays(from, -1) }; }
 function buildAiContext() {
   const { n, from, to, pFrom, pTo } = aiRange();
@@ -3956,7 +4022,7 @@ function viewAI() {
     <div class="ai-opts"><div class="seg">${[["7", "7 วัน"], ["30", "30 วัน"], ["90", "90 วัน"]].map(([v, l]) => `<button data-airng="${v}" class="${AI.range === v ? "on" : ""}">${l}</button>`).join("")}</div>
       <div class="seg">${[["all", "ทุกพื้นที่"], ...plantsList().map(p => [p, p])].map(([v, l]) => `<button data-aiplant="${v}" class="${AI.plant === v ? "on" : ""}">${l}</button>`).join("")}</div>
       ${AI.msgs.length ? `<button class="ghost sm" id="aiClear">${I("trash")}เริ่มใหม่</button>` : ""}</div>
-    ${AI.msgs.length ? "" : `<div class="ai-quick">${aiQuick().map((q, i) => `<button class="chip" data-aiq="${i}">${esc(q)}</button>`).join("")}</div>`}</div>
+    ${AI.msgs.length ? "" : aiHome()}</div>
     <div class="ai-chat" id="aiChat">${AI.msgs.map(m => `<div class="ai-msg ${m.role}">${m.role === "ai" ? `<div class="ai-av">${I("spark")}</div>` : ""}<div class="ai-b">${m.role === "ai" ? mdLite(m.text) + (m.model ? `<div class="ai-meta">AI อาจผิดพลาดได้ ตรวจสอบกับข้อมูลจริงก่อนนำไปใช้</div>` : "") : esc(m.text)}</div></div>`).join("")}
       ${AI.busy ? `<div class="ai-msg ai"><div class="ai-av">${I("spark")}</div><div class="ai-b"><span class="ai-dots"><i></i><i></i><i></i></span> กำลังวิเคราะห์…</div></div>` : ""}</div>
     <form class="ai-input" id="aiForm"><textarea id="aiQ" rows="2" placeholder="ถามเกี่ยวกับปัญหา Retort เช่น ทำไม Main steam ตกบ่อยที่ RP12" ${AI.busy ? "disabled" : ""}></textarea><button class="pri" type="submit" ${AI.busy ? "disabled" : ""}>${I("send")}ถาม</button></form>`;
@@ -3965,7 +4031,7 @@ function viewAI() {
   m.onclick = e => { const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.airng) { AI.range = b.dataset.airng; lsSet("rt_ai_range", AI.range); viewAI(); }
     else if (b.dataset.aiplant) { AI.plant = b.dataset.aiplant; lsSet("rt_ai_plant", AI.plant); viewAI(); }
-    else if (b.dataset.aiq != null) askAI(aiQuick()[+b.dataset.aiq]);
+    else if (b.dataset.aip != null) askAI((AI.qp || [])[+b.dataset.aip]);
     else if (b.id === "aiClear") { AI.msgs = []; viewAI(); }
     else if (b.dataset.viewGo2) { S.view = b.dataset.viewGo2; lsSet("rt_view", S.view); render(); } };
   $("#aiForm").onsubmit = e => { e.preventDefault(); const q = $("#aiQ").value.trim(); if (q) askAI(q); };
