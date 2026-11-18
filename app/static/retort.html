@@ -1589,6 +1589,17 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .vp-b{display:flex;gap:10px}.vp-b button{flex:1;min-height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;border:0}
 .vp-b svg.i{width:18px;height:18px}.vp-mute{background:rgba(255,255,255,.1);color:#e2e8f0}.vp-mute.on{background:#f59e0b;color:#1b2a41}.vp-end{background:#dc2626;color:#fff}
 .vp-note{text-align:center;color:#64748b;font-size:12px}
+#voiceP.has-rep .vp-card{width:min(1240px,100%)}
+.vp-body{display:flex;gap:16px;min-height:0;flex:1}.vp-l{display:flex;flex-direction:column;gap:12px;min-width:0;flex:1}
+#voiceP.has-rep .vp-l{flex:0 0 380px}
+.vp-rep{display:none;flex:1;min-width:0;overflow:auto;max-height:76vh;border-radius:18px;background:#f1f5f9;padding:12px;color:#0f172a}
+#voiceP.has-rep .vp-rep{display:block}
+.vp-rep-q{display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-weight:700;color:var(--navy)}.vp-rep-q svg.i{width:18px;height:18px;color:#7c3aed;flex:0 0 auto}
+.vp-rep-q span{flex:1}.vp-rep-q em{font-style:normal;font-size:12px;color:var(--mute);font-weight:600}
+.vp-load{display:flex;align-items:center;gap:10px;justify-content:center;padding:60px 10px;color:var(--mute);background:#fff;border-radius:16px}
+.vp-rep-empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:60px 20px;color:var(--mute)}.vp-rep-empty svg.i{width:34px;height:34px;color:#94a3b8}.vp-rep-empty b{color:var(--navy)}
+.vl.pick{cursor:pointer}.vl.u.sel{box-shadow:0 0 0 2px #c4b5fd}
+@media(max-width:900px){.vp-body{flex-direction:column}#voiceP.has-rep .vp-l{flex:none}#voiceP.has-rep .vp-log{max-height:22vh}#voiceP.has-rep .vp-orb{width:96px;height:96px}#voiceP.has-rep .vp-orb span{width:56px;height:56px}.vp-rep{max-height:none}.vp-card{overflow:auto}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -4162,7 +4173,7 @@ function viewAI() {
 }
 /* ---------- คุยด้วยเสียง (Gemini Live) · เฉพาะหัวหน้า · เสียงผ่านเซิร์ฟเวอร์ (API Key ไม่ออกจากเซิร์ฟเวอร์) ---------- */
 const MIC_SVG = `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-const V = { ws: null, ac: null, oc: null, stream: null, node: null, playT: 0, srcs: [], st: "", lines: [], muted: false, lvl: 0, cur: { u: "", a: "" } };
+const V = { ws: null, ac: null, oc: null, stream: null, node: null, playT: 0, srcs: [], st: "", lines: [], muted: false, lvl: 0, cur: { u: "", a: "" }, turns: [], sel: -1 };
 const b64 = buf => { let s = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
 function voiceDraw() {
   const p = $("#voiceP"); if (!p) return;
@@ -4170,20 +4181,37 @@ function voiceDraw() {
   p.querySelector(".vp-st").textContent = lab; p.dataset.st = V.st;
   p.querySelector(".vp-mute").classList.toggle("on", V.muted); p.querySelector(".vp-mute span").textContent = V.muted ? "เปิดไมค์" : "ปิดไมค์";
   const L = [...V.lines, ...(V.cur.u ? [{ r: "u", t: V.cur.u }] : []), ...(V.cur.a ? [{ r: "a", t: V.cur.a }] : [])];
-  const box = p.querySelector(".vp-log"); box.innerHTML = L.length ? L.map(x => `<div class="vl ${x.r}"><b>${x.r === "u" ? "คุณ" : x.r === "e" ? "แจ้งเตือน" : "AI"}</b><span>${esc(x.t)}</span></div>`).join("") : `<p class="vp-hint">ลองถาม เช่น "สัปดาห์นี้หม้อไหนมีปัญหามากที่สุด" หรือ "สรุปการ Hold สินค้าให้หน่อย"</p>`;
+  const box = p.querySelector(".vp-log"); box.innerHTML = L.length ? L.map(x => `<div class="vl ${x.r} ${x.ti != null ? "pick" : ""} ${x.ti != null && x.ti === V.sel ? "sel" : ""}" ${x.ti != null ? `data-vti="${x.ti}" title="แตะเพื่อดูรายละเอียดของคำถามนี้"` : ""}><b>${x.r === "u" ? "คุณ" : x.r === "e" ? "แจ้งเตือน" : "AI"}</b><span>${esc(x.t)}</span></div>`).join("") : `<p class="vp-hint">ลองถาม เช่น "สัปดาห์นี้หม้อไหนมีปัญหามากที่สุด" หรือ "สรุปการ Hold สินค้าให้หน่อย"</p>`;
   box.scrollTop = box.scrollHeight;
+  // รายละเอียดแบบรายงาน (เหมือนตอนพิมพ์ถาม) ของคำถามที่เลือก
+  const T = V.turns[V.sel], R = p.querySelector(".vp-rep");
+  p.classList.toggle("has-rep", V.turns.some(t => t.q));
+  R.innerHTML = !T ? `<div class="vp-rep-empty">${I("chart")}<b>รายละเอียดจะขึ้นที่นี่</b><span>ถามด้วยเสียง แล้วระบบจะทำรายงานสรุป ตัวเลข กราฟ และตาราง ให้ดูประกอบ</span></div>`
+    : `<div class="vp-rep-q">${I("spark")}<span>${esc(T.q)}</span>${V.turns.filter(t => t.q).length > 1 ? `<em>คำถามที่ ${V.turns.slice(0, V.sel + 1).filter(t => t.q).length}/${V.turns.filter(t => t.q).length}</em>` : ""}</div>`
+      + (T.busy ? `<div class="vp-load"><span class="ai-dots"><i></i><i></i><i></i></span> กำลังจัดทำรายละเอียด…</div>` : T.err ? `<div class="air-warn">${I("alert")}${esc(T.err)}</div>` : aiMsgHtml({ text: T.rep, trunc: T.trunc, model: "AI" }));
+}
+async function voiceReport(T) {
+  T.busy = true; voiceDraw();
+  const hist = [...AI.msgs.map(m => ({ role: m.role, text: m.text })), ...V.turns.filter(t => t !== T && t.q && t.rep).flatMap(t => [{ role: "user", text: t.q }, { role: "ai", text: t.rep }]).slice(-8), { role: "user", text: T.q }];
+  try { const r = await jpost("/api/retort/ai", { context: buildAiContext().text, messages: hist }); T.rep = r.text; T.trunc = !!r.truncated; }
+  catch (e) { T.err = "ทำรายละเอียดไม่สำเร็จ: " + e.message; }
+  T.busy = false; voiceDraw();
 }
 function voiceOpen() {
   if ($("#voiceP")) return;
   const p = document.createElement("div"); p.id = "voiceP";
   p.innerHTML = `<div class="vp-card"><div class="vp-h"><div><small>ผู้ช่วย AI · ${esc(AI.plant === "all" ? "ทุกพื้นที่" : AI.plant)} · ${esc(AI.range)} วัน</small><b>พูดคุยด้วยเสียง</b></div><button class="vp-x" aria-label="ปิด">${I("x")}</button></div>
+    <div class="vp-body"><div class="vp-l">
     <div class="vp-orb"><i></i><i></i><span>${MIC_SVG}</span></div><div class="vp-st"></div>
     <div class="vp-log"></div>
     <div class="vp-b"><button class="vp-mute">${MIC_SVG}<span>ปิดไมค์</span></button><button class="vp-end">${I("x")}จบการสนทนา</button></div>
-    <small class="vp-note">ใช้ข้อมูลช่วงและพื้นที่ที่เลือกในหน้า AI · AI อาจผิดพลาดได้</small></div>`;
+    <small class="vp-note">ใช้ข้อมูลช่วงและพื้นที่ที่เลือกในหน้า AI · AI อาจผิดพลาดได้</small></div>
+    <div class="vp-rep"></div></div></div>`;
   document.body.appendChild(p);
   p.querySelector(".vp-x").onclick = p.querySelector(".vp-end").onclick = () => voiceClose(true);
   p.querySelector(".vp-mute").onclick = () => { V.muted = !V.muted; V.st = V.muted ? "mute" : "listen"; voiceDraw(); };
+  p.querySelector(".vp-log").onclick = e => { const x = e.target.closest("[data-vti]"); if (x) { V.sel = +x.dataset.vti; voiceDraw(); } };
+  V.turns = []; V.sel = -1;
   V.lines = []; V.cur = { u: "", a: "" }; V.muted = false; V.st = "conn"; voiceDraw(); voiceStart();
 }
 function voiceErr(msg) { V.lines.push({ r: "e", t: msg }); V.st = "err"; voiceDraw(); voiceStop(); }
@@ -4201,9 +4229,16 @@ async function voiceStart() {
     const sc = m.serverContent; if (!sc) return;
     if (sc.interrupted) { V.srcs.forEach(x => { try { x.stop(); } catch {} }); V.srcs = []; V.playT = 0; }
     if (sc.inputTranscription && sc.inputTranscription.text) { V.cur.u += sc.inputTranscription.text; voiceDraw(); }
-    if (sc.outputTranscription && sc.outputTranscription.text) { if (V.cur.u) { V.lines.push({ r: "u", t: V.cur.u.trim() }); V.cur.u = ""; } V.cur.a += sc.outputTranscription.text; voiceDraw(); }
+    if (sc.outputTranscription && sc.outputTranscription.text) { if (V.cur.u) { V.lines.push({ r: "u", t: V.cur.u.trim(), ti: null }); V.cur.u = ""; } V.cur.a += sc.outputTranscription.text; voiceDraw(); }
     (sc.modelTurn && sc.modelTurn.parts || []).forEach(pt => { const d = pt.inlineData; if (d && /audio/.test(d.mimeType || "")) voicePlay(d.data, +((d.mimeType.match(/rate=(\d+)/) || [])[1] || 24000)); });
-    if (sc.turnComplete) { if (V.cur.u) V.lines.push({ r: "u", t: V.cur.u.trim() }); if (V.cur.a) V.lines.push({ r: "a", t: V.cur.a.trim() }); V.cur = { u: "", a: "" }; voiceDraw(); } };
+    if (sc.turnComplete) {
+      // จบ 1 รอบคำถาม: เก็บบทสนทนา แล้วทำรายละเอียดแบบรายงานของคำถามนั้น
+      const lastU = [...V.lines].reverse().find(x => x.r === "u" && x.ti == null);
+      const q = (V.cur.u || (lastU ? lastU.t : "")).trim(), T = { q, a: V.cur.a.trim(), rep: "", busy: false }, ti = V.turns.push(T) - 1;
+      if (V.cur.u) V.lines.push({ r: "u", t: V.cur.u.trim(), ti: q ? ti : null }); else if (lastU && q) lastU.ti = ti;
+      if (V.cur.a) V.lines.push({ r: "a", t: V.cur.a.trim() }); V.cur = { u: "", a: "" };
+      if (q.replace(/\s/g, "").length >= 4) { V.sel = ti; voiceReport(T); } else T.q = "";
+      voiceDraw(); } };
 }
 async function voiceMic() {
   try {
@@ -4237,7 +4272,8 @@ function voiceStop() {
 function voiceClose(keep) {
   voiceStop(); const p = $("#voiceP"); if (p) p.remove();
   // เก็บบทสนทนาไว้ในแชท AI ด้วย
-  const L = V.lines.filter(x => x.r !== "e" && x.t); if (keep && L.length) { L.forEach(x => AI.msgs.push({ role: x.r === "u" ? "user" : "ai", text: (x.r === "u" ? "🎤 " : "") + x.t })); if (S.view === "ai") viewAI(); }
+  if (keep && V.turns.some(t => t.q || t.a)) { V.turns.forEach(t => { if (t.q) AI.msgs.push({ role: "user", text: "🎤 " + t.q }); if (t.rep || t.a) AI.msgs.push({ role: "ai", text: t.rep || t.a, model: t.rep ? "AI" : "", trunc: t.trunc }); }); if (S.view === "ai") viewAI(); }
+  V.turns = []; V.sel = -1;
   V.lines = [];
 }
 async function askAI(q) {
