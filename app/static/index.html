@@ -156,6 +156,9 @@ a.zbtn{text-decoration:none;color:inherit}
 .zbtn.grp .gtag{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--navy);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:2px}
 .hm tr.grp th,.hm tr.grp td{background:#eef2ff;color:var(--navy);text-align:left;font-weight:700;padding:6px 8px}
 .ptag.pilot{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:800}
+.er .acts .hidet{color:#64748b}.er .acts .hidet.on{background:#1e293b;border-color:#1e293b;color:#fff}
+.er.paused{opacity:.55;background:repeating-linear-gradient(135deg,#f8fafc 0 10px,#f1f5f9 10px 20px);border-radius:12px}
+.er.paused .acts .hidet{opacity:1}.er.paused .e-name{text-decoration:line-through}
 .er .acts .pilt{color:#cbd5e1;font-weight:800}.er .acts .pilt.on{background:#fef3c7;border-color:#fcd34d;color:#b45309}
 .ed-grp{font-weight:700;color:var(--navy);margin:16px 0 8px;font-size:15px;border-bottom:2px solid var(--line);padding-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .ed-bulk{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);flex-wrap:wrap}
@@ -2998,16 +3001,18 @@ $("#editBtn").onclick = async () => {
 };
 function closeEditor(){ $("#editBg").classList.remove("on"); document.body.style.overflow=""; }
 $("#editClose").onclick = closeEditor; $("#editCancel").onclick = closeEditor;
+const EYE_ON = `<svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_OFF = `<svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
 function renderEditor(){
   const block = (z, zi) => {
     const rows = z.items.map((it, ii) => {
       const movable = !it.extra;
-      return `<div class="er ${it.extra?"extra":""}" data-z="${zi}" data-i="${ii}">
+      return `<div class="er ${it.extra?"extra":""} ${it.paused?"paused":""}" data-z="${zi}" data-i="${ii}">
         <input type="text" class="e-no" value="${esc(it.no)}" ${it.extra?"disabled":""} placeholder="ลำดับ">
         <input type="text" class="e-name" value="${esc(it.name)}" placeholder="ชื่อรายการตรวจ">
         ${it.extra ? `<span></span>` : `<select class="e-proc" title="อยู่ในกระบวนการไหน"><option value="">— กระบวนการ —</option>${(CFG.process_tags||[]).map(t=>`<option ${t===it.proc?"selected":""}>${esc(t)}</option>`).join("")}</select>`}
         ${it.extra ? `<span></span>` : `<button type="button" class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน · แตะเพื่อติ๊กเลือก"><span>${esc(custText(it) || "ไม่มีลูกค้า")}</span><i>▾</i></button>`}
-        <div class="acts">${movable?`<button type="button" class="pilt ${it.pilot?"on":""}" title="★ หัวข้อใหม่/ทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน % (กดอีกครั้งเพื่อเริ่มนับ)">★</button>`:""}${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
+        <div class="acts">${movable?`<button type="button" class="hidet ${it.paused?"on":""}" title="${it.paused?"ซ่อนอยู่ · แตะเพื่อแสดงในฟอร์มอีกครั้ง":"ซ่อนหัวข้อนี้ (ไม่แสดงในฟอร์มและ Dashboard · ข้อมูลเก่ายังอยู่)"}">${it.paused?EYE_OFF:EYE_ON}</button>`:""}${movable?`<button type="button" class="pilt ${it.pilot?"on":""}" title="★ หัวข้อใหม่/ทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน % (กดอีกครั้งเพื่อเริ่มนับ)">★</button>`:""}${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
         <button type="button" class="down" ${ii>=z.items.filter(x=>!x.extra).length-1?"disabled":""} title="เลื่อนลง">▼</button>
         <button type="button" class="del" title="ลบรายการ"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:`<span class="note">หัวข้อเพิ่มเติม</span>`}</div>
         ${it.qty ? `<div class="e-qty"><span>ห้อง (คั่นด้วย ,)</span><input type="text" class="e-rooms" value="${esc((it.qty.rooms || []).join(", "))}" placeholder="เช่น ห้อง 1, ห้อง 2, ห้อง 3 (เว้นว่าง = กรอกยอดรวมอย่างเดียว)"><span>หน่วย</span><input type="text" class="e-unit" value="${esc(it.qty.unit || "คัน")}" style="flex:0 0 56px"></div>` : ""}</div>`;
@@ -3093,6 +3098,8 @@ $("#editZones").addEventListener("click", e => {
   }
   const er = b.closest(".er"); if(!er) return; const ii = +er.dataset.i;
   if(b.classList.contains("del")){ if(!z.items[ii].name || confirm(`ลบรายการ "${z.items[ii].name}"?`)){ z.items.splice(ii,1); renderEditor(); } }
+  if(b.classList.contains("hidet")){ const it = z.items[ii]; it.paused = !it.paused; renderEditor();
+    toast(it.paused ? `ซ่อน "${it.name}" · กด บันทึกการแก้ไข เพื่อยืนยัน` : `แสดง "${it.name}" อีกครั้ง · กด บันทึกการแก้ไข เพื่อยืนยัน`); return; }
   if(b.classList.contains("pilt")){ const it = z.items[ii]; it.pilot = !it.pilot; b.classList.toggle("on", it.pilot);
     toast(it.pilot ? "★ หัวข้อนี้ยังไม่นับใน % ของ Dashboard" : "หัวข้อนี้นับใน % ของ Dashboard แล้ว"); return; }
   if(b.classList.contains("qtyt")){ const it = z.items[ii];

@@ -129,13 +129,16 @@ def item_active(it, rd: str, checked: bool) -> bool:
     - added   = รอบที่เพิ่มรายการ: ก่อนหน้านั้นไม่นับ / รอบที่เพิ่ม นับเฉพาะถ้ามีคนตรวจ
     - removed = รอบที่ลบรายการ: หลังจากนั้นไม่นับ / รอบที่ลบ นับเฉพาะถ้ามีคนตรวจ"""
     a, r = it.get("added"), it.get("removed")
+    # ช่วงที่ซ่อนหัวข้อไว้ (offs = [[ตั้งแต่, ถึง]] · ถึง ว่าง = ยังซ่อนอยู่): ไม่นับ เว้นแต่มีคนตรวจ
+    if any(rd >= f and (not t or rd <= t) for f, t in (it.get("offs") or [])):
+        return checked
     if it.get("hidden") is not True and a and rd == a and rd >= round_of(now()).isoformat():
         return True  # รอบปัจจุบัน: รายการที่เพิ่งเพิ่มต้องแสดงในฟอร์มทันที
     if a and (rd < a or (rd == a and not checked)):
         return False
     if r and (rd > r or (rd == r and not checked)):
         return False
-    if it.get("hidden") and not r:
+    if it.get("hidden") and not r and not it.get("paused"):
         return checked
     return True
 
@@ -1932,7 +1935,10 @@ def _check_edit_pin(pin: str):
 async def api_admin_check(request: Request):
     data = await request.json()
     _check_edit_pin(data.get("pin"))
-    return {"ok": True, "zones": visible_zones()}
+    # หน้าแก้ไข: แสดงหัวข้อที่ซ่อนไว้ (paused) ด้วย เพื่อให้กดเปิดกลับได้
+    zs = [{**z, "deck": zone_deck(z), "items": [it for it in z["items"] if not it.get("hidden") or it.get("paused")]}
+          for z in AREAS["zones"] if not z.get("hidden")]
+    return {"ok": True, "zones": zs}
 
 
 @app.post("/api/admin/areas")
@@ -1994,6 +2000,26 @@ async def api_admin_save(request: Request):
                     base["qty"] = q
                 else:
                     base.pop("qty", None)
+            # ซ่อนหัวข้อชั่วคราว: ไม่แสดงในฟอร์ม/Dashboard แต่ข้อมูลย้อนหลังยังอยู่ · เปิดกลับได้
+            cur_rd = round_of(now()).isoformat()
+            offs = [list(x) for x in (base.get("offs") or []) if isinstance(x, (list, tuple)) and len(x) == 2]
+            was = bool(old_items.get(iid, {}).get("paused"))
+            if it.get("paused") and not base.get("extra"):
+                base["paused"] = base["hidden"] = True
+                if not was:
+                    offs.append([cur_rd, ""])
+            else:
+                base.pop("paused", None)
+                if offs and not offs[-1][1]:
+                    end = (round_of(now()) - timedelta(days=1)).isoformat()
+                    if end < offs[-1][0]:
+                        offs.pop()
+                    else:
+                        offs[-1][1] = end
+            if offs:
+                base["offs"] = offs
+            else:
+                base.pop("offs", None)
             if is_new:
                 base["added"] = round_of(now()).isoformat()
             items.append(base)
