@@ -1600,6 +1600,26 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .vp-rep-empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:60px 20px;color:var(--mute)}.vp-rep-empty svg.i{width:34px;height:34px;color:#94a3b8}.vp-rep-empty b{color:var(--navy)}
 .vl.pick{cursor:pointer}.vl.u.sel{box-shadow:0 0 0 2px #c4b5fd}
 @media(max-width:900px){.vp-body{flex-direction:column}#voiceP.has-rep .vp-l{flex:none}#voiceP.has-rep .vp-log{max-height:22vh}#voiceP.has-rep .vp-orb{width:96px;height:96px}#voiceP.has-rep .vp-orb span{width:56px;height:56px}.vp-rep{max-height:none}.vp-card{overflow:auto}}
+.vp-bot{--lv:0;--talk:0;width:180px;height:180px;margin:0 auto;animation:rbFloat 3.2s ease-in-out infinite}
+.vp-bot svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 14px 26px rgba(59,130,246,.35))}
+.rb-led{fill:#f59e0b;filter:drop-shadow(0 0 6px #f59e0b)}
+.rb-ring{fill:url(#rbG);opacity:calc(.15 + var(--lv) * .85);transform-box:fill-box;transform-origin:center;transform:scale(calc(.8 + var(--lv) * .6))}
+.rb-eye{fill:#67e8f9;filter:drop-shadow(0 0 6px #22d3ee);transform-box:fill-box;transform-origin:center;animation:rbBlink 4.6s infinite}
+.rb-mouth rect{fill:#67e8f9;transform-box:fill-box;transform-origin:center;transition:transform .06s;transform:scaleY(calc(1 + var(--talk) * 1.6))}
+.rb-mouth rect:nth-child(2),.rb-mouth rect:nth-child(4){transform:scaleY(calc(1 + var(--talk) * 2.6))}.rb-mouth rect:nth-child(3){transform:scaleY(calc(1 + var(--talk) * 3.4))}
+.rb-think{display:none}.rb-think circle{fill:#c4b5fd;animation:rbDot 1s infinite}.rb-think circle:nth-child(2){animation-delay:.15s}.rb-think circle:nth-child(3){animation-delay:.3s}
+#voiceP[data-st="think"] .rb-think{display:block}#voiceP[data-st="think"] .rb-mouth{display:none}
+#voiceP[data-st="think"] .rb-eyes{transform:translateY(-5px)}.rb-eyes{transition:transform .25s}
+#voiceP[data-st="think"] .rb-led{animation:rbLed .5s infinite alternate}
+#voiceP[data-st="speak"] .rb-led{fill:#34d399;filter:drop-shadow(0 0 8px #34d399)}
+#voiceP[data-st="listen"] .rb-led{fill:#38bdf8;filter:drop-shadow(0 0 8px #38bdf8)}
+#voiceP[data-st="conn"] .rb-eye{transform:scaleY(.12);animation:none}#voiceP[data-st="conn"] .vp-bot{animation:rbFloat 1.4s ease-in-out infinite}
+#voiceP[data-st="mute"] .rb-eye,#voiceP[data-st="err"] .rb-eye,#voiceP[data-st="end"] .rb-eye{fill:#64748b;filter:none}
+#voiceP[data-st="err"] .rb-led,#voiceP[data-st="end"] .rb-led{fill:#ef4444}
+@keyframes rbFloat{50%{transform:translateY(-6px)}}@keyframes rbBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes rbDot{50%{opacity:.25}}@keyframes rbLed{to{opacity:.3}}
+#voiceP.has-rep .vp-bot{width:130px;height:130px}
+@media(max-width:900px){#voiceP.has-rep .vp-bot{width:96px;height:96px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -4194,7 +4214,7 @@ const V = { ws: null, ac: null, oc: null, stream: null, node: null, playT: 0, sr
 const b64 = buf => { let s = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
 function voiceDraw() {
   const p = $("#voiceP"); if (!p) return;
-  const lab = { conn: "กำลังเชื่อมต่อ…", listen: "ฟังอยู่ · พูดได้เลย", speak: "AI กำลังพูด · พูดแทรกได้", mute: "ปิดไมค์อยู่", err: "เชื่อมต่อไม่ได้", end: "จบการสนทนา" }[V.st] || "";
+  const lab = { conn: "กำลังปลุกผู้ช่วย…", listen: "ฟังอยู่ · พูดได้เลย", think: "กำลังคิด…", speak: "กำลังพูด · พูดแทรกได้", mute: "ปิดไมค์อยู่", err: "เชื่อมต่อไม่ได้", end: "จบการสนทนา" }[V.st] || "";
   p.querySelector(".vp-st").textContent = lab; p.dataset.st = V.st;
   p.querySelector(".vp-mute").classList.toggle("on", V.muted); p.querySelector(".vp-mute span").textContent = V.muted ? "เปิดไมค์" : "ปิดไมค์";
   const L = [...V.lines, ...(V.cur.u ? [{ r: "u", t: V.cur.u }] : []), ...(V.cur.a ? [{ r: "a", t: V.cur.a }] : [])];
@@ -4219,7 +4239,19 @@ function voiceOpen() {
   const p = document.createElement("div"); p.id = "voiceP";
   p.innerHTML = `<div class="vp-card"><div class="vp-h"><div><small>ผู้ช่วย AI · ${esc(AI.plant === "all" ? "ทุกพื้นที่" : AI.plant)} · ${esc(AI.range)} วัน</small><b>พูดคุยด้วยเสียง</b></div><button class="vp-x" aria-label="ปิด">${I("x")}</button></div>
     <div class="vp-body"><div class="vp-l">
-    <div class="vp-orb"><i></i><i></i><span>${MIC_SVG}</span></div><div class="vp-st"></div>
+    <div class="vp-bot" aria-hidden="true"><svg viewBox="0 0 200 200">
+      <defs><linearGradient id="rbH" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+        <radialGradient id="rbG" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#67e8f9"/><stop offset="1" stop-color="#67e8f9" stop-opacity="0"/></radialGradient></defs>
+      <g class="rb-ant"><line x1="100" y1="30" x2="100" y2="50" stroke="#c4b5fd" stroke-width="5" stroke-linecap="round"/><circle class="rb-led" cx="100" cy="24" r="9"/></g>
+      <g class="rb-ear l"><circle class="rb-ring" cx="30" cy="100" r="22"/><rect x="22" y="80" width="18" height="40" rx="8" fill="#6366f1"/></g>
+      <g class="rb-ear r"><circle class="rb-ring" cx="170" cy="100" r="22"/><rect x="160" y="80" width="18" height="40" rx="8" fill="#6366f1"/></g>
+      <rect x="36" y="48" width="128" height="112" rx="38" fill="url(#rbH)"/>
+      <rect x="50" y="66" width="100" height="76" rx="26" fill="#0b1220"/>
+      <g class="rb-eyes"><rect class="rb-eye" x="68" y="84" width="22" height="26" rx="11"/><rect class="rb-eye" x="110" y="84" width="22" height="26" rx="11"/></g>
+      <g class="rb-mouth">${[0, 1, 2, 3, 4].map(i => `<rect x="${78 + i * 9}" y="124" width="6" height="6" rx="3" />`).join("")}</g>
+      <g class="rb-think"><circle cx="86" cy="127" r="3.2"/><circle cx="100" cy="127" r="3.2"/><circle cx="114" cy="127" r="3.2"/></g>
+      <rect x="78" y="160" width="44" height="14" rx="6" fill="#4f46e5"/><rect x="56" y="172" width="88" height="22" rx="11" fill="url(#rbH)" opacity=".85"/>
+    </svg></div><div class="vp-st"></div>
     <div class="vp-log"></div>
     <div class="vp-b"><button class="vp-mute">${MIC_SVG}<span>ปิดไมค์</span></button><button class="vp-end">${I("x")}จบการสนทนา</button></div>
     <small class="vp-note">ใช้ข้อมูลช่วงและพื้นที่ที่เลือกในหน้า AI · AI อาจผิดพลาดได้</small></div>
@@ -4242,10 +4274,13 @@ async function voiceStart() {
   ws.onerror = () => {};
   ws.onmessage = async ev => { let m; try { m = JSON.parse(typeof ev.data === "string" ? ev.data : await ev.data.text()); } catch { return; }
     if (m.error) return voiceErr(m.error);
-    if (m.setupComplete) { V.st = "listen"; voiceDraw(); await voiceMic(); return; }
+    if (m.setupComplete) { V.st = "listen"; voiceDraw();
+      // ผู้ช่วยทักทายก่อน (สั้น ๆ) แล้วรอฟัง
+      ws.send(JSON.stringify({ clientContent: { turns: [{ role: "user", parts: [{ text: "(เริ่มการสนทนา) ทักทายหัวหน้าสั้น ๆ 1 ประโยคเป็นภาษาไทย แนะนำตัวว่าเป็นผู้ช่วย Retort และบอกจุดเด่นของข้อมูลช่วงนี้ 1 เรื่อง แล้วถามว่าวันนี้อยากรู้เรื่องอะไร" }] }], turnComplete: true } }));
+      await voiceMic(); return; }
     const sc = m.serverContent; if (!sc) return;
     if (sc.interrupted) { V.srcs.forEach(x => { try { x.stop(); } catch {} }); V.srcs = []; V.playT = 0; }
-    if (sc.inputTranscription && sc.inputTranscription.text) { V.cur.u += sc.inputTranscription.text; voiceDraw(); }
+    if (sc.inputTranscription && sc.inputTranscription.text) { V.cur.u += sc.inputTranscription.text; if (V.st === "listen") V.st = "think"; voiceDraw(); }
     if (sc.outputTranscription && sc.outputTranscription.text) { if (V.cur.u) { V.lines.push({ r: "u", t: V.cur.u.trim(), ti: null }); V.cur.u = ""; } V.cur.a += sc.outputTranscription.text; voiceDraw(); }
     (sc.modelTurn && sc.modelTurn.parts || []).forEach(pt => { const d = pt.inlineData; if (d && /audio/.test(d.mimeType || "")) voicePlay(d.data, +((d.mimeType.match(/rate=(\d+)/) || [])[1] || 24000)); });
     if (sc.turnComplete) {
@@ -4255,6 +4290,7 @@ async function voiceStart() {
       if (V.cur.u) V.lines.push({ r: "u", t: V.cur.u.trim(), ti: q ? ti : null }); else if (lastU && q) lastU.ti = ti;
       if (V.cur.a) V.lines.push({ r: "a", t: V.cur.a.trim() }); V.cur = { u: "", a: "" };
       if (q.replace(/\s/g, "").length >= 4) { V.sel = ti; voiceReport(T); } else T.q = "";
+      if (V.st === "think") V.st = V.muted ? "mute" : "listen";
       voiceDraw(); } };
 }
 async function voiceMic() {
@@ -4267,7 +4303,7 @@ async function voiceMic() {
     V.node.port.onmessage = e => { const f = e.data; let s2 = 0;
       for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); s2 += v * v; acc[n++] = v < 0 ? v * 0x8000 : v * 0x7fff;
         if (n === acc.length) { if (!V.muted && V.ws && V.ws.readyState === 1) V.ws.send(JSON.stringify({ realtimeInput: { audio: { data: b64(acc.buffer), mimeType: "audio/pcm;rate=16000" } } })); acc = new Int16Array(1600); n = 0; } }
-      V.lvl = V.muted ? 0 : Math.sqrt(s2 / f.length); const o = document.querySelector("#voiceP .vp-orb"); if (o) o.style.setProperty("--lv", Math.min(1, V.lvl * 6).toFixed(2)); };
+      V.lvl = V.muted ? 0 : Math.sqrt(s2 / f.length); const o = document.querySelector("#voiceP .vp-bot"); if (o) o.style.setProperty("--lv", Math.min(1, V.lvl * 6).toFixed(2)); };
   } catch (e) { voiceErr("เริ่มไมโครโฟนไม่ได้: " + e.message); }
 }
 function voicePlay(data, rate) {
@@ -4275,16 +4311,24 @@ function voicePlay(data, rate) {
   const bin = atob(data), i16 = new Int16Array(bin.length / 2);
   for (let i = 0; i < i16.length; i++) i16[i] = bin.charCodeAt(i * 2) | (bin.charCodeAt(i * 2 + 1) << 8);
   const buf = V.oc.createBuffer(1, i16.length, rate), ch = buf.getChannelData(0); for (let i = 0; i < i16.length; i++) ch[i] = i16[i] / 32768;
-  const src = V.oc.createBufferSource(); src.buffer = buf; src.connect(V.oc.destination);
+  if (!V.an) { V.an = V.oc.createAnalyser(); V.an.fftSize = 512; V.an.connect(V.oc.destination); voiceMouth(); }
+  const src = V.oc.createBufferSource(); src.buffer = buf; src.connect(V.an);
   const t = Math.max(V.oc.currentTime + 0.03, V.playT); src.start(t); V.playT = t + buf.duration; V.srcs.push(src);
   if (V.st !== "speak" && !V.muted) { V.st = "speak"; voiceDraw(); }
   src.onended = () => { V.srcs = V.srcs.filter(x => x !== src); if (!V.srcs.length && V.st === "speak") { V.st = V.muted ? "mute" : "listen"; voiceDraw(); } };
+}
+function voiceMouth() {  // ปากหุ่นยนต์ขยับตามเสียงที่กำลังพูดจริง
+  const d = new Uint8Array(256);
+  const loop = () => { if (!V.an) return; V.an.getByteTimeDomainData(d); let s2 = 0; for (const v of d) { const x = (v - 128) / 128; s2 += x * x; }
+    const o = document.querySelector("#voiceP .vp-bot"); if (o) o.style.setProperty("--talk", Math.min(1, Math.sqrt(s2 / d.length) * 5).toFixed(2));
+    V.raf = requestAnimationFrame(loop); };
+  loop();
 }
 function voiceStop() {
   try { V.node && V.node.disconnect(); } catch {} try { V.stream && V.stream.getTracks().forEach(t => t.stop()); } catch {}
   try { V.ac && V.ac.close(); } catch {} V.srcs.forEach(x => { try { x.stop(); } catch {} }); try { V.oc && V.oc.close(); } catch {}
   const w = V.ws; V.ws = null; try { w && w.readyState <= 1 && w.close(); } catch {}
-  Object.assign(V, { ac: null, oc: null, stream: null, node: null, srcs: [], playT: 0 });
+  cancelAnimationFrame(V.raf); Object.assign(V, { ac: null, oc: null, an: null, stream: null, node: null, srcs: [], playT: 0 });
 }
 function voiceClose(keep) {
   voiceStop(); const p = $("#voiceP"); if (p) p.remove();
