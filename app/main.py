@@ -26,7 +26,7 @@ from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
@@ -920,7 +920,18 @@ def scheduler_loop():
 # ---------------------------------------------------------------- app
 app = FastAPI(title="Process Control Form")
 # บีบอัดหน้าเว็บและข้อมูลก่อนส่ง (เล็กลง ~4-5 เท่า ช่วยมากเมื่อเน็ตช้า)
-app.add_middleware(GZipMiddleware, minimum_size=800)
+class _GZipExceptLive:
+    """GZip ทุกอย่าง ยกเว้นช่องอัปเดตสด (/api/live) ที่ต้องส่งทันทีไม่รอรวมก้อน"""
+    def __init__(self, app_):
+        self.app, self.gz = app_, GZipMiddleware(app_, minimum_size=800)
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope.get("path", "").startswith("/api/live"):
+            return await self.app(scope, receive, send)
+        return await self.gz(scope, receive, send)
+
+
+app.add_middleware(_GZipExceptLive)
 
 
 @app.on_event("startup")
@@ -1034,7 +1045,16 @@ def _fail_check(request: Request, emp: str):
 
 
 # หน้าหลักต้องเข้าสู่ระบบก่อน · ยกเว้นหน้า Retort (มีรหัสของตัวเอง) และการเข้าสู่ระบบเอง
-_USER_FREE = ("/api/auth/", "/api/retort", "/api/login", "/api/admin/check", "/api/uadmin/")
+_USER_FREE = ("/api/auth/", "/api/retort", "/api/login", "/api/admin/check", "/api/uadmin/", "/api/live")
+
+# ---- อัปเดตสด (realtime): บันทึกสำเร็จ → เลขเวอร์ชันเพิ่ม → หน้าที่เปิดอยู่ได้รับสัญญาณทันที แล้วดึงเฉพาะส่วนที่เปลี่ยน
+LIVE_VER = {"rt": 0, "pc": 0}
+_LIVE_SKIP = ("/api/auth/", "/api/login", "/api/retort/login", "/api/retort/logout", "/api/retort/ai", "/api/retort/live",
+              "/api/admin/check", "/api/slides/check", "/api/uadmin/login", "/api/uadmin/logout", "/api/retort/tp/parse", "/api/live")
+
+
+def live_bump(ch: str):
+    LIVE_VER[ch] = LIVE_VER.get(ch, 0) + 1
 
 
 @app.middleware("http")
@@ -1044,7 +1064,37 @@ async def user_gate(request: Request, call_next):
     if path.startswith(("/api/", "/uploads/", "/t/")) and not path.startswith(_USER_FREE) and not u:
         return JSONResponse({"detail": "LOGIN_REQUIRED"}, status_code=401)
     _CUR_FAC.set((u or {}).get("factory") or FAC_DEFAULT)  # Checklist ของโรงงานผู้ใช้
-    return await call_next(request)
+    resp = await call_next(request)
+    if request.method != "GET" and path.startswith("/api/") and resp.status_code < 400 and not path.startswith(_LIVE_SKIP):
+        live_bump("rt" if path.startswith("/api/retort") else "pc")  # มีการเปลี่ยนข้อมูล → แจ้งหน้าที่เปิดอยู่
+    return resp
+
+
+@app.get("/api/live")
+async def api_live(request: Request, ch: str = "pc"):
+    """ช่องอัปเดตสด (Server-Sent Events): ส่งเลขเวอร์ชันทุกครั้งที่ข้อมูลเปลี่ยน · rt = Retort · pc = หน้าหลัก"""
+    ch = ch if ch in LIVE_VER else "pc"
+    ok = _rt_role(request) if ch == "rt" else await run_in_threadpool(_me, request)
+    if not ok:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+
+    async def gen():
+        last, t0, beat = None, _time.monotonic(), _time.monotonic()
+        yield "retry: 2000\n\n"
+        while _time.monotonic() - t0 < 300:  # ต่ออายุทุก 5 นาที (เบราว์เซอร์ต่อใหม่ให้เอง)
+            v = LIVE_VER[ch]
+            if v != last:
+                last = v
+                yield f"data: {v}\n\n"
+            elif _time.monotonic() - beat > 20:
+                beat = _time.monotonic()
+                yield ": ping\n\n"  # กันสายหลุดเพราะเงียบนาน
+            if await request.is_disconnected():
+                break
+            await asyncio.sleep(0.4)
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
 
 
 def _set_session(resp, emp_id: str):

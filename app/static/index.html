@@ -1468,7 +1468,10 @@ const thDate = iso => { const [y,m,d] = iso.slice(0,10).split("-").map(Number); 
 const hm = iso => iso ? iso.slice(11,16) : "";
 // วันแบบ i-Tail: วันใหม่เริ่มเวลาตัดรอบ (07:00) · 00:00–06:59 ยังเป็นวันก่อนหน้า
 const cutMs = () => { const [h, m] = String((typeof CFG !== "undefined" && CFG && CFG.cutoff) || "07:00").split(":").map(Number); return ((h || 0) * 60 + (m || 0)) * 6e4; };
-const bizISO = t => { const d = new Date((typeof t === "number" ? t : Date.parse(t)) - cutMs()); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const _bizC = new Map();  // จำผลไว้ (หน้าเรื่องติดตามเรียกซ้ำหลายพันครั้ง)
+const bizISO = t => { const c = cutMs(), k = t + "|" + c; let v = _bizC.get(k); if(v) return v;
+  const d = new Date((typeof t === "number" ? t : Date.parse(t)) - c); v = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  if(_bizC.size > 20000) _bizC.clear(); _bizC.set(k, v); return v; };
 const bizDM = t => { const [y, m, d] = bizISO(t).split("-").map(Number); return `${d} ${TH_M[m-1]}`; };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const store = { get(k,d){ try{ return localStorage.getItem(k) ?? d }catch{ return d } }, set(k,v){ try{ localStorage.setItem(k,v) }catch{} } };
@@ -4014,7 +4017,19 @@ document.addEventListener("visibilitychange", () => { if(document.visibilityStat
 
 setInterval(tick, 1000);
 // ดึงข้อมูลใหม่อัตโนมัติทุก 60 วินาที เฉพาะตอนเปิดดูอยู่ (จอดับ/สลับแอป = หยุด ประหยัดเน็ตและเครื่อง server)
-setInterval(() => { if(document.visibilityState === "visible" && !$("#sheetBg").classList.contains("on")) refreshAll(); }, 60000);
+setInterval(() => { if(document.visibilityState === "visible" && !$("#sheetBg").classList.contains("on")) refreshAll(); }, 300000);  // สำรอง (ปกติอัปเดตสดผ่าน /api/live)
+/* อัปเดตสด: มีคนส่งผลตรวจ/ความคิดเห็น/เรื่องติดตาม → หน้านี้อัปเดตเองภายในไม่กี่วินาที
+   ถ้ากำลังกรอกฟอร์มอยู่ รออัปเดตหลังปิดฟอร์ม · ปิดช่องตอนพับแอป/สลับแท็บ */
+let pcES = null, pcT = 0, pcPend = false;
+function pcRefresh(){ if($("#sheetBg").classList.contains("on")){ pcPend = true; return; } pcPend = false; refreshAll(); if(FU.cur && FU.cur.id && $("#fuBg").classList.contains("on")) fuChatLoad(); }
+function pcLive(){
+  if(pcES || document.hidden || !ME || !window.EventSource) return;
+  pcES = new EventSource("/api/live?ch=pc"); let first = true;
+  pcES.onmessage = () => { if(first){ first = false; return; } clearTimeout(pcT); pcT = setTimeout(pcRefresh, 600); };
+  pcES.onerror = () => { if(pcES && pcES.readyState === 2){ pcES = null; setTimeout(pcLive, 5000); } };
+}
+document.addEventListener("visibilitychange", () => { if(document.hidden){ if(pcES){ pcES.close(); pcES = null; } } else pcLive(); });
+setInterval(() => { pcLive(); if(pcPend && !$("#sheetBg").classList.contains("on")) pcRefresh(); }, 2000);
 
 /* ---------- ตั้งค่าจากหน้า Admin: แถบที่เปิด · ฟีเจอร์ · ประกาศ (โหลดตอนเปิดและทุก 2 นาที) ---------- */
 let SITE = null;

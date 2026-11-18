@@ -1925,7 +1925,9 @@ const retNum = r => { const m = /\d+/.exec(r || ""); return m ? +m[0] : Infinity
 const RET_ORDER = ["RP", "RA", "RS", "RT", "RC"];
 const retPre = r => ((/^[A-Za-z]+/.exec(r || "") || [""])[0]).toUpperCase();
 const preRank = p => { const i = RET_ORDER.indexOf(p); return i < 0 ? RET_ORDER.length : i; };
-const byRetort = (a, b) => preRank(retPre(a)) - preRank(retPre(b)) || retPre(a).localeCompare(retPre(b)) || retNum(a) - retNum(b) || String(a).localeCompare(String(b), undefined, { numeric: true });
+// ตัวเปรียบเทียบข้อความสร้างครั้งเดียว (สร้างใหม่ทุกครั้งที่เทียบ = ช้ามากเมื่อรายการเยอะ)
+const NUM_CMP = new Intl.Collator(undefined, { numeric: true }).compare, TH_CMP = new Intl.Collator("th").compare;
+const byRetort = (a, b) => preRank(retPre(a)) - preRank(retPre(b)) || (retPre(a) < retPre(b) ? -1 : retPre(a) > retPre(b) ? 1 : 0) || retNum(a) - retNum(b) || NUM_CMP(String(a), String(b));
 /* แบ่งหม้อเป็นกลุ่มตามตัวอักษรนำหน้า: [[กลุ่ม, [หม้อ…]], …] */
 function retGroups(rl) { const m = new Map(); rl.forEach(r => { const g = retPre(r) || "อื่น ๆ"; if (!m.has(g)) m.set(g, []); m.get(g).push(r); }); return [...m]; }
 /* ย่อรายการหม้อเป็นช่วง เช่น RS01–RS02, RS04–RS09 */
@@ -1987,7 +1989,8 @@ const S = {
   charts: {}
 };
 function setSync(ok) { const s = $("#sync"); s.classList.toggle("on", !!ok); $("#syncTxt").textContent = ok ? "ซิงก์แล้ว" : "ออฟไลน์"; }
-const catById = id => S.config.categories.find(c => c.id === id);
+let _catArr = null, _catMap = null;  // หาหัวข้อจาก id แบบ Map (เดิมไล่หาทั้งรายการทุกครั้ง)
+const catById = id => { const a = (S.config && S.config.categories) || []; if (a !== _catArr || _catMap.size !== a.length) { _catArr = a; _catMap = new Map(a.map(c => [c.id, c])); } return _catMap.get(id); };
 // อันดับหัวข้อ (ใช้ทำสี) คำนวณครั้งเดียวต่อการวาดหน้า — ล้างค่าใน render() · เดิมคำนวณใหม่ทุกแถวของรายการ ทำให้หน้ารายการช้า
 let RANK = null, RANK_COLOR = null;
 function catRank() {
@@ -2740,9 +2743,20 @@ const SORTS = [["plant", "Plant / หม้อ / ปัญหา"], ["new", "ว
 const byNew = (a, b) => (b.date + b.time).localeCompare(a.date + a.time);
 const SORT_FN = {
   new: byNew, old: (a, b) => byNew(b, a),
-  plant: (a, b) => (a.plant || "~").localeCompare(b.plant || "~") || byRetort(a.retort || "~", b.retort || "~") || catName(a).localeCompare(catName(b), "th") || byNew(a, b),
-  cat: (a, b) => catName(a).localeCompare(catName(b), "th") || byNew(a, b)
+  plant: (a, b) => ((a.plant || "~") < (b.plant || "~") ? -1 : (a.plant || "~") > (b.plant || "~") ? 1 : 0) || byRetort(a.retort || "~", b.retort || "~") || TH_CMP(catName(a), catName(b)) || byNew(a, b),
+  cat: (a, b) => TH_CMP(catName(a), catName(b)) || byNew(a, b)
 };
+// เรียงแบบคำนวณคีย์ครั้งเดียวต่อรายการ (เร็วกว่าเทียบทีละคู่หลายเท่าเมื่อมีหลายพันรายการ)
+function sortItems(L, mode) {
+  if (mode !== "plant" && mode !== "cat") return L.sort(SORT_FN[mode] || SORT_FN.new);
+  const K = L.map(x => { const r = x.retort || "~", p = retPre(r);
+    return { x, pl: x.plant || "~", rk: preRank(p), rp: p, rn: retNum(r), r, c: catName(x), t: (x.date || "") + (x.time || "") }; });
+  const s = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  K.sort(mode === "plant"
+    ? (a, b) => s(a.pl, b.pl) || a.rk - b.rk || s(a.rp, b.rp) || a.rn - b.rn || NUM_CMP(a.r, b.r) || TH_CMP(a.c, b.c) || s(b.t, a.t)
+    : (a, b) => TH_CMP(a.c, b.c) || s(b.t, a.t));
+  return K.map(k => k.x);
+}
 const GROUP_OF = { new: x => x.date, old: x => x.date, plant: x => `${x.plant || "ไม่ระบุพื้นที่"} / ${x.retort || "ไม่ระบุหม้อ"} / ${catName(x)}`, cat: catName };
 const itemText = x => { const c = catById(x.category); return [x.plant, x.retort, x.program && "p" + x.program, c && c.name, causeText(x), x.action, x.detail, x.product, x.batch, x.code, ...Object.values(x.values || {}), x.by, x.shift, dmy(x.date), x.time].filter(Boolean).join(" ").toLowerCase(); };
 /* ตัวกรองรายการ: ค่าตั้งต้น · ชื่อที่แสดง · หม้อของ Plant ที่เลือก */
@@ -2774,7 +2788,7 @@ function viewList() {
   if (f.plant !== "all" && !listPlants().includes(f.plant)) f.plant = "all";
   if (f.retort !== "all" && !listRets(f.plant).includes(f.retort)) f.retort = "all";
   const [from, to] = rangeOf();
-  const inRange = filtered(from, to).sort(SORT_FN[f.sort]);
+  const inRange = sortItems(filtered(from, to), f.sort);
   const ap = f.appr || "all";
   const kd = f.kind || "all", nKind = k => reportGroups(inRange.filter(x => kindOf(x) === k)).length;
   const all = inRange.filter(x => (ap === "all" || (kindOf(x) === "ir" && (ap === "done") === !!x.approvedBy)) && (kd === "all" || kindOf(x) === kd));
@@ -2801,7 +2815,7 @@ function viewList() {
   </div>
   <div class="card" id="listCard"></div>`;
   $("#main").innerHTML = h;
-  const save = () => { lsSet("rt_filter", f); const y = window.scrollY; viewList(); window.scrollTo(0, y); };
+  const save = () => { lsSet("rt_filter", f); S.listN = 60; const y = window.scrollY; viewList(); window.scrollTo(0, y); };
   const m = $("#main");
   m.onclick = e => {
     // ตาราง: แตะหัวคอลัมน์ = เรียง · แตะแถว = เปิดรายละเอียด
@@ -2845,18 +2859,21 @@ function viewList() {
     let last = null;
     const lay = listLayout();
     [...LSEL].forEach(id => { if (!S.items[id]) LSEL.delete(id); });
-    const vis = L.slice(0, 300), VG = RG.slice(0, 300), nSel = RG.filter(G => G.every(x => LSEL.has(x.id))).length, allOn = vis.length > 0 && vis.every(x => LSEL.has(x.id));
-    const rows = lay === "table" ? xlsTable(L.slice(0, 300), cnt) : VG.map(G => { const g = GROUP_OF[f.sort](G[0]); const head = g !== last ? `<div class="lgrp"><b>${esc(f.sort === "new" || f.sort === "old" ? thDate(g) : g)}</b><span>${cntG[g]} รายการ</span></div>` : ""; last = g; return head + lsIRRow(G); }).join("");
+    const NL = S.listN || 60;  // แสดงทีละชุด: เร็วขึ้นมากเมื่อมีรายการเยอะ · เลื่อนลงแล้วโหลดเพิ่มเอง
+    const vis = L.slice(0, NL), VG = RG.slice(0, NL), nSel = RG.filter(G => G.every(x => LSEL.has(x.id))).length, allOn = vis.length > 0 && vis.every(x => LSEL.has(x.id));
+    const rows = lay === "table" ? xlsTable(L.slice(0, NL), cnt) : VG.map(G => { const g = GROUP_OF[f.sort](G[0]); const head = g !== last ? `<div class="lgrp"><b>${esc(f.sort === "new" || f.sort === "old" ? thDate(g) : g)}</b><span>${cntG[g]} รายการ</span></div>` : ""; last = g; return head + lsIRRow(G); }).join("");
     const bar = `<div class="lsbar"><label class="lcb lsall"><input type="checkbox" id="lsAll" ${allOn ? "checked" : ""}><span>เลือกทั้งหมด (${VG.length})</span></label>
       <span class="lsn">${nSel ? `เลือกแล้ว <b>${nSel}</b> รายการ` : "ติ๊กเลือกรายการเพื่อคัดลอกเป็น IR"}</span>
       <button class="sm" id="lsPick" ${nSel ? "" : "disabled"} title="เลือกรูปแบบ และเลือกช่องที่จะคัดลอก">${I("settings")}<span>เลือกช่อง…</span></button>
       ${nSel ? `<button class="ghost sm" id="lsClr">${I("x")}<span>ล้าง</span></button>` : ""}</div>`;
     $("#listCard").innerHTML = sec("list", `รายการปัญหา (${RG.length}${words.length ? ` จาก ${reportGroups(all).length}` : ""})`, `${esc(where)} · ${esc(rLabel.replace("…", ""))}${words.length ? ` · ค้นหา "${esc(S.q.trim())}"` : ""}`,
       `<div class="seg vseg">${[["card", "list", "รายการ"], ["table", "grid", "ตาราง"]].map(([v, ic, l]) => `<button data-lay="${v}" class="${lay === v ? "on" : ""}" title="แสดงแบบ${l}">${I(ic)}<span>${l}</span></button>`).join("")}</div><button class="soft sm" id="csvBtn">${I("download")}CSV</button>`)
-      + (L.length ? bar + rows + (L.length > 300 ? `<p class="sub" style="text-align:center">แสดง 300 รายการแรก · เลือก Plant / หม้อ / วันที่ ให้แคบลง</p>` : "") : `<div class="empty"><div class="ic">${I(words.length ? "search" : "list")}</div><h3>${words.length ? "ไม่พบรายการที่ค้นหา" : "ไม่มีรายการตามตัวกรองนี้"}</h3><p class="sub">ลองเปลี่ยน Plant / หม้อ / วันที่ ด้านบน</p></div>`);
+      + (L.length ? bar + rows + ((lay === "table" ? L.length : RG.length) > NL ? `<button class="ghost blk ls-more" id="lsMore">แสดงเพิ่ม (เหลืออีก ${(lay === "table" ? L.length : RG.length) - NL} รายการ)</button>` : "") : `<div class="empty"><div class="ic">${I(words.length ? "search" : "list")}</div><h3>${words.length ? "ไม่พบรายการที่ค้นหา" : "ไม่มีรายการตามตัวกรองนี้"}</h3><p class="sub">ลองเปลี่ยน Plant / หม้อ / วันที่ ด้านบน</p></div>`);
+    const more = $("#lsMore"); if (more) { more.onclick = () => { S.listN = NL + 100; redraw(); };
+      if (window.IntersectionObserver) { const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); more.click(); } }, { rootMargin: "600px" }); io.observe(more); } }
   };
   draw();
-  $("#listQ").oninput = e => { S.q = e.target.value; clearTimeout(S.qT); S.qT = setTimeout(draw, 150); };
+  $("#listQ").oninput = e => { S.q = e.target.value; S.listN = 60; clearTimeout(S.qT); S.qT = setTimeout(draw, 150); };
 }
 /* ---------- มุมมองตาราง (แบบ Excel) · จอคอมเริ่มเป็นตาราง มือถือเริ่มเป็นการ์ด · จำที่เลือกไว้ ---------- */
 const listLayout = () => S.f.layV2 && S.f.layout === "table" ? "table" : "card";  // ค่าเริ่มต้น = แถวแบบรายการ IR
@@ -3895,7 +3912,7 @@ function tpManualPick() {
   });
 }
 function isoCard() {
-  const L = isoDocs().slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true }));
+  const L = isoDocs().slice().sort((a, b) => NUM_CMP(a.doc, b.doc));
   const app = new Map(TP_DOCS.map(d => [d.doc, d]));
   return `<div class="card">${sec("doc", `เอกสาร ISO Master (${L.length})`, "เปิดไฟล์ PDF จากระบบ ISO โดยตรง · ต้องล็อกอินบัญชีบริษัทในเครื่อง", `<span class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${L.length ? `<button class="sm pri" id="isoAll">${I("download")}โหลด PDF ทั้งหมดแล้วอัปเดต</button>` : ""}<button class="ghost sm" id="isoEdit">${I("pen")}วางลิงก์ / แก้ไข</button></span>`)}
     ${L.length ? `<div class="isolist">${L.map(x => { const a = app.get(x.doc), diff = a && x.rev && a.rev !== x.rev;
@@ -3908,7 +3925,7 @@ function isoCard() {
 const isoDl = u => u + (u.includes("?") ? "&" : "?") + "download=1";
 function openIsoAll() {
   // เบราว์เซอร์ยอมให้เปิด/ดาวน์โหลดได้ 1 ไฟล์ต่อการกด 1 ครั้ง (เปิดหลายแท็บพร้อมกันจะถูกบล็อกเป็นป๊อปอัป) → กดปุ่มเดิมไปเรื่อย ๆ
-  const L = isoDocs().slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true }));
+  const L = isoDocs().slice().sort((a, b) => NUM_CMP(a.doc, b.doc));
   const got = new Set();
   modal(`<h2>โหลด PDF ทั้งหมดแล้วอัปเดต</h2>
     <ol class="isosteps"><li>กดปุ่มด้านล่าง<b>ทีละครั้ง</b> กด 1 ครั้ง = ดาวน์โหลด 1 ไฟล์ ด้วยบัญชีบริษัทที่ล็อกอินไว้ (กดซ้ำได้เรื่อย ๆ จนครบ)</li>
@@ -3934,7 +3951,7 @@ function openIsoEditor(done) {
   modal(`<h2>เอกสาร ISO Master</h2><p class="sub" style="margin:2px 0 10px">วางลิงก์ไฟล์ PDF ทีเดียวหลายอันได้ (หรือคัดลอกทั้งตารางมาวาง) ระบบอ่านรหัสเอกสารและ Rev. จากชื่อไฟล์ให้เอง</p>
     <textarea id="isoIn" rows="5" placeholder="https://thaiunion.sharepoint.com/.../MAIN_TP002-N%20(ISO)%20Re.36.pdf"></textarea>
     <p class="sub" id="isoMsg" style="min-height:20px;margin:6px 0"></p>
-    <div id="isoCur">${cur.length ? cur.slice().sort((a, b) => a.doc.localeCompare(b.doc, undefined, { numeric: true })).map(x => `<div class="isorow sm"><div class="b"><b>${esc(x.doc)}</b><span class="sub">${x.rev ? "Rev." + esc(x.rev) : ""}${x.eff ? " · " + esc(x.eff) : ""}</span></div><button class="ghost sm" data-isodel="${esc(x.doc)}">ลบ</button></div>`).join("") : ""}</div>
+    <div id="isoCur">${cur.length ? cur.slice().sort((a, b) => NUM_CMP(a.doc, b.doc)).map(x => `<div class="isorow sm"><div class="b"><b>${esc(x.doc)}</b><span class="sub">${x.rev ? "Rev." + esc(x.rev) : ""}${x.eff ? " · " + esc(x.eff) : ""}</span></div><button class="ghost sm" data-isodel="${esc(x.doc)}">ลบ</button></div>`).join("") : ""}</div>
     <div class="row" style="margin-top:12px"><button class="blk" data-close>ปิด</button><button class="blk pri" id="isoSave">บันทึก</button></div>`, box => {
     let html = ""; const inp = box.querySelector("#isoIn"), msg = box.querySelector("#isoMsg"), del = new Set();
     const preview = () => { const n = isoParse(inp.value, html); msg.innerHTML = inp.value.trim() ? (n.length ? `พบ ${n.length} เอกสาร: <b>${n.map(x => esc(x.doc) + (x.rev ? " Rev." + esc(x.rev) : "")).join(", ")}</b>` : `<span style="color:var(--bad)">ไม่พบลิงก์เอกสาร (ต้องเป็นลิงก์ https)</span>`) : ""; };
@@ -5059,7 +5076,19 @@ if ("serviceWorker" in navigator) {
     b.innerHTML = "มีเวอร์ชันใหม่ · <b>แตะเพื่อโหลดใหม่</b>"; b.onclick = () => location.reload(); document.body.appendChild(b);
   });
 }
-setInterval(() => { if (!document.hidden) syncAll(false); }, 20000);
+/* อัปเดตสด: เซิร์ฟเวอร์ส่งสัญญาณทันทีเมื่อมีคนบันทึก → ดึงเฉพาะที่เปลี่ยน (ไม่ต้องรอรอบ 20 วินาที)
+   ปิดช่องตอนพับแอป/สลับแท็บ (ประหยัดแบต และไม่กินช่องเชื่อมต่อของเบราว์เซอร์) · เปิดกลับแล้วซิงก์ทันที */
+let liveES = null, liveT = 0;
+function liveStart() {
+  if (liveES || document.hidden || !S.role || !window.EventSource) return;
+  liveES = new EventSource("/api/live?ch=rt");
+  liveES.onmessage = () => { clearTimeout(liveT); liveT = setTimeout(() => syncAll(false), 300); };
+  liveES.onerror = () => { if (liveES && liveES.readyState === 2) { liveES = null; setTimeout(liveStart, 5000); } };
+}
+function liveStop() { if (liveES) { liveES.close(); liveES = null; } }
+document.addEventListener("visibilitychange", () => { if (document.hidden) liveStop(); else { liveStart(); if (S.role) syncAll(false); } });
+setInterval(() => { if (!S.role) liveStop(); else liveStart(); }, 3000);
+setInterval(() => { if (!document.hidden) syncAll(false); }, 120000);  // สำรอง เผื่อช่องอัปเดตสดหลุด
 document.addEventListener("visibilitychange", () => { if (!document.hidden) syncAll(false); });
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (S.view === "analyze" || S.view === "log") softRender(); }, 250); });
 </script>
