@@ -4272,7 +4272,7 @@ function voiceStop() {
 function voiceClose(keep) {
   voiceStop(); const p = $("#voiceP"); if (p) p.remove();
   // เก็บบทสนทนาไว้ในแชท AI ด้วย
-  if (keep && V.turns.some(t => t.q || t.a)) { V.turns.forEach(t => { if (t.q) AI.msgs.push({ role: "user", text: "🎤 " + t.q }); if (t.rep || t.a) AI.msgs.push({ role: "ai", text: t.rep || t.a, model: t.rep ? "AI" : "", trunc: t.trunc }); }); if (S.view === "ai") viewAI(); }
+  if (keep && V.turns.some(t => t.q || t.a)) { V.turns.forEach(t => { if (t.q) AI.msgs.push({ role: "user", text: t.q }); if (t.rep || t.a) AI.msgs.push({ role: "ai", text: t.rep || t.a, model: t.rep ? "AI" : "", trunc: t.trunc }); }); if (S.view === "ai") viewAI(); }
   V.turns = []; V.sel = -1;
   V.lines = [];
 }
