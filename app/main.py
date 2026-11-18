@@ -3436,6 +3436,8 @@ AI_JSON_SPEC = """รูปแบบคำตอบ: ตอบเป็น JSON 
 
 # ---- คุยด้วยเสียง (Gemini Live) · เฉพาะหัวหน้า · เบราว์เซอร์ ↔ เซิร์ฟเวอร์นี้ ↔ Google (API Key อยู่ที่เซิร์ฟเวอร์เท่านั้น)
 GEMINI_LIVE_MODEL = os.environ.get("GEMINI_LIVE_MODEL", "").strip() or "gemini-3.8-live-extended-thinking"
+# ระดับการคิดของรุ่น Extended Thinking (ต้องระบุ): low = ตอบไวเหมาะกับคุยเสียง · medium · high
+GEMINI_LIVE_THINKING = (os.environ.get("GEMINI_LIVE_THINKING", "").strip().lower() or "low")
 LIVE_URL = os.environ.get("GEMINI_LIVE_URL", "").strip() or "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
 LIVE_SYSTEM = ("คุณคือผู้ช่วยหัวหน้างาน Retort ที่คุยกันด้วยเสียงภาษาไทย ตอบสั้น กระชับ เป็นภาษาพูด "
                "ไม่ต้องอ่านตารางหรือสัญลักษณ์ ใช้ตัวเลขจากข้อมูลที่ให้มาเท่านั้น ถ้าไม่มีข้อมูลให้บอกตรง ๆ "
@@ -3466,7 +3468,8 @@ async def ws_retort_live(ws: WebSocket):
     ctx = str(first.get("context") or "")[:60000]
     setup = {"setup": {
         "model": "models/" + GEMINI_LIVE_MODEL,
-        "generationConfig": {"responseModalities": ["AUDIO"]},
+        "generationConfig": {"responseModalities": ["AUDIO"],
+                             **({"thinkingConfig": {"thinkingLevel": GEMINI_LIVE_THINKING}} if GEMINI_LIVE_THINKING in ("low", "medium", "high") else {})},
         "systemInstruction": {"parts": [{"text": LIVE_SYSTEM + "\n\n" + RETORT_AI_SYSTEM + "\n\nข้อมูลปัญหา Retort ล่าสุด:\n" + ctx}]},
         "inputAudioTranscription": {}, "outputAudioTranscription": {}}}
     try:
@@ -3498,7 +3501,9 @@ async def ws_retort_live(ws: WebSocket):
         return
     except Exception as e:  # noqa
         msg = str(e)
-        if "1008" in msg or "not found" in msg.lower() or "not supported" in msg.lower():
+        if "thinking level" in msg.lower():
+            msg = f"รุ่น {GEMINI_LIVE_MODEL} ต้องตั้งระดับการคิด · ตั้ง GEMINI_LIVE_THINKING=low/medium/high: {msg}"
+        elif "1008" in msg or "not found" in msg.lower() or "not supported" in msg.lower():
             msg = f"ใช้รุ่น {GEMINI_LIVE_MODEL} ไม่ได้ (Key นี้อาจยังไม่เปิดใช้รุ่นนี้): {msg}"
         try:
             await ws.send_text(json.dumps({"error": msg[:300]}))

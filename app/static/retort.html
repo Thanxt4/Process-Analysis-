@@ -4209,7 +4209,7 @@ function voiceOpen() {
     <div class="vp-rep"></div></div></div>`;
   document.body.appendChild(p);
   p.querySelector(".vp-x").onclick = p.querySelector(".vp-end").onclick = () => voiceClose(true);
-  p.querySelector(".vp-mute").onclick = () => { V.muted = !V.muted; V.st = V.muted ? "mute" : "listen"; voiceDraw(); };
+  p.querySelector(".vp-mute").onclick = () => { if (!V.ws) return; V.muted = !V.muted; V.st = V.muted ? "mute" : "listen"; voiceDraw(); };
   p.querySelector(".vp-log").onclick = e => { const x = e.target.closest("[data-vti]"); if (x) { V.sel = +x.dataset.vti; voiceDraw(); } };
   V.turns = []; V.sel = -1;
   V.lines = []; V.cur = { u: "", a: "" }; V.muted = false; V.st = "conn"; voiceDraw(); voiceStart();
