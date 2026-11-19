@@ -1687,6 +1687,13 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .ps-t{width:100%;border-collapse:collapse}.ps-t th{background:#f1f5f9;font-size:12.5px;padding:6px;text-align:center}.ps-t td{border-top:1px solid var(--line);padding:4px}.ps-t td:first-child{font-size:13px;width:44%}
 .ps-sig{grid-template-columns:2fr 1fr}.ps-foot{display:flex;gap:8px;align-items:center;padding-top:10px;border-top:1px solid var(--line)}
 @media(max-width:700px){.ps-g,.ps-sig{grid-template-columns:1fr}.ps-t td:first-child{font-size:12px}}
+.ps-body{gap:14px!important}
+.ps-sec{--c:#2563eb;--bg:#eff6ff;border:1.5px solid color-mix(in srgb,var(--c) 35%,#fff);border-left:6px solid var(--c);background:var(--bg);border-radius:14px;padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.ps-sec h4{margin:0;display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;color:var(--c)}.ps-sec h4 small{font-weight:600;font-size:12.5px;color:#64748b}
+.ps-sec h4 i{font-style:normal;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--c);color:#fff;font-size:13px}
+.ps-sec.c1{--c:#2563eb;--bg:#eff6ff}.ps-sec.c2{--c:#d97706;--bg:#fffbeb}.ps-sec.c3{--c:#dc2626;--bg:#fef2f2}.ps-sec.c4{--c:#16a34a;--bg:#f0fdf4}.ps-sec.c5{--c:#7c3aed;--bg:#f5f3ff}.ps-sec.c6{--c:#0f766e;--bg:#f0fdfa}
+.ps-sec input,.ps-sec textarea{background:#fff!important;border-color:#cbd5e1}.ps-sec input:placeholder-shown,.ps-sec textarea:placeholder-shown{background:#fff!important;border-style:dashed}
+.ps-sec .ps-t{background:#fff;border-radius:10px;overflow:hidden}.ps-sec .ps-t th{background:#fde68a;color:#78350f}.ps-t td.act input{border-color:#f59e0b}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2942,21 +2949,22 @@ function openPDSheet(g) {
     <div class="ps-top"><div><small>${PD_FORM_NO}</small><b>PROCESS DEVIATION DATA SHEET</b><span>i-Tail Corporation Public Limited</span></div>
       <button class="ghost sm" data-close>${I("x")}</button></div>
     <div class="ps-body">
-      <div class="ps-g">${row("Deviation Number", "no", "text", "เช่น PD-PF2-001")}${row("Production Date", "prod", "date")}${row("Deviation Date", "dev", "date")}
+      <section class="ps-sec c1"><h4><i>1</i>ข้อมูลทั่วไป <small>General</small></h4>
+        <div class="ps-g">${row("Deviation Number", "no", "text", "เช่น PD-PF2-001")}${row("Production Date", "prod", "date")}${row("Deviation Date", "dev", "date")}
         ${row("Plant", "plant")}${row("Shift", "shift")}${row("Product Name", "product")}${row("Code", "code")}${row("Packaging size", "pack")}
-        <label class="ps-f"><span>Quantity / Units</span><div class="ps-qu">${f("qty", "text")}${f("unit", "text", "Units")}</div></label>${row("Product Ref# No.", "ref")}</div>
-      <div class="ps-band">DETAIL OF DEVIATION</div>
-      <div class="ps-g">${row("Retort type", "rtype", "text", "เลือกหรือพิมพ์")}${row("Retort no./Batch", "rno")}<label class="ps-f ps-wide"><span>Deviation step</span>${f("step", "text", "เช่น Come up / Cooking / Cooling")}</label></div>
-      <datalist id="pdRtypes"><option value="Water Spray"><option value="Water Immersion"><option value="Steam / Air"><option value="Rotary"><option value="Static"></datalist>
-      <table class="ps-t"><thead><tr><th>Process Parameters</th><th>Official</th><th>Actual</th></tr></thead><tbody>
-        ${PD_PARAMS.map((p, i) => `<tr><td>${esc(p)}</td><td>${f("p" + i + "o")}</td><td>${f("p" + i + "a")}</td></tr>`).join("")}</tbody></table>
-      <div class="ps-band">DETAIL OF DEVIATION WITH EXACT CAUSE(S). WHY OFFICIAL PROCESS WAS NOT FOLLOWED?</div>${f("cause", "ta")}
-      <div class="ps-band">ACTION TAKEN ( QC/PD Section manager)</div>${f("action", "ta")}
-      <div class="ps-band">QC DEPUTY DEPARTMENT MANAGER / QC DEPARTMENT MANAGER COMMENTS</div>${f("ddm_cmt", "ta")}
-      <div class="ps-g ps-sig">${row("QC DDM/DM .signature", "ddm_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "ddm_date", "date")}</div>
-      <div class="ps-band">Process Authority Disposition</div>${f("pa_disp", "ta")}
-      <div class="ps-g ps-sig">${row("Process authority signature", "pa_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "pa_date", "date")}
-        ${row("COO./Sr. QA Manager signature", "coo_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "coo_date", "date")}</div>
+        <label class="ps-f"><span>Quantity / Units</span><div class="ps-qu">${f("qty", "text")}${f("unit", "text", "Units")}</div></label>${row("Product Ref# No.", "ref")}</div></section>
+      <section class="ps-sec c2"><h4><i>2</i>DETAIL OF DEVIATION <small>หม้อ / ค่าที่เบี่ยงเบน</small></h4>
+        <div class="ps-g">${row("Retort type", "rtype", "text", "เลือกหรือพิมพ์")}${row("Retort no./Batch", "rno")}<label class="ps-f ps-wide"><span>Deviation step</span>${f("step", "text", "เช่น Come up / Cooking / Cooling")}</label></div>
+        <datalist id="pdRtypes"><option value="Water Spray"><option value="Water Immersion"><option value="Steam / Air"><option value="Rotary"><option value="Static"></datalist>
+        <table class="ps-t"><thead><tr><th>Process Parameters</th><th>Official</th><th>Actual</th></tr></thead><tbody>
+          ${PD_PARAMS.map((p, i) => `<tr><td>${esc(p)}</td><td>${f("p" + i + "o")}</td><td class="act">${f("p" + i + "a")}</td></tr>`).join("")}</tbody></table></section>
+      <section class="ps-sec c3"><h4><i>3</i>DETAIL OF DEVIATION WITH EXACT CAUSE(S) <small>ทำไมไม่เป็นไปตาม Official process</small></h4>${f("cause", "ta")}</section>
+      <section class="ps-sec c4"><h4><i>4</i>ACTION TAKEN <small>QC/PD Section manager</small></h4>${f("action", "ta")}</section>
+      <section class="ps-sec c5"><h4><i>5</i>QC DDM / DM COMMENTS <small>ความเห็นผู้จัดการ QC</small></h4>${f("ddm_cmt", "ta")}
+        <div class="ps-g ps-sig">${row("QC DDM/DM .signature", "ddm_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "ddm_date", "date")}</div></section>
+      <section class="ps-sec c6"><h4><i>6</i>PROCESS AUTHORITY DISPOSITION <small>การพิจารณาของ Process Authority</small></h4>${f("pa_disp", "ta")}
+        <div class="ps-g ps-sig">${row("Process authority signature", "pa_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "pa_date", "date")}
+        ${row("COO./Sr. QA Manager signature", "coo_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "coo_date", "date")}</div></section>
     </div>
     <div class="ps-foot"><button class="ghost" id="psPrint">${I("printer")}พิมพ์ / PDF</button><span style="flex:1"></span><button class="ghost" data-close>ยกเลิก</button><button class="pri" id="psSave">${I("check")}บันทึก Data Sheet</button></div></div>`, box => {
     // ช่องข้อความยาว: ขยายตามเนื้อหาอัตโนมัติ (อย่างน้อย ~5 บรรทัด)
