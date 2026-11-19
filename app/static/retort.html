@@ -2210,7 +2210,7 @@ async function syncAll(full) {
   } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
-const STAFF_TABS = ["log", "list", "pd", "runs", "survey"];
+const STAFF_TABS = ["log", "list", "runs", "survey"];  // Process Deviation: เฉพาะรหัสหัวหน้า
 const MOBILE_TABS = ["log", "list", "runs", "survey"];
 const MOBILE_MQ = matchMedia("(max-width:700px), (hover:none) and (pointer:coarse) and (max-height:500px)");
 MOBILE_MQ.addEventListener("change", () => { if (typeof renderNav === "function" && S.loaded !== undefined) { renderNav(); render(); } });
@@ -2908,6 +2908,7 @@ const listCount = F => { const [a, b] = rangeOf(F); return filtered(a, b, false,
 /* ---------- แถบ Process Deviation: IR ที่ออก Process Deviation ---------- */
 const PDV = { range: lsGet("rt_pdrange", "90"), q: "" };
 function viewPD() {
+  if (S.role !== "sup") { S.view = "list"; return render(); }  // เฉพาะรหัสหัวหน้า
   const t = todayISO(), from = PDV.range === "all" ? "" : addDays(t, -(+PDV.range - 1));
   const all = Object.values(S.items).filter(x => isPD(x) && (!from || (x.date || "") >= from));
   const G0 = reportGroups(sortItems(all, "new")), q = PDV.q.trim().toLowerCase();
