@@ -2440,6 +2440,9 @@ def _clean_rp(d: dict) -> dict:
     vals = d.get("values") if isinstance(d.get("values"), dict) else {}
     # ค่าที่วัดของหัวข้อปัญหา + ช่องรายละเอียดที่ผู้ดูแลเพิ่มเอง (key ขึ้นต้น x_)
     out["values"] = {str(k)[:40]: str(v)[:200] for k, v in list(vals.items())[:40]}
+    # Process Deviation Data Sheet (แบบฟอร์ม F3QCRE18) — เก็บแยกจาก values เพราะช่องเยอะและข้อความยาว
+    if isinstance(d.get("pdSheet"), dict):
+        out["pdSheet"] = {str(k)[:30]: str(v)[:2000] for k, v in list(d["pdSheet"].items())[:80]}
     ph = d.get("photos") if isinstance(d.get("photos"), list) else []
     out["photos"] = [str(f) for f in ph if isinstance(f, str) and _RT_PHOTO_RE.match(f)][:8]
     out["impact"] = "hold" if out["impact"] == "hold" else "none"
@@ -2496,6 +2499,8 @@ async def api_retort_save(request: Request):
         for k in _RP_APPROVAL:
             if od.get(k):
                 x[k] = od[k]
+        if "pdSheet" not in x and od.get("pdSheet"):  # หน้าเว็บเก่า/ฟอร์มที่ไม่รู้จักช่องนี้ → อย่าให้ Data Sheet หาย
+            x["pdSheet"] = od["pdSheet"]
     with db() as con:
         con.execute("INSERT INTO retort_problems(id, date, data, updated_at) VALUES(?,?,?,?) "
                     "ON CONFLICT(id) DO UPDATE SET date=excluded.date, data=excluded.data, updated_at=excluded.updated_at",

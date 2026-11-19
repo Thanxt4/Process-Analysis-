@@ -1676,6 +1676,18 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .pdc-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.pdc-b>b{font-size:15.5px;color:var(--navy)}.pdc-b small{color:var(--mute);font-size:12.5px}.pdc-b p{margin:2px 0;color:#334155;font-size:14px;white-space:pre-wrap}
 .pdc-b .dec b{color:#334155}.pdc-a{display:flex;flex-direction:column;gap:6px}.pdc-a .ghost{border:1px solid var(--line);background:#fff}
 @media(max-width:700px){.pdv-kpi{grid-template-columns:repeat(2,1fr)}.pdc{flex-wrap:wrap}.pdc-no{flex:1 1 100%;flex-direction:row;align-items:baseline;gap:8px}.pdc-a{flex-direction:row;width:100%}}
+.pdv-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.pdv-head>div{flex:1;min-width:220px}
+.pdv-new{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#5b21b6;border:0;border-radius:14px;padding:12px 18px;font-weight:800;font-size:15px;cursor:pointer}.pdv-new svg.i{width:18px;height:18px}
+.tag.pdok{background:#ede9fe;color:#5b21b6}.tag.pdno{background:#fef3c7;color:#92400e}
+.pdn-l{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto}.pdn-r{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer}.pdn-r:hover{border-color:#7c3aed;background:#faf5ff}.pdn-r small{color:var(--mute)}
+.ps{display:flex;flex-direction:column;max-height:88vh}.ps-top{display:flex;align-items:flex-start;gap:10px;padding:0 0 10px;border-bottom:2px solid #4c1d95}.ps-top>div{flex:1;display:flex;flex-direction:column}.ps-top small{color:var(--mute);font-size:12px}.ps-top b{font-size:19px;color:#4c1d95}.ps-top span{font-size:13px;color:var(--mute)}
+.ps-body{overflow:auto;padding:10px 2px;display:flex;flex-direction:column;gap:8px}
+.ps-g{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 14px}.ps-f{display:flex;flex-direction:column;gap:3px}.ps-f>span{font-size:12.5px;font-weight:700;color:#334155}.ps-wide{grid-column:1/-1}
+.ps-qu{display:grid;grid-template-columns:2fr 1fr;gap:6px}.ps input,.ps textarea{width:100%;min-height:40px;font-size:14px}.ps textarea{resize:vertical}
+.ps-band{background:#ede9fe;color:#4c1d95;font-weight:800;font-size:12.5px;text-align:center;padding:6px 8px;border-radius:8px;margin-top:6px}
+.ps-t{width:100%;border-collapse:collapse}.ps-t th{background:#f1f5f9;font-size:12.5px;padding:6px;text-align:center}.ps-t td{border-top:1px solid var(--line);padding:4px}.ps-t td:first-child{font-size:13px;width:44%}
+.ps-sig{grid-template-columns:2fr 1fr}.ps-foot{display:flex;gap:8px;align-items:center;padding-top:10px;border-top:1px solid var(--line)}
+@media(max-width:700px){.ps-g,.ps-sig{grid-template-columns:1fr}.ps-t td:first-child{font-size:12px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2905,6 +2917,114 @@ const listPlants = () => [...new Set([...plantsList(), ...Object.values(S.items)
 const listRets = pl => [...new Set([...(pl === "all" ? plantsList().flatMap(plantRetorts) : plantRetorts(pl)),
   ...Object.values(S.items).filter(x => pl === "all" || x.plant === pl).map(x => x.retort).filter(Boolean)])].sort(byRetort);
 const listCount = F => { const [a, b] = rangeOf(F); return filtered(a, b, false, F).filter(x => !F.appr || F.appr === "all" || (F.appr === "done") === !!x.approvedBy).length; };
+/* ---------- Process Deviation Data Sheet (F3QCRE18) : กรอกในแอป · พิมพ์ตามแบบฟอร์ม ---------- */
+const PD_PARAMS = ["Process Temperature ( TID ) ( °C)", "Recorded Process Temperature ( °C)", "Process time ( minutes )", "IT. of product ( °C)", "Venting / Come up time ( minutes )", "Flow rate ( l/sec.)", "Minimum moisture (%)"];
+const PD_FORM_NO = "F3QCRE18-2-18/11/26";
+function pdSheetOf(g) {
+  const x = g[0], v = x.values || {}, sh = Object.assign({}, x.pdSheet || {});
+  const pr = x.programDoc ? progByKey(x.programDoc + "#" + x.program) : null, cook = pr && pr.steps.find(s => s[0] === "cook");
+  const dflt = {
+    no: v.ir_pdno || "", prod: v.ir_pdate || x.date || "", dev: v.ir_pddate || x.date || "", plant: x.plant || "", shift: v.ir_pshift || x.shift || "",
+    product: x.product || "", code: v.ir_pcode || (x.code ? x.code + (v.ir_market || "") : ""), pack: "", qty: v.ir_qnrft || x.holdQty || "", unit: x.holdUnit || "", ref: x.code || "",
+    rtype: "", rno: [...new Set(g.flatMap(y => irRowsOf(y).map(r => String(r.b || "").trim())).filter(Boolean))].join(", ") || x.retort || "", step: "",
+    p0o: cook ? cook[1] : "", cause: v.ir_pdnote || [causeText(x), x.detail].filter(Boolean).join(" · "), action: v.ir_decision || x.action || ""
+  };
+  for (const k in dflt) if (sh[k] == null || sh[k] === "") sh[k] = dflt[k];
+  return sh;
+}
+const PD_SIGS = [["ddm", "QC DDM/DM"], ["pa", "Process authority"], ["coo", "COO./Sr. QA Manager"]];
+const pdSigned = sh => PD_SIGS.filter(([k]) => (sh[k + "_sig"] || "").trim()).length;
+function openPDSheet(g) {
+  const x = g[0], sh = pdSheetOf(g);
+  const f = (k, type, ph) => type === "ta" ? `<textarea data-ps="${k}" rows="3" placeholder="${esc(ph || "")}">${esc(sh[k] || "")}</textarea>`
+    : `<input data-ps="${k}" type="${type || "text"}" value="${esc(sh[k] || "")}" placeholder="${esc(ph || "")}" ${k === "rtype" ? 'list="pdRtypes"' : ""} autocomplete="off">`;
+  const row = (l, k, type, ph) => `<label class="ps-f"><span>${l}</span>${f(k, type, ph)}</label>`;
+  modal(`<div class="ps">
+    <div class="ps-top"><div><small>${PD_FORM_NO}</small><b>PROCESS DEVIATION DATA SHEET</b><span>i-Tail Corporation Public Limited</span></div>
+      <button class="ghost sm" data-close>${I("x")}</button></div>
+    <div class="ps-body">
+      <div class="ps-g">${row("Deviation Number", "no", "text", "เช่น PD-PF2-001")}${row("Production Date", "prod", "date")}${row("Deviation Date", "dev", "date")}
+        ${row("Plant", "plant")}${row("Shift", "shift")}${row("Product Name", "product")}${row("Code", "code")}${row("Packaging size", "pack")}
+        <label class="ps-f"><span>Quantity / Units</span><div class="ps-qu">${f("qty", "text")}${f("unit", "text", "Units")}</div></label>${row("Product Ref# No.", "ref")}</div>
+      <div class="ps-band">DETAIL OF DEVIATION</div>
+      <div class="ps-g">${row("Retort type", "rtype", "text", "เลือกหรือพิมพ์")}${row("Retort no./Batch", "rno")}<label class="ps-f ps-wide"><span>Deviation step</span>${f("step", "text", "เช่น Come up / Cooking / Cooling")}</label></div>
+      <datalist id="pdRtypes"><option value="Water Spray"><option value="Water Immersion"><option value="Steam / Air"><option value="Rotary"><option value="Static"></datalist>
+      <table class="ps-t"><thead><tr><th>Process Parameters</th><th>Official</th><th>Actual</th></tr></thead><tbody>
+        ${PD_PARAMS.map((p, i) => `<tr><td>${esc(p)}</td><td>${f("p" + i + "o")}</td><td>${f("p" + i + "a")}</td></tr>`).join("")}</tbody></table>
+      <div class="ps-band">DETAIL OF DEVIATION WITH EXACT CAUSE(S). WHY OFFICIAL PROCESS WAS NOT FOLLOWED?</div>${f("cause", "ta")}
+      <div class="ps-band">ACTION TAKEN ( QC/PD Section manager)</div>${f("action", "ta")}
+      <div class="ps-band">QC DEPUTY DEPARTMENT MANAGER / QC DEPARTMENT MANAGER COMMENTS</div>${f("ddm_cmt", "ta")}
+      <div class="ps-g ps-sig">${row("QC DDM/DM .signature", "ddm_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "ddm_date", "date")}</div>
+      <div class="ps-band">Process Authority Disposition</div>${f("pa_disp", "ta")}
+      <div class="ps-g ps-sig">${row("Process authority signature", "pa_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "pa_date", "date")}
+        ${row("COO./Sr. QA Manager signature", "coo_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "coo_date", "date")}</div>
+    </div>
+    <div class="ps-foot"><button class="ghost" id="psPrint">${I("printer")}พิมพ์ / PDF</button><span style="flex:1"></span><button class="ghost" data-close>ยกเลิก</button><button class="pri" id="psSave">${I("check")}บันทึก Data Sheet</button></div></div>`, box => {
+    const read = () => { const o = {}; box.querySelectorAll("[data-ps]").forEach(e => o[e.dataset.ps] = e.value.trim()); return o; };
+    box.querySelector("#psPrint").onclick = () => printPDSheet(read());
+    box.querySelector("#psSave").onclick = async e => {
+      const o = read(); if (!o.no) { toast("กรุณากรอก Deviation Number"); box.querySelector('[data-ps="no"]').focus(); return; }
+      e.target.disabled = true; let ok = true;
+      for (const [i, y] of g.entries()) {
+        const z = JSON.parse(JSON.stringify(y)); z.values = Object.assign({}, z.values, { ir_pd: "Y", ir_pdno: o.no.slice(0, 200), ir_pddate: o.dev });
+        if (!z.values.ir_pdnote && o.cause) z.values.ir_pdnote = o.cause.slice(0, 200);
+        if (i === 0) z.pdSheet = o;
+        ok = (await saveItem(z)) && ok;
+      }
+      e.target.disabled = false; if (!ok) return;
+      closeModal(); toast("บันทึก Process Deviation Data Sheet แล้ว"); if (S.view === "pd") viewPD();
+    };
+  }, "wide");
+}
+function printPDSheet(o) {
+  const v = k => esc(o[k] || ""), d = k => esc(o[k] ? dmy(o[k]) : ""), ml = k => esc(o[k] || "").replace(/\n/g, "<br>");
+  const lines = (k, n) => `<div class="ml">${ml(k)}</div>${Array.from({ length: Math.max(0, n - Math.ceil((o[k] || "").length / 95) - (o[k] || "").split("\n").length + 1) }, () => '<div class="dl"></div>').join("")}`;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Process Deviation ${v("no")}</title><style>
+    @page{size:A4;margin:12mm 12mm}body{font:10pt "Times New Roman","Sarabun",serif;color:#000;margin:0}
+    .fn{text-align:right;font-weight:bold;font-size:9.5pt}.co{text-align:center;font-weight:bold;font-size:12pt;margin:4px 0 8px}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}td,th{border:1px solid #000;padding:2px 4px;height:6.2mm;vertical-align:middle;word-break:break-word}
+    .bd{background:#d9d9d9;text-align:center;font-weight:bold;border:1px solid #000;padding:2px;margin-top:-1px}.b{font-weight:bold}.c{text-align:center}
+    .sec{margin-top:6px}.ml{padding:2px 4px;min-height:5mm;border-bottom:1px dotted #000;line-height:1.5}.dl{border-bottom:1px dotted #000;height:6mm}
+    .tbl2 td{height:6.4mm}</style></head><body>
+    <div class="fn">${PD_FORM_NO}</div><div class="co">i-Tail Corporation Public Limited</div>
+    <table><tr><td colspan="6" class="bd">PROCESS DEVIATION DATA SHEET</td></tr>
+      <tr><td class="b" style="width:20%">Deviation Number</td><td colspan="5">${v("no")}</td></tr>
+      <tr><td class="b">Production Date</td><td colspan="5">${d("prod")}</td></tr>
+      <tr><td class="b">Deviation Date</td><td colspan="5">${d("dev")}</td></tr>
+      <tr><td class="b">Plant</td><td colspan="2">${v("plant")}</td><td class="b c">Shift</td><td colspan="2">${v("shift")}</td></tr>
+      <tr><td class="b">Product Name</td><td colspan="2">${v("product")}</td><td class="b c">Code</td><td colspan="2">${v("code")}</td></tr>
+      <tr><td class="b">Packaging size</td><td colspan="2">${v("pack")}</td><td class="b c">Quntity</td><td>${v("qty")}</td><td class="b c">${v("unit") || "Units"}</td></tr>
+      <tr><td class="b">Product Ref# No.</td><td colspan="5">${v("ref")}</td></tr>
+      <tr><td colspan="6" class="bd">DETAIL OF DEVIATION</td></tr>
+      <tr><td class="b">Retort type</td><td colspan="2">${v("rtype")}</td><td class="b c">Retort no./Batch</td><td colspan="2">${v("rno")}</td></tr>
+      <tr><td class="b">Deviation step</td><td colspan="5">${v("step")}</td></tr>
+      <tr><td colspan="2" class="b c">Process Parameters</td><td colspan="2" class="b c">Official</td><td colspan="2" class="b c">Actual</td></tr>
+      ${PD_PARAMS.map((p, i) => `<tr><td colspan="2">${esc(p)}</td><td colspan="2" class="c">${v("p" + i + "o")}</td><td colspan="2" class="c">${v("p" + i + "a")}</td></tr>`).join("")}</table>
+    <div class="bd">DETAIL OF DEVIATION WITH EXACT CAUSE(S). WHY OFFICIAL PROCESS WAS NOT FOLLOWED?</div>${lines("cause", 3)}
+    <div class="bd sec">ACTION TAKEN ( QC/PD Section manager)</div>${lines("action", 2)}
+    <div class="bd sec">QC DEPUTY DEPARTMENT MANAGER / QC DEPARTMENT MANAGER COMMENTS</div>${lines("ddm_cmt", 2)}
+    <table class="tbl2 sec"><tr><td class="b" style="width:30%">QC DDM/DM .signature</td><td style="width:30%">${v("ddm_sig")}</td><td class="b c" style="width:10%">Date</td><td>${d("ddm_date")}</td></tr>
+      <tr><td class="b c" style="height:30mm;border-style:dotted solid">Process Authority Disposition</td><td colspan="3" style="vertical-align:top;line-height:1.6">${ml("pa_disp")}</td></tr>
+      <tr><td class="b">Process authority signature</td><td>${v("pa_sig")}</td><td class="b c">Date</td><td>${d("pa_date")}</td></tr>
+      <tr><td class="b">COO./Sr. QA Manager signature</td><td>${v("coo_sig")}</td><td class="b c">Date</td><td>${d("coo_date")}</td></tr></table>
+    <script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`;
+  const w = window.open("", "_blank"); if (!w) { toast("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ · อนุญาตป๊อปอัปแล้วลองใหม่"); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+// ออก Process Deviation ใหม่: เลือก IR ที่ยังไม่ออก PD → กรอก Data Sheet
+function openPDNew() {
+  const from = addDays(todayISO(), -89);
+  const G = reportGroups(sortItems(Object.values(S.items).filter(x => kindOf(x) === "ir" && !isPD(x) && (x.date || "") >= from), "new"));
+  const rowH = g => { const x = g[0], v = x.values || {}; return `<button class="pdn-r" data-pdpick="${esc(x.id)}"><b>${v.ir_irno ? esc(v.ir_irno) + " · " : ""}${esc(g.map(y => catById(y.category)?.name || "").filter(Boolean).join(" · "))}</b>
+    <small>${esc([`${x.plant || ""} ${x.retort || ""}`.trim(), `${dmy(x.date)} ${x.time || ""} กะ ${x.shift || ""}`, x.by].filter(Boolean).join(" · "))}</small></button>`; };
+  modal(`<h2>ออก Process Deviation</h2>
+    <p class="sub" style="margin:0 0 10px">เลือก IR ที่ต้องการออก Process Deviation (IR ใน 90 วันล่าสุดที่ยังไม่ได้ออก) แล้วกรอก Data Sheet</p>
+    <div class="addbar listsearch" style="margin:0 0 10px"><span class="gic">${I("search")}</span><input id="pdnQ" placeholder="ค้นหา IR / หม้อ / ปัญหา" autocomplete="off"></div>
+    <div class="pdn-l" id="pdnL">${G.length ? G.map(rowH).join("") : `<p class="sub">ไม่มี IR ที่ยังไม่ได้ออก Process Deviation ใน 90 วันล่าสุด</p>`}</div>`, box => {
+    box.querySelector("#pdnQ").oninput = e => { const q = e.target.value.trim().toLowerCase(); box.querySelector("#pdnL").innerHTML = G.filter(g => !q || g.some(x => itemText(x).includes(q))).map(rowH).join("") || `<p class="sub">ไม่พบ</p>`; };
+    box.querySelector("#pdnL").onclick = e => { const b = e.target.closest("[data-pdpick]"); if (!b) return; const x = S.items[b.dataset.pdpick]; if (x) openPDSheet(groupOf(x)); };
+  });
+}
 /* ---------- แถบ Process Deviation: IR ที่ออก Process Deviation ---------- */
 const PDV = { range: lsGet("rt_pdrange", "90"), q: "" };
 function viewPD() {
@@ -2920,17 +3040,20 @@ function viewPD() {
       <div class="pdc-b"><b>${v.ir_irno ? `<span class="kb ir">IR</span>${esc(v.ir_irno)} · ` : ""}${esc(names)}</b>
         <small>${esc([`${x.plant || ""} ${x.retort || ""}`.trim(), `${dmy(x.date)} ${x.time || ""} กะ ${x.shift || ""}`, x.code ? x.code + (v.ir_market || "") : "", x.by].filter(Boolean).join(" · "))}</small>
         ${v.ir_pdnote ? `<p>${esc(v.ir_pdnote)}</p>` : ""}${v.ir_decision ? `<small class="dec"><b>การตัดสินใจ:</b> ${esc(v.ir_decision)}</small>` : ""}
-        <span class="irl-tags">${apprTag(x)}${x.impact === "hold" ? `<span class="tag hold">${esc(holdTxt(x))}</span>` : ""}</span></div>
-      <div class="pdc-a"><button class="ghost sm" data-pdview="${esc(x.id)}">${I("list")}รายละเอียด</button><button class="ghost sm" data-pdedit="${esc(x.id)}">${I("pen")}แก้ไข</button></div></div>`; };
+        <span class="irl-tags">${x.pdSheet ? `<span class="tag pdok">Data Sheet · ลงนาม ${pdSigned(x.pdSheet)}/3</span>` : `<span class="tag pdno">ยังไม่กรอก Data Sheet</span>`}${apprTag(x)}${x.impact === "hold" ? `<span class="tag hold">${esc(holdTxt(x))}</span>` : ""}</span></div>
+      <div class="pdc-a"><button class="pri sm" data-pdsheet="${esc(x.id)}">${I("doc")}Data Sheet</button>${x.pdSheet ? `<button class="ghost sm" data-pdprint="${esc(x.id)}">${I("printer")}พิมพ์</button>` : ""}<button class="ghost sm" data-pdview="${esc(x.id)}">${I("list")}รายละเอียด</button><button class="ghost sm" data-pdedit="${esc(x.id)}">${I("pen")}แก้ไข</button></div></div>`; };
   $("#main").innerHTML = `<div class="pdv">
-    <div class="pdv-head"><div><b>Process Deviation</b><span>IR ที่ออก Process Deviation · เลือก "ออก Process Deviation" ตอนออก IR แล้วจะขึ้นที่นี่</span></div></div>
+    <div class="pdv-head"><div><b>Process Deviation</b><span>กรอก Process Deviation Data Sheet (F3QCRE18) · พิมพ์ตามแบบฟอร์มได้</span></div><button class="pdv-new" data-pdnew="1">${I("plus")}ออก Process Deviation</button></div>
     <div class="pdv-kpi"><div><b>${G0.length}</b><span>ฉบับในช่วงนี้</span></div><div><b>${nMon}</b><span>ออกเดือนนี้</span></div><div class="${nWait ? "w" : ""}"><b>${nWait}</b><span>IR รออนุมัติ</span></div><div><b>${nRet}</b><span>หม้อที่เกี่ยวข้อง</span></div></div>
     <div class="pdv-bar"><div class="seg">${[["30", "30 วัน"], ["90", "90 วัน"], ["365", "1 ปี"], ["all", "ทั้งหมด"]].map(([v, l]) => `<button data-pdr="${v}" class="${PDV.range === v ? "on" : ""}">${l}</button>`).join("")}</div>
       <div class="addbar listsearch pdv-q"><span class="gic">${I("search")}</span><input id="pdQ" value="${esc(PDV.q)}" placeholder="ค้นหา เลขที่ / IR / หม้อ / รายละเอียด" autocomplete="off"></div></div>
-    <div class="pdv-list">${G.length ? G.map(card).join("") : `<div class="empty"><div class="ic">${I("alert")}</div><h3>${q ? "ไม่พบที่ค้นหา" : "ยังไม่มี Process Deviation ในช่วงนี้"}</h3><p class="sub">ออกได้ในฟอร์มออก IR (ขั้นที่ 5) · เลือก ออก Process Deviation</p></div>`}</div></div>`;
+    <div class="pdv-list">${G.length ? G.map(card).join("") : `<div class="empty"><div class="ic">${I("alert")}</div><h3>${q ? "ไม่พบที่ค้นหา" : "ยังไม่มี Process Deviation ในช่วงนี้"}</h3><p class="sub">กด "ออก Process Deviation" ด้านบนเพื่อเลือก IR แล้วกรอก Data Sheet · หรือเลือกตอนออก IR (ขั้นที่ 5)</p></div>`}</div></div>`;
   const m = $("#main");
   m.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
     if (ds.pdr) { PDV.range = ds.pdr; lsSet("rt_pdrange", PDV.range); viewPD(); }
+    else if (ds.pdnew) openPDNew();
+    else if (ds.pdsheet) { const x = S.items[ds.pdsheet]; if (x) openPDSheet(groupOf(x)); }
+    else if (ds.pdprint) { const x = S.items[ds.pdprint]; if (x) printPDSheet(pdSheetOf(groupOf(x))); }
     else if (ds.pdview) showItem(ds.pdview);
     else if (ds.pdedit) openEdit(ds.pdedit); };
   m.onchange = null;
