@@ -1949,7 +1949,22 @@ def api_problems(start: Optional[str] = None, end: Optional[str] = None):
                         "topic": r.get("topic") or "", "note": "\n".join(n for n in notes if n.strip()) or (r.get("note") or ""),
                         "cause": r.get("cause") or "", "action": r.get("action") or "", "remark": r.get("remark") or "",
                         "resp": r.get("resp") or "", "media": [media_info(f) for f in imgs]})
-    return {"start": a.isoformat(), "end": b.isoformat(), "items": out}
+        # ผลตรวจ "ปกติ" ในช่วงเดียวกัน: รวมเป็นจำนวนครั้งต่อหัวข้อ (+ ครั้งล่าสุด ไว้เปิดดูผลตรวจ)
+        oks = {}
+        for r in con.execute(
+                "SELECT id, area_id, round_date, created_at, inspector FROM submissions WHERE status='ปกติ' AND round_date BETWEEN ? AND ? "
+                "ORDER BY created_at DESC", (a.isoformat(), b.isoformat())):
+            aid = r["area_id"]
+            if aid in oks:
+                oks[aid]["n"] += 1
+                continue
+            if not item_in_fac(aid):
+                continue
+            it = ITEM_MAP.get(aid, {})
+            oks[aid] = {"area_id": aid, "no": it.get("no", ""), "name": it.get("name", aid), "zone": it.get("zone", ""),
+                        "deck": zdeck.get(it.get("zone_id"), "pc"), "proc": it.get("proc", ""), "n": 1,
+                        "last": r["created_at"], "round": r["round_date"], "sid": r["id"], "inspector": r["inspector"]}
+    return {"start": a.isoformat(), "end": b.isoformat(), "items": out, "ok": list(oks.values())}
 
 
 # ---- ตกแต่งหน้าจอของฉัน: แยกตามบัญชี (รหัสพนักงาน) · app = retort / main

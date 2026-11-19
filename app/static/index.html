@@ -36,6 +36,10 @@ details.pb{margin-top:12px}
 .pb-t.lv2{background:#fee2e2;border-color:#fca5a5}.pb-t.lv3{background:#fecaca;border-color:#f87171}
 .pb-t.lv4{background:#b91c1c;border-color:#991b1b}.pb-t.lv4 em,.pb-t.lv4 em small,.pb-t.lv4 b,.pb-t.lv4 span{color:#fff}
 .pb-t.on{outline:3px solid #1b2a41;outline-offset:1px}
+.pb-sum span.bad b{color:#b91c1c}.pb-sum span.ok{background:#ecfdf5}.pb-sum span.ok b,.pb-sum b.g{color:#15803d}.pb-sum span:first-child b{color:#1b2a41}
+.pb-t.okt{background:#f0fdf4;border-color:#bbf7d0}.pb-t em.g{color:#15803d;font-size:20px}.pb-t em.g small{color:#166534;font-size:13px;margin-left:6px}
+.pb-t .okn{font-style:normal;color:#15803d;font-weight:700}.pb-t.lv4 .okn{color:#bbf7d0}.pb-xh em.g{color:#15803d;background:#dcfce7}.pb-o.okrow{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px}
+
 .pb-x>*{flex-shrink:0}
 .pb-x{grid-column:1/-1;max-height:70vh;overflow:auto;border:1.5px solid #1b2a41;border-radius:16px;background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 28px rgba(15,23,42,.12)}
 .pb-xh{display:flex;align-items:center;gap:10px;position:sticky;top:-12px;background:#fff;z-index:2;padding:6px 0;margin-top:-6px}.pb-xh>div{flex:1;display:flex;flex-direction:column}.pb-xh small{color:var(--muted);font-size:12.5px}.pb-xh b{font-size:16px;color:#1b2a41}
@@ -1243,13 +1247,14 @@ body.no-comments .igc,body.no-comments .cmb,body.no-comments #cmOpen,body.no-ret
     <!-- รวมปัญหา: กล่องหัวข้อที่พบปัญหา · แตะเพื่อดูรายละเอียด -->
     <details class="dash pb" id="probBox">
       <summary class="dash-sum">
-        <div><b>รวมปัญหา</b><span>ปัญหาที่พบ แยกตามหัวข้อ · แตะกล่องเพื่อดูรายละเอียด · เลือกช่วงวันได้</span></div>
+        <div><b>รวมผลตรวจ</b><span>พบปัญหา และ ปกติ แยกตามหัวข้อ · แตะกล่องเพื่อดูรายละเอียด · เลือกช่วงวันได้</span></div>
         <span class="chev" aria-hidden="true"></span>
       </summary>
       <div class="pb-bar">
         <div class="seg" id="pbRange"><button data-d="1">วันนี้</button><button data-d="7" class="on">7 วัน</button><button data-d="30">30 วัน</button><button data-d="90">90 วัน</button></div>
         <div class="pb-dates"><input type="date" id="pbStart" aria-label="ตั้งแต่วันที่"><span>ถึง</span><input type="date" id="pbEnd" aria-label="ถึงวันที่"><button type="button" class="btn sm" id="pbApply">แสดง</button></div>
         <div class="seg sm" id="pbDeck"><button data-k="all" class="on">ทั้งหมด</button><button data-k="pc">Process Control</button><button data-k="gmp">GMP</button></div>
+        <div class="seg sm" id="pbKind"><button data-k="all" class="on">ทั้งหมด</button><button data-k="bad">พบปัญหา</button><button data-k="ok">ปกติ</button></div>
         <div class="seg sm" id="pbSort"><button data-s="n" class="on">พบบ่อย</button><button data-s="new">ล่าสุด</button></div>
       </div>
       <div class="pb-proc" id="pbProc"></div>
@@ -4069,7 +4074,7 @@ setInterval(tick, 1000);
 setInterval(() => { if(document.visibilityState === "visible" && !$("#sheetBg").classList.contains("on")) refreshAll(); }, 300000);  // สำรอง (ปกติอัปเดตสดผ่าน /api/live)
 
 /* ---------- รวมปัญหา (แถบ Checklist): กล่องหัวข้อที่พบปัญหา → แตะเพื่อขยายดูทุกครั้งที่พบ ---------- */
-const PB = { days: 7, start: "", end: "", deck: "all", proc: "all", sort: "n", open: null, data: null, busy: false };
+const PB = { days: 7, start: "", end: "", deck: "all", proc: "all", kind: "all", sort: "n", open: null, data: null, busy: false };
 const isoAdd = (iso, n) => { const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 async function loadProb(){
   if(!CFG || !$("#probBox").open || PB.busy) return;
@@ -4080,29 +4085,42 @@ async function loadProb(){
   if(PB.data) drawProb();
 }
 function drawProb(){
-  const D = PB.data, L0 = D.items.filter(x => PB.deck === "all" || x.deck === PB.deck);
-  // เลือกกระบวนการ (จุดเตรียม / บรรจุ / Retort ...) · เรียงตามลำดับกระบวนการที่ตั้งไว้
-  const order = CFG.process_tags || [], pc = {}; L0.forEach(x => { const k = x.proc || ""; pc[k] = (pc[k] || 0) + 1; });
+  const D = PB.data, okD = x => PB.deck === "all" || x.deck === PB.deck;
+  const L0 = D.items.filter(okD), K0 = (D.ok || []).filter(okD);
+  // เลือกกระบวนการ (จุดเตรียม / บรรจุ / Retort ...) · เรียงตามลำดับกระบวนการที่ตั้งไว้ · ตัวเลข = จำนวนครั้งที่ตรวจ (ปัญหา + ปกติ)
+  const order = CFG.process_tags || [], pc = {}; L0.forEach(x => { const k = x.proc || ""; pc[k] = (pc[k] || 0) + 1; }); K0.forEach(x => { const k = x.proc || ""; pc[k] = (pc[k] || 0) + x.n; });
   const procs = Object.keys(pc).sort((a, b) => (a ? (order.includes(a) ? order.indexOf(a) : 900) : 999) - (b ? (order.includes(b) ? order.indexOf(b) : 900) : 999));
   if(PB.proc !== "all" && !(PB.proc in pc)) PB.proc = "all";
-  $("#pbProc").innerHTML = `<span class="pb-lab">กระบวนการ</span><button type="button" data-pp="all" class="${PB.proc === "all" ? "on" : ""}">ทั้งหมด<em>${L0.length}</em></button>` +
+  const nAll = L0.length + K0.reduce((a, x) => a + x.n, 0);
+  $("#pbProc").innerHTML = `<span class="pb-lab">กระบวนการ</span><button type="button" data-pp="all" class="${PB.proc === "all" ? "on" : ""}">ทั้งหมด<em>${nAll}</em></button>` +
     procs.map(k => `<button type="button" data-pp="${esc(k)}" class="${PB.proc === k ? "on" : ""}">${esc(k || "ไม่ระบุ")}<em>${pc[k]}</em></button>`).join("");
-  const L = L0.filter(x => PB.proc === "all" || (x.proc || "") === PB.proc);
-  const G = new Map(); L.forEach(x => { if(!G.has(x.area_id)) G.set(x.area_id, []); G.get(x.area_id).push(x); });
-  let tiles = [...G.values()].map(arr => ({ a: arr[0], arr, n: arr.length, last: arr[0].at }));
-  tiles.sort(PB.sort === "new" ? (p, q) => String(q.last).localeCompare(String(p.last)) : (p, q) => q.n - p.n || String(q.last).localeCompare(String(p.last)));
-  const zones = new Set(L.map(x => x.zone)).size, dl = D.start === D.end ? thDate(D.start) : `${thDate(D.start)} – ${thDate(D.end)}`;
-  $("#pbSum").innerHTML = `<span><b>${L.length}</b> ครั้งที่พบปัญหา</span><span><b>${tiles.length}</b> หัวข้อ</span><span><b>${zones}</b> พื้นที่</span><span class="pb-dl">${dl}</span>`;
+  const inP = x => PB.proc === "all" || (x.proc || "") === PB.proc;
+  const L = L0.filter(inP), K = K0.filter(inP);
+  // รวมเป็นกล่องต่อหัวข้อ: ครั้งที่พบปัญหา (n) + ครั้งที่ปกติ (ok)
+  const G = new Map();
+  L.forEach(x => { if(!G.has(x.area_id)) G.set(x.area_id, { a: x, arr: [], n: 0, ok: 0, okx: null, last: "" }); const t = G.get(x.area_id); t.arr.push(x); t.n++; if(String(x.at) > String(t.last)) t.last = x.at; });
+  K.forEach(x => { if(!G.has(x.area_id)) G.set(x.area_id, { a: x, arr: [], n: 0, ok: 0, okx: null, last: "" }); const t = G.get(x.area_id); t.ok = x.n; t.okx = x; if(String(x.last) > String(t.last)) t.last = x.last; });
+  const all = [...G.values()], nBadT = all.filter(t => t.n).length, nOkT = all.length - nBadT, nOk = K.reduce((a, x) => a + x.n, 0);
+  let tiles = all.filter(t => PB.kind === "all" || (PB.kind === "bad" ? t.n > 0 : t.n === 0));
+  tiles.sort(PB.sort === "new" ? (p, q) => String(q.last).localeCompare(String(p.last)) : (p, q) => q.n - p.n || q.ok - p.ok || String(q.last).localeCompare(String(p.last)));
+  const zones = new Set(tiles.map(t => t.a.zone)).size, dl = D.start === D.end ? thDate(D.start) : `${thDate(D.start)} – ${thDate(D.end)}`;
+  const tot = L.length + nOk, pOk = tot ? Math.round(nOk / tot * 100) : 0;
+  $("#pbSum").innerHTML = `<span><b>${tot}</b> ครั้งที่ตรวจ</span><span class="bad"><b>${L.length}</b> พบปัญหา</span><span class="ok"><b>${nOk}</b> ปกติ${tot ? ` (${pOk}%)` : ""}</span>
+    <span><b>${nBadT}</b> หัวข้อมีปัญหา · <b class="g">${nOkT}</b> หัวข้อปกติทั้งหมด</span><span><b>${zones}</b> พื้นที่</span><span class="pb-dl">${dl}</span>`;
   [...$("#pbRange").children].forEach(b => b.classList.toggle("on", !PB.start && +b.dataset.d === PB.days));
+  [...$("#pbKind").children].forEach(b => b.classList.toggle("on", b.dataset.k === PB.kind));
   $("#pbStart").value = D.start; $("#pbEnd").value = D.end;
-  if(!tiles.length){ $("#pbGrid").innerHTML = `<div class="pb-empty">ไม่พบปัญหาในช่วงนี้ ✓</div>`; return; }
+  if(!tiles.length){ $("#pbGrid").innerHTML = `<div class="pb-empty">${PB.kind === "bad" ? "ไม่พบปัญหาในช่วงนี้ ✓" : PB.kind === "ok" ? "ไม่มีหัวข้อที่ปกติทั้งหมดในช่วงนี้" : "ไม่มีผลตรวจในช่วงนี้"}</div>`; return; }
   const lv = n => n >= 7 ? 4 : n >= 4 ? 3 : n >= 2 ? 2 : 1;
-  $("#pbGrid").innerHTML = tiles.map(t => { const on = PB.open === t.a.area_id;
-    const tile = `<button type="button" class="pb-t lv${lv(t.n)} ${on ? "on" : ""}" data-pa="${esc(t.a.area_id)}" title="${esc(t.a.name)}">
-      <em>${t.n}<small>ครั้ง</small></em><b>${esc(t.a.no)}. ${esc(t.a.name)}</b><span>${esc(t.a.zone)} · ล่าสุด ${esc(bizDM(t.last))}</span></button>`;
+  $("#pbGrid").innerHTML = tiles.map(t => { const on = PB.open === t.a.area_id, bad = t.n > 0;
+    const tile = `<button type="button" class="pb-t ${bad ? "lv" + lv(t.n) : "okt"} ${on ? "on" : ""}" data-pa="${esc(t.a.area_id)}" title="${esc(t.a.name)}">
+      ${bad ? `<em>${t.n}<small>ครั้ง</small></em>` : `<em class="g">ปกติ<small>${t.ok} ครั้ง</small></em>`}<b>${esc(t.a.no)}. ${esc(t.a.name)}</b>
+      <span>${bad && t.ok ? `<i class="okn">ปกติ ${t.ok}</i> · ` : ""}${esc(t.a.zone)} · ล่าสุด ${esc(bizDM(t.last))}</span></button>`;
     if(!on) return tile;
-    return tile + `<div class="pb-x"><div class="pb-xh"><div><small>${esc(t.a.zone)}${t.a.proc ? " · " + esc(t.a.proc) : ""}</small><b>${esc(t.a.no)}. ${esc(t.a.name)}</b></div><em>${t.n} ครั้ง</em><button type="button" class="pb-close" data-pa="${esc(t.a.area_id)}" aria-label="ย่อ">×</button></div>
-      ${t.arr.map(x => `<div class="pb-o"><div class="pb-oh"><b>${esc(thDate(x.round))}</b><span>${esc(hm(x.at))} น. · ${esc(x.inspector)}</span>
+    const okRow = t.okx ? `<div class="pb-o okrow"><div class="pb-oh"><b>ปกติ ${t.ok} ครั้ง</b><span>ล่าสุด ${esc(thDate(t.okx.round))} ${esc(hm(t.okx.last))} น. · ${esc(t.okx.inspector || "")}</span>
+          <button type="button" class="btn sm ghost" data-pbopen="${esc(t.a.area_id)}|${esc(t.okx.round)}|${esc(t.okx.sid)}">เปิดผลตรวจล่าสุด</button></div></div>` : "";
+    return tile + `<div class="pb-x"><div class="pb-xh"><div><small>${esc(t.a.zone)}${t.a.proc ? " · " + esc(t.a.proc) : ""}</small><b>${esc(t.a.no)}. ${esc(t.a.name)}</b></div><em${bad ? "" : ' class="g"'}>${bad ? `${t.n} ครั้งที่พบปัญหา` : "ปกติทุกครั้ง"}</em><button type="button" class="pb-close" data-pa="${esc(t.a.area_id)}" aria-label="ย่อ">×</button></div>
+      ${okRow}${t.arr.map(x => `<div class="pb-o"><div class="pb-oh"><b>${esc(thDate(x.round))}</b><span>${esc(hm(x.at))} น. · ${esc(x.inspector)}</span>
           <button type="button" class="btn sm ghost" data-pbopen="${esc(x.area_id)}|${esc(x.round)}|${esc(x.sid)}">เปิดผลตรวจ</button></div>
         ${x.topic ? `<div class="pb-tp">${esc(x.topic)}</div>` : ""}${x.note ? `<div class="pb-nt">${esc(x.note)}</div>` : ""}
         ${x.cause ? `<div class="pb-kv"><b>สาเหตุ:</b> ${esc(x.cause)}</div>` : ""}${x.action ? `<div class="pb-kv"><b>การแก้ไข:</b> ${esc(x.action)}</div>` : ""}${x.remark ? `<div class="pb-kv mut"><b>หมายเหตุ:</b> ${esc(x.remark)}</div>` : ""}
@@ -4122,6 +4140,8 @@ $("#pbApply").onclick = () => { const a = $("#pbStart").value, b = $("#pbEnd").v
 $("#pbDeck").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.deck = b.dataset.k; [...$("#pbDeck").children].forEach(x => x.classList.toggle("on", x === b)); if(PB.data) drawProb(); });
 $("#pbProc").addEventListener("click", e => { const b = e.target.closest("[data-pp]"); if(!b) return; PB.proc = b.dataset.pp; PB.open = null; store.set("pc_pbproc", PB.proc); drawProb(); });
 PB.proc = store.get("pc_pbproc", "all");
+$("#pbKind").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.kind = b.dataset.k; PB.open = null; store.set("pc_pbkind", PB.kind); if(PB.data) drawProb(); });
+PB.kind = store.get("pc_pbkind", "all");
 $("#pbSort").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.sort = b.dataset.s; [...$("#pbSort").children].forEach(x => x.classList.toggle("on", x === b)); if(PB.data) drawProb(); });
 $("#pbGrid").addEventListener("click", e => {
   if(e.target.closest(".thumbs")) return;  // รูป → เปิดดูเต็มจอ (ตัวจัดการกลาง)
