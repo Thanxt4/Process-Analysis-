@@ -48,6 +48,12 @@ details.pb{margin-top:12px}
 .pb-empty{grid-column:1/-1;padding:24px;text-align:center;color:#15803d;background:#f0fdf4;border-radius:14px;font-weight:700}
 @media(max-width:600px){.pb-grid{grid-template-columns:repeat(2,1fr)}.pb-t{max-height:none}.pb-dates{width:100%}.pb-dates input{flex:1}}
 #sheetBg.pb-hide{visibility:hidden}
+.pb-proc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}
+.pb-proc .pb-lab{font-size:13px;font-weight:700;color:#1b2a41;margin-right:4px}
+.pb-proc button{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #d5deea;background:#fff;border-radius:99px;padding:5px 12px;font:inherit;font-size:13.5px;font-weight:600;color:#334155;cursor:pointer}
+.pb-proc button em{font-style:normal;font-size:11.5px;font-weight:800;background:#fee2e2;color:#b91c1c;border-radius:99px;padding:0 7px}
+.pb-proc button.on{background:#1b2a41;border-color:#1b2a41;color:#fff}.pb-proc button.on em{background:#f59e0b;color:#1b2a41}
+@media(max-width:600px){.pb-proc{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.pb-proc button{flex:0 0 auto}}
 </style>
 <style>
 :root{
@@ -1246,6 +1252,7 @@ body.no-comments .igc,body.no-comments .cmb,body.no-comments #cmOpen,body.no-ret
         <div class="seg sm" id="pbDeck"><button data-k="all" class="on">ทั้งหมด</button><button data-k="pc">Process Control</button><button data-k="gmp">GMP</button></div>
         <div class="seg sm" id="pbSort"><button data-s="n" class="on">พบบ่อย</button><button data-s="new">ล่าสุด</button></div>
       </div>
+      <div class="pb-proc" id="pbProc"></div>
       <div class="pb-sum" id="pbSum"></div>
       <div class="pb-grid" id="pbGrid"></div>
     </details>
@@ -4062,7 +4069,7 @@ setInterval(tick, 1000);
 setInterval(() => { if(document.visibilityState === "visible" && !$("#sheetBg").classList.contains("on")) refreshAll(); }, 300000);  // สำรอง (ปกติอัปเดตสดผ่าน /api/live)
 
 /* ---------- รวมปัญหา (แถบ Checklist): กล่องหัวข้อที่พบปัญหา → แตะเพื่อขยายดูทุกครั้งที่พบ ---------- */
-const PB = { days: 7, start: "", end: "", deck: "all", sort: "n", open: null, data: null, busy: false };
+const PB = { days: 7, start: "", end: "", deck: "all", proc: "all", sort: "n", open: null, data: null, busy: false };
 const isoAdd = (iso, n) => { const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 async function loadProb(){
   if(!CFG || !$("#probBox").open || PB.busy) return;
@@ -4073,7 +4080,14 @@ async function loadProb(){
   if(PB.data) drawProb();
 }
 function drawProb(){
-  const D = PB.data, L = D.items.filter(x => PB.deck === "all" || x.deck === PB.deck);
+  const D = PB.data, L0 = D.items.filter(x => PB.deck === "all" || x.deck === PB.deck);
+  // เลือกกระบวนการ (จุดเตรียม / บรรจุ / Retort ...) · เรียงตามลำดับกระบวนการที่ตั้งไว้
+  const order = CFG.process_tags || [], pc = {}; L0.forEach(x => { const k = x.proc || ""; pc[k] = (pc[k] || 0) + 1; });
+  const procs = Object.keys(pc).sort((a, b) => (a ? (order.includes(a) ? order.indexOf(a) : 900) : 999) - (b ? (order.includes(b) ? order.indexOf(b) : 900) : 999));
+  if(PB.proc !== "all" && !(PB.proc in pc)) PB.proc = "all";
+  $("#pbProc").innerHTML = `<span class="pb-lab">กระบวนการ</span><button type="button" data-pp="all" class="${PB.proc === "all" ? "on" : ""}">ทั้งหมด<em>${L0.length}</em></button>` +
+    procs.map(k => `<button type="button" data-pp="${esc(k)}" class="${PB.proc === k ? "on" : ""}">${esc(k || "ไม่ระบุ")}<em>${pc[k]}</em></button>`).join("");
+  const L = L0.filter(x => PB.proc === "all" || (x.proc || "") === PB.proc);
   const G = new Map(); L.forEach(x => { if(!G.has(x.area_id)) G.set(x.area_id, []); G.get(x.area_id).push(x); });
   let tiles = [...G.values()].map(arr => ({ a: arr[0], arr, n: arr.length, last: arr[0].at }));
   tiles.sort(PB.sort === "new" ? (p, q) => String(q.last).localeCompare(String(p.last)) : (p, q) => q.n - p.n || String(q.last).localeCompare(String(p.last)));
@@ -4106,6 +4120,8 @@ $("#probBox").addEventListener("toggle", () => { if($("#probBox").open) loadProb
 $("#pbRange").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.days = +b.dataset.d; PB.start = PB.end = ""; PB.open = null; loadProb(); });
 $("#pbApply").onclick = () => { const a = $("#pbStart").value, b = $("#pbEnd").value; if(!a || !b){ toast("เลือกวันที่ให้ครบ"); return; } PB.start = a; PB.end = b; PB.open = null; loadProb(); };
 $("#pbDeck").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.deck = b.dataset.k; [...$("#pbDeck").children].forEach(x => x.classList.toggle("on", x === b)); if(PB.data) drawProb(); });
+$("#pbProc").addEventListener("click", e => { const b = e.target.closest("[data-pp]"); if(!b) return; PB.proc = b.dataset.pp; PB.open = null; store.set("pc_pbproc", PB.proc); drawProb(); });
+PB.proc = store.get("pc_pbproc", "all");
 $("#pbSort").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.sort = b.dataset.s; [...$("#pbSort").children].forEach(x => x.classList.toggle("on", x === b)); if(PB.data) drawProb(); });
 $("#pbGrid").addEventListener("click", e => {
   if(e.target.closest(".thumbs")) return;  // รูป → เปิดดูเต็มจอ (ตัวจัดการกลาง)
