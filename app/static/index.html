@@ -22,6 +22,31 @@
 @font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:500;src:url(/fonts/sarabun-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:600;src:url(/fonts/sarabun-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:'Sarabun';font-style:normal;font-display:swap;font-weight:700;src:url(/fonts/sarabun-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+details.pb{margin-top:12px}
+.pb-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:10px 0}
+.pb-dates{display:flex;gap:6px;align-items:center}.pb-dates input{width:auto;min-height:36px}.pb-dates span{color:var(--muted);font-size:13px}
+.pb-sum{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.pb-sum span{background:#f1f5f9;border-radius:99px;padding:4px 12px;font-size:13px;color:#334155}.pb-sum b{color:#b91c1c;font-size:15px}.pb-sum .pb-dl{background:transparent;color:var(--muted)}
+.pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;grid-auto-flow:row dense}
+.pb-t{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;aspect-ratio:1/1;max-height:170px;padding:10px 11px;border-radius:14px;border:1.5px solid #fecaca;background:#fff5f5;cursor:pointer;overflow:hidden;transition:transform .12s,box-shadow .12s}
+.pb-t:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,23,42,.12)}
+.pb-t em{font-style:normal;font-size:26px;font-weight:800;color:#b91c1c;line-height:1}.pb-t em small{font-size:12px;font-weight:600;margin-left:3px;color:#991b1b}
+.pb-t b{font-size:13.5px;line-height:1.35;color:#1f2937;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pb-t span{margin-top:auto;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pb-t.lv2{background:#fee2e2;border-color:#fca5a5}.pb-t.lv3{background:#fecaca;border-color:#f87171}
+.pb-t.lv4{background:#b91c1c;border-color:#991b1b}.pb-t.lv4 em,.pb-t.lv4 em small,.pb-t.lv4 b,.pb-t.lv4 span{color:#fff}
+.pb-t.on{outline:3px solid #1b2a41;outline-offset:1px}
+.pb-x>*{flex-shrink:0}
+.pb-x{grid-column:1/-1;max-height:70vh;overflow:auto;border:1.5px solid #1b2a41;border-radius:16px;background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 28px rgba(15,23,42,.12)}
+.pb-xh{display:flex;align-items:center;gap:10px;position:sticky;top:-12px;background:#fff;z-index:2;padding:6px 0;margin-top:-6px}.pb-xh>div{flex:1;display:flex;flex-direction:column}.pb-xh small{color:var(--muted);font-size:12.5px}.pb-xh b{font-size:16px;color:#1b2a41}
+.pb-xh em{font-style:normal;font-weight:800;color:#b91c1c;background:#fee2e2;border-radius:99px;padding:3px 12px;font-size:13px}
+.pb-close{border:0;background:#f1f5f9;border-radius:50%;width:32px;height:32px;font-size:20px;line-height:1;cursor:pointer}
+.pb-o{border-top:1px solid #f1f5f9;padding-top:10px;display:flex;flex-direction:column;gap:5px}
+.pb-oh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.pb-oh b{color:#1b2a41}.pb-oh span{color:var(--muted);font-size:13px;flex:1}
+.pb-tp{font-weight:700;color:#1f2937}.pb-nt{white-space:pre-wrap;color:#334155;font-size:14px}.pb-kv{font-size:14px;color:#334155}.pb-kv b{color:#b91c1c}.pb-kv.mut b{color:var(--muted)}
+.pb-o .thumbs{margin-top:2px}
+.pb-empty{grid-column:1/-1;padding:24px;text-align:center;color:#15803d;background:#f0fdf4;border-radius:14px;font-weight:700}
+@media(max-width:600px){.pb-grid{grid-template-columns:repeat(2,1fr)}.pb-t{max-height:none}.pb-dates{width:100%}.pb-dates input{flex:1}}
 </style>
 <style>
 :root{
@@ -1207,6 +1232,21 @@ body.no-comments .igc,body.no-comments .cmb,body.no-comments #cmOpen,body.no-ret
         <span><i class="c1">✓</i>ตรวจแล้ว</span><span><i class="c2">!</i>พบปัญหา</span>
         <span><i class="c3">–</i>ไม่มีกิจกรรม (ไม่นับใน %)</span><span><i class="miss"></i>ไม่ได้ส่ง</span><span><b class="ptag pilot">★</b>หัวข้อใหม่ (แสดง แต่ยังไม่นับใน %)</span>
       </div>
+    </details>
+    <!-- รวมปัญหา: กล่องหัวข้อที่พบปัญหา · แตะเพื่อดูรายละเอียด -->
+    <details class="dash pb" id="probBox">
+      <summary class="dash-sum">
+        <div><b>รวมปัญหา</b><span>ปัญหาที่พบ แยกตามหัวข้อ · แตะกล่องเพื่อดูรายละเอียด · เลือกช่วงวันได้</span></div>
+        <span class="chev" aria-hidden="true"></span>
+      </summary>
+      <div class="pb-bar">
+        <div class="seg" id="pbRange"><button data-d="1">วันนี้</button><button data-d="7" class="on">7 วัน</button><button data-d="30">30 วัน</button><button data-d="90">90 วัน</button></div>
+        <div class="pb-dates"><input type="date" id="pbStart" aria-label="ตั้งแต่วันที่"><span>ถึง</span><input type="date" id="pbEnd" aria-label="ถึงวันที่"><button type="button" class="btn sm" id="pbApply">แสดง</button></div>
+        <div class="seg sm" id="pbDeck"><button data-k="all" class="on">ทั้งหมด</button><button data-k="pc">Process Control</button><button data-k="gmp">GMP</button></div>
+        <div class="seg sm" id="pbSort"><button data-s="n" class="on">พบบ่อย</button><button data-s="new">ล่าสุด</button></div>
+      </div>
+      <div class="pb-sum" id="pbSum"></div>
+      <div class="pb-grid" id="pbGrid"></div>
     </details>
     <div id="todaySum"></div>
     <div id="cmOpen"></div>
@@ -4018,10 +4058,56 @@ document.addEventListener("visibilitychange", () => { if(document.visibilityStat
 setInterval(tick, 1000);
 // ดึงข้อมูลใหม่อัตโนมัติทุก 60 วินาที เฉพาะตอนเปิดดูอยู่ (จอดับ/สลับแอป = หยุด ประหยัดเน็ตและเครื่อง server)
 setInterval(() => { if(document.visibilityState === "visible" && !$("#sheetBg").classList.contains("on")) refreshAll(); }, 300000);  // สำรอง (ปกติอัปเดตสดผ่าน /api/live)
+
+/* ---------- รวมปัญหา (แถบ Checklist): กล่องหัวข้อที่พบปัญหา → แตะเพื่อขยายดูทุกครั้งที่พบ ---------- */
+const PB = { days: 7, start: "", end: "", deck: "all", sort: "n", open: null, data: null, busy: false };
+const isoAdd = (iso, n) => { const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+async function loadProb(){
+  if(!CFG || !$("#probBox").open || PB.busy) return;
+  const end = PB.end || CFG.current_round, start = PB.start || isoAdd(end, -(PB.days - 1));
+  PB.busy = true; if(!PB.data) $("#pbGrid").innerHTML = `<p class="muted-s">กำลังโหลด…</p>`;
+  try{ PB.data = await api(`/api/problems?start=${start}&end=${end}`); }catch(e){ $("#pbGrid").innerHTML = `<p class="muted-s">โหลดไม่สำเร็จ: ${esc(e.message)}</p>`; }
+  finally{ PB.busy = false; }
+  if(PB.data) drawProb();
+}
+function drawProb(){
+  const D = PB.data, L = D.items.filter(x => PB.deck === "all" || x.deck === PB.deck);
+  const G = new Map(); L.forEach(x => { if(!G.has(x.area_id)) G.set(x.area_id, []); G.get(x.area_id).push(x); });
+  let tiles = [...G.values()].map(arr => ({ a: arr[0], arr, n: arr.length, last: arr[0].at }));
+  tiles.sort(PB.sort === "new" ? (p, q) => String(q.last).localeCompare(String(p.last)) : (p, q) => q.n - p.n || String(q.last).localeCompare(String(p.last)));
+  const zones = new Set(L.map(x => x.zone)).size, dl = D.start === D.end ? thDate(D.start) : `${thDate(D.start)} – ${thDate(D.end)}`;
+  $("#pbSum").innerHTML = `<span><b>${L.length}</b> ครั้งที่พบปัญหา</span><span><b>${tiles.length}</b> หัวข้อ</span><span><b>${zones}</b> พื้นที่</span><span class="pb-dl">${dl}</span>`;
+  [...$("#pbRange").children].forEach(b => b.classList.toggle("on", !PB.start && +b.dataset.d === PB.days));
+  $("#pbStart").value = D.start; $("#pbEnd").value = D.end;
+  if(!tiles.length){ $("#pbGrid").innerHTML = `<div class="pb-empty">ไม่พบปัญหาในช่วงนี้ ✓</div>`; return; }
+  const lv = n => n >= 7 ? 4 : n >= 4 ? 3 : n >= 2 ? 2 : 1;
+  $("#pbGrid").innerHTML = tiles.map(t => { const on = PB.open === t.a.area_id;
+    const tile = `<button type="button" class="pb-t lv${lv(t.n)} ${on ? "on" : ""}" data-pa="${esc(t.a.area_id)}" title="${esc(t.a.name)}">
+      <em>${t.n}<small>ครั้ง</small></em><b>${esc(t.a.no)}. ${esc(t.a.name)}</b><span>${esc(t.a.zone)} · ล่าสุด ${esc(bizDM(t.last))}</span></button>`;
+    if(!on) return tile;
+    return tile + `<div class="pb-x"><div class="pb-xh"><div><small>${esc(t.a.zone)}${t.a.proc ? " · " + esc(t.a.proc) : ""}</small><b>${esc(t.a.no)}. ${esc(t.a.name)}</b></div><em>${t.n} ครั้ง</em><button type="button" class="pb-close" data-pa="${esc(t.a.area_id)}" aria-label="ย่อ">×</button></div>
+      ${t.arr.map(x => `<div class="pb-o"><div class="pb-oh"><b>${esc(thDate(x.round))}</b><span>${esc(hm(x.at))} น. · ${esc(x.inspector)}</span>
+          <button type="button" class="btn sm ghost" data-pbopen="${esc(x.area_id)}|${esc(x.round)}">เปิดผลตรวจ</button></div>
+        ${x.topic ? `<div class="pb-tp">${esc(x.topic)}</div>` : ""}${x.note ? `<div class="pb-nt">${esc(x.note)}</div>` : ""}
+        ${x.cause ? `<div class="pb-kv"><b>สาเหตุ:</b> ${esc(x.cause)}</div>` : ""}${x.action ? `<div class="pb-kv"><b>การแก้ไข:</b> ${esc(x.action)}</div>` : ""}${x.remark ? `<div class="pb-kv mut"><b>หมายเหตุ:</b> ${esc(x.remark)}</div>` : ""}
+        ${(x.media || []).length ? `<div class="thumbs">${x.media.map(m => `<div><img src="${m.thumb || m.poster}" data-full="${m.poster}" loading="lazy" decoding="async" alt="" ${m.kind === "video" ? `data-video="${m.url}"` : ""}></div>`).join("")}</div>` : ""}</div>`).join("")}</div>`; }).join("");
+}
+$("#probBox").addEventListener("toggle", () => { if($("#probBox").open) loadProb(); });
+$("#pbRange").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.days = +b.dataset.d; PB.start = PB.end = ""; PB.open = null; loadProb(); });
+$("#pbApply").onclick = () => { const a = $("#pbStart").value, b = $("#pbEnd").value; if(!a || !b){ toast("เลือกวันที่ให้ครบ"); return; } PB.start = a; PB.end = b; PB.open = null; loadProb(); };
+$("#pbDeck").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.deck = b.dataset.k; [...$("#pbDeck").children].forEach(x => x.classList.toggle("on", x === b)); if(PB.data) drawProb(); });
+$("#pbSort").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.sort = b.dataset.s; [...$("#pbSort").children].forEach(x => x.classList.toggle("on", x === b)); if(PB.data) drawProb(); });
+$("#pbGrid").addEventListener("click", e => {
+  if(e.target.closest(".thumbs")) return;  // รูป → เปิดดูเต็มจอ (ตัวจัดการกลาง)
+  const o = e.target.closest("[data-pbopen]"); if(o){ const [a, r] = o.dataset.pbopen.split("|"); openSheet(a, r); return; }
+  const t = e.target.closest("[data-pa]"); if(!t) return;
+  PB.open = PB.open === t.dataset.pa ? null : t.dataset.pa; drawProb();
+  if(PB.open){ const x = $("#pbGrid .pb-x"); if(x) x.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+});
 /* อัปเดตสด: มีคนส่งผลตรวจ/ความคิดเห็น/เรื่องติดตาม → หน้านี้อัปเดตเองภายในไม่กี่วินาที
    ถ้ากำลังกรอกฟอร์มอยู่ รออัปเดตหลังปิดฟอร์ม · ปิดช่องตอนพับแอป/สลับแท็บ */
 let pcES = null, pcT = 0, pcPend = false;
-function pcRefresh(){ if($("#sheetBg").classList.contains("on")){ pcPend = true; return; } pcPend = false; refreshAll(); if(FU.cur && FU.cur.id && $("#fuBg").classList.contains("on")) fuChatLoad(); }
+function pcRefresh(){ if($("#sheetBg").classList.contains("on")){ pcPend = true; return; } pcPend = false; refreshAll(); loadProb(); if(FU.cur && FU.cur.id && $("#fuBg").classList.contains("on")) fuChatLoad(); }
 function pcLive(){
   if(pcES || document.hidden || !ME || !window.EventSource) return;
   pcES = new EventSource("/api/live?ch=pc"); let first = true;

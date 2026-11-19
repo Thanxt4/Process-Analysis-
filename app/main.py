@@ -1907,6 +1907,44 @@ def api_heatmap(days: int = Query(14, ge=3, le=62), start: Optional[str] = None,
     return {"rounds": rounds, "current": cur.isoformat(), "zones": zones, "cust": cust if cust in CUST_FILTERS else ""}
 
 
+@app.get("/api/problems")
+def api_problems(start: Optional[str] = None, end: Optional[str] = None):
+    """หน้ารวมปัญหา: ผลตรวจที่ "พบปัญหา" ในช่วงวันที่ (รอบ) ที่เลือก · เฉพาะ Checklist ของโรงงานผู้ใช้"""
+    cur = round_of(now())
+    try:
+        b = date.fromisoformat(end) if end else cur
+        a = date.fromisoformat(start) if start else b
+    except ValueError:
+        raise HTTPException(400, "วันที่ไม่ถูกต้อง")
+    if a > b:
+        a, b = b, a
+    if (b - a).days > 400:
+        a = b - timedelta(days=400)
+    zdeck = {z["id"]: zone_deck(z) for z in AREAS["zones"]}
+    out = []
+    with db() as con:
+        rows = [dict(r) for r in con.execute(
+            "SELECT * FROM submissions WHERE status='พบปัญหา' AND round_date BETWEEN ? AND ? ORDER BY created_at DESC LIMIT 3000",
+            (a.isoformat(), b.isoformat()))]
+        for r in rows:
+            if not item_in_fac(r["area_id"]):
+                continue
+            it = ITEM_MAP.get(r["area_id"], {})
+            try:
+                pages = json.loads(r.get("pages") or "null") or []
+            except ValueError:
+                pages = []
+            notes = [p if isinstance(p, str) else str((p or {}).get("note", "")) for p in pages]
+            imgs = [x["filename"] for x in con.execute("SELECT filename FROM images WHERE submission_id=? ORDER BY page, seq LIMIT 6", (r["id"],))]
+            out.append({"sid": r["id"], "round": r["round_date"], "at": r["created_at"], "area_id": r["area_id"],
+                        "no": it.get("no", ""), "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""),
+                        "deck": zdeck.get(it.get("zone_id"), "pc"), "proc": it.get("proc", ""), "inspector": r["inspector"],
+                        "topic": r.get("topic") or "", "note": "\n".join(n for n in notes if n.strip()) or (r.get("note") or ""),
+                        "cause": r.get("cause") or "", "action": r.get("action") or "", "remark": r.get("remark") or "",
+                        "resp": r.get("resp") or "", "media": [media_info(f) for f in imgs]})
+    return {"start": a.isoformat(), "end": b.isoformat(), "items": out}
+
+
 @app.get("/api/inspectors")
 def api_inspectors():
     """รายชื่อผู้ตรวจที่เคยส่ง (ล่าสุดก่อน) ไว้ให้เลือก ไม่ต้องพิมพ์ใหม่"""
