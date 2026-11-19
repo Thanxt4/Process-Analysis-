@@ -2938,11 +2938,14 @@ const listCount = F => { const [a, b] = rangeOf(F); return filtered(a, b, false,
 function printHTML(html) {
   const old = document.getElementById("prFrame"); if (old) old.remove();
   const f = document.createElement("iframe"); f.id = "prFrame"; f.setAttribute("aria-hidden", "true");
-  f.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
+  f.style.cssText = "position:fixed;left:-10000px;top:0;width:190mm;height:277mm;border:0;opacity:0;pointer-events:none";
   document.body.appendChild(f);
   const d = f.contentDocument; d.open(); d.write(html.replace(/<script>onload=[^<]*<\/script>/g, "")); d.close();
   const w = f.contentWindow; let done = false;
-  const go = () => { if (done) return; done = true; try { w.focus(); w.print(); } catch (e) { toast("สั่งพิมพ์ไม่สำเร็จ: " + e.message); } };
+  // .fit1 = ต้องพิมพ์ให้จบในหน้าเดียว (A4 ขอบ 10 มม. → สูงได้ 277 มม.) · ยาวเกิน → ย่อลง
+  const fit = () => { const el = d.querySelector(".fit1"); if (!el) return; el.style.zoom = "";
+    const maxH = 277 / 25.4 * 96 - 6, h = el.scrollHeight; if (h > maxH) el.style.zoom = String(Math.floor(maxH / h * 1000) / 1000); };
+  const go = () => { if (done) return; done = true; try { fit(); w.focus(); w.print(); } catch (e) { toast("สั่งพิมพ์ไม่สำเร็จ: " + e.message); } };
   w.addEventListener("afterprint", () => setTimeout(() => f.remove(), 500));
   toast("กำลังเตรียมหน้าพิมพ์…");
   const imgs = [...d.images].map(im => im.complete ? null : new Promise(r => { im.onload = im.onerror = r; })).filter(Boolean);
@@ -3036,14 +3039,14 @@ function printPDSheet(o) {
   const v = k => esc(o[k] || ""), d = k => esc(o[k] ? dmy(o[k]) : ""), ml = k => esc(o[k] || "").replace(/\n/g, "<br>");
   const lines = (k, n) => `<div class="ml">${ml(k)}</div>${Array.from({ length: Math.max(0, n - Math.ceil((o[k] || "").length / 95) - (o[k] || "").split("\n").length + 1) }, () => '<div class="dl"></div>').join("")}`;
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Process Deviation ${v("no")}</title><style>
-    @page{size:A4;margin:12mm 12mm}body{font:10pt "Times New Roman","Sarabun",serif;color:#000;margin:0}
+    @page{size:A4;margin:10mm}*{box-sizing:border-box}html,body{margin:0}body{font:9.5pt "Times New Roman","Sarabun",serif;color:#000;padding:0 1px}.fit1{width:100%;transform-origin:top left}
     .fn{text-align:right;font-weight:bold;font-size:9.5pt}.co{text-align:center;font-weight:bold;font-size:12pt;margin:4px 0 8px}
-    table{width:100%;border-collapse:collapse;table-layout:fixed}td,th{border:1px solid #000;padding:2px 4px;height:6.2mm;vertical-align:middle;word-break:break-word}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}td,th{border:1px solid #000;padding:1px 4px;height:5.6mm;vertical-align:middle;word-break:break-word}
     .bd{background:#d9d9d9;text-align:center;font-weight:bold;border:1px solid #000;padding:2px;margin-top:-1px}.b{font-weight:bold}.c{text-align:center}
-    .sec{margin-top:6px}.ml{padding:2px 4px;min-height:5mm;border-bottom:1px dotted #000;line-height:1.5}.dl{border-bottom:1px dotted #000;height:6mm}
-    .tbl2 td{height:6.4mm}.pg{page-break-before:always}.ph{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:4mm}
+    .sec{margin-top:6px}.ml{padding:2px 4px;min-height:5mm;border-bottom:1px dotted #000;line-height:1.5}.dl{border-bottom:1px dotted #000;height:5.4mm}
+    .tbl2 td{height:5.8mm}.pg{page-break-before:always}.ph{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:4mm}
     .ph figure{margin:0;break-inside:avoid;border:1px solid #000;padding:2mm;text-align:center}.ph img{max-width:100%;max-height:100mm;object-fit:contain}.ph figcaption{font-size:9pt;margin-top:1mm}</style></head><body>
-    <div class="fn">${PD_FORM_NO}</div><div class="co">i-Tail Corporation Public Limited</div>
+    <div class="fit1"><div class="fn">${PD_FORM_NO}</div><div class="co">i-Tail Corporation Public Limited</div>
     <table><tr><td colspan="6" class="bd">PROCESS DEVIATION DATA SHEET</td></tr>
       <tr><td class="b" style="width:20%">Deviation Number</td><td colspan="5">${v("no")}</td></tr>
       <tr><td class="b">Production Date</td><td colspan="5">${d("prod")}</td></tr>
@@ -3061,9 +3064,9 @@ function printPDSheet(o) {
     <div class="bd sec">ACTION TAKEN ( QC/PD Section manager)</div>${lines("action", 2)}
     <div class="bd sec">QC DEPUTY DEPARTMENT MANAGER / QC DEPARTMENT MANAGER COMMENTS</div>${lines("ddm_cmt", 2)}
     <table class="tbl2 sec"><tr><td class="b" style="width:30%">QC DDM/DM .signature</td><td style="width:30%">${v("ddm_sig")}</td><td class="b c" style="width:10%">Date</td><td>${d("ddm_date")}</td></tr>
-      <tr><td class="b c" style="height:30mm;border-style:dotted solid">Process Authority Disposition</td><td colspan="3" style="vertical-align:top;line-height:1.6">${ml("pa_disp")}</td></tr>
+      <tr><td class="b c" style="height:24mm">Process Authority Disposition</td><td colspan="3" style="vertical-align:top;line-height:1.6">${ml("pa_disp")}</td></tr>
       <tr><td class="b">Process authority signature</td><td>${v("pa_sig")}</td><td class="b c">Date</td><td>${d("pa_date")}</td></tr>
-      <tr><td class="b">COO./Sr. QA Manager signature</td><td>${v("coo_sig")}</td><td class="b c">Date</td><td>${d("coo_date")}</td></tr></table>
+      <tr><td class="b">COO./Sr. QA Manager signature</td><td>${v("coo_sig")}</td><td class="b c">Date</td><td>${d("coo_date")}</td></tr></table></div>
     ${(() => { const P = String(o.photos || "").split(",").filter(Boolean); return P.length ? `<div class="pg"><div class="fn">${PD_FORM_NO}</div><div class="bd">ภาพประกอบ / Attached photos · ${v("no")}</div>
       <div class="ph">${P.map((fn, i) => `<figure><img src="${photoUrl(fn)}" alt=""><figcaption>รูปที่ ${i + 1}</figcaption></figure>`).join("")}</div></div>` : ""; })()}
     <script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`;
