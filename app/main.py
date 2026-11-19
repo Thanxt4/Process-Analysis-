@@ -1945,7 +1945,7 @@ def api_problems(start: Optional[str] = None, end: Optional[str] = None):
             imgs = [x["filename"] for x in con.execute("SELECT filename FROM images WHERE submission_id=? ORDER BY page, seq LIMIT 6", (r["id"],))]
             out.append({"sid": r["id"], "round": r["round_date"], "at": r["created_at"], "area_id": r["area_id"],
                         "no": it.get("no", ""), "name": it.get("name", r["area_id"]), "zone": it.get("zone", ""),
-                        "deck": zdeck.get(it.get("zone_id"), "pc"), "proc": it.get("proc", ""), "inspector": r["inspector"],
+                        "deck": zdeck.get(it.get("zone_id"), "pc"), "proc": it.get("proc", ""), "cust": _cust_norm(it.get("cust")), "inspector": r["inspector"],
                         "topic": r.get("topic") or "", "note": "\n".join(n for n in notes if n.strip()) or (r.get("note") or ""),
                         "cause": r.get("cause") or "", "action": r.get("action") or "", "remark": r.get("remark") or "",
                         "resp": r.get("resp") or "", "media": [media_info(f) for f in imgs]})
@@ -1962,7 +1962,7 @@ def api_problems(start: Optional[str] = None, end: Optional[str] = None):
                 continue
             it = ITEM_MAP.get(aid, {})
             oks[aid] = {"area_id": aid, "no": it.get("no", ""), "name": it.get("name", aid), "zone": it.get("zone", ""),
-                        "deck": zdeck.get(it.get("zone_id"), "pc"), "proc": it.get("proc", ""), "n": 1,
+                        "deck": zdeck.get(it.get("zone_id"), "pc"), "proc": it.get("proc", ""), "cust": _cust_norm(it.get("cust")), "n": 1,
                         "last": r["created_at"], "round": r["round_date"], "sid": r["id"], "inspector": r["inspector"]}
     return {"start": a.isoformat(), "end": b.isoformat(), "items": out, "ok": list(oks.values())}
 

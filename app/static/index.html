@@ -36,6 +36,7 @@ details.pb{margin-top:12px}
 .pb-t.lv2{background:#fee2e2;border-color:#fca5a5}.pb-t.lv3{background:#fecaca;border-color:#f87171}
 .pb-t.lv4{background:#b91c1c;border-color:#991b1b}.pb-t.lv4 em,.pb-t.lv4 em small,.pb-t.lv4 b,.pb-t.lv4 span{color:#fff}
 .pb-t.on{outline:3px solid #1b2a41;outline-offset:1px}
+.pb-t .pb-cust{font-style:normal;display:flex;flex-wrap:wrap;gap:3px}.pb-t .pb-cust .ctag{margin:0;font-size:11px}.pb-xh .ctag{margin:3px 0 0;align-self:flex-start;width:auto}#shTitle .ctag{margin-left:8px;vertical-align:middle;font-size:12px}
 .pb-sum span.bad b{color:#b91c1c}.pb-sum span.ok{background:#ecfdf5}.pb-sum span.ok b,.pb-sum b.g{color:#15803d}.pb-sum span:first-child b{color:#1b2a41}
 .pb-t.okt{background:#f0fdf4;border-color:#bbf7d0}.pb-t em.g{color:#15803d;font-size:20px}.pb-t em.g small{color:#166534;font-size:13px;margin-left:6px}
 .pb-t .okn{font-style:normal;color:#15803d;font-weight:700}.pb-t.lv4 .okn{color:#bbf7d0}.pb-xh em.g{color:#15803d;background:#dcfce7}.pb-o.okrow{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px}
@@ -1913,7 +1914,7 @@ async function openSheet(areaId, round){
   const it = findItem(areaId); sheetItem = {...it, round};
   const editable = canEdit(round), late = round !== CFG.current_round;
   $("#shZone").textContent = it.zone + (!late ? "" : editable ? ` · ส่งย้อนหลัง รอบ ${thDate(round)}` : ` · รอบ ${thDate(round)} (ดูอย่างเดียว เกิน ${CFG.backdate_days} วัน)`);
-  $("#shTitle").textContent = it.extra ? `${it.name}` : `${it.no}. ${it.name}`;
+  $("#shTitle").innerHTML = esc(it.extra ? `${it.name}` : `${it.no}. ${it.name}`) + custTag(it);  // ลูกค้า (ถ้ามี)
   $("#topicWrap").hidden = !it.free;
   $("#inspector").value = getMyName();
   $("#entryForm").style.display = editable ? "" : "none";
@@ -4114,12 +4115,12 @@ function drawProb(){
   const lv = n => n >= 7 ? 4 : n >= 4 ? 3 : n >= 2 ? 2 : 1;
   $("#pbGrid").innerHTML = tiles.map(t => { const on = PB.open === t.a.area_id, bad = t.n > 0;
     const tile = `<button type="button" class="pb-t ${bad ? "lv" + lv(t.n) : "okt"} ${on ? "on" : ""}" data-pa="${esc(t.a.area_id)}" title="${esc(t.a.name)}">
-      ${bad ? `<em>${t.n}<small>ครั้ง</small></em>` : `<em class="g">ปกติ<small>${t.ok} ครั้ง</small></em>`}<b>${esc(t.a.no)}. ${esc(t.a.name)}</b>
+      ${bad ? `<em>${t.n}<small>ครั้ง</small></em>` : `<em class="g">ปกติ<small>${t.ok} ครั้ง</small></em>`}<b>${esc(t.a.no)}. ${esc(t.a.name)}</b>${custTag(t.a) ? `<i class="pb-cust">${custTag(t.a)}</i>` : ""}
       <span>${bad && t.ok ? `<i class="okn">ปกติ ${t.ok}</i> · ` : ""}${esc(t.a.zone)} · ล่าสุด ${esc(bizDM(t.last))}</span></button>`;
     if(!on) return tile;
     const okRow = t.okx ? `<div class="pb-o okrow"><div class="pb-oh"><b>ปกติ ${t.ok} ครั้ง</b><span>ล่าสุด ${esc(thDate(t.okx.round))} ${esc(hm(t.okx.last))} น. · ${esc(t.okx.inspector || "")}</span>
           <button type="button" class="btn sm ghost" data-pbopen="${esc(t.a.area_id)}|${esc(t.okx.round)}|${esc(t.okx.sid)}">เปิดผลตรวจล่าสุด</button></div></div>` : "";
-    return tile + `<div class="pb-x"><div class="pb-xh"><div><small>${esc(t.a.zone)}${t.a.proc ? " · " + esc(t.a.proc) : ""}</small><b>${esc(t.a.no)}. ${esc(t.a.name)}</b></div><em${bad ? "" : ' class="g"'}>${bad ? `${t.n} ครั้งที่พบปัญหา` : "ปกติทุกครั้ง"}</em><button type="button" class="pb-close" data-pa="${esc(t.a.area_id)}" aria-label="ย่อ">×</button></div>
+    return tile + `<div class="pb-x"><div class="pb-xh"><div><small>${esc(t.a.zone)}${t.a.proc ? " · " + esc(t.a.proc) : ""}</small><b>${esc(t.a.no)}. ${esc(t.a.name)}</b>${custTag(t.a)}</div><em${bad ? "" : ' class="g"'}>${bad ? `${t.n} ครั้งที่พบปัญหา` : "ปกติทุกครั้ง"}</em><button type="button" class="pb-close" data-pa="${esc(t.a.area_id)}" aria-label="ย่อ">×</button></div>
       ${okRow}${t.arr.map(x => `<div class="pb-o"><div class="pb-oh"><b>${esc(thDate(x.round))}</b><span>${esc(hm(x.at))} น. · ${esc(x.inspector)}</span>
           <button type="button" class="btn sm ghost" data-pbopen="${esc(x.area_id)}|${esc(x.round)}|${esc(x.sid)}">เปิดผลตรวจ</button></div>
         ${x.topic ? `<div class="pb-tp">${esc(x.topic)}</div>` : ""}${x.note ? `<div class="pb-nt">${esc(x.note)}</div>` : ""}
