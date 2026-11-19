@@ -47,6 +47,7 @@ details.pb{margin-top:12px}
 .pb-o .thumbs{margin-top:2px}
 .pb-empty{grid-column:1/-1;padding:24px;text-align:center;color:#15803d;background:#f0fdf4;border-radius:14px;font-weight:700}
 @media(max-width:600px){.pb-grid{grid-template-columns:repeat(2,1fr)}.pb-t{max-height:none}.pb-dates{width:100%}.pb-dates input{flex:1}}
+#sheetBg.pb-hide{visibility:hidden}
 </style>
 <style>
 :root{
@@ -2013,7 +2014,8 @@ function fitSubFull(){
   cells.flat().forEach(d => { d.style.height = Math.floor(best.ch) + "px"; d.style.width = Math.floor(best.cw) + "px"; });
 }
 addEventListener("resize", () => fitSubFull());
-function closeSubFull(){ $("#subFull").classList.remove("on"); $("#subFullBody").innerHTML = ""; }
+function closeSubFull(){ $("#subFull").classList.remove("on"); $("#subFullBody").innerHTML = "";
+  if(pbFull){ pbFull = false; closeSheet(); $("#sheetBg").classList.remove("pb-hide"); } }
 $("#subFullX").onclick = closeSubFull;
 $("#subFull").addEventListener("click", e => { if(e.target.id === "subFull") closeSubFull(); });
 document.addEventListener("keydown", e => { if(e.key === "Escape" && $("#subFull").classList.contains("on") && !$("#lb").classList.contains("on")) closeSubFull(); });
@@ -4087,10 +4089,18 @@ function drawProb(){
     if(!on) return tile;
     return tile + `<div class="pb-x"><div class="pb-xh"><div><small>${esc(t.a.zone)}${t.a.proc ? " · " + esc(t.a.proc) : ""}</small><b>${esc(t.a.no)}. ${esc(t.a.name)}</b></div><em>${t.n} ครั้ง</em><button type="button" class="pb-close" data-pa="${esc(t.a.area_id)}" aria-label="ย่อ">×</button></div>
       ${t.arr.map(x => `<div class="pb-o"><div class="pb-oh"><b>${esc(thDate(x.round))}</b><span>${esc(hm(x.at))} น. · ${esc(x.inspector)}</span>
-          <button type="button" class="btn sm ghost" data-pbopen="${esc(x.area_id)}|${esc(x.round)}">เปิดผลตรวจ</button></div>
+          <button type="button" class="btn sm ghost" data-pbopen="${esc(x.area_id)}|${esc(x.round)}|${esc(x.sid)}">เปิดผลตรวจ</button></div>
         ${x.topic ? `<div class="pb-tp">${esc(x.topic)}</div>` : ""}${x.note ? `<div class="pb-nt">${esc(x.note)}</div>` : ""}
         ${x.cause ? `<div class="pb-kv"><b>สาเหตุ:</b> ${esc(x.cause)}</div>` : ""}${x.action ? `<div class="pb-kv"><b>การแก้ไข:</b> ${esc(x.action)}</div>` : ""}${x.remark ? `<div class="pb-kv mut"><b>หมายเหตุ:</b> ${esc(x.remark)}</div>` : ""}
         ${(x.media || []).length ? `<div class="thumbs">${x.media.map(m => `<div><img src="${m.thumb || m.poster}" data-full="${m.poster}" loading="lazy" decoding="async" alt="" ${m.kind === "video" ? `data-video="${m.url}"` : ""}></div>`).join("")}</div>` : ""}</div>`).join("")}</div>`; }).join("");
+}
+// เปิดผลตรวจแบบขยายเต็มจอ (หน้าต่างเดียวกับปุ่ม ขยาย ในฟอร์ม) · ปิดแล้วกลับมาหน้ารวมปัญหา
+var pbFull = false;
+async function pbOpenFull(area, round, sid){
+  $("#sheetBg").classList.add("pb-hide"); pbFull = true;
+  try{ await openSheet(area, round); }catch(e){ $("#sheetBg").classList.remove("pb-hide"); pbFull = false; toast("เปิดผลตรวจไม่สำเร็จ"); return; }
+  openSubFull(sid);
+  if(!$("#subFull").classList.contains("on")){ $("#sheetBg").classList.remove("pb-hide"); pbFull = false; }  // ไม่พบ → แสดงฟอร์มตามปกติ
 }
 $("#probBox").addEventListener("toggle", () => { if($("#probBox").open) loadProb(); });
 $("#pbRange").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.days = +b.dataset.d; PB.start = PB.end = ""; PB.open = null; loadProb(); });
@@ -4099,7 +4109,7 @@ $("#pbDeck").addEventListener("click", e => { const b = e.target.closest("button
 $("#pbSort").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; PB.sort = b.dataset.s; [...$("#pbSort").children].forEach(x => x.classList.toggle("on", x === b)); if(PB.data) drawProb(); });
 $("#pbGrid").addEventListener("click", e => {
   if(e.target.closest(".thumbs")) return;  // รูป → เปิดดูเต็มจอ (ตัวจัดการกลาง)
-  const o = e.target.closest("[data-pbopen]"); if(o){ const [a, r] = o.dataset.pbopen.split("|"); openSheet(a, r); return; }
+  const o = e.target.closest("[data-pbopen]"); if(o){ const [a, r, sid] = o.dataset.pbopen.split("|"); pbOpenFull(a, r, sid); return; }
   const t = e.target.closest("[data-pa]"); if(!t) return;
   PB.open = PB.open === t.dataset.pa ? null : t.dataset.pa; drawProb();
   if(PB.open){ const x = $("#pbGrid .pb-x"); if(x) x.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
