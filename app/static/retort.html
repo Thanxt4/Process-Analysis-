@@ -3811,7 +3811,7 @@ function pdBlock(d) { const on = pv(d, "pd") === "Y";
     <div class="seg pdseg"><button type="button" data-ppd="N" class="${on ? "" : "on"}">ไม่ออก</button><button type="button" data-ppd="Y" class="${on ? "on pdon" : ""}">${I("alert")}ออก Process Deviation</button></div>
     ${on ? `<div class="pdfields"><label class="f"><span class="lab">เลขที่ Process Deviation</span><input data-v="ir_pdno" value="${esc(pv(d, "pdno"))}" placeholder="เช่น PD-PF2-001" maxlength="40" autocomplete="off"></label>
       <label class="f"><span class="lab">วันที่ออก</span><input type="date" data-v="ir_pddate" value="${esc(pv(d, "pddate") || d.date || todayISO())}"></label>
-      <label class="f full"><span class="lab">รายละเอียดการเบี่ยงเบน / การดำเนินการ</span><textarea data-v="ir_pdnote" rows="2" maxlength="200" placeholder="เช่น อุณหภูมิช่วงฆ่าเชื้อต่ำกว่า spec 0.3°C นาน 2 นาที · ส่ง TPA ประเมิน">${esc(pv(d, "pdnote"))}</textarea></label></div>` : ""}`; }
+      </div>` : ""}`; }
 function pirCard(d, many, fields) {
   if (!IR.codes && !PIR.loading) { PIR.loading = true; irLoad().then(() => { PIR.loading = false; if (S.view === "log" && S.step === 5) { const y = scrollY; viewLog(); scrollTo(0, y); } }); }
   const mk = irMarkets(d.code), inp = (k, lab, attrs = "", wide = "") => `<label class="f ${wide}"><span class="lab">${lab}</span><input data-v="ir_${k}" value="${esc(pv(d, k))}" ${attrs} autocomplete="off"></label>`;
