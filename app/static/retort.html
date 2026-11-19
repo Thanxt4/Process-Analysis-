@@ -2924,6 +2924,21 @@ const listPlants = () => [...new Set([...plantsList(), ...Object.values(S.items)
 const listRets = pl => [...new Set([...(pl === "all" ? plantsList().flatMap(plantRetorts) : plantRetorts(pl)),
   ...Object.values(S.items).filter(x => pl === "all" || x.plant === pl).map(x => x.retort).filter(Boolean)])].sort(byRetort);
 const listCount = F => { const [a, b] = rangeOf(F); return filtered(a, b, false, F).filter(x => !F.appr || F.appr === "all" || (F.appr === "done") === !!x.approvedBy).length; };
+/* พิมพ์ / บันทึก PDF ผ่าน iframe ที่ซ่อนในหน้าเดิม (ไม่เปิดหน้าต่างใหม่)
+   — แอปที่ติดตั้งบนเครื่อง (PWA) เปิดหน้าต่างพิมพ์แยกแล้วมักค้าง/ไปอยู่ข้างหลัง */
+function printHTML(html) {
+  const old = document.getElementById("prFrame"); if (old) old.remove();
+  const f = document.createElement("iframe"); f.id = "prFrame"; f.setAttribute("aria-hidden", "true");
+  f.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
+  document.body.appendChild(f);
+  const d = f.contentDocument; d.open(); d.write(html.replace(/<script>onload=[^<]*<\/script>/g, "")); d.close();
+  const w = f.contentWindow; let done = false;
+  const go = () => { if (done) return; done = true; try { w.focus(); w.print(); } catch (e) { toast("สั่งพิมพ์ไม่สำเร็จ: " + e.message); } };
+  w.addEventListener("afterprint", () => setTimeout(() => f.remove(), 500));
+  toast("กำลังเตรียมหน้าพิมพ์…");
+  (d.fonts && d.fonts.ready ? d.fonts.ready : Promise.resolve()).then(() => setTimeout(go, 150));
+  setTimeout(go, 2500);  // กันฟอนต์โหลดช้า
+}
 /* ---------- Process Deviation Data Sheet (F3QCRE18) : กรอกในแอป · พิมพ์ตามแบบฟอร์ม ---------- */
 const PD_PARAMS = ["Process Temperature ( TID ) ( °C)", "Recorded Process Temperature ( °C)", "Process time ( minutes )", "IT. of product ( °C)", "Venting / Come up time ( minutes )", "Flow rate ( l/sec.)", "Minimum moisture (%)"];
 const PD_FORM_NO = "F3QCRE18-2-18/11/26";
@@ -3019,8 +3034,7 @@ function printPDSheet(o) {
       <tr><td class="b">Process authority signature</td><td>${v("pa_sig")}</td><td class="b c">Date</td><td>${d("pa_date")}</td></tr>
       <tr><td class="b">COO./Sr. QA Manager signature</td><td>${v("coo_sig")}</td><td class="b c">Date</td><td>${d("coo_date")}</td></tr></table>
     <script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`;
-  const w = window.open("", "_blank"); if (!w) { toast("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ · อนุญาตป๊อปอัปแล้วลองใหม่"); return; }
-  w.document.open(); w.document.write(html); w.document.close();
+  printHTML(html);
 }
 // ออก Process Deviation ใหม่: เลือก IR ที่ยังไม่ออก PD → กรอก Data Sheet
 function openPDNew() {
@@ -4106,8 +4120,7 @@ function svPrint(c) {
     td{border:1px solid #000;height:7.2mm;padding:1px 3px;text-align:center;overflow:hidden;word-break:break-word}td.l{width:52mm;text-align:left}td.h{font-weight:bold}
     tr.gap td{height:3mm;border-left:1px solid #000;border-right:1px solid #000}</style></head><body>
     ${pages.map(cs => SV_TABLES.map(t => page(t, cs)).join("")).join("")}<script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`;
-  const w = window.open("", "_blank"); if (!w) { toast("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ · อนุญาตป๊อปอัปแล้วลองใหม่"); return; }
-  w.document.open(); w.document.write(html); w.document.close();
+  printHTML(html);
 }
 /* ---------- อัปเดตค่าโปรแกรมจาก PDF (หัวหน้า) : อัปโหลด → ระบบอ่านตาราง → ตรวจ/แก้ → ยืนยัน ---------- */
 const TPD = { d: null };
