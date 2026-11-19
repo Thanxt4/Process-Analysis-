@@ -1641,6 +1641,14 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .lb-oh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.lb-oh b{color:var(--navy)}.lb-oh>span:not(.kb):not(.tag){flex:1;color:var(--mute);font-size:13px}
 .lb-kv{font-size:14px;color:#334155}.lb-kv b{color:#b45309}.lb-kv.mut{color:var(--mute);font-size:13px}.lb-by{color:var(--mute);font-size:12px}
 @media(max-width:600px){.lb-grid{grid-template-columns:repeat(2,1fr)}.lb-t{max-height:none}}
+.mybox{max-width:640px}
+.my-h{display:flex;align-items:center;gap:12px;margin-bottom:14px}.my-h>div:not(.av){flex:1;display:flex;flex-direction:column}.my-h b{font-size:19px;color:var(--navy)}.my-h small{color:var(--mute);font-size:12.5px}
+.my-av{width:48px;height:48px;font-size:17px}
+.lab.my-l{display:flex;align-items:center;gap:6px;margin-top:16px}.lab.my-l svg.i{width:16px;height:16px;color:var(--amber)}
+.my-bgs{display:flex;flex-wrap:wrap;gap:8px}.my-bgs button{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:0;padding:6px;border-radius:12px;font-size:12.5px;background:#fff}
+.my-bgs i{width:62px;height:40px;border-radius:9px;border:1px solid #e2e8f0}.my-bgs button.on{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
+.my-avs{display:flex;flex-wrap:wrap;gap:8px}.my-avs button{width:38px;height:38px;min-height:0;border-radius:50%;padding:0;border:3px solid #fff;box-shadow:0 0 0 1px #e2e8f0;color:var(--navy);font-weight:800}
+.my-avs button.on{box-shadow:0 0 0 3px var(--navy)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1846,8 +1854,70 @@ function applyUI() {
   $(".ttl .brand").textContent = U.brand; $("#title").textContent = U.title; $("#subtitle").textContent = U.subtitle;
   Object.keys(GROUPS).forEach(g => { if (!U.groups[g] && !GROUPS_DEFAULT[g]) delete GROUPS[g]; });  // กลุ่มที่ถูกลบ
   Object.keys(U.groups).forEach(g => { GROUPS[g] = Object.assign(GROUPS[g] || {}, U.groups[g]); });
-  applyTheme(U.navy, U.amber);
-  document.body.style.zoom = U.scale === 100 ? "" : String(U.scale / 100);
+  const P = MY.p;  // ตกแต่งของฉัน (แยกตามบัญชี) ทับค่าเริ่มต้นของทีม
+  applyTheme(P.navy || U.navy, P.amber || U.amber);
+  const sc = P.scale || U.scale; document.body.style.zoom = sc === 100 ? "" : String(sc / 100);
+  myCss();
+}
+/* ---------- ตกแต่งของฉัน: แยกตามบัญชี (เข้าสู่ระบบหน้าหลักไว้ = เก็บที่เซิร์ฟเวอร์ ใช้ได้ทุกเครื่อง · ไม่ได้เข้า = เก็บในเครื่องนี้) ---------- */
+const MY = { p: lsGet("rt_my", {}) || {}, acct: null, t: 0 };
+const MY_FONT = [["", "Sarabun"], ["th", "TH Sarabun New"], ["sys", "ตัวอักษรของเครื่อง"]];
+const MY_RADIUS = [["sharp", "เหลี่ยม"], ["", "ปกติ"], ["round", "โค้งมน"]];
+const MY_DENSE = [["compact", "กระชับ"], ["", "ปกติ"], ["comfy", "โปร่ง"]];
+const MY_BG = [["", "ปกติ", "#eef2f7"], ["white", "ขาวล้วน", "#ffffff"], ["soft", "ไล่สีนุ่ม", "linear-gradient(135deg,#fef3c7,#dbeafe)"], ["dots", "ลายจุด", "radial-gradient(#cbd5e1 1.5px,#f8fafc 1.5px) 0 0/10px 10px"], ["cream", "ครีม", "#fdf8ef"], ["mint", "เขียวอ่อน", "#ecfdf5"]];
+const MY_AV = ["", "#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#0ea5e9", "#1b2a41"];
+function myCss() {
+  const P = MY.p; let c = "";
+  if (P.font === "th") c += `@font-face{font-family:'THSN';src:url(/fonts/THSarabunNew.woff) format('woff');font-weight:400}@font-face{font-family:'THSN';src:url(/fonts/THSarabunNew-Bold.woff) format('woff');font-weight:600 800}
+    html,body,button,input,select,textarea{font-family:THSN,Sarabun,sans-serif!important;font-size-adjust:.55}`;
+  if (P.font === "sys") c += `html,body,button,input,select,textarea{font-family:system-ui,-apple-system,"Segoe UI","Leelawadee UI",sans-serif!important}`;
+  if (P.radius === "sharp") c += `.card,.modal,button,input,select,textarea,.seg,.chip,.irl-r,.lb-t,.kp,.lswitch{border-radius:6px!important}`;
+  if (P.radius === "round") c += `.card,.modal{border-radius:30px!important}button,input,select,textarea{border-radius:18px!important}`;
+  if (P.dense === "compact") c += `.card{padding:12px 14px!important;margin-bottom:10px!important}button{min-height:38px}.irl-r{padding:8px 4px!important}`;
+  if (P.dense === "comfy") c += `.card{padding:26px 28px!important;margin-bottom:22px!important}.irl-r{padding:16px 6px!important}`;
+  const bg = MY_BG.find(b => b[0] === P.bg); if (bg && P.bg) c += `html,body{background:${bg[2]}!important;background-attachment:fixed!important}`;
+  if (P.av) c += `.av{background:${P.av}!important;color:#fff!important}`;
+  if (P.motion === "off") c += `*,*::before,*::after{animation:none!important;transition:none!important}`;
+  let st = document.getElementById("myCss"); if (!st) { st = document.createElement("style"); st.id = "myCss"; document.head.appendChild(st); }
+  if (st.textContent !== c) st.textContent = c;
+}
+async function myLoad() {
+  try { const r = await fetch("/api/me/prefs?app=retort"); if (r.ok) { const j = await r.json(); MY.acct = j.user; MY.p = j.prefs || {}; lsSet("rt_my", MY.p); applyUI();
+    if (MY.p.home && !S.navUsed && S.view === "log" && !S.draft && !S.editingId) { S.view = MY.p.home; render(); } } } catch {}
+}
+function mySet(k, v) { if (v === "" || v == null) delete MY.p[k]; else MY.p[k] = v; lsSet("rt_my", MY.p); applyUI(); renderNav();
+  clearTimeout(MY.t); if (MY.acct) MY.t = setTimeout(() => jpost("/api/me/prefs", { app: "retort", prefs: MY.p }).catch(() => toast("บันทึกการตกแต่งไม่สำเร็จ")), 500); }
+function myPanel() {
+  const P = MY.p, nav = P.navy || U.navy, amb = P.amber || U.amber, sc = P.scale || U.scale;
+  const seg = (k, opts) => `<div class="seg segfit">${opts.map(([v, l]) => `<button data-my="${k}" data-v="${v}" class="${(P[k] || "") === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
+  const tabs = (S.role === "sup" ? U.tabs.filter(t => t.show) : U.tabs.filter(t => STAFF_TABS.includes(t.k)));
+  modal("", box => {
+    const draw = () => { const P = MY.p, nav = P.navy || U.navy, amb = P.amber || U.amber, sc = P.scale || U.scale;
+      box.innerHTML = `<div class="my-h"><div class="av my-av">${esc(initials(S.user))}</div><div><b>ของฉัน</b><small>${MY.acct ? `บัญชี ${esc(MY.acct.name)} (${esc(MY.acct.emp_id)}) · ใช้ได้ทุกเครื่องที่เข้าสู่ระบบบัญชีนี้` : "ตั้งค่าเฉพาะเครื่องนี้ · เข้าสู่ระบบที่หน้าหลักเพื่อใช้กับบัญชีของคุณทุกเครื่อง"}</small></div><button class="tm-x" data-close aria-label="ปิด">${I("x")}</button></div>
+      <label class="f"><span class="lab">ชื่อผู้บันทึก</span><div class="row"><input id="myName" value="${esc(S.user || "")}" maxlength="40" autocomplete="off"><button class="soft sm" id="myNameOk" style="flex:0 0 auto">บันทึกชื่อ</button></div></label>
+      <span class="lab my-l">${I("palette")}สีของฉัน</span>
+      <div class="grid"><div class="colrow"><input type="color" data-myc="navy" value="${nav}"><span class="sub">สีหลัก</span></div><div class="colrow"><input type="color" data-myc="amber" value="${amb}"><span class="sub">สีเน้น</span></div></div>
+      <div class="swatches">${THEME_PRESETS.map(([n, a, b]) => `<button class="swatch ${nav === a && amb === b ? "on" : ""}" data-mypre="${a}${b}" style="--a:${a};--b:${b}"><i></i>${n.replace(" (ค่าเริ่มต้น)", "")}</button>`).join("")}${P.navy || P.amber ? `<button class="ghost sm" data-myteam>ใช้สีของทีม</button>` : ""}</div>
+      <span class="lab my-l">${I("expand")}ขนาดตัวอักษร / ปุ่ม</span><div class="seg segfit">${[90, 100, 110, 120, 130].map(v => `<button data-myscale="${v}" class="${sc === v ? "on" : ""}">${v}%</button>`).join("")}</div>
+      <span class="lab my-l">${I("pen")}ฟอนต์</span>${seg("font", MY_FONT)}
+      <div class="grid"><div><span class="lab my-l">${I("grid")}มุมโค้ง</span>${seg("radius", MY_RADIUS)}</div><div><span class="lab my-l">${I("list")}ความแน่นของหน้า</span>${seg("dense", MY_DENSE)}</div></div>
+      <span class="lab my-l">${I("image")}พื้นหลัง</span><div class="my-bgs">${MY_BG.map(([v, l, css]) => `<button data-my="bg" data-v="${v}" class="${(P.bg || "") === v ? "on" : ""}"><i style="background:${css}"></i>${l}</button>`).join("")}</div>
+      <span class="lab my-l">${I("user")}สีรูปโปรไฟล์</span><div class="my-avs">${MY_AV.map(c => `<button data-my="av" data-v="${c}" class="${(P.av || "") === c ? "on" : ""}" style="background:${c || "var(--amber)"}" aria-label="${c || "ค่าเริ่มต้น"}">${c ? "" : "A"}</button>`).join("")}</div>
+      <div class="grid"><div><span class="lab my-l">${I("spark")}แอนิเมชัน</span>${seg("motion", [["", "เปิด"], ["off", "ปิด (ลื่นกว่าในเครื่องช้า)"]])}</div>
+        <label class="f"><span class="lab my-l">${I("target")}หน้าแรกของฉัน</span><select id="myHome"><option value="">ตามค่าเริ่มต้นของทีม</option>${tabs.map(t => `<option value="${t.k}" ${P.home === t.k ? "selected" : ""}>${esc(t.label)}</option>`).join("")}</select></label></div>
+      <div class="row" style="margin-top:16px"><button class="blk" id="myReset">${I("x")}กลับเป็นค่าเริ่มต้นทั้งหมด</button><button class="blk pri" data-close>${I("check")}เสร็จ</button></div>`;
+      box.querySelectorAll("[data-close]").forEach(x => x.onclick = closeModal); };
+    draw();
+    box.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+      if (ds.my) { mySet(ds.my, ds.v); draw(); }
+      else if (ds.myscale) { mySet("scale", +ds.myscale === U.scale ? "" : +ds.myscale); draw(); }
+      else if (ds.mypre) { mySet("navy", ds.mypre.slice(0, 7)); mySet("amber", ds.mypre.slice(7)); draw(); }
+      else if (b.hasAttribute("data-myteam")) { mySet("navy", ""); mySet("amber", ""); draw(); }
+      else if (b.id === "myReset") { MY.p = {}; mySet("x", ""); draw(); toast("กลับเป็นค่าเริ่มต้นแล้ว"); }
+      else if (b.id === "myNameOk") { const v = box.querySelector("#myName").value.trim(); if (!v) return; S.user = v; setName(v); if (S.draft && !S.editingId) S.draft.by = v; $("#userBtn").textContent = initials(v); toast("บันทึกชื่อแล้ว"); draw(); } };
+    box.oninput = e => { const t = e.target; if (t.dataset.myc) { mySet(t.dataset.myc, t.value); } };
+    box.onchange = e => { const t = e.target; if (t.id === "myHome") mySet("home", t.value); };
+  }, "mybox");
 }
 /* รายการปัญหา Retort ปัจจุบัน (อัปเดต 04/11/26) — เรียงตามลำดับที่ใช้หน้างาน */
 const DEFAULT_CONFIG = {
@@ -2022,7 +2092,7 @@ function getName() { try { const v = localStorage.getItem("pc_inspector"); if (v
 function setName(n) { n = (n || "").trim().slice(0, 60); try { localStorage.setItem("pc_inspector", n); } catch {} document.cookie = `pc_name=${encodeURIComponent(n)}; max-age=${60*60*24*400}; path=/; samesite=lax`; }
 const S = {
   user: getName(),
-  view: "log", viewAuto: false,  // เปิดหน้านี้ใหม่ทุกครั้ง เริ่มที่แท็บ บันทึก เสมอ (ถ้าแท็บบันทึกถูกซ่อน ใช้แท็บหน้าแรกจากการตั้งค่า)
+  view: MY.p.home || "log", viewAuto: false,  // เปิดหน้านี้ใหม่ทุกครั้ง เริ่มที่แท็บ บันทึก เสมอ (ถ้าแท็บบันทึกถูกซ่อน ใช้แท็บหน้าแรกจากการตั้งค่า)
   items: {}, config: migrate(null)[0],
   pin: "", canAdmin: lsGet("rt_role", "") === "sup", loaded: false, role: lsGet("rt_role", ""),
   draft: null, editingId: null,
@@ -2132,7 +2202,7 @@ function showLock(on) { $("#lock").classList.toggle("hide", !on); if (on) setTim
 $("#lockForm").onsubmit = async e => {
   e.preventDefault(); const pin = $("#lockPin").value.trim(); if (!pin) return;
   const btn = $("#lockForm [type=submit]"); if (btn.disabled) return; btn.disabled = true; btn.textContent = "กำลังเข้าสู่ระบบ…"; $("#lockErr").textContent = "";
-  try { const r = await jpost("/api/retort/login", { pin }); authEpoch++; $("#lockPin").value = ""; setRole(r.role); S.viewAuto = false; S.view = "log";
+  try { const r = await jpost("/api/retort/login", { pin }); authEpoch++; $("#lockPin").value = ""; setRole(r.role); S.viewAuto = false; S.view = MY.p.home || "log";
     await loadCache();  // ข้อมูลที่จำไว้ในเครื่อง → แสดงได้ทันที
     showLock(false); render(); toast(`เข้าสู่ระบบแล้ว · ${r.role_name || ""}`); syncAll(!lastSync); }
   catch (err) { $("#lockErr").textContent = err.message || "รหัสไม่ถูกต้อง"; $("#lockPin").select(); }
@@ -2151,7 +2221,8 @@ function renderNav() {
   let vis = S.role === "sup" ? U.tabs.filter(t => t.show) : U.tabs.filter(t => STAFF_TABS.includes(t.k));
   // มือถือ (ทั้งหัวหน้าและพนักงาน): เหลือ บันทึก · รายการ (ปัญหา + IR) · รอบหม้อ · Survey ตามลำดับเดิม
   if (MOBILE_MQ.matches) { const mv = U.tabs.filter(t => MOBILE_TABS.includes(t.k) && (t.show || S.role !== "sup")); if (mv.length) vis = mv; }
-  const dflt = vis.some(t => t.k === U.defaultTab) ? U.defaultTab : vis[0].k;
+  const home = MY.p.home && vis.some(t => t.k === MY.p.home) ? MY.p.home : U.defaultTab;  // หน้าแรกของฉัน
+  const dflt = vis.some(t => t.k === home) ? home : vis[0].k;
   // เครื่องที่ยังไม่เคยเลือกแท็บ: เปิดแท็บเริ่มต้นตามการตั้งค่า (เลิกทำทันทีที่ผู้ใช้กดอะไรก็ตาม)
   if (S.viewAuto) { if (!S.view || S.view === S.autoPick) S.view = S.autoPick = dflt; else S.viewAuto = false; }
   if (S.view === "irlist") S.view = "list";  // รายการ IR รวมเข้ากับ รายการ แล้ว (บันทึกปัญหา = ออก IR)
@@ -2178,11 +2249,12 @@ function render() {
 /* เล่นแอนิเมชันเข้าหน้าเฉพาะตอนเปลี่ยนหน้า/ขั้นตอน (ไม่เล่นซ้ำตอนซิงก์ข้อมูลหรือเปลี่ยนตัวกรอง) */
 let animKey = "";
 function markAnim(k) { $("#main").classList.toggle("anim", k !== animKey); animKey = k; }
-$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.view = b.dataset.view; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
-$("#userBtn").onclick = () => askName(false);
+$("#nav").onclick = e => { const b = e.target.closest("[data-view]"); if (!b) return; S.navUsed = true; S.view = b.dataset.view; S.viewAuto = false; lsSet("rt_view", S.view); if (S.view === "log" && !S.editingId) S.draft = null; S.justSaved = null; render(); window.scrollTo(0, 0); };
+$("#userBtn").onclick = () => myPanel();
+myLoad();
 document.addEventListener("pointerdown", () => { S.viewAuto = false; }, true);
 // กลับเข้าหน้านี้จากปุ่มย้อนกลับ (เบราว์เซอร์คืนหน้าเดิมจากแคช) ก็ให้กลับมาที่แท็บ บันทึก เหมือนเปิดใหม่
-addEventListener("pageshow", e => { if (e.persisted && S.view !== "log") { S.view = "log"; S.justSaved = null; render(); window.scrollTo(0, 0); } });
+addEventListener("pageshow", e => { if (e.persisted && S.view !== (MY.p.home || "log")) { S.view = MY.p.home || "log"; S.justSaved = null; render(); window.scrollTo(0, 0); } });
 
 /* ---------- log form ---------- */
 function newDraft() {
@@ -4944,7 +5016,7 @@ function viewUI() {
     <label class="f" style="margin-top:10px"><span class="lab">ชื่อหน้า</span>${inp("title", U.title, UI_DEFAULT.title)}</label>
     <label class="f" style="margin-top:10px"><span class="lab">คำอธิบายใต้ชื่อ</span>${inp("subtitle", U.subtitle, UI_DEFAULT.subtitle, 80)}</label>
     <label class="f" style="margin-top:10px"><span class="lab">ข้อความประทับบนรูปถ่าย</span>${inp("stamp", U.stamp, UI_DEFAULT.stamp)}<small class="hint">บรรทัดที่ 2 เป็นวันที่ เวลา กะ อัตโนมัติ · เว้นว่าง = ใช้ค่าเริ่มต้น</small></label></div>`;
-  h += `<div class="card">${sec("palette", "สีและขนาดตัวอักษร")}
+  h += `<div class="card">${sec("palette", "สีและขนาดตัวอักษร (ค่าเริ่มต้นของทุกคน)", "แต่ละคนตกแต่งของตัวเองได้ที่ปุ่มรูปโปรไฟล์ มุมขวาบน")}
     <div class="grid"><div><span class="lab">สีหลัก</span>${col("navy", U.navy)}</div><div><span class="lab">สีเน้น</span>${col("amber", U.amber)}</div></div>
     <span class="lab" style="margin-top:14px">ชุดสีสำเร็จรูป</span><div class="swatches">${THEME_PRESETS.map(([n, a, b]) => `<button class="swatch ${U.navy === a && U.amber === b ? "on" : ""}" data-preset="${a}${b}" style="--a:${a};--b:${b}" ${dis}><i></i>${n}</button>`).join("")}</div>
     <span class="lab" style="margin-top:16px">ขนาดตัวอักษร / ปุ่ม</span><div class="seg segfit">${[90, 100, 110, 120, 130].map(v => `<button data-uscale="${v}" class="${U.scale === v ? "on" : ""}" ${dis}>${v}%</button>`).join("")}</div>

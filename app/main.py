@@ -619,6 +619,13 @@ with db() as con:
             created_at INTEGER NOT NULL,
             active INTEGER NOT NULL DEFAULT 1
         );
+        CREATE TABLE IF NOT EXISTS user_prefs(
+            emp_id TEXT NOT NULL,
+            app TEXT NOT NULL,
+            data TEXT NOT NULL,
+            updated_at INTEGER NOT NULL,
+            PRIMARY KEY(emp_id, app)
+        );
         CREATE TABLE IF NOT EXISTS user_sessions(
             token TEXT PRIMARY KEY,
             emp_id TEXT NOT NULL,
@@ -1050,7 +1057,7 @@ _USER_FREE = ("/api/auth/", "/api/retort", "/api/login", "/api/admin/check", "/a
 # ---- อัปเดตสด (realtime): บันทึกสำเร็จ → เลขเวอร์ชันเพิ่ม → หน้าที่เปิดอยู่ได้รับสัญญาณทันที แล้วดึงเฉพาะส่วนที่เปลี่ยน
 LIVE_VER = {"rt": 0, "pc": 0}
 _LIVE_SKIP = ("/api/auth/", "/api/login", "/api/retort/login", "/api/retort/logout", "/api/retort/ai", "/api/retort/live",
-              "/api/admin/check", "/api/slides/check", "/api/uadmin/login", "/api/uadmin/logout", "/api/retort/tp/parse", "/api/live")
+              "/api/admin/check", "/api/slides/check", "/api/uadmin/login", "/api/uadmin/logout", "/api/retort/tp/parse", "/api/live", "/api/me/")
 
 
 def live_bump(ch: str):
@@ -1943,6 +1950,39 @@ def api_problems(start: Optional[str] = None, end: Optional[str] = None):
                         "cause": r.get("cause") or "", "action": r.get("action") or "", "remark": r.get("remark") or "",
                         "resp": r.get("resp") or "", "media": [media_info(f) for f in imgs]})
     return {"start": a.isoformat(), "end": b.isoformat(), "items": out}
+
+
+# ---- ตกแต่งหน้าจอของฉัน: แยกตามบัญชี (รหัสพนักงาน) · app = retort / main
+@app.get("/api/me/prefs")
+def api_my_prefs(request: Request, app_: str = Query("retort", alias="app")):
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    with db() as con:
+        r = con.execute("SELECT data FROM user_prefs WHERE emp_id=? AND app=?", (u["emp_id"], app_[:20])).fetchone()
+    try:
+        data = json.loads(r["data"]) if r else {}
+    except ValueError:
+        data = {}
+    return {"prefs": data, "user": {"emp_id": u["emp_id"], "name": u["name"], "dept": u["dept"]}}
+
+
+@app.post("/api/me/prefs")
+async def api_my_prefs_save(request: Request):
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    d = await request.json()
+    app_ = str(d.get("app") or "retort")[:20]
+    prefs = d.get("prefs") if isinstance(d.get("prefs"), dict) else {}
+    raw = json.dumps(prefs, ensure_ascii=False)
+    if len(raw) > 8000:
+        raise HTTPException(400, "ข้อมูลตกแต่งใหญ่เกินไป")
+    with db() as con:
+        con.execute("INSERT INTO user_prefs(emp_id, app, data, updated_at) VALUES(?,?,?,?) "
+                    "ON CONFLICT(emp_id, app) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
+                    (u["emp_id"], app_, raw, int(_time.time() * 1000)))
+    return {"ok": True}
 
 
 @app.get("/api/inspectors")
