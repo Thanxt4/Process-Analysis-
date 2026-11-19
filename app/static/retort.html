@@ -1694,6 +1694,7 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .ps-sec{--c:var(--navy)}
 .ps-sec input,.ps-sec textarea{background:#fff!important;border-color:#d5dde8}.ps-sec input:placeholder-shown,.ps-sec textarea:placeholder-shown{border-style:dashed}
 .ps-sec .ps-t{background:#fff;border-radius:10px;overflow:hidden}.ps-sec .ps-t th{background:#eef2f7;color:#334155}
+.rk-run{display:block;font-size:12.5px;color:#475569;margin-top:2px}.rk-run b{color:var(--navy)}.rk-run b.hi{color:var(--bad)}.rk-run b.md{color:#c2410c}.rk-run b.lo{color:#b45309}.rk-run .na{color:#94a3b8}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3432,7 +3433,7 @@ function runSection(R, plant) {
   const key = R.f1 + R.t1;
   if (RUNS.key !== key) {
     if (!RUNS.busy) { RUNS.busy = true; api(`/api/retort/runs?from=${R.f1}&to=${R.t1}`).then(r => { RUNS.items = r.items || []; RUNS.key = key; })
-      .catch(() => { RUNS.items = []; RUNS.key = key; }).finally(() => { RUNS.busy = false; if (S.view === "analyze") { const el = $("#runSec"); if (el) el.outerHTML = runSection(dashRanges(), S.d.plant); } }); }
+      .catch(() => { RUNS.items = []; RUNS.key = key; }).finally(() => { RUNS.busy = false; if (S.view === "analyze" && $("#runSec")) { const y = scrollY; render(); scrollTo(0, y); } }); }
     return `<div class="card dcard" id="runSec">${sec("target", "อัตราปัญหาต่อรอบ", "กำลังโหลดจำนวนรอบ…")}</div>`;
   }
   const inPl = r => plant === "all" || plantRetorts(plant).includes(r);
@@ -4800,13 +4801,20 @@ function viewAnalyze() {
   const topCat = byCat[0] ? catById(byCat[0][0]) : null;
   const kpi = (cls, ic, lab, val, unit, sub, extra = "") => `<div class="kp ${cls}"><div class="kp-h"><span class="kp-ic">${I(ic)}</span><small>${lab}</small></div><b>${val}<i>${unit}</i></b><span class="kp-s">${sub}</span>${extra}</div>`;
   // อันดับ (แถบเดียว ไม่มีการเทียบ)
+  // จำนวนรอบหม้อในช่วงที่เลือก (จากหน้า รอบหม้อ) · ใช้ในอันดับหม้อ
+  const RR = RUNS.key === R.f1 + R.t1 ? runsDaily(RUNS.items) : null, runN = {};
+  if (RR) Object.entries(RR).forEach(([k, n]) => { const r = k.split("|")[1]; runN[r] = (runN[r] || 0) + n; });
+  const retRun = k => { const L = L1.filter(x => x.retort === k), n = runN[k] || 0;
+    if (!RR) return `<span class="rk-run">${L.length} ปัญหา · กำลังโหลดจำนวนรอบ…</span>`;
+    const p = L.filter(x => RR[prodDate(x) + "|" + k] != null).length, pc = n ? p / n * 100 : null;
+    return `<span class="rk-run"><b>${n ? n.toLocaleString() : "–"}</b> รอบ · พบปัญหา <b>${L.length}</b> ครั้ง${pc != null ? ` · <b class="${pc >= 20 ? "hi" : pc >= 10 ? "md" : "lo"}">${pc < 10 && pc > 0 ? pc.toFixed(1) : Math.round(pc)}%</b>${p < L.length ? ` <span class="na">(% คิดจาก ${p} ครั้งในวันที่ใส่รอบ)</span>` : ""}` : n ? "" : ` <span class="na">(ยังไม่ใส่รอบ)</span>`}</span>`; };
   const rank = (rows, kind) => { if (!rows.length) return `<p class="sub" style="margin:6px 2px">ไม่พบปัญหาในช่วงนี้</p>`;
     const mx = rows[0][1], tot = rows.reduce((a, r) => a + r[1], 0);
     return `<div class="rk-l">${rows.slice(0, 10).map(([k, v], i) => { const c = kind === "cat" ? catById(k) : null, G = c ? grpOf(c) : null;
       const sub = kind === "cat" ? (G ? G.name : "") : ((L1.find(x => x.retort === k) || {}).plant || "");
       const topC = kind === "retort" ? (Object.entries(L1.filter(x => x.retort === k).reduce((m, x) => { m[x.category] = (m[x.category] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1])[0] || [])[0] : "";
       return `<button class="rk ${i < 3 ? "top" : ""}" data-trend="${esc(k)}" data-tby="${kind}" style="--rc:${G ? G.color : "#1b2a41"}"><em>${i + 1}</em>
-        <span class="nm"><b>${esc(kind === "cat" ? (c ? c.name : "หัวข้อที่ถูกลบ") : k)}</b><small>${esc(sub)}${topC ? ` · บ่อยสุด: ${esc(catById(topC)?.name || "-")}` : ""}</small></span>
+        <span class="nm"><b>${esc(kind === "cat" ? (c ? c.name : "หัวข้อที่ถูกลบ") : k)}</b><small>${esc(sub)}${topC ? ` · บ่อยสุด: ${esc(catById(topC)?.name || "-")}` : ""}</small>${kind === "retort" ? retRun(k) : ""}</span>
         <span class="tr"><i style="width:${Math.max(3, v / mx * 100)}%"></i></span><span class="v">${dv(v)}<small>${Math.round(v / tot * 100)}%</small></span></button>`; }).join("")}</div>`; };
   let h = `<div class="dash dx">
   <div class="dx-head"><div class="dx-t"><b>Dashboard</b><span>รายงานปัญหา Retort · ${esc(plantLabel)} · ${pr} · ${days1} วัน</span></div>
