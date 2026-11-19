@@ -1695,6 +1695,11 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .ps-sec input,.ps-sec textarea{background:#fff!important;border-color:#d5dde8}.ps-sec input:placeholder-shown,.ps-sec textarea:placeholder-shown{border-style:dashed}
 .ps-sec .ps-t{background:#fff;border-radius:10px;overflow:hidden}.ps-sec .ps-t th{background:#eef2f7;color:#334155}
 .rk-run{display:block;font-size:12.5px;color:#475569;margin-top:2px}.rk-run b{color:var(--navy)}.rk-run b.hi{color:var(--bad)}.rk-run b.md{color:#c2410c}.rk-run b.lo{color:#b45309}.rk-run .na{color:#94a3b8}
+.tm-run{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:-2px 0 12px;padding:10px;border-radius:14px;background:#f1f5f9}
+.tm-run>div{background:#fff;border-radius:12px;padding:8px 14px}.tm-run small{display:block;font-size:12.5px;color:var(--mute)}.tm-run b{display:block;font-size:22px;font-weight:800;color:var(--navy);line-height:1.25}
+.tm-run b.bad{color:var(--bad)}.tm-run b.md{color:#c2410c}.tm-run b.lo{color:#b45309}.tm-run span{font-size:12px;color:var(--mute)}.tm-run .ld{grid-column:1/-1}
+svg text.rn{fill:#1b2a41;font-weight:700}
+@media(max-width:600px){.tm-run{grid-template-columns:1fr 1fr 1fr;gap:6px;padding:6px}.tm-run>div{padding:6px 8px}.tm-run b{font-size:18px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -5018,39 +5023,53 @@ function wireDash() {
   };
 }
 /* ---------- ป๊อปอัปกราฟแนวโน้ม (กราฟแท่งรายวัน) ---------- */
+const TRN = { key: "", items: [], busy: "" };  // จำนวนรอบหม้อ สำหรับป๊อปอัปแนวโน้มของหม้อ
 function trendModal(k, span) {
   const D = S.d, R = dashRanges(), t = todayISO();
   const [from, to] = span === "sel" ? [R.f1, R.t1] : [addDays(t, -(+span - 1)), t];
   const L = dItems(from, to, D.plant).filter(x => dKey(x) === k);
   const days = dayList(from, to); const weekly = days.length > 45;
+  // หม้อ: ดึงจำนวนรอบในช่วงนี้ (หน้า รอบหม้อ) → แสดงรอบ / ปัญหา / % ในป๊อปอัป
+  const isRet = D.by === "retort", rkey = from + to;
+  if (isRet && TRN.key !== rkey && TRN.busy !== rkey) { TRN.busy = rkey;
+    api(`/api/retort/runs?from=${from}&to=${to}`).then(r => { TRN.items = r.items || []; }).catch(() => { TRN.items = []; })
+      .finally(() => { TRN.key = rkey; TRN.busy = ""; const m = document.querySelector("#modalRoot [data-trk]"); if (m && m.dataset.trk === k + "|" + span) trendModal(k, span); }); }
+  const RD = isRet && TRN.key === rkey ? runsDaily(TRN.items) : null, runOf = d => RD ? (RD[d + "|" + k] ?? null) : null;
+  const runTot = RD ? days.reduce((a, d) => a + (runOf(d) || 0), 0) : 0, pOnRun = RD ? L.filter(x => runOf(prodDate(x)) != null).length : 0;
+  const pctR = runTot ? pOnRun / runTot * 100 : null, pctTxt = v => v == null ? "–" : (v < 10 && v > 0 ? v.toFixed(1) : Math.round(v)) + "%";
   const buckets = weekly ? (() => { const out = []; for (let i = 0; i < days.length; i += 7) { const ds = days.slice(i, i + 7); out.push({ from: ds[0], to: ds[ds.length - 1] }); } return out; })() : days.map(d => ({ from: d, to: d }));
-  buckets.forEach(b => { const xs = L.filter(x => x.date >= b.from && x.date <= b.to); b.v = xs.reduce((a, x) => a + dmv(x), 0); b.n = xs.length; });
+  buckets.forEach(b => { const xs = L.filter(x => x.date >= b.from && x.date <= b.to); b.v = xs.reduce((a, x) => a + dmv(x), 0); b.n = xs.length;
+    if (RD) { const ds = dayList(b.from, b.to), rs = ds.map(runOf).filter(v => v != null); b.run = rs.length ? rs.reduce((a, v) => a + v, 0) : null; } });
   const tot = L.reduce((a, x) => a + dmv(x), 0);
   const half = Math.floor(days.length / 2), mid = days[half] || to;
   const h1 = L.filter(x => x.date < mid).reduce((a, x) => a + dmv(x), 0), h2 = L.filter(x => x.date >= mid).reduce((a, x) => a + dmv(x), 0);
   const pdays = [...new Set(L.map(x => x.date))].sort().reverse();
   const mx = Math.max(1, ...buckets.map(b => b.v)); const st = mx <= 5 ? 1 : Math.ceil(mx / 5); const top = Math.ceil(mx / st) * st;
-  const W = Math.max(buckets.length * 44, 600), H = 240, PL = 34, PB = 26, PT = 22;
+  const W = Math.max(buckets.length * 44, 600), H = RD ? 262 : 240, PL = 34, PB = RD ? 46 : 26, PT = 22;
   const bw = (W - PL - 10) / buckets.length;
   let svg = ""; for (let v = 0; v <= top; v += st) { const y = PT + (H - PT - PB) * (1 - v / top); svg += `<line x1="${PL}" x2="${W - 6}" y1="${y}" y2="${y}" stroke="#eef2f6"/><text x="${PL - 8}" y="${y + 4}" text-anchor="end" class="ax">${v}</text>`; }
   const every = Math.ceil(buckets.length / 24);
   buckets.forEach((b, i) => { const x = PL + i * bw + bw * 0.15, w = bw * 0.7, hh = (H - PT - PB) * b.v / top, y = H - PB - hh;
-    if (b.v) svg += `<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="4" fill="#f87171"><title>${weekly ? `${thShort(b.from)} – ${thShort(b.to)}` : thLong(b.from)} · ${dfmt(b.v)}</title></rect><text x="${x + w / 2}" y="${y - 6}" text-anchor="middle" class="bv">${S.d.metric === "minutes" ? Math.round(b.v) : b.v}</text>`;
+    if (RD) svg += `<text x="${x + w / 2}" y="${H - 6}" text-anchor="middle" class="ax rn">${b.run == null ? "– รอบ" : b.run + " รอบ"}</text>`;
+    if (b.v) svg += `<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="4" fill="#f87171"><title>${weekly ? `${thShort(b.from)} – ${thShort(b.to)}` : thLong(b.from)} · ${dfmt(b.v)}${RD && b.run != null ? ` · ${b.run} รอบ` : ""}</title></rect><text x="${x + w / 2}" y="${y - 6}" text-anchor="middle" class="bv">${S.d.metric === "minutes" ? Math.round(b.v) : b.v}</text>`;
     else svg += `<rect x="${x}" y="${H - PB - 4}" width="${w}" height="4" rx="2" fill="#bbf7d0"/>`;
-    if (!(i % every)) { const d = new Date(b.from + "T00:00:00"); svg += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle" class="ax">${d.getDate()}/${d.getMonth() + 1}</text>`; } });
+    if (!(i % every)) { const d = new Date(b.from + "T00:00:00"); svg += `<text x="${x + w / 2}" y="${H - (RD ? 26 : 8)}" text-anchor="middle" class="ax">${d.getDate()}/${d.getMonth() + 1}</text>`; } });
   const causes = Object.entries(L.reduce((m, x) => { const c = S.d.by === "retort" ? (catById(x.category)?.name || "-") : (causeText(x) || "ไม่ระบุ"); m[c] = (m[c] || 0) + dmv(x); return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 6);
   const rets = Object.entries(L.reduce((m, x) => { const c = S.d.by === "retort" ? (causeText(x) || "ไม่ระบุ") : (x.retort || "-"); m[c] = (m[c] || 0) + dmv(x); return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 6);
   const hb = rows => rows.map(([n, v]) => `<div class="hb"><span class="n">${esc(n)}</span><span class="v">${S.d.metric === "minutes" ? Math.round(v) : v}</span><span class="track"><span class="fill" style="width:${tot ? v / tot * 100 : 0}%;background:#ef4444"></span></span></div>`).join("") || `<p class="sub">ไม่มีข้อมูล</p>`;
   const tr = h1 || h2 ? (h2 > h1 ? `<b class="up">▲ แย่ลง</b>` : h2 < h1 ? `<b class="dn">▼ ดีขึ้น</b>` : `<b>เท่าเดิม</b>`) : `<b>–</b>`;
-  modal(`<div class="tm-h"><div><small>${esc(D.plant === "all" ? "ทุกพื้นที่" : D.plant)} · ${esc(dSub(k, L))} · กราฟแนวโน้ม</small><h2>${esc(dName(k))}</h2></div><button class="tm-x" data-close>${I("x")}</button></div>
+  modal(`<div class="tm-h" data-trk="${esc(k + "|" + span)}"><div><small>${esc(D.plant === "all" ? "ทุกพื้นที่" : D.plant)} · ${esc(dSub(k, L))} · กราฟแนวโน้ม</small><h2>${esc(dName(k))}</h2></div><button class="tm-x" data-close>${I("x")}</button></div>
     <div class="seg tm-seg">${[["sel", `ช่วงที่เลือก (${daysBetween(R.f1, R.t1) + 1} วัน)`], ["30", "30 วัน"], ["60", "60 วัน"], ["90", "90 วัน"]].map(([v, l]) => `<button data-tspan="${v}" class="${String(span) === v ? "on" : ""}">${l}</button>`).join("")}</div>
     <div class="tm-k">
       <div><small>จำนวนที่พบ</small><b class="bad">${S.d.metric === "minutes" ? Math.round(tot) : tot}</b><span>${dunit()} · ${thShort(from)} – ${thShort(to)}</span></div>
       <div><small>แนวโน้ม</small>${tr}<span>เทียบครึ่งแรกกับครึ่งหลังของช่วง</span></div>
       <div><small>ครึ่งแรก → ครึ่งหลัง</small><b>${S.d.metric === "minutes" ? Math.round(h1) : h1} → ${S.d.metric === "minutes" ? Math.round(h2) : h2}</b><span>${half} วัน vs ${days.length - half} วัน</span></div>
       <div><small>วันที่พบปัญหา</small><b>${pdays.length}/${days.length}</b><span>${pdays[0] ? "ล่าสุด " + thLong(pdays[0]) : "ไม่พบในช่วงนี้"}</span></div>
-    </div>
-    <div class="tm-c"><div class="cb-leg" style="margin:0 0 6px"><span><i style="background:#f87171"></i>พบปัญหา (${dunit()})</span><span><i style="background:#bbf7d0"></i>ไม่พบ</span>${weekly ? "<em>ช่วงยาว แสดงเป็นรายสัปดาห์</em>" : ""}</div>
+    </div>${isRet ? `<div class="tm-run">${RD ? `<div><small>รอบหม้อ</small><b>${runTot ? runTot.toLocaleString() : "–"}</b><span>รอบ · ${thShort(from)} – ${thShort(to)}</span></div>
+      <div><small>พบปัญหา</small><b class="bad">${L.length}</b><span>ครั้ง</span></div>
+      <div><small>% ปัญหาต่อรอบ</small><b class="${pctR == null ? "" : pctR >= 20 ? "bad" : pctR >= 10 ? "md" : "lo"}">${pctTxt(pctR)}</b><span>${!runTot ? "ยังไม่ใส่จำนวนรอบในช่วงนี้" : pOnRun < L.length ? `คิดจาก ${pOnRun} ครั้งในวันที่ใส่รอบ` : "ปัญหา ÷ รอบ × 100"}</span></div>`
+      : `<div class="ld"><small>รอบหม้อ</small><span>กำลังโหลดจำนวนรอบ…</span></div>`}</div>` : ""}
+    <div class="tm-c"><div class="cb-leg" style="margin:0 0 6px"><span><i style="background:#f87171"></i>พบปัญหา (${dunit()})</span><span><i style="background:#bbf7d0"></i>ไม่พบ</span>${RD ? `<span><b style="color:var(--navy)">n รอบ</b> = จำนวนรอบหม้อ (ใต้วันที่)</span>` : ""}${weekly ? "<em>ช่วงยาว แสดงเป็นรายสัปดาห์</em>" : ""}</div>
       <div class="tscroll"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W, 900)}px;height:${H}px" preserveAspectRatio="none">${svg}</svg></div></div>
     <div class="grid" style="margin-top:12px"><div>${sec("tool", S.d.by === "retort" ? "ปัญหาที่พบ" : "สาเหตุที่พบ")}${hb(causes)}</div><div>${sec(S.d.by === "retort" ? "list" : "grid", S.d.by === "retort" ? "สาเหตุที่พบ" : "หม้อที่พบ")}${hb(rets)}</div></div>
     <h3 style="margin:16px 0 8px">วันที่พบปัญหา <span class="sub" style="font-weight:400">(แตะเพื่อดูรายการ)</span></h3>
