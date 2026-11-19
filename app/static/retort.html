@@ -1489,7 +1489,7 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .kp .go{position:absolute;right:18px;top:22px;color:#94a3b8}
 .kseg{display:flex;align-items:center;gap:10px;margin:0 0 12px}.kseg>span{font-size:14px;font-weight:800;color:var(--navy)}.kseg .seg{flex:1;max-width:420px}
 .kseg .seg button{display:inline-flex;align-items:center;justify-content:center;gap:6px}.kseg .seg button svg.i{width:16px;height:16px}
-.lkind{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 10px}
+.lkind{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
 .lkind button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:16px;background:#fff;border:2px solid #e2e8f0;font-size:16px;font-weight:800;color:#475569}
 .lkind button svg.i{width:18px;height:18px}.lkind em{font-style:normal;font-size:12.5px;padding:2px 9px;border-radius:99px;background:#eef2f7;color:#334155}
 .lkind button.on{background:var(--navy);border-color:var(--navy);color:#fff}.lkind button.on em{background:rgba(255,255,255,.18);color:#fff}
@@ -1656,7 +1656,26 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .kb.pd{background:#ede9fe;color:#6d28d9}
 .pd-line{display:flex;align-items:center;gap:5px;color:#6d28d9!important;font-weight:700}.pd-line svg.i{width:14px;height:14px}
 .lkind button.k-pd.on{background:#7c3aed;border-color:#7c3aed}
-@media(max-width:700px){.lkind{grid-template-columns:repeat(2,1fr)}.pdfields{grid-template-columns:1fr}}
+@media(max-width:700px){.pdfields{grid-template-columns:1fr}}
+.lbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.lc-pill{position:relative;display:inline-flex;align-items:center;gap:6px;padding:0 6px 0 12px;min-height:40px;border-radius:99px;background:#fff;border:1.5px solid #d5deea;color:#334155;cursor:pointer;max-width:100%}
+.lc-pill svg.i{width:16px;height:16px;color:var(--mute);flex:0 0 auto}.lc-pill .pre{font-size:12.5px;color:var(--mute)}
+.lbar .lc-pill select{border:0;background-color:transparent;box-shadow:none;min-height:36px;padding:0 30px 0 2px!important;background-position:right 6px center;font-size:14px;font-weight:700;color:var(--navy);max-width:210px;width:auto;cursor:pointer}
+.lc-pill.on{background:#fff7e6;border-color:var(--amber)}.lc-pill.on svg.i{color:#b45309}
+.lbar .lc-reset{margin-left:auto}
+@media(max-width:700px){.lbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.lbar::-webkit-scrollbar{display:none}.lc-pill{flex:0 0 auto}.lc-pill select{max-width:150px}}
+.pdv{display:flex;flex-direction:column;gap:12px}
+.pdv-head{padding:18px 22px;border-radius:20px;color:#fff;background:radial-gradient(380px 120px at 92% -40px,rgba(167,139,250,.45),transparent 70%),linear-gradient(135deg,#2e1065,#4c1d95 55%,#6d28d9)}
+.pdv-head b{font-size:22px;font-weight:800;display:block}.pdv-head span{font-size:13.5px;color:#ddd6fe}
+.pdv-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pdv-kpi>div{background:#fff;border:1px solid #e9d5ff;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column}
+.pdv-kpi b{font-size:28px;font-weight:800;color:#6d28d9;line-height:1.1}.pdv-kpi span{font-size:12.5px;color:var(--mute)}.pdv-kpi .w b{color:#b45309}
+.pdv-bar .seg button{white-space:nowrap}.pdv-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.pdv-q{flex:1;min-width:220px;margin:0}
+.pdv-list{display:flex;flex-direction:column;gap:10px}
+.pdc{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;background:#fff;border:1px solid #e9d5ff;border-left:5px solid #7c3aed;border-radius:16px}
+.pdc-no{flex:0 0 150px;display:flex;flex-direction:column;gap:2px}.pdc-no small{font-size:11.5px;color:var(--mute)}.pdc-no b{font-size:17px;font-weight:800;color:#5b21b6;word-break:break-word}.pdc-no span{font-size:12.5px;color:var(--mute)}
+.pdc-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.pdc-b>b{font-size:15.5px;color:var(--navy)}.pdc-b small{color:var(--mute);font-size:12.5px}.pdc-b p{margin:2px 0;color:#334155;font-size:14px;white-space:pre-wrap}
+.pdc-b .dec b{color:#334155}.pdc-a{display:flex;flex-direction:column;gap:6px}.pdc-a .ghost{border:1px solid var(--line);background:#fff}
+@media(max-width:700px){.pdv-kpi{grid-template-columns:repeat(2,1fr)}.pdc{flex-wrap:wrap}.pdc-no{flex:1 1 100%;flex-direction:row;align-items:baseline;gap:8px}.pdc-a{flex-direction:row;width:100%}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1794,7 +1813,7 @@ const UI_DEFAULT = {
   brand: "LINE QC / RETORT ANALYSIS", title: "บันทึกปัญหา Retort", subtitle: "หาสาเหตุ · วิเคราะห์แนวโน้ม",
   stamp: "i-Tail Corporation: Retort Analysis",
   navy: "#1b2a41", amber: "#f59e0b", scale: 100,
-  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "runs", label: "รอบหม้อ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
+  tabs: [{ k: "log", label: "บันทึก", show: true }, { k: "list", label: "รายการ", show: true }, { k: "pd", label: "Process Deviation", show: true }, { k: "runs", label: "รอบหม้อ", show: true }, { k: "analyze", label: "วิเคราะห์", show: true },
     { k: "progs", label: "โปรแกรม", show: true }, { k: "survey", label: "Survey", show: true }, { k: "ai", label: "AI", show: true }, { k: "settings", label: "ตั้งค่า", show: true }, { k: "ui", label: "ปรับแต่ง", show: true }],
   defaultTab: "log",
   dsStart: "07:00", dsEnd: "17:30",
@@ -1803,7 +1822,7 @@ const UI_DEFAULT = {
   dash: { insight: true, trend: true, groups: true, hours: true, heat: true, more: true, days: 14 },
   groups: {}, aiQuick: null
 };
-const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", survey: "tool", runs: "target", irlist: "alert", ai: "spark", settings: "settings", ui: "palette" };
+const VIEW_ICON = { log: "plus", list: "list", analyze: "chart", progs: "thermo", survey: "tool", runs: "target", irlist: "alert", pd: "alert", ai: "spark", settings: "settings", ui: "palette" };
 let U = JSON.parse(JSON.stringify(UI_DEFAULT));
 /* รวมค่าตั้งต้นกับค่าที่บันทึกไว้ และตรวจทุกค่า (สี/เวลา/ข้อความ) ก่อนใช้ */
 function uiCfg(raw) {
@@ -2191,7 +2210,7 @@ async function syncAll(full) {
   } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
-const STAFF_TABS = ["log", "list", "runs", "survey"];
+const STAFF_TABS = ["log", "list", "pd", "runs", "survey"];
 const MOBILE_TABS = ["log", "list", "runs", "survey"];
 const MOBILE_MQ = matchMedia("(max-width:700px), (hover:none) and (pointer:coarse) and (max-height:500px)");
 MOBILE_MQ.addEventListener("change", () => { if (typeof renderNav === "function" && S.loaded !== undefined) { renderNav(); render(); } });
@@ -2244,12 +2263,12 @@ function render() {
   applyUI();
   $("#userBtn").textContent = initials(S.user);
   renderNav();
-  $("#main").classList.toggle("wide", S.view === "analyze" || S.view === "list" || S.view === "survey" || S.view === "irlist");
+  $("#main").classList.toggle("wide", S.view === "analyze" || S.view === "list" || S.view === "survey" || S.view === "irlist" || S.view === "pd");
   $("#main").classList.toggle("xwide", S.view === "analyze");
   $("#main").classList.toggle("vset", S.view === "settings" || S.view === "ui");
   S.charts = {}; $("#main").classList.remove("split");
   document.body.classList.remove("svfull");  // ออกจากตาราง Survey แบบเต็มจอ เมื่อไปแท็บอื่น
-  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, runs: viewRuns, irlist: viewIRList, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
+  ({ log: viewLog, list: viewList, analyze: viewAnalyze, progs: viewProgs, survey: viewSurvey, runs: viewRuns, irlist: viewIRList, pd: viewPD, ai: viewAI, settings: viewSettings, ui: viewUI })[S.view || "log"]();
   if (S.view !== "log") markAnim(S.view);
   if (!S.user) askName(true);
   persistSoon();
@@ -2886,6 +2905,38 @@ const listPlants = () => [...new Set([...plantsList(), ...Object.values(S.items)
 const listRets = pl => [...new Set([...(pl === "all" ? plantsList().flatMap(plantRetorts) : plantRetorts(pl)),
   ...Object.values(S.items).filter(x => pl === "all" || x.plant === pl).map(x => x.retort).filter(Boolean)])].sort(byRetort);
 const listCount = F => { const [a, b] = rangeOf(F); return filtered(a, b, false, F).filter(x => !F.appr || F.appr === "all" || (F.appr === "done") === !!x.approvedBy).length; };
+/* ---------- แถบ Process Deviation: IR ที่ออก Process Deviation ---------- */
+const PDV = { range: lsGet("rt_pdrange", "90"), q: "" };
+function viewPD() {
+  const t = todayISO(), from = PDV.range === "all" ? "" : addDays(t, -(+PDV.range - 1));
+  const all = Object.values(S.items).filter(x => isPD(x) && (!from || (x.date || "") >= from));
+  const G0 = reportGroups(sortItems(all, "new")), q = PDV.q.trim().toLowerCase();
+  const G = q ? G0.filter(g => g.some(x => (itemText(x) + " " + ((x.values || {}).ir_pdno || "") + " " + ((x.values || {}).ir_pdnote || "")).toLowerCase().includes(q))) : G0;
+  const mon = t.slice(0, 7), nMon = G0.filter(g => ((g[0].values || {}).ir_pddate || g[0].date || "").startsWith(mon)).length;
+  const nWait = G0.filter(g => !g.every(x => x.approvedBy)).length, nRet = new Set(all.map(x => x.retort).filter(Boolean)).size;
+  const card = g => { const x = g[0], v = x.values || {}, names = g.map(y => catById(y.category)?.name || "หัวข้อที่ถูกลบ").join(" · ");
+    return `<div class="pdc"><div class="pdc-no"><small>เลขที่</small><b>${esc(v.ir_pdno || "—")}</b><span>ออก ${esc(dmy(v.ir_pddate || x.date))}</span></div>
+      <div class="pdc-b"><b>${v.ir_irno ? `<span class="kb ir">IR</span>${esc(v.ir_irno)} · ` : ""}${esc(names)}</b>
+        <small>${esc([`${x.plant || ""} ${x.retort || ""}`.trim(), `${dmy(x.date)} ${x.time || ""} กะ ${x.shift || ""}`, x.code ? x.code + (v.ir_market || "") : "", x.by].filter(Boolean).join(" · "))}</small>
+        ${v.ir_pdnote ? `<p>${esc(v.ir_pdnote)}</p>` : ""}${v.ir_decision ? `<small class="dec"><b>การตัดสินใจ:</b> ${esc(v.ir_decision)}</small>` : ""}
+        <span class="irl-tags">${apprTag(x)}${x.impact === "hold" ? `<span class="tag hold">${esc(holdTxt(x))}</span>` : ""}</span></div>
+      <div class="pdc-a"><button class="ghost sm" data-pdview="${esc(x.id)}">${I("list")}รายละเอียด</button><button class="ghost sm" data-pdedit="${esc(x.id)}">${I("pen")}แก้ไข</button></div></div>`; };
+  $("#main").innerHTML = `<div class="pdv">
+    <div class="pdv-head"><div><b>Process Deviation</b><span>IR ที่ออก Process Deviation · เลือก "ออก Process Deviation" ตอนออก IR แล้วจะขึ้นที่นี่</span></div></div>
+    <div class="pdv-kpi"><div><b>${G0.length}</b><span>ฉบับในช่วงนี้</span></div><div><b>${nMon}</b><span>ออกเดือนนี้</span></div><div class="${nWait ? "w" : ""}"><b>${nWait}</b><span>IR รออนุมัติ</span></div><div><b>${nRet}</b><span>หม้อที่เกี่ยวข้อง</span></div></div>
+    <div class="pdv-bar"><div class="seg">${[["30", "30 วัน"], ["90", "90 วัน"], ["365", "1 ปี"], ["all", "ทั้งหมด"]].map(([v, l]) => `<button data-pdr="${v}" class="${PDV.range === v ? "on" : ""}">${l}</button>`).join("")}</div>
+      <div class="addbar listsearch pdv-q"><span class="gic">${I("search")}</span><input id="pdQ" value="${esc(PDV.q)}" placeholder="ค้นหา เลขที่ / IR / หม้อ / รายละเอียด" autocomplete="off"></div></div>
+    <div class="pdv-list">${G.length ? G.map(card).join("") : `<div class="empty"><div class="ic">${I("alert")}</div><h3>${q ? "ไม่พบที่ค้นหา" : "ยังไม่มี Process Deviation ในช่วงนี้"}</h3><p class="sub">ออกได้ในฟอร์มออก IR (ขั้นที่ 5) · เลือก ออก Process Deviation</p></div>`}</div></div>`;
+  const m = $("#main");
+  m.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
+    if (ds.pdr) { PDV.range = ds.pdr; lsSet("rt_pdrange", PDV.range); viewPD(); }
+    else if (ds.pdview) showItem(ds.pdview);
+    else if (ds.pdedit) openEdit(ds.pdedit); };
+  m.onchange = null;
+  $("#pdQ").oninput = e => { PDV.q = e.target.value; clearTimeout(PDV.t); PDV.t = setTimeout(() => { const y = scrollY; viewPD(); scrollTo(0, y); const i = $("#pdQ"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 200); };
+}
+// ตัวกรองแบบปุ่มดรอปดาวน์ (แถวเดียว) · ปุ่มที่ไม่ใช่ค่าเริ่มต้นเป็นสีเน้น
+const lcDD = (id, ic, on, opts, cur, pre) => `<label class="lc-pill ${on ? "on" : ""}">${ic}${pre ? `<span class="pre">${pre}</span>` : ""}<select id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(cur) === String(v) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></label>`;
 const LSEL = new Set();  // รายการที่ติ๊กเลือกไว้ (คัดลอกเป็น IR)
 // แถวรายการแบบ IR: ติ๊กเลือก · เลข IR · ปัญหา · รายละเอียดย่อ · สถานะ · อนุมัติ / คัดลอก / แก้ไข / ลบ
 function lsIRRow(G) {
@@ -2922,18 +2973,17 @@ function viewList() {
   const dLabel = f.range === "day" ? thDate(from) : f.range === "custom" ? `${dmy(from)} – ${dmy(to)}` : rLabel;
   let h = `<div class="lsearch-row"><div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>
     <button class="fbtn ${nAct ? "act" : ""}" id="fOpen" aria-label="ตัวกรองและการเรียงข้อมูล" title="ตัวกรอง / เรียงข้อมูล">${I("settings")}<span>ตัวกรอง</span>${nAct ? `<em>${nAct}</em>` : ""}</button></div>
-  <div class="lkind">${[["all", "list", "ทั้งหมด", reportGroups(inRange).length], ["gen", "list", "ปัญหาทั่วไป", nKind("gen")], ["ir", "alert", "รายการ IR", nKind("ir")], ["pd", "alert", "Process Deviation", nKind("pd")]]
+  <div class="lkind">${[["all", "list", "ทั้งหมด", reportGroups(inRange).length], ["gen", "list", "ปัญหาทั่วไป", nKind("gen")], ["ir", "alert", "รายการ IR", nKind("ir")]]
     .map(([v, ic, l, n]) => `<button data-qkind="${v}" class="${kd === v ? "on" : ""} k-${v}">${I(ic)}<span>${l}</span><em>${n}</em></button>`).join("")}</div>
-  <div class="card lctl">
-    <div class="lc-row lc-sort"><span class="lc-lab">${I("list")}เรียงตาม</span><div class="lc-seg">${[["new", "clock", "ใหม่ → เก่า"], ["old", "clock", "เก่า → ใหม่"], ["plant", "factory", "Plant / หม้อ"], ["cat", "tag", "หัวข้อปัญหา"]]
-      .map(([v, ic, l]) => `<button data-qsort="${v}" class="${f.sort === v ? "on" : ""}">${I(ic)}<span>${l}</span></button>`).join("")}</div></div>
-    <div class="lc-row"><span class="lc-lab">${I("calendar")}วันที่</span><div class="lc-chips">${[["today", "วันนี้"], ["yesterday", "เมื่อวาน"], ["7", "7 วัน"], ["30", "30 วัน"], ["90", "90 วัน"], ["all", "ทั้งหมด"]]
-      .map(([v, l]) => `<button data-qrange="${v}" class="${f.range === v ? "on" : ""}">${l}</button>`).join("")}<button data-qrange="pick" class="${f.range === "day" || f.range === "custom" || f.range === "year" ? "on" : ""}">${I("calendar")}${f.range === "day" || f.range === "custom" || f.range === "year" ? esc(dLabel) : "เลือกวัน…"}</button></div></div>
-    <div class="lc-row lc-sel"><span class="lc-lab">${I("factory")}Plant</span><div class="lc-chips">${["all", ...listPlants()].map(pl => `<button data-qpl="${esc(pl)}" class="${f.plant === pl ? "on" : ""}">${pl === "all" ? "ทุก Plant" : esc(pl)}</button>`).join("")}</div>
-      <label class="lc-dd ${f.retort !== "all" ? "on" : ""}"><span>หม้อ</span><select id="qRet"><option value="all">ทุกหม้อ</option>${listRets(f.plant).map(r => `<option ${f.retort === r ? "selected" : ""}>${esc(r)}</option>`).join("")}</select></label>
-      <label class="lc-dd ${f.cat !== "all" ? "on" : ""}"><span>ปัญหา</span><select id="qCat"><option value="all">ทุกหัวข้อ</option>${S.config.categories.filter(c => !c.deleted).map(c => `<option value="${c.id}" ${f.cat === c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label></div>
-    <div class="lc-row"><span class="lc-lab">${I("check")}สถานะ</span><div class="lc-chips">${[["all", "ทั้งหมด"], ["wait", `รออนุมัติ (${nWait})`], ["done", "อนุมัติแล้ว"]].map(([v, l]) => `<button data-appr="${v}" class="${ap === v ? "on" : ""} ${v === "wait" && nWait ? "warn" : ""}">${l}</button>`).join("")}</div>
-      ${dirty ? `<button class="ghost sm lc-reset" id="fReset">${I("x")}ล้างตัวกรอง</button>` : ""}</div>
+  <div class="lbar">
+    ${lcDD("qSort", I("list"), f.sort !== LIST_DEF.sort, [["new", "ใหม่ → เก่า"], ["old", "เก่า → ใหม่"], ["plant", "Plant / หม้อ"], ["cat", "หัวข้อปัญหา"]], f.sort, "เรียง")}
+    ${lcDD("qRange", I("calendar"), f.range !== LIST_DEF.range, [["today", "วันนี้"], ["yesterday", "เมื่อวาน"], ["7", "7 วัน"], ["30", "30 วัน"], ["90", "90 วัน"], ["all", "ทั้งหมด"],
+      ...(["day", "custom", "year"].includes(f.range) ? [[f.range, dLabel]] : []), ["pick", "เลือกวัน…"]], f.range)}
+    ${lcDD("qPl", I("factory"), f.plant !== "all", [["all", "ทุก Plant"], ...listPlants().map(p => [p, p])], f.plant)}
+    ${lcDD("qRet", "", f.retort !== "all", [["all", "ทุกหม้อ"], ...listRets(f.plant).map(r => [r, r])], f.retort)}
+    ${lcDD("qCat", I("tag"), f.cat !== "all", [["all", "ทุกหัวข้อปัญหา"], ...S.config.categories.filter(c => !c.deleted).map(c => [c.id, c.name])], f.cat)}
+    ${lcDD("qAppr", I("check"), ap !== "all", [["all", "ทุกสถานะ"], ["wait", `รออนุมัติ (${nWait})`], ["done", "อนุมัติแล้ว"]], ap)}
+    ${dirty ? `<button class="ghost sm lc-reset" id="fReset">${I("x")}ล้าง</button>` : ""}
   </div>
   <div class="card" id="listCard"></div>`;
   $("#main").innerHTML = h;
@@ -2970,6 +3020,10 @@ function viewList() {
   const selItems = () => reportGroups(L).filter(g => g.every(x => LSEL.has(x.id)));
   const redraw = () => { const y = window.scrollY; draw(); window.scrollTo(0, y); };
   m.onchange = e => { const t = e.target;
+    if (t.id === "qSort") { f.sort = t.value; f.sortV2 = 1; save(); return; }
+    if (t.id === "qRange") { if (t.value === "pick") { t.value = f.range; openListFilter(); } else { f.range = t.value; save(); } return; }
+    if (t.id === "qPl") { f.plant = t.value; f.retort = "all"; save(); return; }
+    if (t.id === "qAppr") { f.appr = t.value; save(); return; }
     if (t.id === "qRet") { f.retort = t.value; save(); return; }
     if (t.id === "qCat") { f.cat = t.value; save(); return; }
     if (t.dataset.psel) { t.dataset.psel.split(",").forEach(k => t.checked ? LSEL.add(k) : LSEL.delete(k)); redraw(); }
