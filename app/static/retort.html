@@ -3646,7 +3646,7 @@ function pirCard(d, many, fields) {
     ${inp("irno", "หมายเลข IR", 'placeholder="เช่น IR-PF1-001"')}${inp("shot", "Shot Code")}${inp("qnrft", "จำนวน (NRFT)", 'inputmode="decimal"')}
     <label class="f"><span class="lab">วันผลิต</span><input type="date" data-v="ir_pdate" value="${esc(pv(d, "pdate") || d.date)}"></label>
     <div class="f"><span class="lab">กะผลิต</span><div class="seg">${["DS", "NS"].map(v => `<button type="button" data-ppsh="${v}" class="${(pv(d, "pshift") || d.shift) === v ? "on" : ""}">${v}</button>`).join("")}</div></div>
-    ${inp("ink", "หมายเลขเครื่อง INK")}${inp("bsk", "หมายเลข Basket (BSK)")}
+    ${inp("ink", "หมายเลขเครื่อง INK")}<label class="f full"><span class="lab">หมายเลข Basket (BSK) <small class="sub">(กด Enter ขึ้นบรรทัดใหม่ได้)</small></span><textarea data-v="ir_bsk" rows="3" maxlength="200" placeholder="เช่น BSK 11/21, 12/21&#10;BSK 13/21, 14/21">${esc(pv(d, "bsk"))}</textarea></label>
     ${fields.map(fl => `<label class="f"><span class="lab">${esc(fl.label)}${fl.unit ? ` (${esc(fl.unit)})` : ""}</span><input inputmode="decimal" data-v="${fl.key}" value="${esc(d.values[fl.key] ?? "")}"></label>`).join("")}
     ${detailInput(detailFields().find(x => x.key === "duration") || DEFAULT_DETAILS[1], d)}
     ${custom.map(x => detailInput(x, d)).join("")}
