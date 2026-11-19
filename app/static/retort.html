@@ -1489,7 +1489,7 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .kp .go{position:absolute;right:18px;top:22px;color:#94a3b8}
 .kseg{display:flex;align-items:center;gap:10px;margin:0 0 12px}.kseg>span{font-size:14px;font-weight:800;color:var(--navy)}.kseg .seg{flex:1;max-width:420px}
 .kseg .seg button{display:inline-flex;align-items:center;justify-content:center;gap:6px}.kseg .seg button svg.i{width:16px;height:16px}
-.lkind{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.lkind{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 10px}
 .lkind button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:16px;background:#fff;border:2px solid #e2e8f0;font-size:16px;font-weight:800;color:#475569}
 .lkind button svg.i{width:18px;height:18px}.lkind em{font-style:normal;font-size:12.5px;padding:2px 9px;border-radius:99px;background:#eef2f7;color:#334155}
 .lkind button.on{background:var(--navy);border-color:var(--navy);color:#fff}.lkind button.on em{background:rgba(255,255,255,.18);color:#fff}
@@ -1649,6 +1649,14 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .my-bgs i{width:62px;height:40px;border-radius:9px;border:1px solid #e2e8f0}.my-bgs button.on{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
 .my-avs{display:flex;flex-wrap:wrap;gap:8px}.my-avs button{width:38px;height:38px;min-height:0;border-radius:50%;padding:0;border:3px solid #fff;box-shadow:0 0 0 1px #e2e8f0;color:var(--navy);font-weight:800}
 .my-avs button.on{box-shadow:0 0 0 3px var(--navy)}
+.pdbox{padding:12px 14px;border-radius:14px;background:#faf5ff;border:1px solid #e9d5ff}
+.pdseg{max-width:460px}.pdseg button{display:inline-flex;align-items:center;justify-content:center;gap:6px}.pdseg button svg.i{width:16px;height:16px}
+.pdseg button.pdon{background:#7c3aed!important;color:#fff!important}
+.pdfields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.pdfields .full{grid-column:1/-1}
+.kb.pd{background:#ede9fe;color:#6d28d9}
+.pd-line{display:flex;align-items:center;gap:5px;color:#6d28d9!important;font-weight:700}.pd-line svg.i{width:14px;height:14px}
+.lkind button.k-pd.on{background:#7c3aed;border-color:#7c3aed}
+@media(max-width:700px){.lkind{grid-template-columns:repeat(2,1fr)}.pdfields{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2890,7 +2898,8 @@ function lsIRRow(G) {
     <label class="irl-cb"><input type="checkbox" data-psel="${id}" ${on ? "checked" : ""} aria-label="เลือก"></label>
     <div class="t" data-xview="${esc(x.id)}"><b>${isIR ? `<span class="kb ir">IR</span>${esc(v.ir_irno || "(ยังไม่มีเลข IR)")} · ` : `<span class="kb gen">ทั่วไป</span>`}${esc(names)}${G.length > 1 ? ` <span class="kb n">${G.length} ปัญหา</span>` : ""}</b><small>${esc(meta)}</small>
       ${causeText(x) || x.action ? `<small class="irl-ca">${causeText(x) ? `สาเหตุ: ${esc(causeText(x))}` : ""}${causeText(x) && x.action ? " · " : ""}${x.action ? `แก้ไข: ${esc(x.action)}` : ""}</small>` : ""}
-      <span class="irl-tags">${v.ir_line ? `<span class="irln ${irLtCls(lt)}">${esc(v.ir_line)}</span>` : ""}${apprTag(x)}${v.ir_nrft === "Y" ? `<span class="tag hold">NRFT</span>` : ""}${(x.photos || []).length ? `<span class="tag">${I("camera")} ${x.photos.length}</span>` : ""}</span></div>
+      ${G.some(isPD) ? `<small class="pd-line">${I("alert")}Process Deviation${v.ir_pdno ? " " + esc(v.ir_pdno) : ""}${v.ir_pddate ? " · ออก " + esc(dmy(v.ir_pddate)) : ""}${v.ir_pdnote ? " · " + esc(v.ir_pdnote) : ""}</small>` : ""}
+      <span class="irl-tags">${G.some(isPD) ? `<span class="kb pd">PD</span>` : ""}${v.ir_line ? `<span class="irln ${irLtCls(lt)}">${esc(v.ir_line)}</span>` : ""}${apprTag(x)}${v.ir_nrft === "Y" ? `<span class="tag hold">NRFT</span>` : ""}${(x.photos || []).length ? `<span class="tag">${I("camera")} ${x.photos.length}</span>` : ""}</span></div>
     <div class="acts">${sup && isIR ? (appr ? `<button class="ghost sm" data-punap="${id}">${I("x")}ยกเลิกอนุมัติ</button>` : `<button class="soft sm irap" data-pap="${id}">${I("check")}อนุมัติ</button>`) : ""}
       ${isIR ? `<button class="ghost sm" data-pcopy="${id}" title="คัดลอกรายการนี้เป็น IR">${I("list")}คัดลอก</button>` : ""}<button class="ghost sm" data-pedit="${id}">${I("pen")}แก้ไข</button>
       ${sup ? `<button class="ghost sm danger" data-pdel="${id}" aria-label="ลบ">${I("trash")}</button>` : ""}</div></div>`;
@@ -2903,8 +2912,8 @@ function viewList() {
   const [from, to] = rangeOf();
   const inRange = sortItems(filtered(from, to), f.sort);
   const ap = f.appr || "all";
-  const kd = f.kind || "all", nKind = k => reportGroups(inRange.filter(x => kindOf(x) === k)).length;
-  const all = inRange.filter(x => (ap === "all" || (kindOf(x) === "ir" && (ap === "done") === !!x.approvedBy)) && (kd === "all" || kindOf(x) === kd));
+  const kd = f.kind || "all", kOk = (x, k) => k === "pd" ? isPD(x) : kindOf(x) === k, nKind = k => reportGroups(inRange.filter(x => kOk(x, k))).length;
+  const all = inRange.filter(x => (ap === "all" || (kindOf(x) === "ir" && (ap === "done") === !!x.approvedBy)) && (kd === "all" || kOk(x, kd)));
   const nWait = reportGroups(inRange.filter(x => kindOf(x) === "ir" && !x.approvedBy)).length;
   S.q = S.q || "";
   const rLabel = (RANGE_OPTS.find(o => o[0] === f.range) || [])[1] || "";
@@ -2913,7 +2922,7 @@ function viewList() {
   const dLabel = f.range === "day" ? thDate(from) : f.range === "custom" ? `${dmy(from)} – ${dmy(to)}` : rLabel;
   let h = `<div class="lsearch-row"><div class="addbar listsearch"><span class="gic">${I("search")}</span><input id="listQ" value="${esc(S.q)}" placeholder="ค้นหา สาเหตุ / หม้อ / ปัญหา / การแก้ไข / ชื่อผู้บันทึก / วันที่" autocomplete="off">${S.q ? `<button class="ghost sm" id="listQx">${I("x")}ล้าง</button>` : ""}</div>
     <button class="fbtn ${nAct ? "act" : ""}" id="fOpen" aria-label="ตัวกรองและการเรียงข้อมูล" title="ตัวกรอง / เรียงข้อมูล">${I("settings")}<span>ตัวกรอง</span>${nAct ? `<em>${nAct}</em>` : ""}</button></div>
-  <div class="lkind">${[["all", "list", "ทั้งหมด", reportGroups(inRange).length], ["gen", "list", "ปัญหาทั่วไป", nKind("gen")], ["ir", "alert", "รายการ IR", nKind("ir")]]
+  <div class="lkind">${[["all", "list", "ทั้งหมด", reportGroups(inRange).length], ["gen", "list", "ปัญหาทั่วไป", nKind("gen")], ["ir", "alert", "รายการ IR", nKind("ir")], ["pd", "alert", "Process Deviation", nKind("pd")]]
     .map(([v, ic, l, n]) => `<button data-qkind="${v}" class="${kd === v ? "on" : ""} k-${v}">${I(ic)}<span>${l}</span><em>${n}</em></button>`).join("")}</div>
   <div class="card lctl">
     <div class="lc-row lc-sort"><span class="lc-lab">${I("list")}เรียงตาม</span><div class="lc-seg">${[["new", "clock", "ใหม่ → เก่า"], ["old", "clock", "เก่า → ใหม่"], ["plant", "factory", "Plant / หม้อ"], ["cat", "tag", "หัวข้อปัญหา"]]
@@ -3080,7 +3089,7 @@ function showItem(id) {
   const vals = (c?.fields || []).map(fl => x.values?.[fl.key] ? kv(fl.label, `${x.values[fl.key]} ${fl.unit || ""}`) : "").join("");
   modal(`<h2>${esc(itemTitle(x))}</h2><p class="sub" style="margin:2px 0 12px">${esc(c ? c.name : "")}${causeText(x) ? "" : " · ยังไม่ระบุสาเหตุ (กด แก้ไข เพื่อเพิ่มได้)"}</p>
     ${kv("วันเวลา", `${dmy(x.date)} ${x.time} กะ ${x.shift}`)}${kv("พื้นที่", x.plant)}${kv("หม้อ", x.retort)}${x.program ? `<div class="hb" style="grid-template-columns:auto 1fr"><span class="n" style="color:var(--mute)">โปรแกรม</span><span class="v" style="font-weight:500">${esc(x.program)}${x.programDoc ? ` <small>(${esc(x.programDoc)})</small>` : ""}${x.programDoc && progByKey(x.programDoc + "#" + x.program) ? ` <button class="soft sm" id="mSpec" style="margin-left:6px">ดูค่าควบคุม</button>` : ""}</span></div>` : ""}
-    ${(() => { const v = x.values || {}; return [["หมายเลข IR", v.ir_irno], ["NRFT?", v.ir_nrft], ["ตลาด", v.ir_market], ["โค๊ตผลิตภัณฑ์", v.ir_pcode], ["ไลน์", v.ir_line], ["Shot Code", v.ir_shot],
+    ${(() => { const v = x.values || {}; return [["Process Deviation", v.ir_pd === "Y" ? ["ออก", v.ir_pdno, v.ir_pddate ? "วันที่ " + dmy(v.ir_pddate) : ""].filter(Boolean).join(" · ") : ""], ["รายละเอียด Process Deviation", v.ir_pd === "Y" ? v.ir_pdnote : ""], ["หมายเลข IR", v.ir_irno], ["NRFT?", v.ir_nrft], ["ตลาด", v.ir_market], ["โค๊ตผลิตภัณฑ์", v.ir_pcode], ["ไลน์", v.ir_line], ["Shot Code", v.ir_shot],
       ["วันผลิต / กะผลิต", v.ir_pdate ? `${dmy(v.ir_pdate)} ${v.ir_pshift || ""}` : ""], ["จำนวน (NRFT)", v.ir_qnrft], ["หมายเลขเครื่อง INK", v.ir_ink], ["การตัดสินใจดำเนินการ", v.ir_decision], ["หมายเลข Basket (BSK)", v.ir_bsk]].map(([k, val]) => kv(k, val)).join(""); })()}
     ${vals}${detailFields().map(df => kv(df.label, detailVal(x, df) ? (df.key === "duration" ? fmtDur(detailVal(x, df)) : detailVal(x, df)) : "")).join("")}${kv("การแก้ไข", x.action)}${kv("ผลต่อสินค้า", x.impact === "hold" ? holdTxt(x).replace(/^Hold/, "Hold สินค้า") : "ไม่กระทบ")}${kv("ลงนามผู้บันทึก", x.by)}${kindOf(x) !== "ir" ? "" : x.approvedBy
   ? `<div class="apprbox ok">${I("check")}<div><b>อนุมัติแล้ว · ${esc(x.approvedBy)}</b><small>${esc(fmtTs(x.approvedAt))}</small></div></div>`
@@ -3615,6 +3624,14 @@ function irRowsBlock(d) {
       <div class="irr-b"><button type="button" class="ghost sm" data-rcopy="${i}" title="คัดลอกแถวนี้เป็นหม้อใหม่">${I("plus")}</button>${n > 1 ? `<button type="button" class="ghost sm danger" data-rdel="${i}" title="ลบหม้อนี้">${I("trash")}</button>` : ""}</div></div>`).join("")}</div>
     <button type="button" class="dash blk irr-add" data-radd="1">${I("plus")}เพิ่มหม้อ <small>(คัดลอกจากหม้อล่าสุด แล้วแก้เฉพาะรายละเอียด)</small></button>`;
 }
+/* Process Deviation: เลือกตอนออก IR · ถ้าออกให้กรอกเลขที่ / วันที่ / รายละเอียด · ดูรวมได้ที่แท็บ Process Deviation ในหน้ารายการ */
+const isPD = x => (x.values || {}).ir_pd === "Y";
+function pdBlock(d) { const on = pv(d, "pd") === "Y";
+  return `<span class="lab">ออก Process Deviation ไหม?</span>
+    <div class="seg pdseg"><button type="button" data-ppd="N" class="${on ? "" : "on"}">ไม่ออก</button><button type="button" data-ppd="Y" class="${on ? "on pdon" : ""}">${I("alert")}ออก Process Deviation</button></div>
+    ${on ? `<div class="pdfields"><label class="f"><span class="lab">เลขที่ Process Deviation</span><input data-v="ir_pdno" value="${esc(pv(d, "pdno"))}" placeholder="เช่น PD-PF2-001" maxlength="40" autocomplete="off"></label>
+      <label class="f"><span class="lab">วันที่ออก</span><input type="date" data-v="ir_pddate" value="${esc(pv(d, "pddate") || d.date || todayISO())}"></label>
+      <label class="f full"><span class="lab">รายละเอียดการเบี่ยงเบน / การดำเนินการ</span><textarea data-v="ir_pdnote" rows="2" maxlength="200" placeholder="เช่น อุณหภูมิช่วงฆ่าเชื้อต่ำกว่า spec 0.3°C นาน 2 นาที · ส่ง TPA ประเมิน">${esc(pv(d, "pdnote"))}</textarea></label></div>` : ""}`; }
 function pirCard(d, many, fields) {
   if (!IR.codes && !PIR.loading) { PIR.loading = true; irLoad().then(() => { PIR.loading = false; if (S.view === "log" && S.step === 5) { const y = scrollY; viewLog(); scrollTo(0, y); } }); }
   const mk = irMarkets(d.code), inp = (k, lab, attrs = "", wide = "") => `<label class="f ${wide}"><span class="lab">${lab}</span><input data-v="ir_${k}" value="${esc(pv(d, k))}" ${attrs} autocomplete="off"></label>`;
@@ -3640,6 +3657,7 @@ function pirCard(d, many, fields) {
         <datalist id="pcsAll">${sug.map(x => `<option value="${esc(x)}">`).join("")}</datalist>
         <label class="f full"><span class="lab">การแก้ไข</span><textarea class="pAct" rows="2" placeholder="แก้ไขอย่างไร เช่น ปรับวาล์ว แจ้งช่าง ฆ่าเชื้อซ้ำ">${esc(pc.action)}</textarea></label>`; })()}
     <label class="f full"><span class="lab">การตัดสินใจดำเนินการ</span><textarea data-v="ir_decision" rows="2" placeholder="เช่น Hold รอตรวจสอบ, ปล่อยผ่าน, ฆ่าเชื้อซ้ำ">${esc(pv(d, "decision"))}</textarea></label>
+    <div class="f full pdbox" id="pdBox">${pdBlock(d)}</div>
   </div></div>
   <datalist id="irDocs">${Object.keys(IR.codes || {}).map(v => `<option value="${esc(v)}">`).join("")}</datalist>
   <datalist id="pMk">${(mk.length ? mk : ["P", "N", "E", "X", "C", "S"]).map(v => `<option value="${esc(v)}">`).join("")}</datalist>`;
@@ -3695,6 +3713,8 @@ function pirOnClick(d, b) {
     return true; }
   if (ds.pkind) { const first = !d.kind; d.kind = ds.pkind; const y = window.scrollY; viewLog(); window.scrollTo(0, first ? 0 : y); return true; }
   if (ds.pcpick) { d.values.ir_pcode = ds.pcpick; const pc = document.querySelector('[data-v="ir_pcode"]'); if (pc) pc.value = ds.pcpick; const h = $("#pCodeHint"); if (h) h.innerHTML = pirHint(d); return true; }
+  if (ds.ppd) { d.values.ir_pd = ds.ppd; if (ds.ppd === "Y" && !d.values.ir_pddate) d.values.ir_pddate = d.date || todayISO(); if (ds.ppd === "N") ["ir_pdno", "ir_pddate", "ir_pdnote"].forEach(k => delete d.values[k]);
+    const box = $("#pdBox"); if (box) box.innerHTML = pdBlock(d); return true; }
   if (ds.pnrft) { d.values.ir_nrft = ds.pnrft; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); return true; }
   if (ds.ppsh) { d.values.ir_pshift = ds.ppsh; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); return true; }
   if (ds.plt) { if (d.product !== ds.plt) { d.product = ds.plt; if (irLineType(d.values.ir_line) !== ds.plt) d.values.ir_line = ""; PIR.lineNew = false; }
