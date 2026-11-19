@@ -1706,6 +1706,8 @@ svg text.rn{fill:#1b2a41;font-weight:700}
 .ps-photos .pp.ld{width:auto;padding:0 12px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mute)}
 .nt-pd{margin:0 0 12px;padding:8px;border-radius:14px;background:#f8fafc;border:1px solid var(--line)}.nt-pdh{display:flex;align-items:center;gap:6px;font-weight:800;color:var(--navy);margin:0 4px 6px}.nt-pdh svg.i{width:16px;height:16px}.nt-pdh small{font-weight:600;color:var(--mute);font-size:12px}
 .nt-pd .nti{width:100%}.ic2.pd{background:#fff7e6!important;color:#b45309!important}
+.pdv-dates{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:14px;background:#fff;border:1.5px solid var(--line)}.pdv-dates.on{border-color:var(--amber);background:#fffbeb}
+.pdv-dates input{width:auto;min-height:38px;font-size:14px;padding:4px 8px}.pdv-dates span{font-size:13px;color:var(--mute)}.pdv-dates button{min-height:38px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3099,14 +3101,18 @@ function openPDNew() {
   });
 }
 /* ---------- แถบ Process Deviation: IR ที่ออก Process Deviation ---------- */
-const PDV = { range: lsGet("rt_pdrange", "90"), q: "" };
+const PDV = { range: "1", from: "", to: "", q: "" };  // เปิดหน้ามา = วันนี้ทุกครั้ง
 function viewPD() {
   if (S.role !== "sup") { S.view = "list"; return render(); }  // เฉพาะรหัสหัวหน้า
-  const t = todayISO(), from = PDV.range === "all" ? "" : addDays(t, -(+PDV.range - 1));
-  const all = Object.values(S.items).filter(x => isPD(x) && (!from || (x.date || "") >= from));
+  // ช่วงเวลา: วันนี้ / 7 / 30 / 90 วัน / 1 ปี / ทั้งหมด / เลือกเอง · นับตามวันที่ออก PD
+  const t = todayISO(), cust = PDV.range === "custom";
+  const from = cust ? PDV.from : PDV.range === "all" ? "" : addDays(t, -(+PDV.range - 1)), to = cust ? PDV.to : t;
+  const pdDay = x => (x.values || {}).ir_pddate || x.date || "";
+  const all = Object.values(S.items).filter(x => isPD(x) && (!from || pdDay(x) >= from) && (!to || pdDay(x) <= to));
+  const rangeTxt = PDV.range === "all" ? "ทั้งหมด" : from === to ? (from === t ? "วันนี้ · " : "") + dmy(from) : `${dmy(from)} – ${dmy(to)}`;
   const G0 = reportGroups(sortItems(all, "new")), q = PDV.q.trim().toLowerCase();
   const G = q ? G0.filter(g => g.some(x => (itemText(x) + " " + ((x.values || {}).ir_pdno || "") + " " + ((x.values || {}).ir_pdnote || "")).toLowerCase().includes(q))) : G0;
-  const mon = t.slice(0, 7), nMon = G0.filter(g => ((g[0].values || {}).ir_pddate || g[0].date || "").startsWith(mon)).length;
+  const mon = t.slice(0, 7), nMon = reportGroups(Object.values(S.items).filter(x => isPD(x) && pdDay(x).startsWith(mon))).length;
   const nWait = G0.filter(g => !g.every(x => x.approvedBy)).length, nRet = new Set(all.map(x => x.retort).filter(Boolean)).size;
   const card = g => { const x = g[0], v = x.values || {}, names = g.map(y => catById(y.category)?.name || "หัวข้อที่ถูกลบ").join(" · ");
     return `<div class="pdc"><div class="pdc-no"><small>เลขที่</small><b>${esc(v.ir_pdno || "—")}</b><span>ออก ${esc(dmy(v.ir_pddate || x.date))}</span></div>
@@ -3117,13 +3123,15 @@ function viewPD() {
       <div class="pdc-a"><button class="pri sm" data-pdsheet="${esc(x.id)}">${I("doc")}Data Sheet</button>${x.pdSheet ? `<button class="ghost sm" data-pdprint="${esc(x.id)}">${I("printer")}พิมพ์</button>` : ""}<button class="ghost sm" data-pdview="${esc(x.id)}">${I("list")}รายละเอียด</button><button class="ghost sm" data-pdedit="${esc(x.id)}">${I("pen")}แก้ไข</button></div></div>`; };
   $("#main").innerHTML = `<div class="pdv">
     <div class="pdv-head"><div><b>Process Deviation</b><span>กรอก Process Deviation Report (F3QCRE18 แก้ไขครั้งที่ 3) · พิมพ์ตามแบบฟอร์มได้</span></div><button class="pdv-new" data-pdnew="1">${I("plus")}ออก Process Deviation</button></div>
-    <div class="pdv-kpi"><div><b>${G0.length}</b><span>ฉบับในช่วงนี้</span></div><div><b>${nMon}</b><span>ออกเดือนนี้</span></div><div class="${nWait ? "w" : ""}"><b>${nWait}</b><span>IR รออนุมัติ</span></div><div><b>${nRet}</b><span>หม้อที่เกี่ยวข้อง</span></div></div>
-    <div class="pdv-bar"><div class="seg">${[["30", "30 วัน"], ["90", "90 วัน"], ["365", "1 ปี"], ["all", "ทั้งหมด"]].map(([v, l]) => `<button data-pdr="${v}" class="${PDV.range === v ? "on" : ""}">${l}</button>`).join("")}</div>
+    <div class="pdv-kpi"><div><b>${G0.length}</b><span>ฉบับ · ${esc(rangeTxt)}</span></div><div><b>${nMon}</b><span>ออกเดือนนี้</span></div><div class="${nWait ? "w" : ""}"><b>${nWait}</b><span>IR รออนุมัติ</span></div><div><b>${nRet}</b><span>หม้อที่เกี่ยวข้อง</span></div></div>
+    <div class="pdv-bar"><div class="seg">${[["1", "วันนี้"], ["7", "7 วัน"], ["30", "30 วัน"], ["90", "90 วัน"], ["365", "1 ปี"], ["all", "ทั้งหมด"]].map(([v, l]) => `<button data-pdr="${v}" class="${PDV.range === v ? "on" : ""}">${l}</button>`).join("")}</div>
+      <div class="pdv-dates ${cust ? "on" : ""}"><input type="date" id="pdF" value="${esc(from || "")}" aria-label="ตั้งแต่วันที่"><span>ถึง</span><input type="date" id="pdT" value="${esc(to || t)}" aria-label="ถึงวันที่"><button class="pri sm" id="pdGo">แสดง</button></div>
       <div class="addbar listsearch pdv-q"><span class="gic">${I("search")}</span><input id="pdQ" value="${esc(PDV.q)}" placeholder="ค้นหา เลขที่ / IR / หม้อ / รายละเอียด" autocomplete="off"></div></div>
     <div class="pdv-list">${G.length ? G.map(card).join("") : `<div class="empty"><div class="ic">${I("alert")}</div><h3>${q ? "ไม่พบที่ค้นหา" : "ยังไม่มี Process Deviation ในช่วงนี้"}</h3><p class="sub">กด "ออก Process Deviation" ด้านบนเพื่อเลือก IR แล้วกรอก Data Sheet · หรือเลือกตอนออก IR (ขั้นที่ 5)</p></div>`}</div></div>`;
   const m = $("#main");
   m.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
-    if (ds.pdr) { PDV.range = ds.pdr; lsSet("rt_pdrange", PDV.range); viewPD(); }
+    if (ds.pdr) { PDV.range = ds.pdr; viewPD(); }
+    else if (b.id === "pdGo") { let a = $("#pdF").value, z = $("#pdT").value; if (!a || !z) { toast("เลือกวันที่ให้ครบ"); return; } if (a > z) [a, z] = [z, a]; PDV.range = "custom"; PDV.from = a; PDV.to = z; viewPD(); }
     else if (ds.pdnew) openPDNew();
     else if (ds.pdsheet) { const x = S.items[ds.pdsheet]; if (x) openPDSheet(groupOf(x)); }
     else if (ds.pdprint) { const x = S.items[ds.pdprint]; if (x) printPDSheet(pdSheetOf(groupOf(x))); }
