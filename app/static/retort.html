@@ -3144,7 +3144,6 @@ function runSection(R, plant) {
     <div class="rt-sum"><div class="all"><small>% ปัญหาต่อรอบ</small><b>${pctTxt(pct(T.pd + T.pn, T.n))}</b><span>${T.pd + T.pn} ปัญหา / ${T.n} รอบ</span></div>
       <div class="ds"><small>ปัญหากะ DS</small><b>${T.pd}</b><span>ครั้ง</span></div>
       <div class="ns"><small>ปัญหากะ NS</small><b>${T.pn}</b><span>ครั้ง</span></div></div>
-    ${noRuns ? `<div class="rt-warn">${I("alert")}<span>ไม่นำ <b>${noRuns} ปัญหา</b> (${skipDays} วัน) มาคิด % เพราะวันนั้นหม้อนั้นยังไม่ได้ใส่จำนวนรอบ · กด <b>ใส่จำนวนรอบ</b> ย้อนหลังเพื่อให้นับครบ</span></div>` : ""}
     <div class="tscroll"><table class="rt-t"><thead>
       <tr><th class="l">หม้อ</th><th class="all">รอบ</th><th class="ds">ปัญหา DS</th><th class="ns">ปัญหา NS</th><th class="all">ปัญหารวม</th><th class="all">%</th><th class="l">ปัญหาหลัก / สาเหตุหลัก</th></tr></thead><tbody>
       ${rows.map(x => `<tr data-trend="${esc(x.r)}" data-tby="retort"><td class="l"><b>${esc(x.r)}</b></td><td class="n">${x.n || "–"}</td><td class="n">${x.pd || "–"}</td><td class="n">${x.pn || "–"}</td><td class="n p">${x.pt || "–"}</td><td class="n">${pctTxt(pct(x.pt, x.n))}</td>
