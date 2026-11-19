@@ -1277,9 +1277,8 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .addcat-err{min-height:18px;margin-top:6px;font-size:13.5px;color:var(--bad)}
 @media(max-width:700px){.addcat-r{grid-template-columns:1fr 1fr}.addcat-r input{grid-column:1/-1}}
 #main.vset>.addcat{grid-column:1/-1}
-.addcat{position:sticky;bottom:12px;z-index:30;margin-top:4px;box-shadow:0 -6px 28px rgba(15,23,42,.18);background:linear-gradient(180deg,#fffbeb,#fff)}
 .addcat .sec{margin-bottom:8px}
-@media(max-width:900px){.addcat{bottom:84px;padding:10px 12px}.addcat .sec .sub{display:none}.addcat-r{grid-template-columns:1fr auto}.addcat-r select{grid-column:1;grid-row:2;width:100%}.addcat-r button{grid-row:1/3;grid-column:2;height:100%}}
+@media(max-width:900px){.addcat{padding:10px 12px}.addcat .sec .sub{display:none}.addcat-r{grid-template-columns:1fr auto}.addcat-r select{grid-column:1;grid-row:2;width:100%}.addcat-r button{grid-row:1/3;grid-column:2;height:100%}}
 .card.flashnew{animation:flashNew 2.4s ease}
 @keyframes flashNew{0%,40%{box-shadow:0 0 0 4px rgba(245,158,11,.55);border-color:var(--amber)}100%{box-shadow:var(--sh)}}
 /* ปรับแต่ง: เพิ่มกลุ่มปัญหา */
@@ -5114,6 +5113,7 @@ function viewSettings() {
   let h = ro ? `<div class="alert a-warn">${I("info")}<div style="flex:1">ดูได้อย่างเดียว · ผู้ดูแลกดปลดล็อกเพื่อแก้หัวข้อ/สาเหตุ/รายชื่อ Retort</div><button class="pri sm" id="unlock">ปลดล็อกแก้ไข</button></div>` : "";
   h += `<div class="alert a-info">${I("info")}<div>เพิ่มหัวข้อปัญหาและสาเหตุได้ที่นี่ หัวข้อที่ปิดไว้จะไม่ขึ้นในหน้าบันทึก แต่ข้อมูลเก่ายังอยู่ในการวิเคราะห์</div></div>`;
 
+  h += "<!--ADDCAT-->";  // กล่องเพิ่มหัวข้อ: อยู่บนสุดก่อนรายการหัวข้อ (ไม่ลอยตามจอ)
   S.config.categories.forEach((c, ci) => {
     if (c.deleted) return;  // หัวข้อที่ลบแล้ว (เก็บไว้ให้ประวัติเก่าแสดงชื่อได้)
     h += `<div class="card" id="cat-${esc(c.id)}"><div class="sec"><span class="ic" style="background:${grpOf(c).color}1f;color:${grpOf(c).color}">${I(grpOf(c).icon)}</span><div class="t"><input data-cname="${ci}" value="${esc(c.name)}" ${ro ? "disabled" : ""} style="font-weight:600"></div></div>
@@ -5140,7 +5140,7 @@ function viewSettings() {
     <div class="addcat-r"><input id="newCat" placeholder="ชื่อหัวข้อ เช่น Cooling ผิดปกติ, Flow rate ต่ำ" maxlength="120" autocomplete="off">
       <select id="newCatGrp" aria-label="กลุ่ม">${Object.keys(GROUPS).map(g => `<option value="${g}" ${g === "other" ? "selected" : ""}>${esc(GROUPS[g].name)}</option>`).join("")}</select>
       <button class="pri" id="addCat">${I("plus")}เพิ่มหัวข้อ</button></div><div class="addcat-err" id="newCatErr"></div></div>`;
-  h += addBox;  // กล่องเพิ่มหัวข้อ: ติดล่างจอเสมอ (หัวข้อใหม่ต่อท้ายรายการ)
+  h = h.replace("<!--ADDCAT-->", addBox);
   $("#main").innerHTML = h;
   if (!AI.status) aiStatus().then(() => { if (S.view === "settings") { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); } });
   $("#main").querySelectorAll("[data-catdel]").forEach(b => b.onclick = () => askDelete("category", b.dataset.catdel, () => { const y = window.scrollY; viewSettings(); window.scrollTo(0, y); }));
