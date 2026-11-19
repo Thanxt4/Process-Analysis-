@@ -1704,6 +1704,8 @@ svg text.rn{fill:#1b2a41;font-weight:700}
 .ps-photos{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0 0}.ps-photos:empty{display:none}.ps-photos .pp{position:relative;width:96px;height:96px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#f8fafc}
 .ps-photos img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}.ps-photos .pp button{position:absolute;top:4px;right:4px;width:24px;height:24px;min-height:0;padding:0;border-radius:50%;border:0;background:rgba(15,23,42,.7);color:#fff;display:grid;place-items:center;cursor:pointer}.ps-photos .pp button svg.i{width:14px;height:14px}
 .ps-photos .pp.ld{width:auto;padding:0 12px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mute)}
+.nt-pd{margin:0 0 12px;padding:8px;border-radius:14px;background:#f8fafc;border:1px solid var(--line)}.nt-pdh{display:flex;align-items:center;gap:6px;font-weight:800;color:var(--navy);margin:0 4px 6px}.nt-pdh svg.i{width:16px;height:16px}.nt-pdh small{font-weight:600;color:var(--mute);font-size:12px}
+.nt-pd .nti{width:100%}.ic2.pd{background:#fff7e6!important;color:#b45309!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2175,6 +2177,8 @@ async function api(url, opt) {
 const jpost = (url, body) => api(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 async function saveItem(x) {
   x.updatedBy = S.user;
+  // Process Deviation: จำเวลา/ผู้ที่ออกครั้งแรก (ใช้แจ้งเตือนหัวหน้า)
+  if (isPD(x) && !x.values.ir_pdat) { x.values = Object.assign({}, x.values, { ir_pdat: String(Date.now()), ir_pdby: S.user || "" }); }
   try { const r = await jpost("/api/retort/problems", x); S.items[x.id] = normItem(r.item); setSync(true); return true; }
   catch (e) { if (e.status === 401) { showLock(true); return false; } setSync(false); toast("บันทึกไม่สำเร็จ: " + e.message); return false; }
 }
@@ -2234,7 +2238,7 @@ async function syncAll(full) {
     if (r.role && r.role !== S.role) { setRole(r.role); ch = true; }
     if (r.role && !$("#lock").classList.contains("hide")) { showLock(false); ch = true; }
     lastSync = r.now; S.loaded = true; setSync(true);
-    if (ch) { softRender(); persistSoon(); }
+    if (ch) { softRender(); persistSoon(); if (typeof pdNotify === "function") pdNotify(); }
   } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
@@ -3027,7 +3031,7 @@ function openPDSheet(g) {
       for (const [i, y] of g.entries()) {
         const z = JSON.parse(JSON.stringify(y)); z.values = Object.assign({}, z.values, { ir_pd: "Y", ir_pdno: o.no.slice(0, 200), ir_pddate: o.dev });
         if (!z.values.ir_pdnote && o.cause) z.values.ir_pdnote = o.cause.slice(0, 200);
-        if (i === 0) z.pdSheet = o;
+        if (i === 0) z.pdSheet = Object.assign({}, o, { _at: String(Date.now()), _by: S.user || "" });
         ok = (await saveItem(z)) && ok;
       }
       e.target.disabled = false; if (!ok) return;
@@ -5423,8 +5427,25 @@ async function loadNotif() {
   try { NT.items = (await api(`/api/notifications?name=${encodeURIComponent(S.user || "")}`)).items || []; } catch { return; }
   NT.seen = Math.max(NT.seen, +lsRaw("pc_ntseen", "0") || 0); ntBadge(); if (NT.open) ntRender();
 }
+/* แจ้งเตือน Process Deviation (เฉพาะรหัสหัวหน้า): ออก PD ใหม่ / บันทึก Data Sheet · ไม่แจ้งของที่ตัวเองทำ */
+function pdEvents() {
+  if (S.role !== "sup") return [];
+  const out = [];
+  reportGroups(Object.values(S.items).filter(isPD)).forEach(g => { const x = g[0], v = x.values || {}, sh = x.pdSheet || {};
+    const nm = g.map(y => catById(y.category)?.name || "").filter(Boolean).join(" · "), wh = `${x.plant || ""} ${x.retort || ""}`.trim();
+    if (+v.ir_pdat) out.push({ id: "pd1:" + x.id, x, at: +v.ir_pdat, by: v.ir_pdby || x.by || "", kind: "new", title: `ออก Process Deviation ${v.ir_pdno || ""}`.trim(), text: [v.ir_irno, nm, wh].filter(Boolean).join(" · ") });
+    if (+sh._at && !(+v.ir_pdat && Math.abs(+sh._at - +v.ir_pdat) < 120000 && (sh._by || "") === (v.ir_pdby || ""))) out.push({ id: "pd2:" + x.id + ":" + sh._at, x, at: +sh._at, by: sh._by || "", kind: "sheet", title: `บันทึก Data Sheet ${sh.no || v.ir_pdno || ""}`.trim(), text: [`ลงนาม ${pdSigned(sh)}/3`, nm, wh].filter(Boolean).join(" · ") }); });
+  return out.filter(e => e.by !== S.user).sort((a, b) => b.at - a.at);
+}
+const PDN = { last: Date.now() };  // แจ้งเตือนแบบเด้ง เฉพาะรายการที่เข้ามาหลังเปิดหน้า
+function pdNotify() {
+  const E = pdEvents(), fresh = E.filter(e => e.at > PDN.last);
+  if (E.length) PDN.last = Math.max(PDN.last, E[0].at);
+  if (fresh.length) { const e = fresh[0]; toast(`${e.kind === "new" ? "มี Process Deviation ใหม่" : "อัปเดต Data Sheet"}: ${e.title.replace(/^(ออก Process Deviation|บันทึก Data Sheet)\s*/, "") || e.text} · โดย ${e.by || "-"}`); }
+  ntBadge();
+}
 function ntBadge() {
-  const pool = ntMine() ? NT.items.filter(e => e.mine) : NT.items, n = pool.filter(e => e.at > NT.seen).length, b = $("#bellN"), bt = $("#bellBtn");
+  const pool = ntMine() ? NT.items.filter(e => e.mine) : NT.items, n = pool.filter(e => e.at > NT.seen).length + pdEvents().filter(e => e.at > NT.seen).length, b = $("#bellN"), bt = $("#bellBtn");
   const was = +(b.textContent || 0); b.hidden = !n; b.textContent = n > 99 ? "99+" : n;
   bt.title = n ? `มีการแจ้งเตือนใหม่ ${n} รายการ` : "การแจ้งเตือน";
   if (n > was) { bt.classList.remove("ring"); void bt.offsetWidth; bt.classList.add("ring"); }
@@ -5432,7 +5453,11 @@ function ntBadge() {
 function ntRender() {
   const box = $("#ntBox"); if (!box) return;
   const tab = ntMine() ? NT.tab : "all", L = tab === "mine" ? NT.items.filter(e => e.mine) : NT.items;
-  box.innerHTML = `<div class="seg nt-tabs"><button data-nt="mine" class="${tab === "mine" ? "on" : ""}" ${ntMine() ? "" : "disabled"}>ของฉัน</button><button data-nt="all" class="${tab === "all" ? "on" : ""}">ทั้งหมด</button></div>
+  const PE = pdEvents().slice(0, 15);
+  const pdHtml = PE.length ? `<div class="nt-pd"><div class="nt-pdh">${I("alert")}Process Deviation <small>เฉพาะหัวหน้า</small></div>${PE.map(e => `<button class="nti ${e.at > NT.lastSeen ? "new" : ""}" data-pdn="${esc(e.x.id)}">
+        <span class="ic2 pd"><svg class="i" viewBox="0 0 24 24">${e.kind === "new" ? IP.alert : IP.doc}</svg></span>
+        <span class="b"><b>${esc(e.title)}</b><span class="x2"><em>${esc(e.by || "-")}</em> ${esc(e.text)}</span><small>${agoTxt(e.at)}</small></span></button>`).join("")}</div>` : "";
+  box.innerHTML = pdHtml + `<div class="seg nt-tabs"><button data-nt="mine" class="${tab === "mine" ? "on" : ""}" ${ntMine() ? "" : "disabled"}>ของฉัน</button><button data-nt="all" class="${tab === "all" ? "on" : ""}">ทั้งหมด</button></div>
     <div class="nt-list">${L.length ? L.slice(0, 80).map(e => `<button class="nti ${e.at > NT.lastSeen ? "new" : ""}" data-nti="${esc(e.id)}">
         <span class="ic2 ${e.type === "followup" ? "fu" : ""}"><svg class="i" viewBox="0 0 24 24">${NT_IC[e.type] || NT_IC.other}</svg></span>
         <span class="b">${e.reason ? `<span class="r ${e.ng ? "ng" : ""}">${esc(e.reason)}</span>` : ""}<b>${esc(e.title || "")}</b>
@@ -5444,6 +5469,7 @@ function ntOpen() {
   NT.lastSeen = NT.seen; NT.open = true;
   modal(`<div class="row sp" style="margin-bottom:10px"><h2>การแจ้งเตือน</h2><button class="ghost sm" data-close>${I("x")}ปิด</button></div><div id="ntBox"></div>`, box => {
     box.onclick = e => { const t = e.target.closest("[data-nt]"); if (t && !t.disabled) { NT.tab = t.dataset.nt; lsRawSet("pc_nttab", NT.tab); ntRender(); return; }
+      const p = e.target.closest("[data-pdn]"); if (p) { const x = S.items[p.dataset.pdn]; closeModal(); NT.open = false; S.view = "pd"; render(); if (x) openPDSheet(groupOf(x)); return; }
       const b = e.target.closest("[data-nti]"); if (b) location.href = "/#nt=" + encodeURIComponent(b.dataset.nti); };
     ntRender();
   }, "ntsheet");
