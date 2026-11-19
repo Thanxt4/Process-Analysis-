@@ -1680,9 +1680,9 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .tag.pdok{background:#dcfce7;color:#166534}.tag.pdno{background:#fef3c7;color:#92400e}
 .pdn-l{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto}.pdn-r{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer}.pdn-r:hover{border-color:var(--amber);background:#fffbeb}.pdn-r small{color:var(--mute)}
 .ps{display:flex;flex-direction:column;max-height:88vh}.ps-top{display:flex;align-items:flex-start;gap:10px;padding:0 0 10px;border-bottom:2px solid var(--navy)}.ps-top>div{flex:1;display:flex;flex-direction:column}.ps-top small{color:var(--mute);font-size:12px}.ps-top b{font-size:19px;color:var(--navy)}.ps-top span{font-size:13px;color:var(--mute)}
-.ps-body{overflow:auto;padding:10px 2px;display:flex;flex-direction:column;gap:8px}
+.ps-body>*{flex-shrink:0}.ps-body{overflow:auto;padding:10px 2px;display:flex;flex-direction:column;gap:8px}
 .ps-g{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 14px}.ps-f{display:flex;flex-direction:column;gap:3px}.ps-f>span{font-size:12.5px;font-weight:700;color:#334155}.ps-wide{grid-column:1/-1}
-.ps-qu{display:grid;grid-template-columns:2fr 1fr;gap:6px}.ps input,.ps textarea{width:100%;min-height:40px;font-size:14px}.ps textarea{resize:vertical}
+.ps-qu{display:grid;grid-template-columns:2fr 1fr;gap:6px}.ps input,.ps textarea{width:100%;min-height:40px;font-size:14px}.ps textarea{resize:vertical;min-height:130px!important;height:auto;line-height:1.6;padding:10px 12px;overflow:hidden}
 .ps-band{background:#eef2f7;color:var(--navy);font-weight:800;font-size:12.5px;text-align:center;padding:6px 8px;border-radius:8px;margin-top:6px}
 .ps-t{width:100%;border-collapse:collapse}.ps-t th{background:#f1f5f9;font-size:12.5px;padding:6px;text-align:center}.ps-t td{border-top:1px solid var(--line);padding:4px}.ps-t td:first-child{font-size:13px;width:44%}
 .ps-sig{grid-template-columns:2fr 1fr}.ps-foot{display:flex;gap:8px;align-items:center;padding-top:10px;border-top:1px solid var(--line)}
@@ -2935,7 +2935,7 @@ const PD_SIGS = [["ddm", "QC DDM/DM"], ["pa", "Process authority"], ["coo", "COO
 const pdSigned = sh => PD_SIGS.filter(([k]) => (sh[k + "_sig"] || "").trim()).length;
 function openPDSheet(g) {
   const x = g[0], sh = pdSheetOf(g);
-  const f = (k, type, ph) => type === "ta" ? `<textarea data-ps="${k}" rows="3" placeholder="${esc(ph || "")}">${esc(sh[k] || "")}</textarea>`
+  const f = (k, type, ph) => type === "ta" ? `<textarea data-ps="${k}" rows="5" placeholder="${esc(ph || "")}">${esc(sh[k] || "")}</textarea>`
     : `<input data-ps="${k}" type="${type || "text"}" value="${esc(sh[k] || "")}" placeholder="${esc(ph || "")}" ${k === "rtype" ? 'list="pdRtypes"' : ""} autocomplete="off">`;
   const row = (l, k, type, ph) => `<label class="ps-f"><span>${l}</span>${f(k, type, ph)}</label>`;
   modal(`<div class="ps">
@@ -2959,6 +2959,9 @@ function openPDSheet(g) {
         ${row("COO./Sr. QA Manager signature", "coo_sig", "text", "ชื่อผู้ลงนาม")}${row("Date", "coo_date", "date")}</div>
     </div>
     <div class="ps-foot"><button class="ghost" id="psPrint">${I("printer")}พิมพ์ / PDF</button><span style="flex:1"></span><button class="ghost" data-close>ยกเลิก</button><button class="pri" id="psSave">${I("check")}บันทึก Data Sheet</button></div></div>`, box => {
+    // ช่องข้อความยาว: ขยายตามเนื้อหาอัตโนมัติ (อย่างน้อย ~5 บรรทัด)
+    const grow = t => { t.style.height = "auto"; t.style.height = Math.max(130, t.scrollHeight + 4) + "px"; };
+    box.querySelectorAll("textarea[data-ps]").forEach(t => { grow(t); t.addEventListener("input", () => grow(t)); });
     const read = () => { const o = {}; box.querySelectorAll("[data-ps]").forEach(e => o[e.dataset.ps] = e.value.trim()); return o; };
     box.querySelector("#psPrint").onclick = () => printPDSheet(read());
     box.querySelector("#psSave").onclick = async e => {
