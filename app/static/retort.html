@@ -1719,6 +1719,11 @@ table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w
 .modal .box.w5full{max-width:1400px;width:96vw}.modal .box.w5full .w5-tw{max-height:78vh}
 /* รายการยาว: ส่วนที่อยู่นอกจอไม่ต้องคำนวณหน้าตาจนกว่าจะเลื่อนถึง */
 .irl-r{content-visibility:auto;contain-intrinsic-size:auto 96px}.card[id^="cat-"]{content-visibility:auto;contain-intrinsic-size:auto 520px}.pdc{content-visibility:auto;contain-intrinsic-size:auto 140px}
+.sig-box{border:1.5px dashed var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.sig-prev{min-height:110px;border-radius:10px;display:grid;place-items:center;padding:8px;background-color:#fff;background-image:linear-gradient(45deg,#eef2f7 25%,transparent 25%),linear-gradient(-45deg,#eef2f7 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eef2f7 75%),linear-gradient(-45deg,transparent 75%,#eef2f7 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+.sig-prev img{max-width:100%;max-height:150px;display:block}.sig-prev .sub{text-align:center}
+.sig-btns{gap:8px;flex-wrap:wrap}.sig-btns>*{flex:1 1 140px;white-space:nowrap}.sig-btns label.blk{display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border:1.5px solid var(--line);border-radius:12px;background:#fff;min-height:44px;font-weight:700;color:var(--navy)}.sig-btns label.blk:hover{background:#f8fafc}.sig-ctl .seg button{white-space:nowrap}
+.sig-ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sig-ctl label{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--mute)}.sig-ctl input[type=range]{width:100%;min-height:0;padding:0}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -1957,6 +1962,83 @@ async function myLoad() {
 }
 function mySet(k, v) { if (v === "" || v == null) delete MY.p[k]; else MY.p[k] = v; lsSet("rt_my", MY.p); applyUI(); renderNav();
   clearTimeout(MY.t); if (MY.acct) MY.t = setTimeout(() => jpost("/api/me/prefs", { app: "retort", prefs: MY.p }).catch(() => toast("บันทึกการตกแต่งไม่สำเร็จ")), 500); }
+/* ---------- ลายเซ็นของฉัน: ถ่ายรูป/เลือกรูป → ตัดพื้นหลังออก (เหลือแต่เส้นลายเซ็น) → ครอปให้พอดี → เก็บเป็น PNG โปร่งใส
+   มีบัญชี = เก็บที่เซิร์ฟเวอร์ (ใช้ได้ทุกเครื่อง) · ไม่มีบัญชี = เก็บในเครื่องนี้ */
+const SIG = { url: lsGet("rt_sig", ""), src: null, sens: 50, ink: "orig", out: "", loaded: false };
+async function sigLoad() {
+  if (!MY.acct) { SIG.url = lsGet("rt_sig", ""); SIG.loaded = true; return; }
+  try { const r = await fetch("/api/me/signature", { cache: "no-store" });
+    if (r.ok) { const b = await r.blob(); SIG.url = await new Promise(z => { const fr = new FileReader(); fr.onload = () => z(fr.result); fr.readAsDataURL(b); }); }
+    else SIG.url = ""; } catch {}
+  SIG.loaded = true;
+}
+// ตัดพื้นหลัง: ปรับแสงให้เท่ากันทั้งภาพ (หารด้วยความสว่างพื้นหลังรอบ ๆ) → เส้นที่เข้มกว่าพื้นหลังชัดเจน = ลายเซ็น
+function sigProcess(img, sens, ink) {
+  const MAX = 1000, k = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth * k)), h = Math.max(1, Math.round(img.naturalHeight * k));
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const g = cv.getContext("2d", { willReadFrequently: true });
+  g.drawImage(img, 0, 0, w, h); const id = g.getImageData(0, 0, w, h), d = id.data, n = w * h;
+  const L = new Float32Array(n); for (let i = 0; i < n; i++) L[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  // ความสว่างพื้นหลัง = ค่าเฉลี่ยในกรอบรอบจุด (integral image) · เส้นปากกาบางจึงแทบไม่กระทบ
+  const W1 = w + 1, I = new Float64Array(W1 * (h + 1));
+  for (let y = 0; y < h; y++) { let row = 0; for (let x = 0; x < w; x++) { row += L[y * w + x]; I[(y + 1) * W1 + x + 1] = I[y * W1 + x + 1] + row; } }
+  const R = Math.max(8, Math.round(Math.min(w, h) / 12));
+  const ratio = new Float32Array(n);
+  for (let y = 0; y < h; y++) { const y0 = Math.max(0, y - R), y1 = Math.min(h, y + R + 1);
+    for (let x = 0; x < w; x++) { const x0 = Math.max(0, x - R), x1 = Math.min(w, x + R + 1);
+      const s = I[y1 * W1 + x1] - I[y0 * W1 + x1] - I[y1 * W1 + x0] + I[y0 * W1 + x0], m = s / ((y1 - y0) * (x1 - x0));
+      ratio[y * w + x] = Math.min(1.2, L[y * w + x] / Math.max(1, m)); } }
+  // sens 0–100: มาก = เก็บเส้นจาง ๆ ไว้ด้วย · น้อย = เก็บเฉพาะเส้นเข้ม (ตัดเงา/รอยเปื้อนได้ดีกว่า)
+  const hi = 0.97 - (100 - sens) * 0.0028, lo = hi - 0.22;
+  const col = ink === "black" ? [17, 24, 39] : ink === "blue" ? [23, 53, 145] : null;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let i = 0; i < n; i++) { const r = ratio[i]; let a = r >= hi ? 0 : r <= lo ? 1 : (hi - r) / (hi - lo);
+    a = a < 0.12 ? 0 : a; const p = i * 4;
+    if (col) { d[p] = col[0]; d[p + 1] = col[1]; d[p + 2] = col[2]; } else { const f = 0.55; d[p] *= f; d[p + 1] *= f; d[p + 2] *= f; }  // สีเดิมแต่เข้มขึ้น
+    d[p + 3] = Math.round(a * 255);
+    if (a > 0.35) { const x = i % w, y = (i / w) | 0; if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; } }
+  if (maxX < 0) return "";
+  g.putImageData(id, 0, 0);
+  const pad = Math.round(Math.max(maxX - minX, maxY - minY) * 0.04) + 4;
+  minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad); maxX = Math.min(w - 1, maxX + pad); maxY = Math.min(h - 1, maxY + pad);
+  const cw = maxX - minX + 1, ch = maxY - minY + 1, s2 = Math.min(1, 700 / cw);
+  const o = document.createElement("canvas"); o.width = Math.round(cw * s2); o.height = Math.round(ch * s2);
+  o.getContext("2d").drawImage(cv, minX, minY, cw, ch, 0, 0, o.width, o.height);
+  return o.toDataURL("image/png");
+}
+function sigHtml() {
+  const edit = !!SIG.src;
+  return `<span class="lab my-l">${I("pen")}ลายเซ็นของฉัน</span>
+    <div class="sig-box ${edit ? "edit" : ""}">
+      <div class="sig-prev">${edit ? (SIG.out ? `<img src="${SIG.out}" alt="ลายเซ็น">` : `<span class="sub">ไม่พบเส้นลายเซ็น · ลองเพิ่มความไว หรือถ่ายใหม่ให้ชัดขึ้น</span>`)
+        : SIG.url ? `<img src="${SIG.url}" alt="ลายเซ็น">` : `<span class="sub">${SIG.loaded ? "ยังไม่มีลายเซ็น · เซ็นบนกระดาษขาว แล้วถ่ายรูปให้เห็นลายเซ็นชัด ๆ" : "กำลังโหลด…"}</span>`}</div>
+      ${edit ? `<div class="sig-ctl"><label><span>ความไวในการเก็บเส้น</span><input type="range" id="sigSens" min="0" max="100" value="${SIG.sens}"></label>
+          <div class="seg sm">${[["orig", "สีเดิม"], ["black", "ดำ"], ["blue", "น้ำเงิน"]].map(([v, l]) => `<button data-sigink="${v}" class="${SIG.ink === v ? "on" : ""}">${l}</button>`).join("")}</div></div>
+        <div class="row"><button class="blk" data-sigx="1">ยกเลิก</button><button class="blk pri" data-sigok="1" ${SIG.out ? "" : "disabled"}>${I("check")}ใช้ลายเซ็นนี้</button></div>`
+      : `<div class="row sig-btns"><label class="blk">${I("camera")}ถ่ายรูปลายเซ็น<input type="file" accept="image/*" capture="environment" data-sigfile hidden></label>
+          <label class="blk">${I("image")}เลือกรูป<input type="file" accept="image/*" data-sigfile hidden></label>${SIG.url ? `<button class="blk" data-sigdel="1">${I("trash")}ลบ</button>` : ""}</div>`}
+      <small class="sub">${MY.acct ? "เก็บไว้กับบัญชี ใช้ได้ทุกเครื่องที่เข้าสู่ระบบบัญชีนี้" : "เก็บไว้ในเครื่องนี้ (เข้าสู่ระบบบัญชีที่หน้าหลัก เพื่อใช้ได้ทุกเครื่อง)"} · พื้นหลังถูกตัดออก เหลือแต่เส้นลายเซ็น</small>
+    </div>`;
+}
+function sigWire(host) {
+  const redraw = () => { host.innerHTML = sigHtml(); };
+  const run = () => { if (!SIG.src) return; SIG.out = sigProcess(SIG.src, SIG.sens, SIG.ink); redraw(); };
+  if (!SIG.loaded) sigLoad().then(redraw);
+  redraw();
+  host.onchange = e => { const t = e.target; if (t.dataset.sigfile == null || !t.files[0]) return;
+    const f = t.files[0], img = new Image(); img.onload = () => { SIG.src = img; run(); URL.revokeObjectURL(img.src); }; img.onerror = () => toast("เปิดรูปไม่ได้"); img.src = URL.createObjectURL(f); };
+  host.oninput = e => { if (e.target.id === "sigSens") { SIG.sens = +e.target.value; clearTimeout(SIG.t); SIG.t = setTimeout(run, 120); } };
+  host.onclick = async e => { const b = e.target.closest("button"); if (!b) return; e.stopPropagation(); const ds = b.dataset;
+    if (ds.sigink) { SIG.ink = ds.sigink; run(); }
+    else if (ds.sigx) { SIG.src = null; SIG.out = ""; redraw(); }
+    else if (ds.sigok) { const png = SIG.out; b.disabled = true;
+      try { if (MY.acct) await jpost("/api/me/signature", { png }); else lsSet("rt_sig", png);
+        SIG.url = png; SIG.src = null; SIG.out = ""; redraw(); toast("บันทึกลายเซ็นแล้ว"); }
+      catch (err) { b.disabled = false; toast("บันทึกลายเซ็นไม่สำเร็จ: " + err.message); } }
+    else if (ds.sigdel) { if (!confirm("ลบลายเซ็นของฉัน?")) return;
+      try { if (MY.acct) await api("/api/me/signature", { method: "DELETE" }); else lsSet("rt_sig", ""); SIG.url = ""; redraw(); toast("ลบลายเซ็นแล้ว"); }
+      catch (err) { toast("ลบไม่สำเร็จ: " + err.message); } } };
+}
 function myPanel() {
   const P = MY.p, nav = P.navy || U.navy, amb = P.amber || U.amber, sc = P.scale || U.scale;
   const seg = (k, opts) => `<div class="seg segfit">${opts.map(([v, l]) => `<button data-my="${k}" data-v="${v}" class="${(P[k] || "") === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
@@ -1965,6 +2047,7 @@ function myPanel() {
     const draw = () => { const P = MY.p, nav = P.navy || U.navy, amb = P.amber || U.amber, sc = P.scale || U.scale;
       box.innerHTML = `<div class="my-h"><div class="av my-av">${esc(initials(S.user))}</div><div><b>ของฉัน</b><small>${MY.acct ? `บัญชี ${esc(MY.acct.name)} (${esc(MY.acct.emp_id)}) · ใช้ได้ทุกเครื่องที่เข้าสู่ระบบบัญชีนี้` : "ตั้งค่าเฉพาะเครื่องนี้ · เข้าสู่ระบบที่หน้าหลักเพื่อใช้กับบัญชีของคุณทุกเครื่อง"}</small></div><button class="tm-x" data-close aria-label="ปิด">${I("x")}</button></div>
       <label class="f"><span class="lab">ชื่อผู้บันทึก</span><div class="row"><input id="myName" value="${esc(S.user || "")}" maxlength="40" autocomplete="off"><button class="soft sm" id="myNameOk" style="flex:0 0 auto">บันทึกชื่อ</button></div></label>
+      <div id="mySig"></div>
       <span class="lab my-l">${I("palette")}สีของฉัน</span>
       <div class="grid"><div class="colrow"><input type="color" data-myc="navy" value="${nav}"><span class="sub">สีหลัก</span></div><div class="colrow"><input type="color" data-myc="amber" value="${amb}"><span class="sub">สีเน้น</span></div></div>
       <div class="swatches">${THEME_PRESETS.map(([n, a, b]) => `<button class="swatch ${nav === a && amb === b ? "on" : ""}" data-mypre="${a}${b}" style="--a:${a};--b:${b}"><i></i>${n.replace(" (ค่าเริ่มต้น)", "")}</button>`).join("")}${P.navy || P.amber ? `<button class="ghost sm" data-myteam>ใช้สีของทีม</button>` : ""}</div>
@@ -1976,7 +2059,8 @@ function myPanel() {
       <div class="grid"><div><span class="lab my-l">${I("spark")}แอนิเมชัน</span>${seg("motion", [["", "เปิด"], ["off", "ปิด (ลื่นกว่าในเครื่องช้า)"]])}</div>
         <label class="f"><span class="lab my-l">${I("target")}หน้าแรกของฉัน</span><select id="myHome"><option value="">ตามค่าเริ่มต้นของทีม</option>${tabs.map(t => `<option value="${t.k}" ${P.home === t.k ? "selected" : ""}>${esc(t.label)}</option>`).join("")}</select></label></div>
       <div class="row" style="margin-top:16px"><button class="blk" id="myReset">${I("x")}กลับเป็นค่าเริ่มต้นทั้งหมด</button><button class="blk pri" data-close>${I("check")}เสร็จ</button></div>`;
-      box.querySelectorAll("[data-close]").forEach(x => x.onclick = closeModal); };
+      box.querySelectorAll("[data-close]").forEach(x => x.onclick = closeModal); sigWire(box.querySelector("#mySig")); };
+    SIG.src = null; SIG.out = ""; SIG.loaded = false;
     draw();
     box.onclick = e => { const b = e.target.closest("button"); if (!b) return; const ds = b.dataset;
       if (ds.my) { mySet(ds.my, ds.v); draw(); }

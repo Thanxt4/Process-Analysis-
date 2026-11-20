@@ -5,6 +5,7 @@ Process Control – ฟอร์มตรวจพื้นที่หน้า
 - Generate สไลด์ (.pptx) จากข้อมูลและรูป
 - ตัดรอบทุกวันเวลา 07:00 น. (รอบ = 07:00 วันนี้ ถึง 06:59 วันถัดไป) และสร้างสไลด์เก็บไว้อัตโนมัติ
 """
+import base64
 import hashlib
 import re
 import secrets
@@ -2001,6 +2002,57 @@ async def api_my_prefs_save(request: Request):
         con.execute("INSERT INTO user_prefs(emp_id, app, data, updated_at) VALUES(?,?,?,?) "
                     "ON CONFLICT(emp_id, app) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
                     (u["emp_id"], app_, raw, int(_time.time() * 1000)))
+    return {"ok": True}
+
+
+# ---- ลายเซ็นของฉัน (รูป PNG พื้นหลังโปร่งใส · ตัดพื้นหลังที่หน้าเว็บแล้ว) · เก็บต่อบัญชี
+SIG_DIR = DATA_DIR / "signatures"
+
+
+def _sig_path(emp: str) -> Path:
+    safe = "".join(ch for ch in str(emp) if ch.isalnum() or ch in "-_")[:40] or "x"
+    return SIG_DIR / f"{safe}.png"
+
+
+@app.get("/api/me/signature")
+def api_my_sig(request: Request):
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    p = _sig_path(u["emp_id"])
+    if not p.exists():
+        raise HTTPException(404, "ยังไม่มีลายเซ็น")
+    return FileResponse(p, media_type="image/png", headers={"Cache-Control": "no-cache"})
+
+
+@app.post("/api/me/signature")
+async def api_my_sig_save(request: Request):
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    d = await request.json()
+    s = str(d.get("png") or "")
+    if not s.startswith("data:image/png;base64,"):
+        raise HTTPException(400, "รูปลายเซ็นไม่ถูกต้อง")
+    try:
+        data = base64.b64decode(s.split(",", 1)[1], validate=True)
+    except Exception:
+        raise HTTPException(400, "รูปลายเซ็นไม่ถูกต้อง")
+    if len(data) > 600_000 or not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise HTTPException(400, "รูปลายเซ็นใหญ่เกินไปหรือไม่ใช่ PNG")
+    SIG_DIR.mkdir(parents=True, exist_ok=True)
+    _sig_path(u["emp_id"]).write_bytes(data)
+    return {"ok": True}
+
+
+@app.delete("/api/me/signature")
+def api_my_sig_del(request: Request):
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "LOGIN_REQUIRED")
+    p = _sig_path(u["emp_id"])
+    if p.exists():
+        p.unlink()
     return {"ok": True}
 
 
