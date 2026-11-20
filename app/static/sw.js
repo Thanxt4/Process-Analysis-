@@ -1,5 +1,5 @@
 // Service worker: ทำให้ติดตั้งเป็นแอปบนมือถือได้ และเปิดหน้าแอปได้เร็วขึ้น
-const CACHE = "pc-shell-v259";
+const CACHE = "pc-shell-v260";
 const SHELL = ["/", "/retort.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
@@ -13,12 +13,13 @@ self.addEventListener("fetch", e => {
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/uploads/") || url.pathname.startsWith("/t/") || url.pathname.startsWith("/fonts/")) return;
   // หน้า Retort: เปิดจากที่จำไว้ในเครื่องทันที (ไม่ต้องรอเน็ต) แล้วโหลดเวอร์ชันล่าสุดเก็บไว้เบื้องหลัง
   // ถ้าเวอร์ชันบนเซิร์ฟเวอร์เปลี่ยน → บอกหน้าเว็บให้ขึ้นแถบ "มีเวอร์ชันใหม่ · แตะเพื่อโหลดใหม่"
-  if (url.pathname === "/retort.html") {
-    const key = "/retort.html", cacheP = caches.open(CACHE), oldP = cacheP.then(c => c.match(key));
+  // หน้าหลัก (/) ใช้วิธีเดียวกัน: เปิดทันทีจากเครื่อง ไม่ต้องรอดาวน์โหลดหน้าเว็บทุกครั้ง
+  if (url.pathname === "/retort.html" || url.pathname === "/" || url.pathname === "/index.html") {
+    const key = url.pathname === "/retort.html" ? "/retort.html" : "/", cacheP = caches.open(CACHE), oldP = cacheP.then(c => c.match(key));
     const tag = r => r.headers.get("etag") || r.headers.get("last-modified") || "";
     const wait = ms => new Promise(r => setTimeout(r, ms));
     const tell = () => self.clients.matchAll({ type: "window" }).then(cs => cs
-      .filter(c => new URL(c.url).pathname === key).forEach(c => c.postMessage({ type: "page-updated" })));
+      .filter(c => { const p = new URL(c.url).pathname; return p === key || (key === "/" && p === "/index.html"); }).forEach(c => c.postMessage({ type: "page-updated" })));
     const netP = fetch(e.request, { cache: "no-cache" }).then(async r => {
       if (r.ok) {
         const c = await cacheP, old = await oldP; await c.put(key, r.clone());

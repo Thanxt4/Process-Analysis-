@@ -59,6 +59,8 @@ details.pb{margin-top:12px}
 .pb-proc button em{font-style:normal;font-size:11.5px;font-weight:800;background:#fee2e2;color:#b91c1c;border-radius:99px;padding:0 7px}
 .pb-proc button.on{background:#1b2a41;border-color:#1b2a41;color:#fff}.pb-proc button.on em{background:#f59e0b;color:#1b2a41}
 @media(max-width:600px){.pb-proc{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.pb-proc button{flex:0 0 auto}}
+.updbar{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;border:0;border-radius:999px;padding:10px 18px;background:#0f1a2e;color:#fff;font:inherit;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap;max-width:calc(100vw - 32px)}
+.updbar b{color:#fbbf24}
 </style>
 <style>
 :root{
@@ -3943,7 +3945,7 @@ function openAcct(){
 function closeAcct(){ $("#acctBg").classList.remove("on"); document.body.style.overflow = ""; }
 $("#acX").onclick = closeAcct;
 $("#acctBg").addEventListener("click", e => { if(e.target.id === "acctBg") closeAcct(); });
-$("#acLogout").onclick = async () => { if(!confirm("ออกจากระบบ?")) return; try{ await fetch("/api/auth/logout", {method: "POST"}); }catch{} location.reload(); };
+$("#acLogout").onclick = async () => { if(!confirm("ออกจากระบบ?")) return; try{ localStorage.removeItem("pc_boot1"); }catch{} try{ await fetch("/api/auth/logout", {method: "POST"}); }catch{} location.reload(); };
 
 /* countdown + round rollover */
 function tick(){
@@ -3954,12 +3956,12 @@ function tick(){
   $("#countdown").textContent = [h,m,s].map(n=>String(n).padStart(2,"0")).join(":");
 }
 let busy=false;
-async function refreshAll(){
+async function refreshAll(pre){
   if(busy) return; busy=true;
   try{
-    const prevRound = CFG && CFG.current_round;
-    // ดึงข้อมูลพร้อมกันทีเดียว (ไม่ต้องรอทีละอย่าง — ลดเวลารอเมื่อเน็ตช้า)
-    const [cfg, st, rounds] = await Promise.all([api("/api/config"), api("/api/status"),
+    const prevRound = pre ? null : CFG && CFG.current_round;
+    // ดึงข้อมูลพร้อมกันทีเดียว (ไม่ต้องรอทีละอย่าง — ลดเวลารอเมื่อเน็ตช้า) · ตอนเปิดแอปใช้ชุดที่ดึงไว้แล้ว
+    const [cfg, st, rounds] = await Promise.all([pre ? pre.cfg : api("/api/config"), pre ? pre.st : api("/api/status"),
       ["check", "slides"].includes(curTab()) ? api("/api/rounds") : null]);
     loadFollowups();  // ตัวเลขเรื่องค้างบนแถบ ติดตาม
     loadCmSummary();  // ป้ายถาม-ตอบ ในแต่ละหัวข้อ
@@ -3967,6 +3969,7 @@ async function refreshAll(){
     await loadConfig(cfg);
     if(prevRound && prevRound !== CFG.current_round){ viewRound = CFG.current_round; toast("ตัดรอบแล้ว เริ่มรอบใหม่ "+thDate(CFG.current_round)); }
     await loadStatus(st);
+    if(st && st.round === CFG.current_round){ try{ localStorage.setItem(BOOT_KEY, JSON.stringify({cfg: CFG, st, at: Date.now()})); }catch{} }
     if(rounds) await loadRounds(rounds);
   }catch(err){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้", true); }
   finally{ busy=false; }
@@ -4053,10 +4056,26 @@ function mtext(t){
   const re = new RegExp("@(" + names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "g");
   return h.replace(re, '<span class="mtag">@$1</span>');
 }
-ensureLogin().then(() => { refreshAll(); loadPpl(); });  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล
+/* เปิดแอปให้เร็ว: (1) แสดงข้อมูลชุดล่าสุดที่จำไว้ในเครื่องทันที (2) ดึงข้อมูลใหม่พร้อมกับตรวจการเข้าสู่ระบบ ไม่ต้องรอทีละขั้น */
+const BOOT_KEY = "pc_boot1";
+const bootPre = Promise.all(["/api/config", "/api/status"].map(u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null)));
+(() => { try{
+  const b = JSON.parse(localStorage.getItem(BOOT_KEY) || "null");
+  if(!b || !b.cfg || !b.st || b.st.round !== b.cfg.current_round || new Date(b.cfg.round_end) <= Date.now()) return;
+  loadConfig(Object.assign({}, b.cfg, {server_time: new Date().toISOString()})).then(() => loadStatus(b.st)).catch(() => {});
+}catch{} })();
+ensureLogin().then(async () => { const [c, s] = await bootPre; refreshAll(c && s && s.round === c.current_round ? {cfg: c, st: s} : null); loadPpl(); });  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล
 
 /* PWA: ติดตั้งเป็นแอปบนมือถือ */
-if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  // หน้าเปิดจากที่จำไว้ในเครื่อง · มีเวอร์ชันใหม่บนเซิร์ฟเวอร์ → ขึ้นแถบให้แตะโหลดใหม่
+  navigator.serviceWorker.addEventListener("message", e => {
+    if(!e.data || e.data.type !== "page-updated" || $("#updBar")) return;
+    const b = document.createElement("button"); b.id = "updBar"; b.className = "updbar"; b.type = "button";
+    b.innerHTML = "มีเวอร์ชันใหม่ · <b>แตะเพื่อโหลดใหม่</b>"; b.onclick = () => location.reload(); document.body.appendChild(b);
+  });
+}
 let deferredPrompt = null;
 const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredPrompt = e; $("#installBtn").classList.add("on"); });
