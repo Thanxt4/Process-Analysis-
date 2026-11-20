@@ -190,7 +190,7 @@ header{background:linear-gradient(135deg,#0f1a2e,#1b2a41 60%,#24395a);color:#fff
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const toast = (m, err) => { const t = $("#toast"); t.textContent = m; t.className = "toast on" + (err ? " err" : ""); clearTimeout(t._h); t._h = setTimeout(() => t.className = "toast", 2600); };
-const S = { users: [], depts: ["QC", "PD", "TP"], facs: ["ITC-SK", "ITC-SS"], f: "all", q: "" };
+const S = { users: [], depts: ["QC", "PD", "TP", "QM", "QA"], facs: ["ITC-SK", "ITC-SS"], f: "all", q: "" };
 const facOf = u => u.factory || "ITC-SK";  // สังกัดโรงงาน (สมาชิกเดิม = ITC-SK)
 const facTag = u => `<span class="fac ${facOf(u) === "ITC-SS" ? "ss" : "sk"}">${esc(facOf(u))}</span>`;
 const facSel = v => `<select name="factory" required>${S.facs.map(d => `<option ${d === v ? "selected" : ""}>${d}</option>`).join("")}</select>`;

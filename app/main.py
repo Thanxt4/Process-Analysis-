@@ -990,7 +990,7 @@ async def access_gate(request: Request, call_next):
 
 
 # ---------------------------------------------------------------- บัญชีผู้ใช้ (สมัครสมาชิก / เข้าสู่ระบบ ด้วยรหัสพนักงาน)
-DEPTS = ("QC", "PD", "TP")
+DEPTS = ("QC", "PD", "TP", "QM", "QA")
 USER_COOKIE = "pc_user"
 ADMIN_COOKIE = "pc_uadmin"
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "Admin#12345")  # รหัส Admin สำหรับหน้าจัดการผู้ใช้ (/users.html)
