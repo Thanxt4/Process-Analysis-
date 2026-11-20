@@ -61,6 +61,8 @@ details.pb{margin-top:12px}
 @media(max-width:600px){.pb-proc{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.pb-proc button{flex:0 0 auto}}
 .updbar{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;border:0;border-radius:999px;padding:10px 18px;background:#0f1a2e;color:#fff;font:inherit;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap;max-width:calc(100vw - 32px)}
 .updbar b{color:#fbbf24}
+/* รายการยาว: การ์ดที่อยู่นอกจอไม่ต้องคำนวณหน้าตาจนกว่าจะเลื่อนถึง (เปิดแท็บเร็วขึ้น) */
+#checkList .zcard{content-visibility:auto;contain-intrinsic-size:auto 320px}.fu-card{content-visibility:auto;contain-intrinsic-size:auto 150px}
 </style>
 <style>
 :root{
@@ -1626,14 +1628,20 @@ async function loadConfig(pre){
 }
 function hasRetort(){ return !!(CFG && CFG.zones.some(z => deckOf(z) === "retort")); }
 
-async function loadStatus(pre){
+/* ลดงานหน้าจอ: ข้อมูลไม่เปลี่ยน → ไม่วาดใหม่ · แท็บที่ไม่ได้เปิดอยู่ → วาดตอนกดเปิดแท็บ */
+let ST_SIG = "", ckDirty = false;
+const cfgSig = () => CFG ? JSON.stringify(CFG.zones) + CFG.current_round + "|" + (CFG.title || "") : "";
+async function loadStatus(pre, force){
   const cur = (pre && pre.round === CFG.current_round) ? pre : await api("/api/status?round="+CFG.current_round);
   STATUS = cur;
   $("#ovNum").textContent = `${cur.done}/${cur.total}`;
   $("#ovBar").style.width = (cur.total? cur.done/cur.total*100:0)+"%";
   $("#ovIssue").innerHTML = cur.issues ? `<b style="color:#fca5a5">พบปัญหา ${cur.issues}</b>` : "";
+  const sig = JSON.stringify(cur) + "#" + cfgSig() + "#" + (ME ? ME.emp_id : "");
+  if(!force && sig === ST_SIG) return;
+  ST_SIG = sig;
   renderForm();
-  await renderChecklist();
+  if($("#tab-check").classList.contains("on")){ ckDirty = false; await renderChecklist(); } else ckDirty = true;
 }
 
 /* ---------- form tab ---------- */
@@ -2948,7 +2956,10 @@ async function loadHeatmap(){
   $("#hmCust").value = hmCust;
   $("#hmCustNote").textContent = hmCust === "none" ? "แสดงเฉพาะหัวข้อที่ไม่มีลูกค้า" : hmCust === "any" ? "แสดงเฉพาะหัวข้อที่มีลูกค้า (Weruva, Smucker, MARS) · ไม่รวมหัวข้อที่ไม่มีลูกค้า" : hmCust ? `แสดงเฉพาะหัวข้อของ ${hmCust} (รวมหัวข้อที่ใช้ร่วมกับลูกค้าอื่น)` : "";
   $("#dashBox").classList.toggle("cust-on", !!hmCust);
-  try{ HM = await api(`/api/heatmap?start=${from}&end=${end}${custQ()}`); }catch(err){ toast(err.message, true); return; }
+  let hm; try{ hm = await api(`/api/heatmap?start=${from}&end=${end}${custQ()}`); }catch(err){ toast(err.message, true); return; }
+  const hs = from + end + custQ() + hmDays + JSON.stringify(typeof cmpCustom === "undefined" ? null : cmpCustom) + JSON.stringify(hm);
+  if(hs === loadHeatmap.sig) return;  // ข้อมูลเดิม → ไม่วาดใหม่ (และไม่ล้างหัวข้อที่เลือกไว้)
+  loadHeatmap.sig = hs; HM = hm;
   for(const k in hotSel) delete hotSel[k];  // เปลี่ยนช่วงวัน → กลับไปเริ่มที่ 5 อันดับแรกของช่วงใหม่
   {
     const work = HM.rounds.map((r, i) => [r, i]).filter(([r]) => new Date(r + "T00:00:00").getDay() !== 0);
@@ -3274,7 +3285,7 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("on",x===b));
   document.querySelectorAll("section").forEach(s=>s.classList.toggle("on", s.id==="tab-"+b.dataset.tab));
   if(b.dataset.tab==="check" || b.dataset.tab==="slides") loadRounds();
-  if(b.dataset.tab==="check") loadHeatmap();
+  if(b.dataset.tab==="check"){ if(ckDirty && CFG && STATUS){ ckDirty = false; renderChecklist(); } else loadHeatmap(); }
   if(b.dataset.tab==="follow"){ renderFollow(); loadFollowups(); }
 });
 /* ต้องใส่รหัสก่อน Generate / ดาวน์โหลดสไลด์ */
@@ -3370,11 +3381,15 @@ function fuDueTxt(x){
   return `${thDate(x.due)} · ${n < 0 ? `เกินกำหนด ${-n} วัน` : n === 0 ? "ครบกำหนดวันนี้" : `เหลือ ${n} วัน`}`;
 }
 async function loadFollowups(){
-  try{ const r = await api("/api/followups"); FU.items = r.items || []; FU.issues = r.issues || []; FU.days = r.issue_days || 14; FU.loaded = true; }
-  catch(err){ if(curTab() === "follow") toast(err.message, true); return; }
+  let r; try{ r = await api("/api/followups"); }catch(err){ if(curTab() === "follow") toast(err.message, true); return; }
+  const sig = JSON.stringify(r);
+  if(FU.loaded && sig === loadFollowups.sig) return;  // ไม่มีอะไรเปลี่ยน → ไม่วาดใหม่
+  loadFollowups.sig = sig; FU.items = r.items || []; FU.issues = r.issues || []; FU.days = r.issue_days || 14; FU.loaded = true;
   fuBadge(); if(curTab() === "follow") renderFollow();
 }
-const fuOf = sid => FU.items.find(x => (x.src || {}).sid === sid);
+// ค้นเรื่องติดตามจากผลตรวจ: ทำดัชนีไว้ (เดิมวนหาทุกครั้ง → ช้าเมื่อรายการเยอะ)
+const fuIdx = { items: null, m: null };
+const fuOf = sid => { if(fuIdx.items !== FU.items || fuIdx.n !== FU.items.length){ fuIdx.items = FU.items; fuIdx.n = FU.items.length; fuIdx.m = new Map(); FU.items.forEach(x => { const k = (x.src || {}).sid; if(k && !fuIdx.m.has(k)) fuIdx.m.set(k, x); }); } return fuIdx.m.get(sid); };
 const fuBtn = sid => { const x = fuOf(sid); return `<button type="button" class="fubtn ${x ? "on" : ""}" data-fusid="${esc(sid)}" title="${x ? "ดูในหน้า เรื่องที่ต้องติดตาม" : "เพิ่มหัวข้อนี้ไปที่ เรื่องที่ต้องติดตาม"}">${x ? "✓ ติดตามแล้ว" : "＋ ติดตาม"}</button>`; };
 function fuMarkBtns(){ document.querySelectorAll(".fubtn[data-fusid]").forEach(b => { const on = !!fuOf(b.dataset.fusid); if(b.classList.contains("on") !== on){ b.classList.toggle("on", on); b.textContent = on ? "✓ ติดตามแล้ว" : "＋ ติดตาม"; } }); }
 async function fuAddSub(pre){
@@ -3424,7 +3439,8 @@ function renderFollow(){
   const pass = {active: x => x.status !== "done", over: fuOver, urgent: x => x.status !== "done" && x.urgent, done: x => x.status === "done", all: () => true}[FU.filter] || (() => true);
   const list = all.filter(pass).filter(x => !q || [x.title, x.detail, x.zone, x.owner, x.created_by].join(" ").toLowerCase().includes(q)).sort(fuSort);
   // แบ่งตามรอบวัน (07:00–06:59): วันที่พบปัญหา (ถ้ามาจากผลตรวจ) หรือวันที่เปิดเรื่อง · วันล่าสุดอยู่บน
-  const fuDay = x => (x.src && x.src.sid && (FU.issues.find(i => i.sid === x.src.sid) || {}).round) || (x.created_at ? bizISO(x.created_at) : fuToday());
+  const issRound = new Map(); FU.issues.forEach(i => { if(!issRound.has(i.sid)) issRound.set(i.sid, i.round); });
+  const dayMemo = new Map(), fuDay = x => { if(dayMemo.has(x)) return dayMemo.get(x); const v = (x.src && x.src.sid && issRound.get(x.src.sid)) || (x.created_at ? bizISO(x.created_at) : fuToday()); dayMemo.set(x, v); return v; };
   const fuDays = [...new Set(list.map(fuDay))].sort().reverse(), today = fuToday();
   const fuCard = x => {
     const ov = fuOver(x), dn = x.due ? fuDays(x.due) : null;
@@ -3542,7 +3558,7 @@ async function fuChatSend(){
   try{
     if(si && si.sid) await api("/api/comments", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({area_id: si.area_id, sid: si.sid, text: t, by: getMyName(), round: si.round})});
     else { const r = await api(`/api/followups/${encodeURIComponent(c.id)}/note`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({text: t, kind: "chat", by: getMyName()})});
-      const i = FU.items.findIndex(y => y.id === r.item.id); if(i >= 0){ r.item.src_info = FU.items[i].src_info; FU.items[i] = r.item; } c.notes = r.item.notes; }
+      const i = FU.items.findIndex(y => y.id === r.item.id); if(i >= 0){ r.item.src_info = FU.items[i].src_info; FU.items[i] = r.item; fuIdx.items = null; } c.notes = r.item.notes; }
     inp.value = ""; FU.chat.drawn = false; await fuChatLoad(); inp.focus(); setTimeout(loadNotif, 300);
   }catch(err){ toast(err.message, true); }
   finally{ b.disabled = false; }
@@ -3567,6 +3583,7 @@ function fuPut(item){  // อัปเดตรายการในเครื
   const i = FU.items.findIndex(x => x.id === item.id);
   item.src_info = item.src_info || (FU.cur && FU.cur.src_info) || (i >= 0 ? FU.items[i].src_info : null);
   if(i >= 0) FU.items[i] = item; else FU.items.unshift(item);
+  fuIdx.items = null;
 
   fuBadge(); renderFollow();
 }
@@ -3633,7 +3650,9 @@ const CM_IC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const cmMine = x => { const a = (getMyName() || "").trim().replace(/\s+/g, " ").toLowerCase(); return !!a && a === String(x.by || "").trim().replace(/\s+/g, " ").toLowerCase(); };
 const cmAt = ms => { const d = new Date(ms); return `${bizDM(ms)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`; };
 async function loadCmSummary(){
-  try{ const r = await api("/api/comments/summary"); CM.sum = r.items || {}; CM.open = r.open || []; }catch{ return; }
+  let r; try{ r = await api("/api/comments/summary"); }catch{ return; }
+  const sig = JSON.stringify(r); if(sig === loadCmSummary.sig) { cmDecorate(); return; } loadCmSummary.sig = sig;
+  CM.sum = r.items || {}; CM.open = r.open || [];
   cmDecorate(); renderCmOpen();
 }
 // ป้ายจำนวนความคิดเห็น/คำถามรอตอบ ต่อท้ายชื่อหัวข้อในทุกรายการ
@@ -4064,7 +4083,7 @@ const bootPre = Promise.all(["/api/config", "/api/status"].map(u => fetch(u).the
   if(!b || !b.cfg || !b.st || b.st.round !== b.cfg.current_round || new Date(b.cfg.round_end) <= Date.now()) return;
   loadConfig(Object.assign({}, b.cfg, {server_time: new Date().toISOString()})).then(() => loadStatus(b.st)).catch(() => {});
 }catch{} })();
-ensureLogin().then(async () => { const [c, s] = await bootPre; refreshAll(c && s && s.round === c.current_round ? {cfg: c, st: s} : null); loadPpl(); });  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล
+ensureLogin().then(async () => { const [c, s] = await bootPre; refreshAll(c && s && s.round === c.current_round ? {cfg: c, st: s} : null); loadPpl(); setTimeout(() => { if(typeof pcLive === "function") pcLive(); }, 0); });  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล  // เข้าสู่ระบบก่อน แล้วค่อยโหลดข้อมูล
 
 /* PWA: ติดตั้งเป็นแอปบนมือถือ */
 if("serviceWorker" in navigator){
@@ -4100,9 +4119,11 @@ async function loadProb(){
   if(!CFG || !$("#probBox").open || PB.busy) return;
   const end = PB.end || CFG.current_round, start = PB.start || isoAdd(end, -(PB.days - 1));
   PB.busy = true; if(!PB.data) $("#pbGrid").innerHTML = `<p class="muted-s">กำลังโหลด…</p>`;
-  try{ PB.data = await api(`/api/problems?start=${start}&end=${end}`); }catch(e){ $("#pbGrid").innerHTML = `<p class="muted-s">โหลดไม่สำเร็จ: ${esc(e.message)}</p>`; }
+  let same = false;
+  try{ const d = await api(`/api/problems?start=${start}&end=${end}`), sig = JSON.stringify(d); same = !!PB.data && sig === loadProb.sig; loadProb.sig = sig; PB.data = d; }
+  catch(e){ $("#pbGrid").innerHTML = `<p class="muted-s">โหลดไม่สำเร็จ: ${esc(e.message)}</p>`; }
   finally{ PB.busy = false; }
-  if(PB.data) drawProb();
+  if(PB.data && !same) drawProb();
 }
 function drawProb(){
   const D = PB.data, okD = x => PB.deck === "all" || x.deck === PB.deck;

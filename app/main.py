@@ -1071,7 +1071,11 @@ async def user_gate(request: Request, call_next):
     if path.startswith(("/api/", "/uploads/", "/t/")) and not path.startswith(_USER_FREE) and not u:
         return JSONResponse({"detail": "LOGIN_REQUIRED"}, status_code=401)
     _CUR_FAC.set((u or {}).get("factory") or FAC_DEFAULT)  # Checklist ของโรงงานผู้ใช้
+    t0 = _time.perf_counter()
     resp = await call_next(request)
+    dt = _time.perf_counter() - t0
+    if dt > 1.0 and path.startswith("/api/") and not path.startswith(("/api/live", "/api/retort/ai", "/api/retort/live", "/api/retort/tp/parse")):
+        print(f"[ช้า] {request.method} {path} {dt * 1000:.0f} ms", flush=True)  # ไว้ดูว่าส่วนไหนของเซิร์ฟเวอร์ช้า
     if request.method != "GET" and path.startswith("/api/") and resp.status_code < 400 and not path.startswith(_LIVE_SKIP):
         live_bump("rt" if path.startswith("/api/retort") else "pc")  # มีการเปลี่ยนข้อมูล → แจ้งหน้าที่เปิดอยู่
     return resp
