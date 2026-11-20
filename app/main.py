@@ -2660,6 +2660,38 @@ def _rt_thumb(src: Path) -> Path:
     return tp
 
 
+# ลายเซ็นที่แนบในเอกสาร (เช่น Process Deviation Report) · เก็บเป็นสำเนาแยก เอกสารเดิมไม่เปลี่ยนแม้เจ้าของเปลี่ยนลายเซ็นภายหลัง
+RT_SIG_DIR = DATA_DIR / "retort_signs"
+_RT_SIG_RE = re.compile(r"^[0-9]{8}_[0-9a-f]{16}\.png$")
+
+
+@app.post("/api/retort/sign")
+async def api_retort_sign(request: Request):
+    _rt_auth(request)
+    d = await request.json()
+    s = str(d.get("png") or "")
+    if not s.startswith("data:image/png;base64,"):
+        raise HTTPException(400, "รูปลายเซ็นไม่ถูกต้อง")
+    try:
+        data = base64.b64decode(s.split(",", 1)[1], validate=True)
+    except Exception:
+        raise HTTPException(400, "รูปลายเซ็นไม่ถูกต้อง")
+    if len(data) > 600_000 or not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise HTTPException(400, "รูปลายเซ็นใหญ่เกินไปหรือไม่ใช่ PNG")
+    RT_SIG_DIR.mkdir(parents=True, exist_ok=True)
+    fn = f"{now().strftime('%Y%m%d')}_{secrets.token_hex(8)}.png"
+    (RT_SIG_DIR / fn).write_bytes(data)
+    return {"ok": True, "file": fn}
+
+
+@app.get("/api/retort/sign/{fn}")
+def api_retort_sign_get(fn: str, request: Request):
+    _rt_auth(request)
+    if not _RT_SIG_RE.match(fn) or not (RT_SIG_DIR / fn).exists():
+        raise HTTPException(404, "ไม่พบลายเซ็น")
+    return FileResponse(RT_SIG_DIR / fn, media_type="image/png", headers={"Cache-Control": "private, max-age=31536000, immutable"})
+
+
 @app.get("/api/retort/photo/{fn}")
 def api_retort_photo_get(fn: str, request: Request, w: int = 0):
     _rt_auth(request)
