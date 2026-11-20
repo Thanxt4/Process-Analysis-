@@ -1708,6 +1708,14 @@ svg text.rn{fill:#1b2a41;font-weight:700}
 .nt-pd .nti{width:100%}.ic2.pd{background:#fff7e6!important;color:#b45309!important}
 .pdv-dates{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:14px;background:#fff;border:1.5px solid var(--line)}.pdv-dates.on{border-color:var(--amber);background:#fffbeb}
 .pdv-dates input{width:auto;min-height:38px;font-size:14px;padding:4px 8px}.pdv-dates span{font-size:13px;color:var(--mute)}.pdv-dates button{min-height:38px}
+.w5h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.w5h>span:first-child{flex:1}.w5btn{display:flex;gap:6px}.w5btn .ghost{border:1px solid var(--line);background:#fff}
+.w5-tw{overflow:auto;border-radius:14px;border:1px solid var(--line)}
+table.w5{width:100%;min-width:900px;border-collapse:separate;border-spacing:0;font-size:14.5px;background:#fff}
+table.w5 th{background:var(--navy);color:#fff;text-align:left;padding:10px 12px;font-weight:800;vertical-align:top;position:sticky;top:0}table.w5 th small{display:block;font-weight:500;color:#cbd5e1;font-size:12px}
+table.w5 td{padding:12px;border-top:1px solid #e9eef4;vertical-align:top;line-height:1.55;color:#1f2937}table.w5 tr:nth-child(even) td{background:#fbfcfe}
+table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w5 td.p,table.w5 th.p{width:64px}table.w5 td.what{width:18%}table.w5 td.when{white-space:nowrap}table.w5 td.when small{display:block;color:var(--mute);font-size:12.5px}
+.w5p{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:800}.w5p.hi{background:#fee2e2;color:#b91c1c}.w5p.md{background:#fef3c7;color:#b45309}.w5p.lo{background:#dcfce7;color:#166534}
+.modal .box.w5full{max-width:1400px;width:96vw}.modal .box.w5full .w5-tw{max-height:78vh}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -4425,7 +4433,8 @@ const AI_SECTIONS = [
   ["ภาพรวมและแผนงาน", [
     ["pie", "ภาพรวมช่วงนี้", "เทียบกับช่วงก่อนหน้า พร้อมแผนจัดการ", "สรุปภาพรวมปัญหา Retort ในช่วงนี้ เทียบกับช่วงก่อนหน้า (จำนวน หัวข้อ หม้อ กะ Hold) บอกว่าอะไรดีขึ้น อะไรแย่ลง และเสนอแผนจัดการเป็นข้อ ๆ"],
     ["target", "จัดลำดับปัญหา", "3 อันดับที่น่าห่วงที่สุด + แผนแก้ไข", "จัดลำดับ 3 ปัญหาที่น่าห่วงที่สุดในช่วงนี้ โดยดูจากความถี่ แนวโน้ม เวลาที่เสีย และผลต่อสินค้า (Hold) อธิบายเหตุผลของแต่ละอันดับ และเสนอแผนแก้ไขที่ทำได้จริง พร้อมผู้รับผิดชอบและกำหนดเวลา"],
-    ["calendar", "แผนสัปดาห์หน้า", "แยกตามวัน จันทร์–ศุกร์ สำหรับรายงานหัวหน้า", "จากข้อมูลช่วงนี้ ร่างแผนงานสัปดาห์หน้าแยกตามวัน จันทร์–ศุกร์ ว่าควรตรวจ/แก้/ติดตามเรื่องอะไร ที่หม้อไหน เขียนกระชับสำหรับรายงานหัวหน้า"]]],
+    ["calendar", "แผนสัปดาห์หน้า", "แยกตามวัน จันทร์–ศุกร์ สำหรับรายงานหัวหน้า", "จากข้อมูลช่วงนี้ ร่างแผนงานสัปดาห์หน้าแยกตามวัน จันทร์–ศุกร์ ว่าควรตรวจ/แก้/ติดตามเรื่องอะไร ที่หม้อไหน เขียนกระชับสำหรับรายงานหัวหน้า"],
+    ["list", "แผนงาน 5W1H", "What · Why · Where · When · Who · How เป็นตาราง", "จากข้อมูลปัญหา Retort ในช่วงนี้ จัดทำแผนงานแก้ไขและป้องกันแบบ 5W1H สำหรับปัญหาที่สำคัญที่สุด (3-8 เรื่อง) แต่ละเรื่องระบุ What ทำอะไร, Why ทำไม (อ้างอิงตัวเลขจากข้อมูล), Where ที่ไหน (พื้นที่/หม้อ), When เริ่ม-เสร็จเมื่อไร, Who ใครรับผิดชอบ, How ทำอย่างไร และระดับความสำคัญ ตอบด้วย section ชนิด 5w1h"]]],
   ["หาสาเหตุ", [
     ["search", "สาเหตุรากแบบ 5 Why", "ปัญหาอันดับ 1 + แผนป้องกันไม่ให้เกิดซ้ำ", "วิเคราะห์สาเหตุรากของปัญหาที่เกิดบ่อยที่สุดในช่วงนี้แบบ 5 Why โดยอ้างอิงข้อมูลที่บันทึก (หม้อ โปรแกรม กะ ค่าที่วัด สาเหตุ การแก้ไข) แล้วเสนอแผนป้องกันไม่ให้เกิดซ้ำ"],
     ["bars", "สาเหตุที่พบบ่อยสุด", "3 อันดับ พร้อมมาตรการป้องกัน", "สาเหตุที่พบบ่อยที่สุด 3 อันดับในช่วงนี้คืออะไร เกิดกับปัญหา/หม้อไหน และควรมีมาตรการป้องกันอย่างไร"],
@@ -4535,6 +4544,7 @@ function aiRich(o, m) {
     if (ty === "table" && Array.isArray(x.rows) && x.rows.length) return sec(x.title, aiTable(x.columns, x.rows.slice(0, 30)));
     if (ty === "actions" && Array.isArray(x.items) && x.items.length) return sec(x.title, `<div class="air-acts">${x.items.map((i, k) => { const p = PR[String(i.priority || "").toLowerCase()];
       return `<div class="air-act"><em>${k + 1}</em><div><b>${aiInl(i.title)}${p ? ` <span class="air-pr ${p[1]}">${p[0]}</span>` : ""}</b>${i.detail ? `<p>${aiInl(i.detail)}</p>` : ""}${i.owner ? `<small>ผู้รับผิดชอบ: ${esc(i.owner)}</small>` : ""}</div></div>`; }).join("")}</div>`);
+    if ((ty === "5w1h" || ty === "w5h1") && Array.isArray(x.items) && x.items.length) return w5Html(x);
     if (ty === "list" && Array.isArray(x.items) && x.items.length) return sec(x.title, `<ul class="air-ul">${x.items.map(i => `<li>${aiInl(typeof i === "string" ? i : JSON.stringify(i))}</li>`).join("")}</ul>`);
     if (x.body || x.text) return sec(x.title, `<div class="air-txt">${mdLite(String(x.body || x.text))}</div>`);
     return ""; }).join("");
@@ -4544,6 +4554,33 @@ function aiRich(o, m) {
     ${parts}${m.trunc ? `<div class="air-warn">${I("alert")}คำตอบอาจถูกตัดก่อนจบ · ลองถามให้แคบลง หรือถามใหม่อีกครั้ง</div>` : ""}
     <div class="air-foot">AI อาจผิดพลาดได้ ตรวจสอบกับข้อมูลจริงก่อนนำไปใช้</div></div>`;
 }
+/* ตารางแผนงาน 5W1H: # · สำคัญ · What · Why · Where · When (เริ่ม → เสร็จ · กี่วัน) · Who · How */
+const W5_PR = { high: ["สูง", "hi"], medium: ["กลาง", "md"], low: ["ต่ำ", "lo"], สูง: ["สูง", "hi"], กลาง: ["กลาง", "md"], ต่ำ: ["ต่ำ", "lo"] };
+const W5_COLS = [["what", "What", "ทำอะไร"], ["why", "Why", "ทำไม"], ["where", "Where", "ที่ไหน"], ["when", "When", "เมื่อไร"], ["who", "Who", "ใคร"], ["how", "How", "อย่างไร"]];
+const w5d = d => /^\d{4}-\d\d-\d\d$/.test(String(d || "")) ? dmy(d) : String(d || "");
+const w5When = i => { const a = i.start || i.from || "", b = i.end || i.to || "", t = i.when || "";
+  if (!a && !b) return { txt: String(t), days: "" };
+  const n = /^\d{4}-\d\d-\d\d$/.test(a) && /^\d{4}-\d\d-\d\d$/.test(b) ? daysBetween(a, b) + 1 : 0;
+  return { txt: a && b && a !== b ? `${w5d(a)} → ${w5d(b)}` : w5d(a || b), days: n > 0 ? `${n} วัน` : "" }; };
+function w5Rows(x) { return x.items.slice(0, 12).map(i => { const p = W5_PR[String(i.priority || i.level || "").toLowerCase()] || null, w = w5When(i);
+  return { p, what: i.what || i.title || "", why: i.why || "", where: i.where || "", when: w, who: i.who || i.owner || "", how: i.how || i.detail || "" }; }); }
+function w5Table(x) { const R = w5Rows(x);
+  return `<div class="w5-tw"><table class="w5"><thead><tr><th class="n">#</th><th class="p">สำคัญ</th>${W5_COLS.map(([k, en, th]) => `<th class="${k}">${en}<small>${th}</small></th>`).join("")}</tr></thead>
+    <tbody>${R.map((r, k) => `<tr><td class="n">${k + 1}</td><td class="p">${r.p ? `<span class="w5p ${r.p[1]}">${r.p[0]}</span>` : `<span class="air-na">—</span>`}</td>
+      <td class="what"><b>${aiInl(r.what)}</b></td><td>${aiInl(r.why)}</td><td>${aiInl(r.where)}</td>
+      <td class="when">${esc(r.when.txt)}${r.when.days ? `<small>${r.when.days}</small>` : ""}</td><td>${aiInl(r.who)}</td><td>${aiInl(r.how)}</td></tr>`).join("")}</tbody></table></div>`; }
+function w5Html(x) { W5_STORE.push(x);
+  return `<div class="air-sec w5sec"><div class="air-sh w5h"><span>${esc(x.title || "ตารางแผนงาน 5W1H")}</span>
+      <span class="w5btn"><button class="ghost sm" data-w5c="${W5_STORE.length - 1}">${I("doc")}คัดลอกไป Excel</button><button class="ghost sm" data-w5x="${W5_STORE.length - 1}">${I("expand")}ขยายตาราง</button></span></div>
+    <div class="air-sb">${w5Table(x)}</div></div>`; }
+const W5_STORE = [];
+document.addEventListener("click", e => {
+  const x = e.target.closest("[data-w5x]"), c = e.target.closest("[data-w5c]");
+  if (x) { const t = W5_STORE[+x.dataset.w5x]; if (t) modal(`<div class="row sp" style="margin-bottom:10px"><h2>${esc(t.title || "ตารางแผนงาน 5W1H")}</h2><button class="ghost sm" data-close>${I("x")}ปิด</button></div>${w5Table(t)}`, null, "wide w5full"); }
+  if (c) { const t = W5_STORE[+c.dataset.w5c]; if (!t) return; const clean = v => String(v || "").replace(/\*\*/g, "").replace(/[\t\n]+/g, " ").trim();
+    const tsv = [["#", "สำคัญ", "What", "Why", "Where", "When", "Who", "How"].join("\t"), ...w5Rows(t).map((r, k) => [k + 1, r.p ? r.p[0] : "", r.what, r.why, r.where, r.when.txt + (r.when.days ? ` (${r.when.days})` : ""), r.who, r.how].map(clean).join("\t"))].join("\n");
+    (navigator.clipboard ? navigator.clipboard.writeText(tsv) : Promise.reject()).then(() => toast("คัดลอกตาราง 5W1H แล้ว · วางใน Excel ได้เลย"), () => toast("คัดลอกไม่สำเร็จ")); }
+});
 const aiMdTables = [];
 function aiMsgHtml(m) {
   const o = aiParse(m.text); if (o) return aiRich(o, m);
