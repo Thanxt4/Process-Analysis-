@@ -342,7 +342,7 @@ textarea{min-height:96px;resize:vertical}
 .pg .cnt{font-size:12.5px;color:var(--muted);margin-top:6px}
 .addpage{width:100%;border-style:dashed}
 .sub .pl{font-size:12.5px;font-weight:700;color:var(--navy);margin-top:8px}
-.sheet.edit{max-width:760px}
+.sheet.edit{max-width:1180px}
 .ez{border:1.5px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;background:#f8fafc}
 .ez-h{display:grid;grid-template-columns:1fr 1fr 130px auto auto;gap:8px;margin-bottom:10px}
 .ez-h .zcopy{border:1px solid var(--line);background:#fff;border-radius:8px;width:34px;height:34px;color:var(--navy);display:inline-grid;place-items:center}
@@ -350,7 +350,13 @@ textarea{min-height:96px;resize:vertical}
 .zbtn.grp.sub{border-color:#94a3b8;background:linear-gradient(180deg,#fff,#f8fafc)}
 .ez-h input{font-weight:700}
 .ez input[type=text]{padding:8px 10px;border-radius:9px}
-.er{display:grid;grid-template-columns:62px 1fr 140px 128px auto;gap:6px;align-items:center;margin-bottom:6px}
+.er{display:grid;grid-template-columns:56px minmax(0,1fr) 130px 128px auto;gap:6px;align-items:start;margin-bottom:6px}
+.er textarea.e-name{width:100%;resize:none;overflow:hidden;min-height:40px;padding:8px 10px;border-radius:9px;border:1.5px solid var(--line);font:inherit;font-size:15px;line-height:1.4;background:#fff;color:var(--ink,#0f172a)}
+.er>select,.er>.e-cust,.er>.acts,.er>input{align-self:start}
+.edtools{position:sticky;top:-1px;z-index:5;background:#fff;padding:8px 0 10px;margin:0 0 6px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.edt-r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.edt-r .seg button b{font-weight:700;opacity:.65;margin-left:2px}
+.edt-r select{width:auto;max-width:100%;min-height:40px;border:1.5px solid var(--line);border-radius:10px;padding:6px 10px;font:inherit;font-size:14px;background:#fff}
+.edt-r input[type=search]{flex:1;min-width:200px;min-height:40px;border:1.5px solid var(--line);border-radius:10px;padding:6px 12px;font:inherit;font-size:14px}.edt-n{font-size:13px;color:var(--muted)}
 .er select.e-proc,.er .e-cust{border:1px solid var(--line);border-radius:10px;padding:8px 6px;font:inherit;font-size:13px;background:#fff;min-width:0}
 .er .e-cust.c-weruva{background:#ecfdf5;border-color:#6ee7b7;color:#065f46;font-weight:700}
 .er .e-cust.c-smucker{background:#fff1f2;border-color:#fda4af;color:#9f1239;font-weight:700}
@@ -1502,6 +1508,7 @@ body.no-comments .igc,body.no-comments .cmb,body.no-comments #cmOpen,body.no-ret
   <div class="sheet edit" role="dialog" aria-modal="true">
     <div class="top"><div class="t"><small>ผู้ดูแลระบบ</small><h2>แก้ไขหัวข้อ Checklist</h2></div><button class="x" id="editClose" aria-label="ปิด">×</button></div>
     <p class="note" style="margin:0 0 12px">แก้ชื่อ/ลำดับ/เพิ่ม/ลบ รายการได้ · รายการที่ลบจะไม่แสดงในฟอร์ม แต่ข้อมูลย้อนหลังยังอยู่ · มีสำรองไฟล์เดิมให้อัตโนมัติ</p>
+    <div class="edtools" id="edTools"></div>
     <div id="editZones"></div>
     <button type="button" class="btn ghost addpage" id="addZone">＋ เพิ่มพื้นที่</button>
     <div class="editbar"><button class="btn ghost" id="editCancel" type="button">ยกเลิก</button><button class="btn" id="editSave" type="button">บันทึกการแก้ไข</button></div>
@@ -3078,13 +3085,32 @@ function closeEditor(){ $("#editBg").classList.remove("on"); document.body.style
 $("#editClose").onclick = closeEditor; $("#editCancel").onclick = closeEditor;
 const EYE_ON = `<svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const EYE_OFF = `<svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
+/* ตัวช่วยหาหัวข้อ: กรอง Process Control / GMP · เลือกพื้นที่ · ค้นหา · เรียงพื้นที่ (เฉพาะการแสดง ไม่เปลี่ยนลำดับที่บันทึก) */
+const ED = { deck: store.get("pc_eddeck", "all"), zone: "all", q: "", sort: store.get("pc_edsort", "orig") };
+const edNorm = t => String(t || "").toLowerCase().replace(/\s+/g, " ").trim();
+function edTools(){
+  const decks = [["all", "ทั้งหมด"], ["pc", "Process Control"], ["gmp", "GMP"]].concat(editZones.some(z => z.deck === "retort") ? [["retort", "Retort (เก่า)"]] : []);
+  const cnt = d => editZones.filter(z => d === "all" || (z.deck || "pc") === d).reduce((a, z) => a + z.items.filter(it => !it.extra).length, 0);
+  const zs = editZones.map((z, zi) => ({z, zi})).filter(({z}) => ED.deck === "all" || (z.deck || "pc") === ED.deck);
+  const og = d => { const L = zs.filter(({z}) => (z.deck || "pc") === d); return L.length ? `<optgroup label="${deckName(d)}">${L.map(({z, zi}) => `<option value="${zi}" ${String(ED.zone) === String(zi) ? "selected" : ""}>${esc(z.name || "(ยังไม่ตั้งชื่อ)")} · ${z.items.filter(it => !it.extra).length} หัวข้อ</option>`).join("")}</optgroup>` : ""; };
+  $("#edTools").innerHTML = `<div class="edt-r"><div class="seg sm" id="edDeck">${decks.map(([k, l]) => `<button type="button" data-ed="${k}" class="${ED.deck === k ? "on" : ""}">${l} <b>${cnt(k)}</b></button>`).join("")}</div>
+      <select id="edZone" aria-label="เลือกพื้นที่"><option value="all">ทุกพื้นที่ (${zs.length})</option>${["pc", "gmp", "retort"].map(og).join("")}</select>
+      <select id="edSort" aria-label="เรียงพื้นที่"><option value="orig" ${ED.sort === "orig" ? "selected" : ""}>เรียงพื้นที่: ลำดับเดิม</option><option value="name" ${ED.sort === "name" ? "selected" : ""}>เรียงพื้นที่: ชื่อ ก → ฮ</option><option value="count" ${ED.sort === "count" ? "selected" : ""}>เรียงพื้นที่: หัวข้อมาก → น้อย</option></select></div>
+    <div class="edt-r"><input type="search" id="edQ" value="${esc(ED.q)}" placeholder="ค้นหาหัวข้อ / เลขลำดับ / กระบวนการ" autocomplete="off"><span class="edt-n" id="edN"></span></div>`;
+}
+function edGrow(t){ t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; }
 function renderEditor(){
+  edTools();
+  const q = edNorm(ED.q), hitIt = it => !q || edNorm(`${it.no} ${it.name} ${it.proc || ""} ${custText(it)}`).includes(q);
+  let shownN = 0;
   const block = (z, zi) => {
     const rows = z.items.map((it, ii) => {
+      if(q && !hitIt(it) && !edNorm(z.name).includes(q)) return "";
+      if(!it.extra) shownN++;
       const movable = !it.extra;
       return `<div class="er ${it.extra?"extra":""} ${it.paused?"paused":""}" data-z="${zi}" data-i="${ii}">
         <input type="text" class="e-no" value="${esc(it.no)}" ${it.extra?"disabled":""} placeholder="ลำดับ">
-        <input type="text" class="e-name" value="${esc(it.name)}" placeholder="ชื่อรายการตรวจ">
+        <textarea class="e-name" rows="1" placeholder="ชื่อรายการตรวจ">${esc(it.name)}</textarea>
         ${it.extra ? `<span></span>` : `<select class="e-proc" title="อยู่ในกระบวนการไหน"><option value="">— กระบวนการ —</option>${(CFG.process_tags||[]).map(t=>`<option ${t===it.proc?"selected":""}>${esc(t)}</option>`).join("")}</select>`}
         ${it.extra ? `<span></span>` : `<button type="button" class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน · แตะเพื่อติ๊กเลือก"><span>${esc(custText(it) || "ไม่มีลูกค้า")}</span><i>▾</i></button>`}
         <div class="acts">${movable?`<button type="button" class="hidet ${it.paused?"on":""}" title="${it.paused?"ซ่อนอยู่ · แตะเพื่อแสดงในฟอร์มอีกครั้ง":"ซ่อนหัวข้อนี้ (ไม่แสดงในฟอร์มและ Dashboard · ข้อมูลเก่ายังอยู่)"}">${it.paused?EYE_OFF:EYE_ON}</button>`:""}${movable?`<button type="button" class="pilt ${it.pilot?"on":""}" title="★ หัวข้อใหม่/ทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน % (กดอีกครั้งเพื่อเริ่มนับ)">★</button>`:""}${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
@@ -3101,10 +3127,22 @@ function renderEditor(){
       ${rows}<button type="button" class="additem">＋ เพิ่มรายการ</button></div>`;
   };
   const sect = (deck, title) => `<div class="ed-grp"><span>${title}</span><span class="ed-bulk">ลูกค้าทุกหัวข้อ: <button type="button" data-bulk="${deck}" data-v="">ไม่มีลูกค้า</button><button type="button" data-bulk="${deck}" data-v="${BOTH}">${BOTH_CUST}</button><button type="button" data-bulk="${deck}" data-v="Weruva,Smucker,MARS">Weruva, Smucker, MARS</button></span><span class="ed-bulk"><button type="button" data-psort="${deck}" title="${esc((CFG.process_tags || []).join(" → "))}">เรียงตามกระบวนการ</button></span></div>` +
-    editZones.map((z, zi) => ((z.deck || "pc") === deck ? block(z, zi) : "")).join("") +
+    editZones.map((z, zi) => ({z, zi})).filter(({z, zi}) => (z.deck || "pc") === deck && (ED.zone === "all" || String(ED.zone) === String(zi)) && (!q || edNorm(z.name).includes(q) || z.items.some(hitIt)))
+      .sort((a, b) => ED.sort === "name" ? String(a.z.name).localeCompare(String(b.z.name), "th", {numeric: true}) : ED.sort === "count" ? b.z.items.length - a.z.items.length : a.zi - b.zi)
+      .map(({z, zi}) => block(z, zi)).join("") +
     `<button type="button" class="btn ghost addpage addzone" data-deck="${deck}">＋ เพิ่มพื้นที่${deck==="pc"?"":" " + deckName(deck)}</button>`;
-  $("#editZones").innerHTML = sect("pc", "Process Control") + sect("gmp", "GMP") + (editZones.some(z => z.deck === "retort") ? sect("retort", "Retort Analysis (แบบเก่า)") : "");
+  const show = d => ED.deck === "all" || ED.deck === d;
+  $("#editZones").innerHTML = (show("pc") ? sect("pc", "Process Control") : "") + (show("gmp") ? sect("gmp", "GMP") : "") + (show("retort") && editZones.some(z => z.deck === "retort") ? sect("retort", "Retort Analysis (แบบเก่า)") : "");
+  $("#editZones").querySelectorAll("textarea.e-name").forEach(edGrow);
+  $("#edN").textContent = q || ED.zone !== "all" ? `แสดง ${shownN} หัวข้อ` : "";
 }
+$("#edTools").addEventListener("click", e => { const b = e.target.closest("[data-ed]"); if(!b) return; ED.deck = b.dataset.ed; ED.zone = "all"; store.set("pc_eddeck", ED.deck); renderEditor(); $("#editBg .sheet").scrollTop = 0; });
+$("#edTools").addEventListener("change", e => {
+  if(e.target.id === "edZone"){ ED.zone = e.target.value; renderEditor(); $("#editBg .sheet").scrollTop = 0; }
+  if(e.target.id === "edSort"){ ED.sort = e.target.value; store.set("pc_edsort", ED.sort); renderEditor(); }
+});
+$("#edTools").addEventListener("input", e => { if(e.target.id !== "edQ") return; ED.q = e.target.value; clearTimeout(ED.t);
+  ED.t = setTimeout(() => { renderEditor(); const i = $("#edQ"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 250); });
 $("#editZones").addEventListener("input", e => {
   const ez = e.target.closest(".ez"); if(!ez) return; const z = editZones[+ez.dataset.z];
   if(e.target.classList.contains("e-zname")) z.name = e.target.value;
@@ -3115,7 +3153,7 @@ $("#editZones").addEventListener("input", e => {
     else if(e.target.classList.contains("e-proc")) it.proc = e.target.value;
     else if(e.target.classList.contains("e-rooms")) it.qty = {...it.qty, rooms: e.target.value.split(/[,，]/).map(x => x.trim()).filter(Boolean)};
     else if(e.target.classList.contains("e-unit")) it.qty = {...it.qty, unit: e.target.value.trim() || "คัน"};
-    else it.name = e.target.value; }
+    else { if(e.target.tagName === "TEXTAREA"){ if(/\n/.test(e.target.value)) e.target.value = e.target.value.replace(/\n+/g, " "); edGrow(e.target); } it.name = e.target.value; } }
 });
 // ช่องลูกค้า: ติ๊กเลือกได้หลายลูกค้า (แบบตัวกรองใน Excel)
 const CUST_DOT = {Weruva: "#10b981", Smucker: "#f43f5e", MARS: "#8b5cf6"};
