@@ -1673,7 +1673,7 @@ details.irc>summary{list-style:none;cursor:pointer;margin:0}details.irc>summary:
 .pdc{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;background:#fff;border:1px solid var(--line);border-left:5px solid var(--amber);border-radius:16px}
 .pdc-no{flex:0 0 150px;display:flex;flex-direction:column;gap:2px}.pdc-no small{font-size:11.5px;color:var(--mute)}.pdc-no b{font-size:17px;font-weight:800;color:var(--navy);word-break:break-word}.pdc-no span{font-size:12.5px;color:var(--mute)}
 .pdc-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.pdc-b>b{font-size:15.5px;color:var(--navy)}.pdc-b small{color:var(--mute);font-size:12.5px}.pdc-b p{margin:2px 0;color:#334155;font-size:14px;white-space:pre-wrap}
-.pdc-b .dec b{color:#334155}.pdc-a{display:flex;flex-direction:column;gap:6px}.pdc-a .ghost{border:1px solid var(--line);background:#fff}
+.pdc-b .dec b{color:#334155}.pdc-cause{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.pdc-a{display:flex;flex-direction:column;gap:6px}.pdc-a .ghost{border:1px solid var(--line);background:#fff}
 @media(max-width:700px){.pdv-kpi{grid-template-columns:repeat(2,1fr)}.pdc{flex-wrap:wrap}.pdc-no{flex:1 1 100%;flex-direction:row;align-items:baseline;gap:8px}.pdc-a{flex-direction:row;width:100%}}
 .pdv-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.pdv-head>div{flex:1;min-width:220px}
 .pdv-new{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--navy);border:0;border-radius:14px;padding:12px 18px;font-weight:800;font-size:15px;cursor:pointer}.pdv-new svg.i{width:18px;height:18px}
@@ -3080,8 +3080,17 @@ function printHTML(html) {
 const PD_PARAMS = ["Process Temperature ( TID/ MIG) ( °C)", "Recorded Process Temperature ( °C)", "Process time ( minutes )", "IT. of product ( °C)", "Venting / Come up time ( minutes )", "Flow rate ( l/sec.)", "Minimum moisture (%)"];
 const PD_FORM_NO = "F3QCRE18-3-20/11/26";  // แบบฟอร์มแก้ไขครั้งที่ 3 (เริ่มใช้ 20/11/26)
 const PD_CO = "i-Tail Corporation Public Company Limited", PD_TITLE = "PROCESS DEVIATION REPORT";
+/* Data Sheet ตาม IR: ช่องที่ดึงมาจาก IR และยังไม่ได้แก้เองใน Data Sheet → ใช้ค่าล่าสุดของ IR เสมอ (แก้ IR แล้วตามไปด้วย)
+   ช่องที่แก้เองใน Data Sheet → คงค่าที่แก้ไว้ · _auto = ลายนิ้วมือของค่าจาก IR ตอนบันทึก Data Sheet ครั้งล่าสุด */
+const pdHash = t => { let h = 5381; t = String(t ?? ""); for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+function pdAutoOf(sh) { try { return JSON.parse(sh._auto || "null"); } catch { return null; } }
 function pdSheetOf(g) {
-  const x = g[0], v = x.values || {}, sh = Object.assign({}, x.pdSheet || {});
+  const x = g[0], sh = Object.assign({}, x.pdSheet || {}), dflt = pdDefaults(g), auto = pdAutoOf(sh);
+  for (const k in dflt) if (sh[k] == null || sh[k] === "" || (auto && auto[k] && auto[k] === pdHash(sh[k]))) sh[k] = dflt[k];
+  return sh;
+}
+function pdDefaults(g) {
+  const x = g[0], v = x.values || {};
   const pr = x.programDoc ? progByKey(x.programDoc + "#" + x.program) : null, cook = pr && pr.steps.find(s => s[0] === "cook");
   const dflt = {
     no: v.ir_pdno || "", prod: v.ir_pdate || x.date || "", dev: v.ir_pddate || x.date || "", plant: x.plant || "", shift: v.ir_pshift || x.shift || "",
@@ -3089,8 +3098,7 @@ function pdSheetOf(g) {
     rtype: "", rno: [...new Set(g.flatMap(y => irRowsOf(y).map(r => String(r.b || "").trim())).filter(Boolean))].join(", ") || x.retort || "", step: "",
     p0o: cook ? cook[1] : "", photo_rep: v.ir_pdrep || "", photo_graph: v.ir_pdgraph || "", rep_by: v.ir_pdby || x.by || "", cause: v.ir_pdnote || [causeText(x), x.detail].filter(Boolean).join(" · "), action: v.ir_decision || x.action || ""
   };
-  for (const k in dflt) if (sh[k] == null || sh[k] === "") sh[k] = dflt[k];
-  return sh;
+  return dflt;
 }
 const PD_SIGS = [["ddm", "QC DDM/DM"], ["pa", "Process authority"], ["coo", "COO./Sr. QA Department Manager"]];
 const pdSigned = sh => PD_SIGS.filter(([k]) => (sh[k + "_sig"] || "").trim()).length;
@@ -3198,8 +3206,8 @@ function openPDSheet(g) {
       for (const [i, y] of g.entries()) {
         const z = JSON.parse(JSON.stringify(y)); z.values = Object.assign({}, z.values, { ir_pd: "Y", ir_pdno: o.no.slice(0, 200), ir_pddate: o.dev, ir_pdrep: o.photo_rep || "", ir_pdgraph: o.photo_graph || "" });
         if (!z.values.ir_pdrep) delete z.values.ir_pdrep; if (!z.values.ir_pdgraph) delete z.values.ir_pdgraph;
-        if (!z.values.ir_pdnote && o.cause) z.values.ir_pdnote = o.cause.slice(0, 200);
-        if (i === 0) z.pdSheet = Object.assign({}, o, { _at: String(Date.now()), _by: S.user || "" });
+        if (i === 0) { const df = pdDefaults(g), au = {}; for (const k in df) if (df[k] !== "" && o[k] === df[k]) au[k] = pdHash(df[k]);  // ช่องที่ยังเป็นค่าจาก IR
+          z.pdSheet = Object.assign({}, o, { _at: String(Date.now()), _by: S.user || "", _auto: JSON.stringify(au) }); }
         ok = (await saveItem(z)) && ok;
       }
       e.target.disabled = false; if (!ok) return;
@@ -3287,7 +3295,7 @@ function viewPD() {
     return `<div class="pdc"><div class="pdc-no"><small>เลขที่</small><b>${esc(v.ir_pdno || "—")}</b><span>ออก ${esc(dmy(v.ir_pddate || x.date))}</span></div>
       <div class="pdc-b"><b>${v.ir_irno ? `<span class="kb ir">IR</span>${esc(v.ir_irno)} · ` : ""}${esc(names)}</b>
         <small>${esc([`${x.plant || ""} ${x.retort || ""}`.trim(), `${dmy(x.date)} ${x.time || ""} กะ ${x.shift || ""}`, x.code ? x.code + (v.ir_market || "") : "", x.by].filter(Boolean).join(" · "))}</small>
-        ${v.ir_pdnote ? `<p>${esc(v.ir_pdnote)}</p>` : ""}${v.ir_decision ? `<small class="dec"><b>การตัดสินใจ:</b> ${esc(v.ir_decision)}</small>` : ""}
+        ${(t => t ? `<p class="pdc-cause">${esc(t)}</p>` : "")(pdSheetOf(g).cause)}${v.ir_decision ? `<small class="dec"><b>การตัดสินใจ:</b> ${esc(v.ir_decision)}</small>` : ""}
         <span class="irl-tags">${x.pdSheet ? `<span class="tag pdok">Data Sheet · ลงนาม ${pdSigned(x.pdSheet)}/3</span>${(() => { const sh = x.pdSheet, n = phList(sh.photos).length + phList(sh.photo_rep).length + phList(sh.photo_graph).length, miss = [!sh.photo_rep && "รายงาน", !sh.photo_graph && "กราฟ"].filter(Boolean);
           return (n ? `<span class="tag">รูป ${n}</span>` : "") + (miss.length ? `<span class="tag pdno">ยังไม่แนบรูป${miss.join(" / ")}</span>` : ""); })()}` : `<span class="tag pdno">ยังไม่กรอก Data Sheet</span>`}${apprTag(x)}${x.impact === "hold" ? `<span class="tag hold">${esc(holdTxt(x))}</span>` : ""}</span></div>
       <div class="pdc-a"><button class="pri sm" data-pdsheet="${esc(x.id)}">${I("doc")}Data Sheet</button>${x.pdSheet ? `<button class="ghost sm" data-pdprint="${esc(x.id)}">${I("printer")}พิมพ์</button>` : ""}<button class="ghost sm" data-pdview="${esc(x.id)}">${I("list")}รายละเอียด</button><button class="ghost sm" data-pdedit="${esc(x.id)}">${I("pen")}แก้ไข</button></div></div>`; };
