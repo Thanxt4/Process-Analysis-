@@ -4004,7 +4004,7 @@ function irCopyDlg(list) {
       <div class="seg"><button data-ca="1" class="${st.all ? "on" : ""}">ทุกช่องตามแบบฟอร์ม</button><button data-ca="0" class="${st.all ? "" : "on"}">เลือกช่องเอง</button></div>
       ${st.all ? "" : `<div class="irk-grid">${IR_COLS.map(([k, l, col]) => `<label><input type="checkbox" data-ck="${k}" ${st.keys.includes(k) ? "checked" : ""}><span>${esc(l)} <small>${col}</small></span></label>`).join("")}</div>
         <div class="row" style="gap:6px;margin-top:6px"><button class="ghost sm" data-cset="all">เลือกทั้งหมด</button><button class="ghost sm" data-cset="none">ล้าง</button></div>`}
-      ${st.fmt === "excel" && st.all ? `<span class="lab" style="margin-top:14px">จะวางในไฟล์ไหน?</span>
+      ${st.fmt === "excel" && st.all ? `<span class="lab" style="margin-top:14px">จะวางในไฟล์ไหน? <small style="font-weight:500;color:var(--mute)">· แบบคอลัมน์ฉบับ 23/11/26 · วางที่คอลัมน์ D</small></span>
       <div class="laysel">${["PF1", "PF2"].map(v => `<button data-clay="${v}" class="${irLay(st.lay, list[0]) === v ? "on" : ""}"><b>${esc(IR_LAYOUTS[v].name)}</b><small>${esc(IR_LAYOUTS[v].note)}</small></button>`).join("")}</div>
       <small class="hint">เลือกให้ตรงกับ<b>ชีทที่จะวาง</b> · แต่ละชีทมีคอลัมน์ว่างไม่เหมือนกัน · ค่าเริ่มต้น: PF2 = ชีท IR Retort · PF1 = ไม่มีคอลัมน์ว่าง</small>` : ""}
       ${st.fmt === "excel" ? `<label class="irl-ck" style="margin-top:10px"><input type="checkbox" id="cHead" ${st.head ? "checked" : ""}><span>ใส่หัวคอลัมน์บรรทัดแรก</span></label>
