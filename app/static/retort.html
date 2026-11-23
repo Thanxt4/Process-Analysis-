@@ -3750,13 +3750,18 @@ const irDMY = s => { if (!s) return ""; const [y, m, d] = s.split("-"); return `
 // แบบฟอร์มไฟล์ IR: PF1 = D–AM · PF2 (ชีท IR Retort) มีคอลัมน์ว่างเพิ่ม 2 ช่อง: T (หลัง ปัญหา) และ AF (หลัง วันปิด IR) → D–AO
 // แบบฟอร์มตามชีทที่จะวาง: แต่ละชีทในไฟล์ IR มีคอลัมน์ว่างไม่เหมือนกัน
 const IR_LAYOUTS = {
-  PF2: { gaps: ["problem", "closeDate"], end: "AO", name: "ไฟล์ PF2 · ชีท IR Retort", note: "เว้นคอลัมน์ T และ AF" },
+  // PF2 (หัวตารางล่าสุด): … จำนวน (NRFT) · ปัญหา · Column2 (ว่าง) · ไลน์ · รายละเอียดของปัญหา … วันปิด IR · Column1 (ว่าง) · การตัดสินใจดำเนินการ2 …
+  PF2: { gaps: ["problem", "closeDate"], end: "AO", name: "ไฟล์ PF2 · ชีท IR Retort", note: "ปัญหา → ว่าง → ไลน์ · เว้นคอลัมน์ S และ AF",
+    order: ["nrft", "doc", "market", "irNo", "plant", "prodDate", "prodShift", "repDate", "repShift", "checkpoint", "productCode", "shotCode", "qtyHold", "qtyNrft", "problem", "line"] },
   PF1: { gaps: [], end: "AM", name: "ไฟล์ PF1 / ชีทอื่น (เช่น บรรจุ PF2)", note: "ไม่มีคอลัมน์ว่าง · D–AM" },
   STORE: { gaps: ["cause"], end: "AN", name: "ชีท IR STORE", note: "เว้นคอลัมน์ V" } };
+// ลำดับคอลัมน์ของแต่ละไฟล์ (PF2 สลับ ไลน์ ไปไว้หลัง ปัญหา + คอลัมน์ว่าง) · ช่องที่ไม่ได้ระบุใน order เรียงต่อตามแบบฟอร์มเดิม
+const irColsOf = lay => { const o = (IR_LAYOUTS[lay] || {}).order; if (!o) return IR_COLS;
+  const head = o.map(k => IR_COLS.find(c => c[0] === k)).filter(Boolean); return head.concat(IR_COLS.filter(c => !o.includes(c[0]))); };
 const irLay = (lay, x) => IR_LAYOUTS[lay] ? lay : (x && x.plant === "PF2" ? "PF2" : "PF1");
 // เรียงช่องตามแบบฟอร์ม (ทุกช่อง = ใส่คอลัมน์ว่างตามแบบฟอร์มของไฟล์ · เลือกช่องเอง = เรียงต่อกันไม่เว้น)
 function irCells(keys, lay, fn) {
-  const out = []; (keys ? IR_COLS.filter(c => keys.includes(c[0])) : IR_COLS).forEach(c => { out.push(fn(c)); if (!keys && IR_LAYOUTS[lay].gaps.includes(c[0])) out.push(""); });
+  const C = irColsOf(lay), out = []; (keys ? C.filter(c => keys.includes(c[0])) : C).forEach(c => { out.push(fn(c)); if (!keys && IR_LAYOUTS[lay].gaps.includes(c[0])) out.push(""); });
   return out;
 }
 function irRow(x, keys, lay) {
@@ -3978,7 +3983,7 @@ function irShow(x) {
 // ตรวจก่อนวาง: แต่ละค่าจะลงคอลัมน์ไหนของไฟล์ (ตามแบบฟอร์ม PF1 / PF2)
 const colName = n => { let s = ""; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
 function irColPreview(x, lay) {
-  const cells = []; IR_COLS.forEach(([k, l]) => { cells.push([l, String(x[k] ?? "")]); if (IR_LAYOUTS[lay].gaps.includes(k)) cells.push(["(คอลัมน์ว่างในชีทนี้)", ""]); });
+  const cells = []; irColsOf(lay).forEach(([k, l]) => { cells.push([l, String(x[k] ?? "")]); if (IR_LAYOUTS[lay].gaps.includes(k)) cells.push(["(คอลัมน์ว่างในชีทนี้)", ""]); });
   return `<span class="lab" style="margin-top:14px">ตรวจคอลัมน์ก่อนวาง · ${esc(IR_LAYOUTS[lay].name)}</span>
     <div class="irk-cols">${cells.map(([l, v], i) => `<div class="${v ? "" : "e"} ${l.startsWith("(") ? "gap" : ""}"><b>${colName(i + 4)}</b><span>${esc(l)}</span><em>${esc(v.replace(/\n/g, " ↵ ").slice(0, 40)) || "–"}</em></div>`).join("")}</div>`;
 }
