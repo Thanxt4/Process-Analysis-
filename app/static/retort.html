@@ -1729,6 +1729,14 @@ table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w
 .ps-sigbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-radius:12px;border:1.5px solid var(--navy);background:#fff;color:var(--navy);font-weight:700;font-size:13.5px;white-space:nowrap;cursor:pointer;min-height:40px}.ps-sigbtn:hover{background:#f1f5f9}.ps-sigbtn svg.i{width:16px;height:16px}
 .ps-sigimg{position:relative;align-self:flex-start}.ps-sigimg:empty{display:none}.ps-sigimg img{display:block;max-height:70px;max-width:260px;margin-top:6px;padding:4px 8px;background:#fff;border:1px dashed var(--line);border-radius:10px}
 .ps-sigimg button{position:absolute;top:0;right:-10px;width:24px;height:24px;min-height:0;padding:0;border-radius:50%;border:0;background:rgba(15,23,42,.7);color:#fff;display:grid;place-items:center;cursor:pointer}.ps-sigimg button svg.i{width:13px;height:13px}
+.ps-slots{padding:10px 0 0}.ps-slh{display:flex;align-items:center;gap:6px;font-weight:800;color:var(--navy);font-size:14px;margin-bottom:8px;flex-wrap:wrap}.ps-slh svg.i{width:16px;height:16px}.ps-slh small{font-weight:500;color:var(--mute);font-size:12px}
+.ps-slg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ps-slot{border:1.5px dashed #cbd5e1;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#f8fafc}.ps-slot.has{border-style:solid;border-color:#bbf7d0;background:#f0fdf4}
+.ps-slt{display:flex;align-items:center;gap:8px}.ps-slt em{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800}.ps-slt b{color:var(--navy)}
+.ps-slt span{margin-left:auto;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:3px}.ps-slt .ok{color:#15803d}.ps-slt .no{color:#b45309}.ps-slt svg.i{width:14px;height:14px}
+.ps-slb img{display:block;width:100%;max-height:180px;object-fit:contain;border-radius:10px;background:#fff;cursor:zoom-in}.ps-sle{height:110px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--mute);font-size:13px}
+.ps-sla{display:flex;gap:6px;flex-wrap:wrap}.ps-sla label.ghost{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer}.ps-sla .ghost{border:1px solid var(--line);background:#fff}.ps-sla svg.i{width:15px;height:15px}
+.ps-slp{display:flex;gap:6px;flex-wrap:wrap}.ps-slp img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid transparent;cursor:pointer}.ps-slp img:hover{border-color:var(--amber)}
+@media(max-width:700px){.ps-slg{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3089,10 +3097,12 @@ function openPDSheet(g) {
     <input type="hidden" data-ps="${k}_img" value="${esc(sh[k + "_img"] || "")}"><div class="ps-sigimg" data-sigimg="${k}"></div></div>`;
   modal(`<div class="ps">
     <div class="ps-top"><div><small>${PD_FORM_NO}</small><b>${PD_TITLE}</b><span>${PD_CO}</span></div>
-      <label class="ps-att">${I("camera")}แนบรูป<em id="psPhN"></em><input type="file" id="psPhIn" accept="image/*" multiple hidden></label>
+      <label class="ps-att">${I("camera")}รูปอื่น ๆ<em id="psPhN"></em><input type="file" id="psPhIn" accept="image/*" multiple hidden></label>
       <button class="ghost sm" data-close>${I("x")}</button></div>
-    <div class="ps-photos" id="psPh"></div>
+
     <div class="ps-body">
+      <div class="ps-slots" id="psSlots"></div>
+      <div class="ps-photos" id="psPh"></div>
       <section class="ps-sec c1"><h4><i>1</i>ข้อมูลทั่วไป <small>General</small></h4>
         <div class="ps-g">${row("Deviation Number", "no", "text", "เช่น PD-PF2-001")}${row("Production Date", "prod", "date")}${row("Deviation Date", "dev", "date")}
         ${row("Plant", "plant")}${row("Shift", "shift")}${row("Product Name", "product")}${row("Code", "code")}${row("Packaging size", "pack")}
@@ -3117,6 +3127,30 @@ function openPDSheet(g) {
     box.querySelectorAll("textarea[data-ps]").forEach(t => { grow(t); t.addEventListener("input", () => grow(t)); });
     // รูปแนบ (เก็บชื่อไฟล์ใน pdSheet.photos คั่นด้วย ,) · อัปโหลดแบบเดียวกับรูปปัญหา (ประทับเวลา)
     let ph = String(sh.photos || "").split(",").filter(Boolean), up = 0; const PH_MAX = 12;
+    const upload = async fl => { const pt = await photoTime(fl, false), blob = await stampPhoto(fl, pt.at), fd = new FormData(); fd.append("file", blob, "photo.jpg");
+      const r = await fetch("/api/retort/photo", { method: "POST", body: fd });
+      if (r.status === 401) { showLock(true); throw new Error("ต้องเข้าสู่ระบบใหม่"); }
+      if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m; } catch {} throw new Error(m); }
+      return (await r.json()).file; };
+    // รูปที่ต้องแนบเมื่อออก Process Deviation (ตามลำดับ): 1 รูปรายงาน · 2 รูปกราฟ
+    const SLOTS = [["photo_rep", "รูปรายงาน"], ["photo_graph", "รูปกราฟ"]], slot = { photo_rep: sh.photo_rep || "", photo_graph: sh.photo_graph || "" }, busy = {}, pick = {};
+    const irPh = [...new Set(g.flatMap(y => y.photos || []))];
+    const drawSlots = () => { box.querySelector("#psSlots").innerHTML = `<div class="ps-slh">${I("image")}รูปที่ต้องแนบเมื่อออก Process Deviation <small>เรียงตามลำดับ · พิมพ์ออกมาตามลำดับนี้</small></div><div class="ps-slg">` +
+      SLOTS.map(([k, l], i) => { const fn = slot[k];
+        return `<div class="ps-slot ${fn ? "has" : ""}"><div class="ps-slt"><em>${i + 1}</em><b>${l}</b>${fn ? `<span class="ok">${I("check")}แนบแล้ว</span>` : `<span class="no">ยังไม่แนบ</span>`}</div>
+          <div class="ps-slb">${busy[k] ? `<div class="ps-sle"><span class="ai-dots"><i></i><i></i><i></i></span>กำลังอัปโหลด…</div>` : fn ? `<img src="${photoUrl(fn)}?w=1" data-full="${esc(fn)}" alt="${l}">` : `<div class="ps-sle">${I("camera")}ยังไม่มีรูป</div>`}</div>
+          <div class="ps-sla"><label class="ghost sm">${I("camera")}${fn ? "เปลี่ยนรูป" : "ถ่าย / เลือกรูป"}<input type="file" accept="image/*" data-slotfile="${k}" hidden></label>
+            ${irPh.length ? `<button type="button" class="ghost sm" data-slotir="${k}">${I("image")}จากรูป IR</button>` : ""}${fn ? `<button type="button" class="ghost sm danger" data-slotdel="${k}">${I("x")}เอาออก</button>` : ""}</div>
+          ${pick[k] ? `<div class="ps-slp">${irPh.map(p => `<img src="${photoUrl(p)}?w=1" data-slotpick="${k}|${esc(p)}" alt="">`).join("")}</div>` : ""}</div>`; }).join("") + `</div>`; };
+    drawSlots();
+    box.querySelector("#psSlots").addEventListener("click", e => {
+      const im = e.target.closest("img[data-full]"); if (im) { window.open(photoUrl(im.dataset.full), "_blank"); return; }
+      const pk = e.target.closest("[data-slotpick]"); if (pk) { const [k, p] = pk.dataset.slotpick.split("|"); slot[k] = p; pick[k] = false; drawSlots(); return; }
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.slotir) { pick[b.dataset.slotir] = !pick[b.dataset.slotir]; drawSlots(); }
+      else if (b.dataset.slotdel) { slot[b.dataset.slotdel] = ""; drawSlots(); } });
+    box.querySelector("#psSlots").addEventListener("change", async e => { const k = e.target.dataset.slotfile, fl = e.target.files && e.target.files[0]; if (!k || !fl) return; e.target.value = "";
+      busy[k] = true; drawSlots(); try { slot[k] = await upload(fl); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); } busy[k] = false; drawSlots(); });
     const drawPh = () => { box.querySelector("#psPhN").textContent = ph.length ? ` (${ph.length})` : "";
       box.querySelector("#psPh").innerHTML = ph.map(fn => `<div class="pp"><img src="${photoUrl(fn)}?w=1" data-full="${esc(fn)}" alt="" loading="lazy"><button type="button" data-phdel="${esc(fn)}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")
         + (up ? `<div class="pp ld"><span class="ai-dots"><i></i><i></i><i></i></span>กำลังอัปโหลด ${up} รูป…</div>` : ""); };
@@ -3126,11 +3160,7 @@ function openPDSheet(g) {
     box.querySelector("#psPhIn").onchange = async e => { const files = [...e.target.files]; e.target.value = "";
       for (const fl of files) { if (ph.length >= PH_MAX) { toast(`แนบรูปได้สูงสุด ${PH_MAX} รูป`); break; }
         up++; drawPh();
-        try { const pt = await photoTime(fl, false), blob = await stampPhoto(fl, pt.at), fd = new FormData(); fd.append("file", blob, "photo.jpg");
-          const r = await fetch("/api/retort/photo", { method: "POST", body: fd });
-          if (r.status === 401) { showLock(true); up--; break; }
-          if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m; } catch {} throw new Error(m); }
-          ph.push((await r.json()).file); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); }
+        try { ph.push(await upload(fl)); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); }
         up--; drawPh(); } };
     // ลายเซ็นในช่องลงนาม
     const sigShow = k => { const fn = box.querySelector(`[data-ps="${k}_img"]`).value, el = box.querySelector(`[data-sigimg="${k}"]`);
@@ -3151,11 +3181,13 @@ function openPDSheet(g) {
         sigShow(k); toast("แนบลายเซ็นแล้ว · กด บันทึก Data Sheet เพื่อยืนยัน"); }
       catch (err) { toast("แนบลายเซ็นไม่สำเร็จ: " + err.message); }
       b.disabled = false; });
-    const read = () => { const o = {}; box.querySelectorAll("[data-ps]").forEach(e => o[e.dataset.ps] = e.value.trim()); o.photos = ph.join(","); return o; };
+    const read = () => { const o = {}; box.querySelectorAll("[data-ps]").forEach(e => o[e.dataset.ps] = e.value.trim()); o.photos = ph.join(","); o.photo_rep = slot.photo_rep; o.photo_graph = slot.photo_graph; return o; };
     box.querySelector("#psPrint").onclick = () => printPDSheet(read());
     box.querySelector("#psSave").onclick = async e => {
       const o = read(); if (!o.no) { toast("กรุณากรอก Deviation Number"); box.querySelector('[data-ps="no"]').focus(); return; }
-      if (up) { toast("รออัปโหลดรูปให้เสร็จก่อน"); return; }
+      if (up || busy.photo_rep || busy.photo_graph) { toast("รออัปโหลดรูปให้เสร็จก่อน"); return; }
+      const miss = SLOTS.filter(([k]) => !o[k]).map(([, l]) => l);
+      if (miss.length && !confirm(`ยังไม่ได้แนบ ${miss.join(" และ ")}\nเมื่อออก Process Deviation ควรแนบรูปรายงานและรูปกราฟ · บันทึกไปก่อนไหม?`)) { box.querySelector("#psSlots").scrollIntoView({ block: "nearest" }); return; }
       e.target.disabled = true; let ok = true;
       for (const [i, y] of g.entries()) {
         const z = JSON.parse(JSON.stringify(y)); z.values = Object.assign({}, z.values, { ir_pd: "Y", ir_pdno: o.no.slice(0, 200), ir_pddate: o.dev });
@@ -3208,8 +3240,8 @@ function printPDSheet(o) {
     <table class="dc"><tr><td>ผู้จัดทำ: (รัฐจินันท์ คงรินทร์)</td><td colspan="2" class="c">หมายเลขเอกสาร: F3QCRE18</td></tr>
       <tr><td>ผู้อนุมัติ: (ปิยวัจน์ รักช่วย)</td><td>แก้ไขครั้งที่: 3</td><td>หน้าที่ 1/1</td></tr>
       <tr><td>วันที่อนุมัติ: 17/11/26</td><td colspan="2">วันที่เริ่มใช้: 20/11/26</td></tr></table></div>
-    ${(() => { const P = String(o.photos || "").split(",").filter(Boolean); return P.length ? `<div class="pg"><div class="fn">${PD_FORM_NO}</div><div class="bd">ภาพประกอบ / Attached photos · ${v("no")}</div>
-      <div class="ph">${P.map((fn, i) => `<figure><img src="${photoUrl(fn)}" alt=""><figcaption>รูปที่ ${i + 1}</figcaption></figure>`).join("")}</div></div>` : ""; })()}
+    ${(() => { const P = [[o.photo_rep, "รูปรายงาน"], [o.photo_graph, "รูปกราฟ"], ...String(o.photos || "").split(",").filter(Boolean).map(f => [f, ""])].filter(([f]) => f); return P.length ? `<div class="pg"><div class="fn">${PD_FORM_NO}</div><div class="bd">ภาพประกอบ / Attached photos · ${v("no")}</div>
+      <div class="ph">${P.map(([fn, l], i) => `<figure><img src="${photoUrl(fn)}" alt=""><figcaption>รูปที่ ${i + 1}${l ? ` · ${l}` : ""}</figcaption></figure>`).join("")}</div></div>` : ""; })()}
     <script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`;
   printHTML(html);
 }
@@ -3248,7 +3280,8 @@ function viewPD() {
       <div class="pdc-b"><b>${v.ir_irno ? `<span class="kb ir">IR</span>${esc(v.ir_irno)} · ` : ""}${esc(names)}</b>
         <small>${esc([`${x.plant || ""} ${x.retort || ""}`.trim(), `${dmy(x.date)} ${x.time || ""} กะ ${x.shift || ""}`, x.code ? x.code + (v.ir_market || "") : "", x.by].filter(Boolean).join(" · "))}</small>
         ${v.ir_pdnote ? `<p>${esc(v.ir_pdnote)}</p>` : ""}${v.ir_decision ? `<small class="dec"><b>การตัดสินใจ:</b> ${esc(v.ir_decision)}</small>` : ""}
-        <span class="irl-tags">${x.pdSheet ? `<span class="tag pdok">Data Sheet · ลงนาม ${pdSigned(x.pdSheet)}/3</span>${x.pdSheet.photos ? `<span class="tag">รูป ${String(x.pdSheet.photos).split(",").filter(Boolean).length}</span>` : ""}` : `<span class="tag pdno">ยังไม่กรอก Data Sheet</span>`}${apprTag(x)}${x.impact === "hold" ? `<span class="tag hold">${esc(holdTxt(x))}</span>` : ""}</span></div>
+        <span class="irl-tags">${x.pdSheet ? `<span class="tag pdok">Data Sheet · ลงนาม ${pdSigned(x.pdSheet)}/3</span>${(() => { const sh = x.pdSheet, n = String(sh.photos || "").split(",").filter(Boolean).length + (sh.photo_rep ? 1 : 0) + (sh.photo_graph ? 1 : 0), miss = [!sh.photo_rep && "รายงาน", !sh.photo_graph && "กราฟ"].filter(Boolean);
+          return (n ? `<span class="tag">รูป ${n}</span>` : "") + (miss.length ? `<span class="tag pdno">ยังไม่แนบรูป${miss.join(" / ")}</span>` : ""); })()}` : `<span class="tag pdno">ยังไม่กรอก Data Sheet</span>`}${apprTag(x)}${x.impact === "hold" ? `<span class="tag hold">${esc(holdTxt(x))}</span>` : ""}</span></div>
       <div class="pdc-a"><button class="pri sm" data-pdsheet="${esc(x.id)}">${I("doc")}Data Sheet</button>${x.pdSheet ? `<button class="ghost sm" data-pdprint="${esc(x.id)}">${I("printer")}พิมพ์</button>` : ""}<button class="ghost sm" data-pdview="${esc(x.id)}">${I("list")}รายละเอียด</button><button class="ghost sm" data-pdedit="${esc(x.id)}">${I("pen")}แก้ไข</button></div></div>`; };
   $("#main").innerHTML = `<div class="pdv">
     <div class="pdv-head"><div><b>Process Deviation</b><span>กรอก Process Deviation Report (F3QCRE18 แก้ไขครั้งที่ 3) · พิมพ์ตามแบบฟอร์มได้</span></div><button class="pdv-new" data-pdnew="1">${I("plus")}ออก Process Deviation</button></div>
