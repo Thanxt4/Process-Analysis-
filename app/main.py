@@ -2510,7 +2510,9 @@ def _clean_rp(d: dict) -> dict:
         raise HTTPException(400, "กรุณาเลือกหัวข้อปัญหา")
     vals = d.get("values") if isinstance(d.get("values"), dict) else {}
     # ค่าที่วัดของหัวข้อปัญหา + ช่องรายละเอียดที่ผู้ดูแลเพิ่มเอง (key ขึ้นต้น x_)
-    out["values"] = {str(k)[:40]: str(v)[:200] for k, v in list(vals.items())[:40]}
+    # รูปแนบ Process Deviation (รายงาน / กราฟ) เก็บหลายรูปคั่นด้วย , → ยาวได้มากกว่าช่องอื่น
+    _long = ("ir_pdrep", "ir_pdgraph")
+    out["values"] = {str(k)[:40]: str(v)[:2000 if str(k) in _long else 200] for k, v in list(vals.items())[:40]}
     # Process Deviation Data Sheet (แบบฟอร์ม F3QCRE18) — เก็บแยกจาก values เพราะช่องเยอะและข้อความยาว
     if isinstance(d.get("pdSheet"), dict):
         out["pdSheet"] = {str(k)[:30]: str(v)[:2000] for k, v in list(d["pdSheet"].items())[:80]}
