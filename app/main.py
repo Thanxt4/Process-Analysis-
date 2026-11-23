@@ -2694,6 +2694,27 @@ def api_retort_sign_get(fn: str, request: Request):
     return FileResponse(RT_SIG_DIR / fn, media_type="image/png", headers={"Cache-Control": "private, max-age=31536000, immutable"})
 
 
+@app.post("/api/retort/photo/{fn}/rotate")
+async def api_retort_photo_rotate(fn: str, request: Request):
+    """หมุนรูป 90° · ได้ไฟล์ใหม่ (รูปเดิมไม่เปลี่ยน ใช้ที่อื่นอยู่ได้ และไม่ติดแคช)"""
+    _rt_auth(request)
+    if not _RT_PHOTO_RE.match(fn) or not (RT_PHOTO_DIR / fn).exists():
+        raise HTTPException(404, "ไม่พบรูป")
+    d = await request.json()
+    deg = int(d.get("deg") or 90)
+    if deg not in (90, -90, 180):
+        raise HTTPException(400, "องศาไม่ถูกต้อง")
+    new = f"{now().strftime('%Y%m%d')}_{secrets.token_hex(8)}.jpg"
+
+    def work():
+        with Image.open(RT_PHOTO_DIR / fn) as im:
+            im = ImageOps.exif_transpose(im).convert("RGB")
+            im = im.rotate(-deg, expand=True)  # deg บวก = หมุนตามเข็มนาฬิกา
+            im.save(RT_PHOTO_DIR / new, "JPEG", quality=90, optimize=True)
+    await run_in_threadpool(work)
+    return {"ok": True, "file": new}
+
+
 @app.get("/api/retort/photo/{fn}")
 def api_retort_photo_get(fn: str, request: Request, w: int = 0):
     _rt_auth(request)

@@ -1742,6 +1742,8 @@ table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w
 .ps-slx img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block}.ps-slx i{position:absolute;left:4px;bottom:4px;font-style:normal;font-size:11px;font-weight:800;background:rgba(15,23,42,.75);color:#fff;border-radius:6px;padding:0 6px}
 .ps-slx button{position:absolute;top:4px;right:4px;width:22px;height:22px;min-height:0;padding:0;border-radius:50%;border:0;background:rgba(15,23,42,.7);color:#fff;display:grid;place-items:center;cursor:pointer}.ps-slx button svg.i{width:12px;height:12px}
 .ps-slx.ld{display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;color:var(--mute)}.ps-slp img.on{border-color:#16a34a;box-shadow:0 0 0 2px #bbf7d0}.ps-slp small{width:100%;font-size:12px;color:var(--mute)}
+.ps-slx button.rot,.ps-photos .pp button.rot{top:auto;bottom:4px;right:4px;font-size:15px;font-weight:800;line-height:1;width:26px;height:26px;background:rgba(15,23,42,.78)}.ps-slx button.rot:hover,.ps-photos .pp button.rot:hover{background:var(--amber);color:#1b2a41}
+.ps-slx button.rot:disabled,.ps-photos .pp button.rot:disabled{opacity:.5;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3148,15 +3150,18 @@ function openPDSheet(g) {
       const pk = e.target.closest("[data-slpick]"); if (pk) { const [k, p] = pk.dataset.slpick.split("|"); slot[k] = slot[k].includes(p) ? slot[k].filter(x => x !== p) : slot[k].concat(p); drawSlots(); return; }
       const b = e.target.closest("button"); if (!b) return;
       if (b.dataset.slir) { pick[b.dataset.slir] = !pick[b.dataset.slir]; drawSlots(); }
-      else if (b.dataset.sldel) { const [k, j] = b.dataset.sldel.split("|"); slot[k].splice(+j, 1); drawSlots(); } });
+      else if (b.dataset.sldel) { const [k, j] = b.dataset.sldel.split("|"); slot[k].splice(+j, 1); drawSlots(); }
+      else if (b.dataset.slrot) { const [k, j] = b.dataset.slrot.split("|"); b.disabled = true;
+        rtRotate(slot[k][+j]).then(nf => { slot[k][+j] = nf; drawSlots(); }).catch(err => { b.disabled = false; toast("หมุนรูปไม่สำเร็จ: " + err.message); }); } });
     box.querySelector("#psSlots").addEventListener("change", async e => { const k = e.target.dataset.slfile, files = [...(e.target.files || [])]; if (!k || !files.length) return; e.target.value = "";
       busy[k] = (busy[k] || 0) + files.length; drawSlots();
       for (const fl of files) { try { slot[k] = slot[k].concat(await upload(fl)); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); } busy[k]--; drawSlots(); } });
     const drawPh = () => { box.querySelector("#psPhN").textContent = ph.length ? ` (${ph.length})` : "";
-      box.querySelector("#psPh").innerHTML = ph.map(fn => `<div class="pp"><img src="${photoUrl(fn)}?w=1" data-full="${esc(fn)}" alt="" loading="lazy"><button type="button" data-phdel="${esc(fn)}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")
+      box.querySelector("#psPh").innerHTML = ph.map(fn => `<div class="pp"><img src="${photoUrl(fn)}?w=1" data-full="${esc(fn)}" alt="" loading="lazy"><button type="button" data-phdel="${esc(fn)}" aria-label="ลบรูป">${I("x")}</button><button type="button" class="rot" data-phrot="${esc(fn)}" title="หมุนรูป 90°" aria-label="หมุนรูป">↻</button></div>`).join("")
         + (up ? `<div class="pp ld"><span class="ai-dots"><i></i><i></i><i></i></span>กำลังอัปโหลด ${up} รูป…</div>` : ""); };
     drawPh();
     box.querySelector("#psPh").onclick = e => { const d = e.target.closest("[data-phdel]"); if (d) { ph = ph.filter(x => x !== d.dataset.phdel); drawPh(); return; }
+      const r = e.target.closest("[data-phrot]"); if (r) { r.disabled = true; rtRotate(r.dataset.phrot).then(nf => { ph = ph.map(x => x === r.dataset.phrot ? nf : x); drawPh(); }).catch(err => { r.disabled = false; toast("หมุนรูปไม่สำเร็จ: " + err.message); }); return; }
       const im = e.target.closest("img[data-full]"); if (im) window.open(photoUrl(im.dataset.full), "_blank"); };
     box.querySelector("#psPhIn").onchange = async e => { const files = [...e.target.files]; e.target.value = "";
       for (const fl of files) { if (ph.length >= PH_MAX) { toast(`แนบรูปได้สูงสุด ${PH_MAX} รูป`); break; }
@@ -4064,11 +4069,13 @@ function pdBlock(d) { const on = pv(d, "pd") === "Y";
       </div>${pdSlotsHtml(d)}` : ""}`; }
 /* แนบรูปตอนออก Process Deviation (ตามลำดับ): 1 รูปรายงาน · 2 รูปกราฟ · เก็บใน values (ir_pdrep / ir_pdgraph) แล้วไปขึ้นใน Data Sheet ให้เอง */
 const PD_SLOTS = [["ir_pdrep", "รูปรายงาน"], ["ir_pdgraph", "รูปกราฟ"]];
+// หมุนรูป 90° ตามเข็มนาฬิกา → ได้ไฟล์ใหม่ (รูปเดิมยังอยู่)
+const rtRotate = async fn => (await jpost(`/api/retort/photo/${encodeURIComponent(fn)}/rotate`, { deg: 90 })).file;
 const phList = v => String(v || "").split(",").map(x => x.trim()).filter(Boolean);
 // กล่องรูปตามลำดับ (แต่ละช่องใส่ได้หลายรูป) · pre = คำนำหน้า data-* ของหน้านั้น
 function slotBoxHtml(pre, k, l, i, list, irPh, busyN, picking) {
   return `<div class="ps-slot ${list.length ? "has" : ""}"><div class="ps-slt"><em>${i + 1}</em><b>${l}</b>${list.length ? `<span class="ok">${I("check")}${list.length} รูป</span>` : `<span class="no">ยังไม่แนบ</span>`}</div>
-    <div class="ps-slb">${list.length || busyN ? `<div class="ps-slm">${list.map((fn, j) => `<div class="ps-slx"><img src="${photoUrl(fn)}?w=1" data-${pre}view="${esc(fn)}" alt="${l} ${j + 1}"><i>${j + 1}</i><button type="button" data-${pre}del="${k}|${j}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}${busyN ? `<div class="ps-slx ld"><span class="ai-dots"><i></i><i></i><i></i></span>${busyN} รูป</div>` : ""}</div>`
+    <div class="ps-slb">${list.length || busyN ? `<div class="ps-slm">${list.map((fn, j) => `<div class="ps-slx"><img src="${photoUrl(fn)}?w=1" data-${pre}view="${esc(fn)}" alt="${l} ${j + 1}"><i>${j + 1}</i><button type="button" data-${pre}del="${k}|${j}" aria-label="ลบรูป">${I("x")}</button><button type="button" class="rot" data-${pre}rot="${k}|${j}" title="หมุนรูป 90° ตามเข็มนาฬิกา" aria-label="หมุนรูป">↻</button></div>`).join("")}${busyN ? `<div class="ps-slx ld"><span class="ai-dots"><i></i><i></i><i></i></span>${busyN} รูป</div>` : ""}</div>`
       : `<div class="ps-sle">${I("camera")}ยังไม่มีรูป</div>`}</div>
     <div class="ps-sla"><label class="ghost sm">${I("camera")}${list.length ? "เพิ่มรูป" : "ถ่าย / เลือกรูป"}<input type="file" accept="image/*" multiple data-${pre}file="${k}" hidden></label>
       ${irPh.length ? `<button type="button" class="ghost sm" data-${pre}ir="${k}">${I("image")}จากรูปที่แนบ</button>` : ""}</div>
@@ -4183,6 +4190,9 @@ function pirOnClick(d, b) {
   if (ds.pcpick) { d.values.ir_pcode = ds.pcpick; const pc = document.querySelector('[data-v="ir_pcode"]'); if (pc) pc.value = ds.pcpick; const h = $("#pCodeHint"); if (h) h.innerHTML = pirHint(d); return true; }
   if (ds.pdslotview) { window.open(photoUrl(ds.pdslotview), "_blank"); return true; }
   if (ds.pdslotir) { d._pdpick = d._pdpick || {}; d._pdpick[ds.pdslotir] = !d._pdpick[ds.pdslotir]; pdSlotRedraw(d); return true; }
+  if (ds.pdslotrot) { const [k, j] = ds.pdslotrot.split("|"); b.disabled = true;
+    rtRotate(phList(d.values[k])[+j]).then(nf => { const L = phList(d.values[k]); L[+j] = nf; d.values[k] = L.join(","); pdSlotRedraw(d); }).catch(err => { b.disabled = false; toast("หมุนรูปไม่สำเร็จ: " + err.message); });
+    return true; }
   if (ds.pdslotdel) { const [k, j] = ds.pdslotdel.split("|"); const L = phList(d.values[k]); L.splice(+j, 1); if (L.length) d.values[k] = L.join(","); else delete d.values[k]; pdSlotRedraw(d); return true; }
   if (ds.ppd) { d.values.ir_pd = ds.ppd; if (ds.ppd === "Y" && !d.values.ir_pddate) d.values.ir_pddate = d.date || todayISO(); if (ds.ppd === "N") ["ir_pdno", "ir_pddate", "ir_pdnote"].forEach(k => delete d.values[k]);
     const box = $("#pdBox"); if (box) box.innerHTML = pdBlock(d); return true; }
