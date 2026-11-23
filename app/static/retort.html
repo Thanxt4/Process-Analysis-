@@ -1729,6 +1729,7 @@ table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w
 .ps-sigbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-radius:12px;border:1.5px solid var(--navy);background:#fff;color:var(--navy);font-weight:700;font-size:13.5px;white-space:nowrap;cursor:pointer;min-height:40px}.ps-sigbtn:hover{background:#f1f5f9}.ps-sigbtn svg.i{width:16px;height:16px}
 .ps-sigimg{position:relative;align-self:flex-start}.ps-sigimg:empty{display:none}.ps-sigimg img{display:block;max-height:70px;max-width:260px;margin-top:6px;padding:4px 8px;background:#fff;border:1px dashed var(--line);border-radius:10px}
 .ps-sigimg button{position:absolute;top:0;right:-10px;width:24px;height:24px;min-height:0;padding:0;border-radius:50%;border:0;background:rgba(15,23,42,.7);color:#fff;display:grid;place-items:center;cursor:pointer}.ps-sigimg button svg.i{width:13px;height:13px}
+.pd-slots{grid-column:1/-1;margin-top:10px}.pd-slots .ps-slg{margin-top:6px}
 .ps-slots{padding:10px 0 0}.ps-slh{display:flex;align-items:center;gap:6px;font-weight:800;color:var(--navy);font-size:14px;margin-bottom:8px;flex-wrap:wrap}.ps-slh svg.i{width:16px;height:16px}.ps-slh small{font-weight:500;color:var(--mute);font-size:12px}
 .ps-slg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ps-slot{border:1.5px dashed #cbd5e1;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#f8fafc}.ps-slot.has{border-style:solid;border-color:#bbf7d0;background:#f0fdf4}
 .ps-slt{display:flex;align-items:center;gap:8px}.ps-slt em{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800}.ps-slt b{color:var(--navy)}
@@ -3080,7 +3081,7 @@ function pdSheetOf(g) {
     no: v.ir_pdno || "", prod: v.ir_pdate || x.date || "", dev: v.ir_pddate || x.date || "", plant: x.plant || "", shift: v.ir_pshift || x.shift || "",
     product: x.product || "", code: v.ir_pcode || (x.code ? x.code + (v.ir_market || "") : ""), pack: "", qty: v.ir_qnrft || x.holdQty || "", unit: x.holdUnit || "", ref: x.code || "",
     rtype: "", rno: [...new Set(g.flatMap(y => irRowsOf(y).map(r => String(r.b || "").trim())).filter(Boolean))].join(", ") || x.retort || "", step: "",
-    p0o: cook ? cook[1] : "", rep_by: v.ir_pdby || x.by || "", cause: v.ir_pdnote || [causeText(x), x.detail].filter(Boolean).join(" · "), action: v.ir_decision || x.action || ""
+    p0o: cook ? cook[1] : "", photo_rep: v.ir_pdrep || "", photo_graph: v.ir_pdgraph || "", rep_by: v.ir_pdby || x.by || "", cause: v.ir_pdnote || [causeText(x), x.detail].filter(Boolean).join(" · "), action: v.ir_decision || x.action || ""
   };
   for (const k in dflt) if (sh[k] == null || sh[k] === "") sh[k] = dflt[k];
   return sh;
@@ -3190,7 +3191,8 @@ function openPDSheet(g) {
       if (miss.length && !confirm(`ยังไม่ได้แนบ ${miss.join(" และ ")}\nเมื่อออก Process Deviation ควรแนบรูปรายงานและรูปกราฟ · บันทึกไปก่อนไหม?`)) { box.querySelector("#psSlots").scrollIntoView({ block: "nearest" }); return; }
       e.target.disabled = true; let ok = true;
       for (const [i, y] of g.entries()) {
-        const z = JSON.parse(JSON.stringify(y)); z.values = Object.assign({}, z.values, { ir_pd: "Y", ir_pdno: o.no.slice(0, 200), ir_pddate: o.dev });
+        const z = JSON.parse(JSON.stringify(y)); z.values = Object.assign({}, z.values, { ir_pd: "Y", ir_pdno: o.no.slice(0, 200), ir_pddate: o.dev, ir_pdrep: o.photo_rep || "", ir_pdgraph: o.photo_graph || "" });
+        if (!z.values.ir_pdrep) delete z.values.ir_pdrep; if (!z.values.ir_pdgraph) delete z.values.ir_pdgraph;
         if (!z.values.ir_pdnote && o.cause) z.values.ir_pdnote = o.cause.slice(0, 200);
         if (i === 0) z.pdSheet = Object.assign({}, o, { _at: String(Date.now()), _by: S.user || "" });
         ok = (await saveItem(z)) && ok;
@@ -4054,7 +4056,37 @@ function pdBlock(d) { const on = pv(d, "pd") === "Y";
     <div class="seg pdseg"><button type="button" data-ppd="N" class="${on ? "" : "on"}">ไม่ออก</button><button type="button" data-ppd="Y" class="${on ? "on pdon" : ""}">${I("alert")}ออก Process Deviation</button></div>
     ${on ? `<div class="pdfields"><label class="f"><span class="lab">เลขที่ Process Deviation</span><input data-v="ir_pdno" value="${esc(pv(d, "pdno"))}" placeholder="เช่น PD-PF2-001" maxlength="40" autocomplete="off"></label>
       <label class="f"><span class="lab">วันที่ออก</span><input type="date" data-v="ir_pddate" value="${esc(pv(d, "pddate") || d.date || todayISO())}"></label>
-      </div>` : ""}`; }
+      </div>${pdSlotsHtml(d)}` : ""}`; }
+/* แนบรูปตอนออก Process Deviation (ตามลำดับ): 1 รูปรายงาน · 2 รูปกราฟ · เก็บใน values (ir_pdrep / ir_pdgraph) แล้วไปขึ้นใน Data Sheet ให้เอง */
+const PD_SLOTS = [["ir_pdrep", "รูปรายงาน"], ["ir_pdgraph", "รูปกราฟ"]];
+async function rtUploadPhoto(fl) {
+  const pt = await photoTime(fl, false), blob = await stampPhoto(fl, pt.at), fd = new FormData(); fd.append("file", blob, "photo.jpg");
+  const r = await fetch("/api/retort/photo", { method: "POST", body: fd });
+  if (r.status === 401) { showLock(true); throw new Error("ต้องเข้าสู่ระบบใหม่"); }
+  if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m; } catch {} throw new Error(m); }
+  return (await r.json()).file;
+}
+function pdSlotsHtml(d) {
+  const v = d.values || {}, irPh = d.photos || [], busy = d._pdbusy || {}, pick = d._pdpick || {};
+  return `<div class="pd-slots"><span class="lab">แนบรูป (ตามลำดับ)</span><div class="ps-slg">` + PD_SLOTS.map(([k, l], i) => { const fn = v[k];
+    return `<div class="ps-slot ${fn ? "has" : ""}"><div class="ps-slt"><em>${i + 1}</em><b>${l}</b>${fn ? `<span class="ok">${I("check")}แนบแล้ว</span>` : `<span class="no">ยังไม่แนบ</span>`}</div>
+      <div class="ps-slb">${busy[k] ? `<div class="ps-sle"><span class="ai-dots"><i></i><i></i><i></i></span>กำลังอัปโหลด…</div>` : fn ? `<img src="${photoUrl(fn)}?w=1" data-pdslotview="${esc(fn)}" alt="${l}">` : `<div class="ps-sle">${I("camera")}ยังไม่มีรูป</div>`}</div>
+      <div class="ps-sla"><label class="ghost sm">${I("camera")}${fn ? "เปลี่ยนรูป" : "ถ่าย / เลือกรูป"}<input type="file" accept="image/*" data-pdslotfile="${k}" hidden></label>
+        ${irPh.length ? `<button type="button" class="ghost sm" data-pdslotir="${k}">${I("image")}จากรูปที่แนบ</button>` : ""}${fn ? `<button type="button" class="ghost sm danger" data-pdslotdel="${k}">${I("x")}เอาออก</button>` : ""}</div>
+      ${pick[k] ? `<div class="ps-slp">${irPh.map(p => `<img src="${photoUrl(p)}?w=1" data-pdslotpick="${k}|${esc(p)}" alt="">`).join("")}</div>` : ""}</div>`; }).join("") + `</div></div>`;
+}
+document.addEventListener("click", e => {  // รูปในช่องแนบ (ไม่ใช่ปุ่ม): ดูรูปใหญ่ / เลือกจากรูปที่แนบ
+  const v = e.target.closest("img[data-pdslotview]"); if (v) { window.open(photoUrl(v.dataset.pdslotview), "_blank"); return; }
+  const p = e.target.closest("img[data-pdslotpick]"), d = S.draft; if (!p || !d) return;
+  const [k, f] = p.dataset.pdslotpick.split("|"); d.values = d.values || {}; d.values[k] = f; (d._pdpick || {})[k] = false; pdSlotRedraw(d);
+});
+const pdSlotRedraw = d => { const box = $("#pdBox"); if (box) box.innerHTML = pdBlock(d); };
+document.addEventListener("change", async e => {
+  const k = e.target.dataset && e.target.dataset.pdslotfile, fl = e.target.files && e.target.files[0], d = S.draft; if (!k || !fl || !d) return; e.target.value = "";
+  d.values = d.values || {}; d._pdbusy = d._pdbusy || {}; d._pdbusy[k] = true; pdSlotRedraw(d);
+  try { d.values[k] = await rtUploadPhoto(fl); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); }
+  d._pdbusy[k] = false; pdSlotRedraw(d);
+});
 function pirCard(d, many, fields) {
   if (!IR.codes && !PIR.loading) { PIR.loading = true; irLoad().then(() => { PIR.loading = false; if (S.view === "log" && S.step === 5) { const y = scrollY; viewLog(); scrollTo(0, y); } }); }
   const mk = irMarkets(d.code), inp = (k, lab, attrs = "", wide = "") => `<label class="f ${wide}"><span class="lab">${lab}</span><input data-v="ir_${k}" value="${esc(pv(d, k))}" ${attrs} autocomplete="off"></label>`;
@@ -4136,6 +4168,10 @@ function pirOnClick(d, b) {
     return true; }
   if (ds.pkind) { const first = !d.kind; d.kind = ds.pkind; const y = window.scrollY; viewLog(); window.scrollTo(0, first ? 0 : y); return true; }
   if (ds.pcpick) { d.values.ir_pcode = ds.pcpick; const pc = document.querySelector('[data-v="ir_pcode"]'); if (pc) pc.value = ds.pcpick; const h = $("#pCodeHint"); if (h) h.innerHTML = pirHint(d); return true; }
+  if (ds.pdslotview) { window.open(photoUrl(ds.pdslotview), "_blank"); return true; }
+  if (ds.pdslotir) { d._pdpick = d._pdpick || {}; d._pdpick[ds.pdslotir] = !d._pdpick[ds.pdslotir]; pdSlotRedraw(d); return true; }
+  if (ds.pdslotpick) { const [k, p] = ds.pdslotpick.split("|"); d.values[k] = p; (d._pdpick || {})[k] = false; pdSlotRedraw(d); return true; }
+  if (ds.pdslotdel) { delete d.values[ds.pdslotdel]; pdSlotRedraw(d); return true; }
   if (ds.ppd) { d.values.ir_pd = ds.ppd; if (ds.ppd === "Y" && !d.values.ir_pddate) d.values.ir_pddate = d.date || todayISO(); if (ds.ppd === "N") ["ir_pdno", "ir_pddate", "ir_pdnote"].forEach(k => delete d.values[k]);
     const box = $("#pdBox"); if (box) box.innerHTML = pdBlock(d); return true; }
   if (ds.pnrft) { d.values.ir_nrft = ds.pnrft; b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); return true; }
