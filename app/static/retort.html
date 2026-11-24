@@ -1730,6 +1730,7 @@ table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w
 .ps-sigimg{position:relative;align-self:flex-start}.ps-sigimg:empty{display:none}.ps-sigimg img{display:block;max-height:70px;max-width:260px;margin-top:6px;padding:4px 8px;background:#fff;border:1px dashed var(--line);border-radius:10px}
 .ps-sigimg button{position:absolute;top:0;right:-10px;width:24px;height:24px;min-height:0;padding:0;border-radius:50%;border:0;background:rgba(15,23,42,.7);color:#fff;display:grid;place-items:center;cursor:pointer}.ps-sigimg button svg.i{width:13px;height:13px}
 .pd-slots{grid-column:1/-1;margin-top:10px}.pd-slots .ps-slg{margin-top:6px}
+.photoin{margin-bottom:6px}.photoin .phbtns{margin-top:4px}
 .ps-slots{padding:10px 0 0}.ps-slh{display:flex;align-items:center;gap:6px;font-weight:800;color:var(--navy);font-size:14px;margin-bottom:8px;flex-wrap:wrap}.ps-slh svg.i{width:16px;height:16px}.ps-slh small{font-weight:500;color:var(--mute);font-size:12px}
 .ps-slg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ps-slot{border:1.5px dashed #cbd5e1;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#f8fafc}.ps-slot.has{border-style:solid;border-color:#bbf7d0;background:#f0fdf4}
 .ps-slt{display:flex;align-items:center;gap:8px}.ps-slt em{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800}.ps-slt b{color:var(--navy)}
@@ -2593,16 +2594,8 @@ function viewLog() {
         return `<button class="big cat ${si >= 0 ? "on" : ""} ${multi ? "multi" : ""}" data-cat="${c.id}" data-s="${esc((i + 1) + " " + c.name + " " + (c.causes || []).join(" ") + " " + G.name).toLowerCase()}" data-n="${esc(c.name.toLowerCase())}" style="--gc:${G.color}"><span class="gic">${I(G.icon)}</span><span class="nm"><span class="cn"><em>${i + 1}</em>${esc(c.name)}</span><small>${nc ? esc(c.causes.join(" · ")) : esc(G.name)}</small></span>${wk[c.id] ? `<span class="wk" title="หม้อนี้ 7 วันล่าสุด">${wk[c.id]}</span>` : ""}${multi ? `<span class="ck">${si >= 0 ? si + 1 : ""}</span>` : I("right")}</button>`; }).join("")}</div>
       ${cats.length ? "" : `<p class="sub">ยังไม่มีหัวข้อ เพิ่มได้ที่ช่องค้นหาด้านบน</p>`}
       ${multi ? `<button class="pri blk savebig catnext" id="catNext" ${d.cats.length ? "" : "disabled"}>${catNextLabel(d)}</button>` : ""}`);
-  } else if (S.step === 4) {
-    h += catHead(d, `id="catChange"`) + `<h2 class="q">ถ่ายรูปปัญหา <span class="sub" style="font-weight:400">${d.photos.length ? `${d.photos.length} รูป` : "รูปจะมีเวลาประทับอัตโนมัติ"}</span></h2>
-      <div class="card">
-        ${photoPicker(d)}
-        ${(() => { const pts = d.photos.map(f => (d.ptimes || {})[f]).filter(Boolean); if (!pts.length) return "";
-          const t0 = Math.min(...pts), at = new Date(t0), hm = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
-          if (Math.abs(at - realTs(d.date, d.time)) <= 10 * 60e3) return "";
-          return `<div class="ptime">${I("clock")}<div>รูปถ่ายเมื่อ <b>${dmy(bizISO(at))} ${hm} น.</b> (กะ ${shiftOf(hm)}) · เวลาที่บันทึกไว้ ${dmy(d.date)} ${esc(d.time)} น.</div><button class="soft sm" id="usePt" data-t="${t0}">ใช้เวลาจากรูป</button></div>`; })()}
-      </div>
-      <button class="pri blk savebig" id="photoOk">${d.photos.length ? "ถัดไป" : "ถัดไป (ไม่ถ่ายรูป)"}${I("right")}</button>`;
+  } else if (S.step === 4) {  // หน้าถ่ายรูปแยก (เดิม) → ย้ายไปอยู่ในการ์ดรายละเอียดของขั้นที่ 5 แล้ว
+    S.step = 5; return viewLog();
   } else {
     const progs = progsFor(d.retort); const sel = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null;
     const cs = d.cats.map(catById).filter(Boolean), many = cs.length > 1;
@@ -2611,9 +2604,9 @@ function viewLog() {
     const fields = []; cs.forEach(c => (c.fields || []).forEach(fl => { if (!fields.some(x => x.key === fl.key)) fields.push(fl); }));
     if (editing && !d.kind) d.kind = kindOf(d);
     const photoCard = `<div class="card photocard">${sec("camera", "รูปถ่ายปัญหา", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · รูปจะมีเวลาประทับอัตโนมัติ (ไม่บังคับ)")}${photoPicker(d)}</div>`;
-    h += catHead(d, `data-step="4"`) + (!d.kind ? kindPick() + photoCard : `${photoCard}
+    h += catHead(d, `data-step="4"`) + (!d.kind ? kindPick() : `
       ${kindSeg(d)}
-      ${d.kind === "gen" ? genCard(d, many) : U.form.more ? pirCard(d, many, fields) : ""}
+      ${d.kind === "gen" ? genCard(d, many) : U.form.more ? pirCard(d, many, fields) : photoCard}
       ${!editing ? "" : cs.map((c, ci) => { const G = grpOf(c), pc = d.pc[c.id] || { cause: "", action: "" };
         return `<div class="card formcard pcard ${many ? "many" : ""}" data-cid="${c.id}" style="--gc:${G.color}">
         ${many ? `<div class="pchead"><span class="gic">${I(G.icon)}</span><div><small>ปัญหาที่ ${ci + 1} / ${cs.length}</small><b>${esc(c.name)}</b></div></div>` : ""}
@@ -2863,6 +2856,13 @@ function openDetailEditor(after) {
       } };
   }, "fsheet");
 }
+// รูปถ่ายปัญหา ในการ์ดรายละเอียด (ปัญหาทั่วไป / ออก IR) · เวลาในรูปต่างจากเวลาที่บันทึก → เสนอให้ใช้เวลาถ่ายจริง
+function photoIn(d) {
+  const pts = d.photos.map(f => (d.ptimes || {})[f]).filter(Boolean); let hint = "";
+  if (pts.length) { const t0 = Math.min(...pts), at = new Date(t0), hm = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
+    if (Math.abs(at - realTs(d.date, d.time)) > 10 * 60e3) hint = `<div class="ptime">${I("clock")}<div>รูปถ่ายเมื่อ <b>${dmy(bizISO(at))} ${hm} น.</b> (กะ ${shiftOf(hm)}) · เวลาที่บันทึกไว้ ${dmy(d.date)} ${esc(d.time)} น.</div><button class="soft sm" id="usePt" data-t="${t0}">ใช้เวลาถ่ายรูป</button></div>`; }
+  return `<div class="f full photoin"><span class="lab">รูปถ่ายปัญหา <small class="sub" style="font-weight:500">${d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบได้` : "ไม่บังคับ · มีเวลาประทับอัตโนมัติ"}</small></span>${photoPicker(d)}${hint}</div>`;
+}
 function photoPicker(d) {
   const full = d.photos.length >= U.form.maxPhotos;
   return `<div class="phbtns">
@@ -2949,7 +2949,7 @@ function wireLog() {
       if (b.classList.contains("multi")) { setCats(d, d.cats.includes(ds.cat) ? d.cats.filter(x => x !== ds.cat) : [...d.cats, ds.cat]); refreshPick(); }  // เลือก/เอาออก (หลายปัญหา)
       else { if (d.category !== ds.cat) { setCats(d, [ds.cat]); d.pc = { [ds.cat]: { cause: "", action: d.pc?.[d.category]?.action || "" } }; } S.catPick = false; go(4); }  // แก้ไขรายการเดิม: เลือกได้ 1 ปัญหา
     }
-    else if (b.id === "catNext") { if (!d.cats.length) return; S.catPick = false; go(4); }
+    else if (b.id === "catNext") { if (!d.cats.length) return; S.catPick = false; go(5); }
     else if (b.id === "catChange") { S.catPick = true; go(4); }
     else if (ds.step) { if (+ds.step === 4) S.catPick = true; go(+ds.step); }
     else if (b.id === "nowBtn") { const n = nowHM(); d.date = todayISO(); d.time = n; m.querySelector('[data-k=date]').value = d.date; m.querySelector('[data-k=time]').value = n; setTime(); }
@@ -4177,6 +4177,7 @@ function pirCard(d, many, fields) {
   const mk = irMarkets(d.code), inp = (k, lab, attrs = "", wide = "") => `<label class="f ${wide}"><span class="lab">${lab}</span><input data-v="ir_${k}" value="${esc(pv(d, k))}" ${attrs} autocomplete="off"></label>`;
   const custom = detailFields().filter(x => !x.hide && !x.builtin);
   return `<div class="card detcard pircard">${sec("list", "รายละเอียด (แบบ IR)", (many ? "ใช้ร่วมกันทุกปัญหา · " : "") + "คัดลอกเป็นแบบฟอร์ม IR ได้หลังบันทึก")}<div class="grid">
+    ${photoIn(d)}
     <div class="f"><span class="lab">NRFT?</span><div class="seg">${["N", "Y"].map(v => `<button type="button" data-pnrft="${v}" class="${(pv(d, "nrft") || "N") === v ? "on" : ""}">${v}</button>`).join("")}</div></div>
     <label class="f"><span class="lab">รหัสเอกสาร</span><input data-k="code" value="${esc(d.code || "")}" list="irDocs" placeholder="เช่น M022" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase"></label>
     <label class="f"><span class="lab">ตลาด</span><input data-v="ir_market" value="${esc(pv(d, "market"))}" list="pMk" placeholder="${mk.length ? "เช่น " + esc(mk.join(", ")) : "เช่น P, N, E"}" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase"></label>
@@ -4235,6 +4236,7 @@ function genCard(d, many) {
   const cs = (d.cats || []).map(catById).filter(Boolean), pc = (d.pc || {})[d.cats[0]] || { cause: "", action: "" };
   const sug = [...new Set([...cs.flatMap(c => c.causes || []), UNKNOWN])];
   return `<div class="card detcard gencard">${sec("list", "รายละเอียดปัญหา", many ? "ใช้ร่วมกันทุกปัญหาที่เลือก" : "แจ้งปัญหาทั่วไป")}<div class="grid">
+    ${photoIn(d)}
     <div class="f full"><span class="lab">ไลน์</span>${pirLineField(d)}</div>
     ${detailInput(detailFields().find(x => x.key === "duration") || DEFAULT_DETAILS[1], d)}
     ${S.editingId ? "" : `<label class="f full"><span class="lab">สาเหตุ</span><input class="pCause" value="${esc(pc.cause)}" list="pcsAll" placeholder="กรอกสาเหตุ หรือเลือกจากรายการ" autocomplete="off"></label>
