@@ -175,6 +175,63 @@ def item_active(it, rd: str, checked: bool) -> bool:
     return True
 
 
+def item_off_reason(it, rd: str) -> str:
+    """หัวข้อที่หน้าแก้ไขแสดงอยู่ แต่ไม่ขึ้นในฟอร์มรอบ rd เพราะอะไร (ว่าง = แสดงปกติ)"""
+    if item_active(it, rd, False):
+        return ""
+    a, r = it.get("added"), it.get("removed")
+    if any(rd >= f and (not t or rd <= t) for f, t in (it.get("offs") or [])):
+        return "อยู่ในช่วงซ่อนหัวข้อ" + ("" if it.get("paused") else " (ค้างจากการซ่อนครั้งก่อน)")
+    if a and rd < a:
+        return f"วันที่เพิ่มหัวข้อ ({a}) อยู่หลังวันนี้"
+    if r and rd > r:
+        return f"ถูกบันทึกว่าลบไปแล้ว ({r})"
+    if it.get("hidden"):
+        return "ถูกซ่อน"
+    return "ไม่ทราบสาเหตุ"
+
+
+def _heal_items(items, cur_rd: str) -> int:
+    """หัวข้อที่ไม่ได้ซ่อนและไม่ได้ลบ แต่มีสถานะค้าง (ช่วงซ่อนที่ยังไม่ปิด / วันลบ / วันเพิ่มในอนาคต) → แก้ให้แสดงตามปกติ"""
+    n = 0
+    y = (date.fromisoformat(cur_rd) - timedelta(days=1)).isoformat()
+    for it in items:
+        if it.get("hidden") or it.get("paused") or it.get("extra"):
+            continue
+        ch = False
+        offs = [list(x) for x in (it.get("offs") or []) if isinstance(x, (list, tuple)) and len(x) == 2]
+        if offs and not offs[-1][1]:
+            if y < offs[-1][0]:
+                offs.pop()
+            else:
+                offs[-1][1] = y
+            ch = True
+        if ch:
+            if offs:
+                it["offs"] = offs
+            else:
+                it.pop("offs", None)
+        if it.get("removed"):
+            it.pop("removed", None)
+            ch = True
+        if it.get("added") and it["added"] > cur_rd:
+            it["added"] = cur_rd
+            ch = True
+        n += ch
+    return n
+
+
+def _migrate_heal_items():
+    """ทุกครั้งที่เปิดเซิร์ฟเวอร์: ซ่อมหัวข้อที่สถานะค้าง จนไม่ขึ้นในฟอร์มทั้งที่ไม่ได้ซ่อน/ลบ"""
+    global AREAS, ITEM_MAP
+    cur = round_of(now()).isoformat()
+    n = sum(_heal_items(z["items"], cur) for z in AREAS["zones"] if not z.get("hidden"))
+    if n:
+        print(f"[areas] ซ่อมหัวข้อที่ไม่ขึ้นในฟอร์ม {n} หัวข้อ", flush=True)
+        _save_areas(AREAS, "heal_items")
+        AREAS, ITEM_MAP = load_areas()
+
+
 def zones_for_round(rd: str, checked_ids: set):
     """โครงสร้าง Checklist ตามที่เป็นในรอบ rd"""
     out = []
@@ -953,6 +1010,7 @@ def _start():
         _migrate_new_items_v1()
         _migrate_proc_order_v1()
         _migrate_title_v1()
+        _migrate_heal_items()
     except Exception as e:  # noqa
         print("[areas] backfill error:", e, flush=True)
     try:
@@ -2182,7 +2240,9 @@ async def api_admin_check(request: Request):
     data = await request.json()
     _check_edit_pin(data.get("pin"))
     # หน้าแก้ไข: แสดงหัวข้อที่ซ่อนไว้ (paused) ด้วย เพื่อให้กดเปิดกลับได้
-    zs = [{**z, "deck": zone_deck(z), "items": [it for it in z["items"] if not it.get("hidden") or it.get("paused")]}
+    cur = round_of(now()).isoformat()
+    zs = [{**z, "deck": zone_deck(z), "items": [{**it, "_off": "" if it.get("paused") else item_off_reason(it, cur)}
+                                                for it in z["items"] if not it.get("hidden") or it.get("paused")]}
           for z in fac_zones() if not z.get("hidden")]
     return {"ok": True, "zones": zs, "factory": cur_fac()}
 
@@ -2270,6 +2330,9 @@ async def api_admin_save(request: Request):
                 base.pop("offs", None)
             if is_new:
                 base["added"] = round_of(now()).isoformat()
+            base.pop("_off", None)
+            if not base.get("paused"):
+                _heal_items([base], cur_rd)  # แสดงในหน้าแก้ไข + ไม่ได้ซ่อน → ต้องขึ้นในฟอร์ม
             items.append(base)
             seen_item.add(iid)
         # รายการเดิมที่ถูกลบ → ซ่อนไว้ (ไม่หายจากข้อมูลย้อนหลัง)
