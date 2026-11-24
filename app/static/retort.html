@@ -2534,7 +2534,7 @@ function viewLog() {
   if (S.justSaved) return viewSaved();
   const d = S.draft; d.photos = d.photos || []; if (!d.cats) setCats(d, d.category ? [d.category] : []);
   d.cats = d.cats.filter(id => catById(id)); d.category = d.cats[0] || "";
-  if (S.step === 4 && !S.catPick && d.cats.length && !U.form.photo) S.step = 5;  // ปิดขั้นถ่ายรูปไว้ในแท็บ ปรับแต่ง
+  if (S.step === 4 && !S.catPick && d.cats.length) S.step = 5;  // ไม่มีขั้นถ่ายรูปแยกแล้ว · เพิ่มรูปในหน้ารายละเอียด (ขั้น 5)
   const cats = S.config.categories.filter(c => c.active || d.cats.includes(c.id));
   const editing = !!S.editingId;
   let h = editing ? `<div class="alert a-info">${I("pen")}<div>กำลังแก้ไขรายการที่บันทึกไว้ <button class="ghost sm" id="cancelEdit">ยกเลิก</button></div></div>` : "";
@@ -2610,7 +2610,8 @@ function viewLog() {
     if (!editing && d.retort && (!String(d.batch || "").trim() || /^[A-Za-z]+\d+\/$/.test(d.batch))) d.batch = d.retort + "/";
     const fields = []; cs.forEach(c => (c.fields || []).forEach(fl => { if (!fields.some(x => x.key === fl.key)) fields.push(fl); }));
     if (editing && !d.kind) d.kind = kindOf(d);
-    h += catHead(d, `data-step="4"`) + (!d.kind ? kindPick() : `${editing ? `<div class="card">${sec("camera", "รูปถ่าย", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · เพิ่มรูปได้")}${photoPicker(d)}</div>` : d.photos.length ? `<div class="photos mini">${d.photos.map(f => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"></div>`).join("")}</div>` : ""}
+    const photoCard = `<div class="card photocard">${sec("camera", "รูปถ่ายปัญหา", d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบรูปได้` : "ยังไม่มีรูป · รูปจะมีเวลาประทับอัตโนมัติ (ไม่บังคับ)")}${photoPicker(d)}</div>`;
+    h += catHead(d, `data-step="4"`) + (!d.kind ? kindPick() + photoCard : `${photoCard}
       ${kindSeg(d)}
       ${d.kind === "gen" ? genCard(d, many) : U.form.more ? pirCard(d, many, fields) : ""}
       ${!editing ? "" : cs.map((c, ci) => { const G = grpOf(c), pc = d.pc[c.id] || { cause: "", action: "" };
@@ -5647,7 +5648,7 @@ function viewUI() {
     <span class="lab">ชื่อขั้นตอน</span><div class="grow5">${U.steps.map((s, i) => `<input data-ustep="${i}" value="${esc(s)}" maxlength="16" aria-label="ขั้นที่ ${i + 1}" ${dis}>`).join("")}</div>
     <div class="grid" style="margin-top:12px"><label class="f"><span class="lab">กะ DS เริ่ม</span><input type="time" data-utime="dsStart" value="${U.dsStart}" ${dis}></label><label class="f"><span class="lab">กะ DS สิ้นสุด</span><input type="time" data-utime="dsEnd" value="${U.dsEnd}" ${dis}></label></div>
     <small class="hint">${shiftHint()} · มีผลกับรายการที่บันทึกใหม่ (รายการเก่าคงกะเดิม)</small>
-    <div style="margin-top:10px">${sw("form.photo", U.form.photo, "ขั้นถ่ายรูปปัญหา", "ปิด = เลือกปัญหาแล้วไปหน้าสาเหตุเลย")}${sw("form.action", U.form.action, "ช่อง การแก้ไข")}${sw("form.impact", U.form.impact, "ช่อง ผลต่อสินค้า (Hold)")}
+    <div style="margin-top:10px">${sw("form.action", U.form.action, "ช่อง การแก้ไข")}${sw("form.impact", U.form.impact, "ช่อง ผลต่อสินค้า (Hold)")}
       ${sw("form.program", U.form.program, "ช่อง โปรแกรมที่ใช้")}${sw("form.more", U.form.more, "ส่วน รายละเอียด (เหนือสาเหตุ)", "ค่าที่วัด · ระยะเวลา · สินค้า · Batch · รายละเอียดเพิ่มเติม")}${sw("form.todaybar", U.form.todaybar, "สรุปวันนี้ (มือถือ)", "ปัญหาวันนี้ · 7 วัน · รออนุมัติ")}${sw("form.recent", U.form.recent, "รายการบันทึกล่าสุด")}</div>
     <label class="f" style="margin-top:10px"><span class="lab">จำนวนรูปสูงสุดต่อรายการ</span><select data-umax ${dis}>${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<option ${U.form.maxPhotos === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
     <small class="hint">ช่อง สาเหตุ และ ลงนามผู้บันทึก บังคับกรอกเสมอ</small></div>`;
