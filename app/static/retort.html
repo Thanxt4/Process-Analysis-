@@ -1748,6 +1748,8 @@ table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w
 .ps-grph{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}.ps-grph b{color:var(--navy);font-size:14px}.ps-grph small{color:var(--mute);font-size:12px;flex:1}
 .ps-grph label.ghost{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 10px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer}.ps-grph svg.i{width:14px;height:14px}
 .ps-slx select.ps-tag{position:absolute;left:4px;bottom:4px;max-width:calc(100% - 38px);min-height:0;height:24px;padding:0 4px;font-size:11.5px;font-weight:700;border-radius:7px;border:0;background:rgba(255,255,255,.92);color:var(--navy)}
+.pd-det{grid-column:1/-1;margin-top:10px}.pd-det .pdfields{margin-top:6px}.pd-pt{margin-top:8px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line)}.pd-pt input{width:100%;min-height:38px;font-size:14px}
+.pd-pt td:first-child{font-size:13px}.pd-det input[disabled]{background:#f1f5f9;color:#334155}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3099,8 +3101,9 @@ function pdDefaults(g) {
   const dflt = {
     no: v.ir_pdno || "", prod: v.ir_pdate || x.date || "", dev: v.ir_pddate || x.date || "", plant: x.plant || "", shift: v.ir_pshift || x.shift || "",
     product: x.product || "", code: v.ir_pcode || (x.code ? x.code + (v.ir_market || "") : ""), pack: "", qty: v.ir_qnrft || x.holdQty || "", unit: x.holdUnit || "", ref: x.code || "",
-    rtype: "", rno: [...new Set(g.flatMap(y => irRowsOf(y).map(r => String(r.b || "").trim())).filter(Boolean))].join(", ") || x.retort || "", step: "",
-    p0o: cook ? cook[1] : "", photo_rep: v.ir_pdrep || "", photo_graph: v.ir_pdgraph || "", rep_by: v.ir_pdby || x.by || "", cause: v.ir_pdnote || [causeText(x), x.detail].filter(Boolean).join(" · "), action: v.ir_decision || x.action || ""
+    rtype: pdDetOf(v).rtype || "", rno: [...new Set(g.flatMap(y => irRowsOf(y).map(r => String(r.b || "").trim())).filter(Boolean))].join(", ") || x.retort || "", step: pdDetOf(v).step || "",
+    ...Object.fromEntries(PD_PARAMS.flatMap((_, i) => { const r = (pdDetOf(v).p || [])[i] || []; return [["p" + i + "o", r[0] || ""], ["p" + i + "a", r[1] || ""]]; })),
+    p0o: ((pdDetOf(v).p || [])[0] || [])[0] || (cook ? cook[1] : ""), photo_rep: v.ir_pdrep || "", photo_graph: v.ir_pdgraph || "", rep_by: v.ir_pdby || x.by || "", cause: v.ir_pdnote || [causeText(x), x.detail].filter(Boolean).join(" · "), action: v.ir_decision || x.action || ""
   };
   return dflt;
 }
@@ -3213,6 +3216,7 @@ function openPDSheet(g) {
       for (const [i, y] of g.entries()) {
         const z = JSON.parse(JSON.stringify(y)); z.values = Object.assign({}, z.values, { ir_pd: "Y", ir_pdno: o.no.slice(0, 200), ir_pddate: o.dev, ir_pdrep: o.photo_rep || "", ir_pdgraph: o.photo_graph || "" });
         if (!z.values.ir_pdrep) delete z.values.ir_pdrep; if (!z.values.ir_pdgraph) delete z.values.ir_pdgraph;
+        z.values.ir_pddet = JSON.stringify({ rtype: o.rtype || "", step: o.step || "", p: PD_PARAMS.map((_, k) => [o["p" + k + "o"] || "", o["p" + k + "a"] || ""]) }, (kk, vv) => typeof vv === "string" ? vv.slice(0, 60) : vv);
         if (i === 0) { const df = pdDefaults(g), au = {}; for (const k in df) if (df[k] !== "" && o[k] === df[k]) au[k] = pdHash(df[k]);  // ช่องที่ยังเป็นค่าจาก IR
           z.pdSheet = Object.assign({}, o, { _at: String(Date.now()), _by: S.user || "", _auto: JSON.stringify(au) }); }
         ok = (await saveItem(z)) && ok;
@@ -4083,7 +4087,30 @@ function pdBlock(d) { const on = pv(d, "pd") === "Y";
     <div class="seg pdseg"><button type="button" data-ppd="N" class="${on ? "" : "on"}">ไม่ออก</button><button type="button" data-ppd="Y" class="${on ? "on pdon" : ""}">${I("alert")}ออก Process Deviation</button></div>
     ${on ? `<div class="pdfields"><label class="f"><span class="lab">เลขที่ Process Deviation</span><input data-v="ir_pdno" value="${esc(pv(d, "pdno"))}" placeholder="เช่น PD-PF2-001" maxlength="40" autocomplete="off"></label>
       <label class="f"><span class="lab">วันที่ออก</span><input type="date" data-v="ir_pddate" value="${esc(pv(d, "pddate") || d.date || todayISO())}"></label>
-      </div>${pdSlotsHtml(d)}` : ""}`; }
+      </div>${pdDetHtml(d)}${pdSlotsHtml(d)}` : ""}`; }
+/* รายละเอียดการเบี่ยงเบน (เหมือนส่วนที่ 2 ของ Process Deviation Report) · เก็บใน values.ir_pddet (JSON) แล้วไปขึ้นใน Data Sheet ให้เอง */
+const pdDetOf = v => { try { const o = JSON.parse((v || {}).ir_pddet || "{}"); return o && typeof o === "object" ? o : {}; } catch { return {}; } };
+function pdDetHtml(d) {
+  const D = pdDetOf(d.values), P = D.p || [], rno = pdTagsOf(d._rows || irRowsOf(d)).join(", ") || d.retort || "";
+  const pr = d.programDoc ? progByKey(d.programDoc + "#" + d.program) : null, cook = pr && pr.steps.find(x => x[0] === "cook");
+  const inp = (k, ph, list) => `<input data-pdd="${k}" value="${esc(D[k] || "")}" placeholder="${esc(ph)}" ${list ? `list="${list}"` : ""} autocomplete="off">`;
+  return `<div class="pd-det"><span class="lab">รายละเอียดการเบี่ยงเบน (Detail of Deviation)</span>
+    <div class="pdfields"><label class="f"><span class="lab">Retort type</span>${inp("rtype", "เลือกหรือพิมพ์", "pdRtypes2")}</label>
+      <label class="f"><span class="lab">Retort no./Batch</span><input value="${esc(rno)}" disabled title="มาจากช่อง หม้อ / รายละเอียดของปัญหา"></label>
+      <label class="f full"><span class="lab">Deviation step</span>${inp("step", "เช่น Come up / Cooking / Cooling")}</label></div>
+    <datalist id="pdRtypes2"><option value="Water Spray"><option value="Water Immersion"><option value="Steam / Air"><option value="Rotary"><option value="Static"></datalist>
+    <table class="ps-t pd-pt"><thead><tr><th>Process Parameters</th><th>Official <small>(ค่าที่กำหนด)</small></th><th>Actual <small>(ค่าจริง)</small></th></tr></thead><tbody>
+      ${PD_PARAMS.map((p, i) => { const r = P[i] || [], o0 = r[0] != null && r[0] !== "" ? r[0] : (i === 0 && cook ? cook[1] : "");
+        return `<tr><td>${esc(p)}</td><td><input data-pdp="${i}|0" value="${esc(o0)}" inputmode="decimal" autocomplete="off"></td><td class="act"><input data-pdp="${i}|1" value="${esc(r[1] || "")}" inputmode="decimal" autocomplete="off"></td></tr>`; }).join("")}</tbody></table></div>`;
+}
+document.addEventListener("input", e => {
+  const t = e.target, d = S.draft; if (!d || !t.dataset || (t.dataset.pdd == null && t.dataset.pdp == null)) return;
+  d.values = d.values || {}; const D = pdDetOf(d.values);
+  if (t.dataset.pdd != null) D[t.dataset.pdd] = t.value;
+  else { const [i, j] = t.dataset.pdp.split("|").map(Number); D.p = D.p || []; while (D.p.length <= i) D.p.push(["", ""]); D.p[i][j] = t.value; }
+  const any = String(D.rtype || "").trim() || String(D.step || "").trim() || (D.p || []).some(r => r.some(x => String(x || "").trim()));
+  if (any) d.values.ir_pddet = JSON.stringify(D, (k, v) => typeof v === "string" ? v.slice(0, 60) : v); else delete d.values.ir_pddet;
+});
 /* แนบรูปตอนออก Process Deviation (ตามลำดับ): 1 รูปรายงาน · 2 รูปกราฟ · เก็บใน values (ir_pdrep / ir_pdgraph) แล้วไปขึ้นใน Data Sheet ให้เอง */
 const PD_SLOTS = [["ir_pdrep", "รูปรายงาน"], ["ir_pdgraph", "รูปกราฟ"]];
 // หมุนรูป 90° ตามเข็มนาฬิกา → ได้ไฟล์ใหม่ (รูปเดิมยังอยู่)

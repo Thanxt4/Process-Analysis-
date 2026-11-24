@@ -2574,7 +2574,7 @@ def _clean_rp(d: dict) -> dict:
     vals = d.get("values") if isinstance(d.get("values"), dict) else {}
     # ค่าที่วัดของหัวข้อปัญหา + ช่องรายละเอียดที่ผู้ดูแลเพิ่มเอง (key ขึ้นต้น x_)
     # รูปแนบ Process Deviation (รายงาน / กราฟ) เก็บหลายรูปคั่นด้วย , → ยาวได้มากกว่าช่องอื่น
-    _long = ("ir_pdrep", "ir_pdgraph")
+    _long = ("ir_pdrep", "ir_pdgraph", "ir_pddet")  # ir_pddet = รายละเอียด Process Deviation (JSON)
     out["values"] = {str(k)[:40]: str(v)[:2000 if str(k) in _long else 200] for k, v in list(vals.items())[:40]}
     # Process Deviation Data Sheet (แบบฟอร์ม F3QCRE18) — เก็บแยกจาก values เพราะช่องเยอะและข้อความยาว
     if isinstance(d.get("pdSheet"), dict):
