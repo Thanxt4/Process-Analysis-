@@ -1298,7 +1298,7 @@ def api_presence(request: Request):
     with db() as con:
         rows = con.execute("""SELECT u.emp_id, u.name, u.dept, (SELECT MAX(last_seen) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS seen
                               FROM users u WHERE u.active=1""").fetchall()
-    out = [{"name": r["name"], "dept": r["dept"], "seen": r["seen"] or 0,
+    out = [{"emp": r["emp_id"], "name": r["name"], "dept": r["dept"], "seen": r["seen"] or 0,
             "online": r["emp_id"] == u["emp_id"] or bool(r["seen"] and nowms - r["seen"] < ONLINE_MS), "me": r["emp_id"] == u["emp_id"]} for r in rows]
     out.sort(key=lambda x: (not x["online"], -x["seen"], x["name"].lower()))
     return {"users": out, "now": nowms}
@@ -2354,6 +2354,11 @@ async def api_admin_save(request: Request):
             zbase["factory"] = fac
         if zid not in old_zones and z.get("deck") in DECKS and z.get("deck") != "pc":
             zbase["deck"] = z["deck"]  # พื้นที่ใหม่ที่เพิ่มในกลุ่ม GMP
+        resp = [str(x).strip()[:20] for x in (z.get("resp") or []) if str(x).strip()][:12]  # ผู้รับผิดชอบ (บัญชี) → ได้รับแจ้งเตือนถ้ายังไม่ส่ง
+        if resp:
+            zbase["resp"] = resp
+        else:
+            zbase.pop("resp", None)
         sub = str(z.get("sub") or "").strip()[:30]  # กลุ่มย่อย เช่น WH → WH1, WH5 ... รวมเป็นการ์ดเดียว
         if sub:
             zbase["sub"] = sub
@@ -4118,8 +4123,40 @@ def api_notifications(request: Request, name: str = "", days: int = Query(14, ge
             ev.append({"id": f'{f["id"]}:{n["at"]}', "type": "followup", "fid": f["id"], "at": n["at"], "by": n.get("by") or "",
                        "text": ("พบปัญหา · ขอให้ " + f["dept"] + " ตอบสาเหตุและการแก้ไข" if n.get("kind") == "open" and f.get("dept") else n.get("text", ""))[:160],
                        "title": f.get("title", ""), "zone": f.get("zone", ""), "mine": bool(reason), "reason": reason})
+    ev += _remind_events(_me(request))
     ev.sort(key=lambda e: -e["at"])
     return {"items": ev[:150], "now": _fu_ms()}
+
+
+# ---- แจ้งเตือนพื้นที่ที่ยังไม่ส่ง: ก่อนตัดรอบ (ค่าเริ่มต้น 3 ชม. และ 1 ชม.) → แจ้งผู้รับผิดชอบของพื้นที่นั้น
+REMIND_HOURS = [h for h in (float(x) for x in (os.environ.get("REMIND_HOURS", "3,1").replace(" ", "").split(",")) if x) if 0 < h < 24]
+
+
+def _remind_events(u):
+    cur = round_of(now())
+    _, end = round_window(cur)
+    times = sorted({end - timedelta(hours=h) for h in REMIND_HOURS if end - timedelta(hours=h) <= now()})
+    if not times:
+        return []
+    emp = (u or {}).get("emp_id", "")
+    st = status_for(cur)
+    out = []
+    for z in st["zones"]:
+        if z.get("deck") == "retort" or z["done"] >= z["total"]:
+            continue
+        zc = next((x for x in AREAS["zones"] if x.get("id") == z["id"]), {})
+        resp = zc.get("resp") or []
+        if not resp:
+            continue  # ยังไม่ได้ตั้งผู้รับผิดชอบ → ไม่แจ้ง
+        left = [it for it in z["items"] if not it.get("extra") and not it.get("checked")]
+        names = ", ".join(f'{it.get("no", "")} {it.get("name", "")}'.strip() for it in left[:3]) + (f" และอีก {len(left) - 3} หัวข้อ" if len(left) > 3 else "")
+        for t in times:
+            hrs = round((end - t).total_seconds() / 3600, 1)
+            out.append({"id": f'remind:{z["id"]}:{cur.isoformat()}:{hrs:g}', "type": "remind", "at": int(t.timestamp() * 1000), "by": "ระบบ",
+                        "text": f'ยังไม่ได้ส่ง {len(left)} รายการ · ตัดรอบอีก {hrs:g} ชม. ({end.strftime("%H:%M")} น.) · {names}'[:200],
+                        "title": f'ยังไม่ได้ส่ง: {z["name"]}', "zone": z["name"], "zid": z["id"], "round": cur.isoformat(),
+                        "mine": bool(emp) and emp in resp, "reason": "พื้นที่ที่คุณรับผิดชอบยังไม่ได้ส่ง" if emp in resp else ""})
+    return out
 
 
 # ---------------------------------------------------------------- เรื่องที่ต้องติดตาม (Follow-up)

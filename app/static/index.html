@@ -63,6 +63,9 @@ details.pb{margin-top:12px}
 .updbar b{color:#fbbf24}
 /* รายการยาว: การ์ดที่อยู่นอกจอไม่ต้องคำนวณหน้าตาจนกว่าจะเลื่อนถึง (เปิดแท็บเร็วขึ้น) */
 #checkList .zcard{content-visibility:auto;contain-intrinsic-size:auto 320px}.fu-card{content-visibility:auto;contain-intrinsic-size:auto 150px}
+.e-resp{grid-column:1/-1;order:10;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.e-respb{flex:1;min-width:200px;text-align:left;border:1.5px dashed #cbd5e1;background:#fff;border-radius:10px;padding:7px 10px;font:inherit;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer}
+.resppop .rp-q{width:100%;min-height:36px;margin-bottom:6px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit}.resppop .rp-l{max-height:260px;overflow:auto}.resppop label small{margin-left:auto;color:var(--muted);font-size:11.5px}
+.zbtn .zresp{font-size:12px;color:#1d4ed8;font-weight:600}
 </style>
 <style>
 :root{
@@ -1746,8 +1749,9 @@ function renderForm(){
   const lastZ = allZ.find(z => z.id === last);
   const zoneCard = z => {
     const left = z.total - z.done, full = left === 0;
+    const cz = CFG.zones.find(x => x.id === z.id) || {}, rs = (cz.resp || []).map(pplName);
     return `<button class="zbtn ${full?"full":""}" data-z="${z.id}">
-      <b>${esc(z.name)}</b><span>${esc(z.owner)}</span>
+      <b>${esc(z.name)}</b><span>${esc(z.owner)}</span>${rs.length ? `<span class="zresp" title="ได้รับแจ้งเตือนถ้ายังไม่ส่งก่อนตัดรอบ">🔔 ${esc(rs.join(", "))}</span>` : ""}
       <span class="badge">${z.total===1?(full?`ส่งแล้ว ${z.items[0].count} ครั้ง ✓`:"แตะเพื่อกรอกฟอร์ม"):full?"ตรวจครบแล้ว ✓":`เหลือ ${left} รายการ`}${z.id===last?" · ล่าสุด":""}</span>
       <div class="zrow"><div class="bar"><i style="width:${z.total?z.done/z.total*100:0}%"></i></div><em>${z.done}/${z.total}</em></div>
       <svg class="go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></button>`;
@@ -3079,6 +3083,7 @@ $("#editBtn").onclick = async () => {
   try{
     const r = await api("/api/admin/check", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({pin})});
     editPin = pin; editZones = JSON.parse(JSON.stringify(r.zones)); renderEditor();
+    if(!PPL.users.length || !PPL.users[0].emp) loadPpl().then(() => renderEditor());
     $("#editBg").classList.add("on"); document.body.style.overflow="hidden";
   }catch(err){ editPin=""; toast(err.message, true); }
 };
@@ -3123,6 +3128,7 @@ function renderEditor(){
     return `<div class="ez" data-z="${zi}"><div class="ez-h">
       <input type="text" class="e-zname" value="${esc(z.name)}" placeholder="ชื่อพื้นที่">
       <input type="text" class="e-owner" value="${esc(z.owner)}" placeholder="ผู้รับผิดชอบ">
+      <div class="e-resp"><span>ผู้รับผิดชอบ (รับแจ้งเตือนถ้ายังไม่ส่ง)</span><button type="button" class="e-respb" data-resp="${zi}">${respText(z) || "ยังไม่ได้เลือก · แตะเพื่อเลือก"}</button></div>
       <input type="text" class="e-sub" value="${esc(z.sub || "")}" placeholder="กลุ่มย่อย เช่น WH" title="พื้นที่ที่ใส่กลุ่มย่อยเดียวกัน จะรวมเป็นการ์ดเดียว กดแล้วเห็นจุดย่อยข้างใน">
       <button type="button" class="zcopy" title="คัดลอกพื้นที่นี้ (พร้อมรายการตรวจ)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
       <button type="button" class="del zdel" title="ลบพื้นที่นี้"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>
@@ -3157,6 +3163,25 @@ $("#editZones").addEventListener("input", e => {
     else if(e.target.classList.contains("e-unit")) it.qty = {...it.qty, unit: e.target.value.trim() || "คัน"};
     else { if(e.target.tagName === "TEXTAREA"){ if(/\n/.test(e.target.value)) e.target.value = e.target.value.replace(/\n+/g, " "); edGrow(e.target); } it.name = e.target.value; } }
 });
+// ผู้รับผิดชอบพื้นที่ (บัญชีผู้ใช้) → ได้รับแจ้งเตือนเมื่อพื้นที่ยังไม่ส่งก่อนตัดรอบ
+const pplName = emp => (PPL.users.find(u => u.emp === emp) || {}).name || emp;
+const respText = z => (z.resp || []).map(pplName).map(esc).join(", ");
+function respPopOpen(btn, z){
+  custPopClose(); if(!PPL.users.length) loadPpl().then(() => { if($("#custPop")) respPopOpen(btn, z); });
+  const p = document.createElement("div"); p.id = "custPop"; p.className = "resppop"; let q = "";
+  const draw = () => { const cur = z.resp || [], L = PPL.users.filter(u => u.emp && (!q || `${u.name} ${u.dept}`.toLowerCase().includes(q)));
+    p.innerHTML = `<input type="search" class="rp-q" placeholder="ค้นหาชื่อ / แผนก" value="${esc(q)}"><div class="rp-l">${L.map(u => `<label><input type="checkbox" value="${esc(u.emp)}" ${cur.includes(u.emp) ? "checked" : ""}>${esc(u.name)}<small>${esc(u.dept || "")}</small></label>`).join("") || `<p class="muted-s">${PPL.users.length ? "ไม่พบชื่อ" : "กำลังโหลดรายชื่อ…"}</p>`}</div>
+      <div class="cp-b"><button type="button" class="cp-none">ล้าง</button><button type="button" class="ok">ตกลง</button></div>`;
+    const qi = p.querySelector(".rp-q"); qi.oninput = () => { q = qi.value.trim().toLowerCase(); draw(); const n = p.querySelector(".rp-q"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }; };
+  draw(); document.body.appendChild(p);
+  const r = btn.getBoundingClientRect(), h = p.offsetHeight, w = Math.max(r.width, 280);
+  p.style.minWidth = w + "px"; p.style.left = Math.min(r.left, innerWidth - w - 8) + "px";
+  p.style.top = (r.bottom + h + 8 > innerHeight ? Math.max(8, r.top - h - 6) : r.bottom + 6) + "px";
+  const apply = () => { btn.innerHTML = respText(z) || "ยังไม่ได้เลือก · แตะเพื่อเลือก"; };
+  p.addEventListener("change", e => { if(e.target.type !== "checkbox") return; const v = e.target.value, cur = new Set(z.resp || []); e.target.checked ? cur.add(v) : cur.delete(v); z.resp = [...cur]; apply(); });
+  p.addEventListener("click", e => { if(e.target.closest(".cp-none")){ z.resp = []; apply(); draw(); } else if(e.target.closest(".ok")) custPopClose(); });
+  p._btn = btn;
+}
 // ช่องลูกค้า: ติ๊กเลือกได้หลายลูกค้า (แบบตัวกรองใน Excel)
 const CUST_DOT = {Weruva: "#10b981", Smucker: "#f43f5e", MARS: "#8b5cf6"};
 function custPopClose(){ const p = $("#custPop"); if(p) p.remove(); }
@@ -3176,11 +3201,12 @@ function custPopOpen(btn, it){
   p.addEventListener("change", e => { if(e.target.classList.contains("cp-all")) p.querySelectorAll("input[value]").forEach(x => x.checked = e.target.checked); apply(); });
   p.addEventListener("click", e => { if(e.target.closest(".cp-none")){ p.querySelectorAll("input").forEach(x => x.checked = false); apply(); custPopClose(); } else if(e.target.closest(".ok")) custPopClose(); });
 }
-document.addEventListener("pointerdown", e => { if($("#custPop") && !e.target.closest("#custPop,.e-cust")) custPopClose(); }, true);
+document.addEventListener("pointerdown", e => { if($("#custPop") && !e.target.closest("#custPop,.e-cust,.e-respb")) custPopClose(); }, true);
 document.addEventListener("scroll", e => { if($("#custPop") && !(e.target.closest && e.target.closest("#custPop"))) custPopClose(); }, true);
 document.addEventListener("keydown", e => { if(e.key === "Escape") custPopClose(); });
 $("#editZones").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.resp != null){ const z = editZones[+b.dataset.resp]; if($("#custPop") && $("#custPop")._btn === b) custPopClose(); else respPopOpen(b, z); return; }
   if(b.classList.contains("e-cust")){ const z = editZones[+b.closest(".ez").dataset.z], it = z.items[+b.closest(".er").dataset.i];
     if($("#custPop") && $("#custPop")._btn === b) custPopClose(); else { custPopOpen(b, it); $("#custPop")._btn = b; } return; }
   if(b.dataset.bulk != null){  // ตั้งลูกค้าของทุกหัวข้อในกลุ่มนี้ (ยังไม่บันทึกจนกว่าจะกด บันทึกการแก้ไข)
@@ -3804,8 +3830,9 @@ $("#prevWrap").addEventListener("keydown", e => { const i = e.target.closest("[d
 /* ---------- การแจ้งเตือน (กระดิ่งมุมขวาบน) ---------- */
 const NT = { items: [], tab: store.get("pc_nttab", "mine"), seen: +store.get("pc_ntseen", "0") || 0, popped: +store.get("pc_ntpop", "0") || 0, lastSeen: 0 };
 const NT_IC = { comment: CM_IC, question: CM_IC, reply: CM_IC,
-  followup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>` };
-const ntVerb = e => e.type === "followup" ? "เรื่องที่ต้องติดตาม" : e.type === "question" ? "ถามคำถาม" : e.type === "reply" ? "ตอบกลับ" : "แสดงความคิดเห็น";
+  followup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>`,
+  remind: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"/></svg>` };
+const ntVerb = e => e.type === "remind" ? "แจ้งเตือน" : e.type === "followup" ? "เรื่องที่ต้องติดตาม" : e.type === "question" ? "ถามคำถาม" : e.type === "reply" ? "ตอบกลับ" : "แสดงความคิดเห็น";
 const ntAgo = ms => { const m = Math.round((Date.now() - ms) / 6e4); return m < 1 ? "เมื่อสักครู่" : m < 60 ? `${m} นาทีที่แล้ว` : m < 1440 ? `${Math.round(m / 60)} ชม.ที่แล้ว` : cmAt(ms); };
 const ntMineMode = () => !!getMyName();
 async function loadNotif(){
@@ -3855,6 +3882,10 @@ function ntPop(){
 }
 async function ntGo(e){
   ntClose();
+  if(e.type === "remind"){  // พื้นที่ที่ยังไม่ส่ง → เปิดพื้นที่นั้นในแท็บ กรอกฟอร์ม
+    document.querySelector('nav.tabs [data-tab="form"]').click(); formRound = CFG.current_round;
+    const z = CFG.zones.find(x => x.id === e.zid); if(!z){ toast("ไม่พบพื้นที่นี้", true); return; }
+    curGroup = deckOf(z); curSub = z.sub || null; curZone = z.id; store.set("pc_zone", z.id); renderForm(); scrollTo({top: 0}); return; }
   if(e.type === "followup"){ document.querySelector('nav.tabs [data-tab="follow"]').click(); if(!FU.loaded) await loadFollowups(); const x = FU.items.find(y => y.id === e.fid); if(x) fuOpen(x); else toast("ไม่พบเรื่องนี้ (อาจถูกลบไปแล้ว)", true); return; }
   if(!findItem(e.area_id)){ toast("ไม่พบหัวข้อนี้ (อาจถูกลบไปแล้ว)", true); return; }
   await openSheet(e.area_id, e.round || CFG.current_round);
