@@ -1744,6 +1744,10 @@ table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w
 .ps-slx.ld{display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;color:var(--mute)}.ps-slp img.on{border-color:#16a34a;box-shadow:0 0 0 2px #bbf7d0}.ps-slp small{width:100%;font-size:12px;color:var(--mute)}
 .ps-slx button.rot,.ps-photos .pp button.rot{top:auto;bottom:4px;right:4px;font-size:15px;font-weight:800;line-height:1;width:26px;height:26px;background:rgba(15,23,42,.78)}.ps-slx button.rot:hover,.ps-photos .pp button.rot:hover{background:var(--amber);color:#1b2a41}
 .ps-slx button.rot:disabled,.ps-photos .pp button.rot:disabled{opacity:.5;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.ps-grp{border:1px solid #dbe3ec;border-radius:12px;padding:8px;background:#fff;margin-bottom:8px}.ps-grp.other{border-style:dashed;background:#fffbeb}
+.ps-grph{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}.ps-grph b{color:var(--navy);font-size:14px}.ps-grph small{color:var(--mute);font-size:12px;flex:1}
+.ps-grph label.ghost{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 10px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer}.ps-grph svg.i{width:14px;height:14px}
+.ps-slx select.ps-tag{position:absolute;left:4px;bottom:4px;max-width:calc(100% - 38px);min-height:0;height:24px;padding:0 4px;font-size:11.5px;font-weight:700;border-radius:7px;border:0;background:rgba(255,255,255,.92);color:var(--navy)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -3150,20 +3154,23 @@ function openPDSheet(g) {
     // รูปที่ต้องแนบเมื่อออก Process Deviation (ตามลำดับ): 1 รูปรายงาน · 2 รูปกราฟ
     const SLOTS = [["photo_rep", "รูปรายงาน"], ["photo_graph", "รูปกราฟ"]], slot = { photo_rep: phList(sh.photo_rep), photo_graph: phList(sh.photo_graph) }, busy = {}, pick = {};
     const irPh = [...new Set(g.flatMap(y => y.photos || []))];
-    const drawSlots = () => { box.querySelector("#psSlots").innerHTML = `<div class="ps-slh">${I("image")}รูปที่ต้องแนบเมื่อออก Process Deviation <small>เรียงตามลำดับ · แต่ละช่องใส่ได้หลายรูป · พิมพ์ออกมาตามลำดับนี้</small></div><div class="ps-slg">` +
-      SLOTS.map(([k, l], i) => slotBoxHtml("sl", k, l, i, slot[k], irPh, busy[k] || 0, pick[k])).join("") + `</div>`; };
+    const tags = pdTagsOf(g.flatMap(y => irRowsOf(y)));
+    const drawSlots = () => { box.querySelector("#psSlots").innerHTML = `<div class="ps-slh">${I("image")}รูปที่ต้องแนบเมื่อออก Process Deviation <small>เรียงตามลำดับ · แยกตามหม้อ · พิมพ์ออกมาตามลำดับนี้</small></div><div class="ps-slg">` +
+      SLOTS.map(([k, l], i) => slotBoxHtml("sl", k, l, i, slot[k], irPh, busy[k] || {}, pick[k], tags)).join("") + `</div>`; };
     drawSlots();
     box.querySelector("#psSlots").addEventListener("click", e => {
       const im = e.target.closest("img[data-slview]"); if (im) { window.open(photoUrl(im.dataset.slview), "_blank"); return; }
-      const pk = e.target.closest("[data-slpick]"); if (pk) { const [k, p] = pk.dataset.slpick.split("|"); slot[k] = slot[k].includes(p) ? slot[k].filter(x => x !== p) : slot[k].concat(p); drawSlots(); return; }
+      const pk = e.target.closest("[data-slpick]"); if (pk) { const [k, p] = pk.dataset.slpick.split("|"); slot[k] = slot[k].some(x => phParse(x).fn === p) ? slot[k].filter(x => phParse(x).fn !== p) : slot[k].concat(p); drawSlots(); return; }
       const b = e.target.closest("button"); if (!b) return;
       if (b.dataset.slir) { pick[b.dataset.slir] = !pick[b.dataset.slir]; drawSlots(); }
       else if (b.dataset.sldel) { const [k, j] = b.dataset.sldel.split("|"); slot[k].splice(+j, 1); drawSlots(); }
       else if (b.dataset.slrot) { const [k, j] = b.dataset.slrot.split("|"); b.disabled = true;
-        rtRotate(slot[k][+j]).then(nf => { slot[k][+j] = nf; drawSlots(); }).catch(err => { b.disabled = false; toast("หมุนรูปไม่สำเร็จ: " + err.message); }); } });
-    box.querySelector("#psSlots").addEventListener("change", async e => { const k = e.target.dataset.slfile, files = [...(e.target.files || [])]; if (!k || !files.length) return; e.target.value = "";
-      busy[k] = (busy[k] || 0) + files.length; drawSlots();
-      for (const fl of files) { try { slot[k] = slot[k].concat(await upload(fl)); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); } busy[k]--; drawSlots(); } });
+        rtRotate(phParse(slot[k][+j]).fn).then(nf => { slot[k][+j] = phMake(nf, phParse(slot[k][+j]).tag); drawSlots(); }).catch(err => { b.disabled = false; toast("หมุนรูปไม่สำเร็จ: " + err.message); }); } });
+    box.querySelector("#psSlots").addEventListener("change", async e => { const ds = e.target.dataset;
+      if (ds.sltag) { const [k, j] = ds.sltag.split("|"); slot[k][+j] = phMake(phParse(slot[k][+j]).fn, e.target.value); drawSlots(); return; }
+      const files = [...(e.target.files || [])]; if (!ds.slfile || !files.length) return; e.target.value = "";
+      const [k, tag] = ds.slfile.split("|"), B = busy[k] = busy[k] || {}; B[tag] = (B[tag] || 0) + files.length; drawSlots();
+      for (const fl of files) { try { slot[k] = slot[k].concat(phMake(await upload(fl), tag)); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); } B[tag]--; drawSlots(); } });
     const drawPh = () => { box.querySelector("#psPhN").textContent = ph.length ? ` (${ph.length})` : "";
       box.querySelector("#psPh").innerHTML = ph.map(fn => `<div class="pp"><img src="${photoUrl(fn)}?w=1" data-full="${esc(fn)}" alt="" loading="lazy"><button type="button" data-phdel="${esc(fn)}" aria-label="ลบรูป">${I("x")}</button><button type="button" class="rot" data-phrot="${esc(fn)}" title="หมุนรูป 90°" aria-label="หมุนรูป">↻</button></div>`).join("")
         + (up ? `<div class="pp ld"><span class="ai-dots"><i></i><i></i><i></i></span>กำลังอัปโหลด ${up} รูป…</div>` : ""); };
@@ -3199,7 +3206,7 @@ function openPDSheet(g) {
     box.querySelector("#psPrint").onclick = () => printPDSheet(read());
     box.querySelector("#psSave").onclick = async e => {
       const o = read(); if (!o.no) { toast("กรุณากรอก Deviation Number"); box.querySelector('[data-ps="no"]').focus(); return; }
-      if (up || busy.photo_rep || busy.photo_graph) { toast("รออัปโหลดรูปให้เสร็จก่อน"); return; }
+      if (up || Object.values(busy).some(B => Object.values(B).some(n => n > 0))) { toast("รออัปโหลดรูปให้เสร็จก่อน"); return; }
       const miss = SLOTS.filter(([k]) => !o[k]).map(([, l]) => l);
       if (miss.length && !confirm(`ยังไม่ได้แนบ ${miss.join(" และ ")}\nเมื่อออก Process Deviation ควรแนบรูปรายงานและรูปกราฟ · บันทึกไปก่อนไหม?`)) { box.querySelector("#psSlots").scrollIntoView({ block: "nearest" }); return; }
       e.target.disabled = true; let ok = true;
@@ -3255,8 +3262,10 @@ function printPDSheet(o) {
     <table class="dc"><tr><td>ผู้จัดทำ: (รัฐจินันท์ คงรินทร์)</td><td colspan="2" class="c">หมายเลขเอกสาร: F3QCRE18</td></tr>
       <tr><td>ผู้อนุมัติ: (ปิยวัจน์ รักช่วย)</td><td>แก้ไขครั้งที่: 3</td><td>หน้าที่ 1/1</td></tr>
       <tr><td>วันที่อนุมัติ: 17/11/26</td><td colspan="2">วันที่เริ่มใช้: 20/11/26</td></tr></table></div>
-    ${(() => { const lab = (L, t) => L.map((f, j) => [f, L.length > 1 ? `${t} ${j + 1}/${L.length}` : t]);
-      const P = [...lab(phList(o.photo_rep), "รูปรายงาน"), ...lab(phList(o.photo_graph), "รูปกราฟ"), ...phList(o.photos).map(f => [f, ""])]; return P.length ? `<div class="pg"><div class="fn">${PD_FORM_NO}</div><div class="bd">ภาพประกอบ / Attached photos · ${v("no")}</div>
+    ${(() => { const tags = pdTagsOf(String(o.rno || "").split(",").map(b => ({ b })));
+      const lab = (v, t) => { const L = phOrdered(v, tags.concat(phList(v).map(e => phParse(e).tag).filter(x => x && !tags.includes(x)))); const cnt = {}, tot = {}; L.forEach(([, g]) => tot[g] = (tot[g] || 0) + 1);
+        return L.map(([f, g]) => { cnt[g] = (cnt[g] || 0) + 1; return [f, `${t}${g ? " · " + g : ""}${tot[g] > 1 ? ` (${cnt[g]}/${tot[g]})` : ""}`]; }); };
+      const P = [...lab(o.photo_rep, "รูปรายงาน"), ...lab(o.photo_graph, "รูปกราฟ"), ...phList(o.photos).map(f => [f, ""])]; return P.length ? `<div class="pg"><div class="fn">${PD_FORM_NO}</div><div class="bd">ภาพประกอบ / Attached photos · ${v("no")}</div>
       <div class="ph">${P.map(([fn, l], i) => `<figure><img src="${photoUrl(fn)}" alt=""><figcaption>รูปที่ ${i + 1}${l ? ` · ${l}` : ""}</figcaption></figure>`).join("")}</div></div>` : ""; })()}
     <script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`;
   printHTML(html);
@@ -4080,14 +4089,30 @@ const PD_SLOTS = [["ir_pdrep", "รูปรายงาน"], ["ir_pdgraph", "�
 // หมุนรูป 90° ตามเข็มนาฬิกา → ได้ไฟล์ใหม่ (รูปเดิมยังอยู่)
 const rtRotate = async fn => (await jpost(`/api/retort/photo/${encodeURIComponent(fn)}/rotate`, { deg: 90 })).file;
 const phList = v => String(v || "").split(",").map(x => x.trim()).filter(Boolean);
-// กล่องรูปตามลำดับ (แต่ละช่องใส่ได้หลายรูป) · pre = คำนำหน้า data-* ของหน้านั้น
-function slotBoxHtml(pre, k, l, i, list, irPh, busyN, picking) {
+// รูปแต่ละรูปผูกกับหม้อ/รอบได้: เก็บเป็น "ชื่อไฟล์~RC13/2" คั่นด้วย , (ไม่ผูก = ชื่อไฟล์อย่างเดียว)
+const phParse = e => { const i = String(e).indexOf("~"); return i < 0 ? { fn: String(e), tag: "" } : { fn: e.slice(0, i), tag: e.slice(i + 1) }; };
+const phMake = (fn, tag) => tag ? `${fn}~${String(tag).replace(/[,~]/g, " ").trim()}` : fn;
+const phFns = v => phList(v).map(e => phParse(e).fn);
+// หม้อ/รอบของ IR (จากช่อง หม้อ / รายละเอียดของปัญหา)
+const pdTagsOf = rows => [...new Set(rows.map(r => String(r.b || "").replace(/[,~]/g, " ").trim()).filter(t => t && !/\/$/.test(t)))];
+// เรียงรูปตามลำดับหม้อ (รูปที่ยังไม่ระบุหม้ออยู่ท้าย) → [ไฟล์, หม้อ]
+const phOrdered = (v, tags) => { const E = phList(v).map(phParse); return [...tags.flatMap(t => E.filter(e => e.tag === t)), ...E.filter(e => !tags.includes(e.tag))].map(e => [e.fn, e.tag]); };
+// กล่องรูปตามลำดับ (แต่ละช่องใส่ได้หลายรูป · แยกตามหม้อ) · pre = คำนำหน้า data-* ของหน้านั้น
+function slotBoxHtml(pre, k, l, i, list, irPh, busy, picking, tags) {
+  tags = tags || []; const E = list.map((e, j) => Object.assign(phParse(e), { j })), fns = E.map(e => e.fn);
+  const thumb = e => `<div class="ps-slx"><img src="${photoUrl(e.fn)}?w=1" data-${pre}view="${esc(e.fn)}" alt="${l}"><button type="button" data-${pre}del="${k}|${e.j}" aria-label="ลบรูป">${I("x")}</button><button type="button" class="rot" data-${pre}rot="${k}|${e.j}" title="หมุนรูป 90° ตามเข็มนาฬิกา" aria-label="หมุนรูป">↻</button>
+    ${tags.length ? `<select class="ps-tag" data-${pre}tag="${k}|${e.j}" title="รูปนี้เป็นของหม้อไหน">${tags.map(t => `<option ${t === e.tag ? "selected" : ""}>${esc(t)}</option>`).join("")}<option value="" ${tags.includes(e.tag) ? "" : "selected"}>ไม่ระบุหม้อ</option></select>` : ""}</div>`;
+  const ld = n => n ? `<div class="ps-slx ld"><span class="ai-dots"><i></i><i></i><i></i></span>${n} รูป</div>` : "";
+  const add = (t, has) => `<label class="ghost sm">${I("camera")}${has ? "เพิ่มรูป" : "ถ่าย / เลือกรูป"}${t ? ` <b>${esc(t)}</b>` : ""}<input type="file" accept="image/*" multiple data-${pre}file="${k}|${esc(t)}" hidden></label>`;
+  const groups = tags.length ? tags.map(t => ({ t, L: E.filter(e => e.tag === t) })).concat([{ t: "", L: E.filter(e => !tags.includes(e.tag)), other: true }]) : [{ t: "", L: E }];
+  const body = groups.filter(gr => !gr.other || gr.L.length || busy[""]).map(gr => {
+    const n = busy[gr.t] || 0, inner = gr.L.length || n ? `<div class="ps-slm">${gr.L.map(thumb).join("")}${ld(n)}</div>` : (tags.length ? "" : `<div class="ps-sle">${I("camera")}ยังไม่มีรูป</div>`);
+    return tags.length ? `<div class="ps-grp ${gr.other ? "other" : ""}"><div class="ps-grph"><b>${gr.other ? "ยังไม่ระบุหม้อ" : esc(gr.t)}</b><small>${gr.L.length ? gr.L.length + " รูป" : "ยังไม่มีรูป"}</small>${gr.other ? "" : add(gr.t, gr.L.length)}</div>${inner}</div>` : inner + `<div class="ps-sla">${add("", gr.L.length)}</div>`;
+  }).join("");
   return `<div class="ps-slot ${list.length ? "has" : ""}"><div class="ps-slt"><em>${i + 1}</em><b>${l}</b>${list.length ? `<span class="ok">${I("check")}${list.length} รูป</span>` : `<span class="no">ยังไม่แนบ</span>`}</div>
-    <div class="ps-slb">${list.length || busyN ? `<div class="ps-slm">${list.map((fn, j) => `<div class="ps-slx"><img src="${photoUrl(fn)}?w=1" data-${pre}view="${esc(fn)}" alt="${l} ${j + 1}"><i>${j + 1}</i><button type="button" data-${pre}del="${k}|${j}" aria-label="ลบรูป">${I("x")}</button><button type="button" class="rot" data-${pre}rot="${k}|${j}" title="หมุนรูป 90° ตามเข็มนาฬิกา" aria-label="หมุนรูป">↻</button></div>`).join("")}${busyN ? `<div class="ps-slx ld"><span class="ai-dots"><i></i><i></i><i></i></span>${busyN} รูป</div>` : ""}</div>`
-      : `<div class="ps-sle">${I("camera")}ยังไม่มีรูป</div>`}</div>
-    <div class="ps-sla"><label class="ghost sm">${I("camera")}${list.length ? "เพิ่มรูป" : "ถ่าย / เลือกรูป"}<input type="file" accept="image/*" multiple data-${pre}file="${k}" hidden></label>
-      ${irPh.length ? `<button type="button" class="ghost sm" data-${pre}ir="${k}">${I("image")}จากรูปที่แนบ</button>` : ""}</div>
-    ${picking ? `<div class="ps-slp">${irPh.map(p => `<img src="${photoUrl(p)}?w=1" data-${pre}pick="${k}|${esc(p)}" class="${list.includes(p) ? "on" : ""}" alt="">`).join("")}<small>แตะรูปเพื่อเพิ่ม / เอาออก</small></div>` : ""}</div>`;
+    <div class="ps-slb">${body}</div>
+    ${irPh.length ? `<div class="ps-sla"><button type="button" class="ghost sm" data-${pre}ir="${k}">${I("image")}จากรูปที่แนบ</button></div>` : ""}
+    ${picking ? `<div class="ps-slp">${irPh.map(p => `<img src="${photoUrl(p)}?w=1" data-${pre}pick="${k}|${esc(p)}" class="${fns.includes(p) ? "on" : ""}" alt="">`).join("")}<small>แตะรูปเพื่อเพิ่ม / เอาออก · แล้วเลือกหม้อใต้รูป</small></div>` : ""}</div>`;
 }
 async function rtUploadPhoto(fl) {
   const pt = await photoTime(fl, false), blob = await stampPhoto(fl, pt.at), fd = new FormData(); fd.append("file", blob, "photo.jpg");
@@ -4097,23 +4122,27 @@ async function rtUploadPhoto(fl) {
   return (await r.json()).file;
 }
 function pdSlotsHtml(d) {
-  const v = d.values || {}, irPh = d.photos || [], busy = d._pdbusy || {}, pick = d._pdpick || {};
-  return `<div class="pd-slots"><span class="lab">แนบรูป (ตามลำดับ · แต่ละช่องใส่ได้หลายรูป)</span><div class="ps-slg">` + PD_SLOTS.map(([k, l], i) => slotBoxHtml("pdslot", k, l, i, phList(v[k]), irPh, busy[k] || 0, pick[k])).join("") + `</div></div>`;
+  const v = d.values || {}, irPh = d.photos || [], busy = d._pdbusy || {}, pick = d._pdpick || {}, tags = pdTagsOf(d._rows || irRowsOf(d));
+  return `<div class="pd-slots"><span class="lab">แนบรูป (ตามลำดับ · แยกตามหม้อ · ใส่ได้หลายรูป)</span><div class="ps-slg">` + PD_SLOTS.map(([k, l], i) => slotBoxHtml("pdslot", k, l, i, phList(v[k]), irPh, busy[k] || {}, pick[k], tags)).join("") + `</div></div>`;
 }
+// แก้ชื่อหม้อ/รอบในฟอร์ม → กลุ่มรูปตามหม้ออัปเดตตาม
+document.addEventListener("input", e => { if (!e.target.matches || !e.target.matches('[data-rf="b"]') || !S.draft || !$("#pdBox")) return; clearTimeout(pdSlotsHtml.t); pdSlotsHtml.t = setTimeout(() => pdSlotRedraw(S.draft), 400); });
 document.addEventListener("click", e => {  // รูปในช่องแนบ (ไม่ใช่ปุ่ม): ดูรูปใหญ่ / เลือกจากรูปที่แนบ
   const v = e.target.closest("img[data-pdslotview]"); if (v) { window.open(photoUrl(v.dataset.pdslotview), "_blank"); return; }
   const p = e.target.closest("img[data-pdslotpick]"), d = S.draft; if (!p || !d) return;
-  const [k, f] = p.dataset.pdslotpick.split("|"); d.values = d.values || {}; const L = phList(d.values[k]);
-  d.values[k] = (L.includes(f) ? L.filter(x => x !== f) : L.concat(f)).join(","); if (!d.values[k]) delete d.values[k]; pdSlotRedraw(d);
+  const [k, f] = p.dataset.pdslotpick.split("|"); d.values = d.values || {}; const L = phList(d.values[k]), has = L.some(e => phParse(e).fn === f);
+  d.values[k] = (has ? L.filter(e => phParse(e).fn !== f) : L.concat(f)).join(","); if (!d.values[k]) delete d.values[k]; pdSlotRedraw(d);
 });
 const pdSlotRedraw = d => { const box = $("#pdBox"); if (box) box.innerHTML = pdBlock(d); };
 document.addEventListener("change", async e => {
-  const k = e.target.dataset && e.target.dataset.pdslotfile, files = [...(e.target.files || [])], d = S.draft; if (!k || !files.length || !d) return; e.target.value = "";
-  d.values = d.values || {}; d._pdbusy = d._pdbusy || {};
-  for (const fl of files) { d._pdbusy[k] = (d._pdbusy[k] || 0) + 1; }
-  pdSlotRedraw(d);
-  for (const fl of files) { try { const fn = await rtUploadPhoto(fl); d.values[k] = phList(d.values[k]).concat(fn).join(","); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); }
-    d._pdbusy[k]--; pdSlotRedraw(d); }
+  const d = S.draft, ds = (e.target.dataset || {});
+  if (ds.pdslottag && d) { const [k, j] = ds.pdslottag.split("|"), L = phList(d.values[k]); L[+j] = phMake(phParse(L[+j]).fn, e.target.value); d.values[k] = L.join(","); pdSlotRedraw(d); return; }
+  const files = [...(e.target.files || [])]; if (!ds.pdslotfile || !files.length || !d) return; e.target.value = "";
+  const [k, tag] = ds.pdslotfile.split("|");
+  d.values = d.values || {}; d._pdbusy = d._pdbusy || {}; const B = d._pdbusy[k] = d._pdbusy[k] || {};
+  B[tag] = (B[tag] || 0) + files.length; pdSlotRedraw(d);
+  for (const fl of files) { try { const fn = await rtUploadPhoto(fl); d.values[k] = phList(d.values[k]).concat(phMake(fn, tag)).join(","); } catch (err) { toast("อัปโหลดรูปไม่สำเร็จ: " + err.message); }
+    B[tag]--; pdSlotRedraw(d); }
 });
 function pirCard(d, many, fields) {
   if (!IR.codes && !PIR.loading) { PIR.loading = true; irLoad().then(() => { PIR.loading = false; if (S.view === "log" && S.step === 5) { const y = scrollY; viewLog(); scrollTo(0, y); } }); }
@@ -4199,7 +4228,8 @@ function pirOnClick(d, b) {
   if (ds.pdslotview) { window.open(photoUrl(ds.pdslotview), "_blank"); return true; }
   if (ds.pdslotir) { d._pdpick = d._pdpick || {}; d._pdpick[ds.pdslotir] = !d._pdpick[ds.pdslotir]; pdSlotRedraw(d); return true; }
   if (ds.pdslotrot) { const [k, j] = ds.pdslotrot.split("|"); b.disabled = true;
-    rtRotate(phList(d.values[k])[+j]).then(nf => { const L = phList(d.values[k]); L[+j] = nf; d.values[k] = L.join(","); pdSlotRedraw(d); }).catch(err => { b.disabled = false; toast("หมุนรูปไม่สำเร็จ: " + err.message); });
+    const e0 = phParse(phList(d.values[k])[+j]);
+    rtRotate(e0.fn).then(nf => { const L = phList(d.values[k]); L[+j] = phMake(nf, phParse(L[+j]).tag); d.values[k] = L.join(","); pdSlotRedraw(d); }).catch(err => { b.disabled = false; toast("หมุนรูปไม่สำเร็จ: " + err.message); });
     return true; }
   if (ds.pdslotdel) { const [k, j] = ds.pdslotdel.split("|"); const L = phList(d.values[k]); L.splice(+j, 1); if (L.length) d.values[k] = L.join(","); else delete d.values[k]; pdSlotRedraw(d); return true; }
   if (ds.ppd) { d.values.ir_pd = ds.ppd; if (ds.ppd === "Y" && !d.values.ir_pddate) d.values.ir_pddate = d.date || todayISO(); if (ds.ppd === "N") ["ir_pdno", "ir_pddate", "ir_pdnote"].forEach(k => delete d.values[k]);
