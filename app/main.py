@@ -152,7 +152,8 @@ def visible_zones():
     for z in fac_zones():
         if z.get("hidden"):
             continue
-        out.append({**z, "deck": zone_deck(z), "items": [it for it in z["items"] if not it.get("hidden")]})
+        zz = {k: v for k, v in z.items() if k != "resp"}  # ผู้รับผิดชอบ = ข้อมูลหลังบ้าน (หน้างานไม่เห็น)
+        out.append({**zz, "deck": zone_deck(z), "items": [it for it in z["items"] if not it.get("hidden")]})
     return out
 
 
@@ -1298,7 +1299,7 @@ def api_presence(request: Request):
     with db() as con:
         rows = con.execute("""SELECT u.emp_id, u.name, u.dept, (SELECT MAX(last_seen) FROM user_sessions s WHERE s.emp_id=u.emp_id) AS seen
                               FROM users u WHERE u.active=1""").fetchall()
-    out = [{"emp": r["emp_id"], "name": r["name"], "dept": r["dept"], "seen": r["seen"] or 0,
+    out = [{"name": r["name"], "dept": r["dept"], "seen": r["seen"] or 0,
             "online": r["emp_id"] == u["emp_id"] or bool(r["seen"] and nowms - r["seen"] < ONLINE_MS), "me": r["emp_id"] == u["emp_id"]} for r in rows]
     out.sort(key=lambda x: (not x["online"], -x["seen"], x["name"].lower()))
     return {"users": out, "now": nowms}
@@ -2245,6 +2246,16 @@ async def api_admin_check(request: Request):
                                                 for it in z["items"] if not it.get("hidden") or it.get("paused")]}
           for z in fac_zones() if not z.get("hidden")]
     return {"ok": True, "zones": zs, "factory": cur_fac()}
+
+
+@app.post("/api/admin/users")
+async def api_admin_users(request: Request):
+    """รายชื่อบัญชี (สำหรับเลือกผู้รับผิดชอบพื้นที่ในหน้าแก้ไขหัวข้อ) · ต้องใส่รหัสแก้ไข"""
+    data = await request.json()
+    _check_edit_pin(data.get("pin"))
+    with db() as con:
+        rows = con.execute("SELECT emp_id, name, dept, factory FROM users WHERE active=1 ORDER BY name").fetchall()
+    return {"users": [{"emp": r["emp_id"], "name": r["name"], "dept": r["dept"] or "", "factory": r["factory"] or FAC_DEFAULT} for r in rows]}
 
 
 @app.post("/api/admin/areas")
@@ -4194,8 +4205,8 @@ def _remind_events(u):
             continue
         zc = next((x for x in AREAS["zones"] if x.get("id") == z["id"]), {})
         resp = zc.get("resp") or []
-        if not resp:
-            continue  # ยังไม่ได้ตั้งผู้รับผิดชอบ → ไม่แจ้ง
+        if not resp or emp not in resp:
+            continue  # แจ้งเฉพาะผู้รับผิดชอบของพื้นที่นี้ (คนอื่นไม่เห็น)
         left = [it for it in z["items"] if not it.get("extra") and not it.get("checked")]
         names = ", ".join(f'{it.get("no", "")} {it.get("name", "")}'.strip() for it in left[:3]) + (f" และอีก {len(left) - 3} หัวข้อ" if len(left) > 3 else "")
         for t in times:
