@@ -4139,15 +4139,16 @@ def _remind_events(u):
     if not times:
         return []
     emp = (u or {}).get("emp_id", "")
+    if not emp:
+        return []  # แจ้งเฉพาะผู้รับผิดชอบ (ต้องเข้าสู่ระบบด้วยบัญชี)
     st = status_for(cur)
     out = []
     for z in st["zones"]:
         if z.get("deck") == "retort" or z["done"] >= z["total"]:
             continue
         zc = next((x for x in AREAS["zones"] if x.get("id") == z["id"]), {})
-        resp = zc.get("resp") or []
-        if not resp:
-            continue  # ยังไม่ได้ตั้งผู้รับผิดชอบ → ไม่แจ้ง
+        if emp not in (zc.get("resp") or []):
+            continue  # แจ้งเฉพาะผู้รับผิดชอบของพื้นที่นี้ (ยังไม่ได้ตั้ง / ไม่ใช่ผู้รับผิดชอบ → ไม่แจ้ง)
         left = [it for it in z["items"] if not it.get("extra") and not it.get("checked")]
         names = ", ".join(f'{it.get("no", "")} {it.get("name", "")}'.strip() for it in left[:3]) + (f" และอีก {len(left) - 3} หัวข้อ" if len(left) > 3 else "")
         for t in times:
@@ -4155,7 +4156,7 @@ def _remind_events(u):
             out.append({"id": f'remind:{z["id"]}:{cur.isoformat()}:{hrs:g}', "type": "remind", "at": int(t.timestamp() * 1000), "by": "ระบบ",
                         "text": f'ยังไม่ได้ส่ง {len(left)} รายการ · ตัดรอบอีก {hrs:g} ชม. ({end.strftime("%H:%M")} น.) · {names}'[:200],
                         "title": f'ยังไม่ได้ส่ง: {z["name"]}', "zone": z["name"], "zid": z["id"], "round": cur.isoformat(),
-                        "mine": bool(emp) and emp in resp, "reason": "พื้นที่ที่คุณรับผิดชอบยังไม่ได้ส่ง" if emp in resp else ""})
+                        "mine": True, "reason": "พื้นที่ที่คุณรับผิดชอบยังไม่ได้ส่ง"})
     return out
 
 
