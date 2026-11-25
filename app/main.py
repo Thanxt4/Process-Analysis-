@@ -2303,6 +2303,11 @@ async def api_admin_save(request: Request):
                 base["proc"] = proc  # ป้ายกระบวนการ เช่น จุดเตรียม / บรรจุ
             else:
                 base.pop("proc", None)
+            guide = str(it.get("guide") or "").replace("\r", "").strip()[:1500]  # วิธีตรวจ / จุดที่ต้องดู (หน้างานเห็นในฟอร์ม)
+            if guide and not base.get("extra"):
+                base["guide"] = guide
+            else:
+                base.pop("guide", None)
             cust = _cust_norm(it.get("cust"))
             if cust and not base.get("extra"):
                 base["cust"] = cust  # Checklist ของลูกค้า · both = ทั้งสองลูกค้า (ไม่ระบุ = ไม่มีลูกค้า)

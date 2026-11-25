@@ -66,6 +66,11 @@ details.pb{margin-top:12px}
 .e-resp{grid-column:1/-1;order:10;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.e-respb{flex:1;min-width:200px;text-align:left;border:1.5px dashed #cbd5e1;background:#fff;border-radius:10px;padding:7px 10px;font:inherit;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer}
 .resppop .rp-q{width:100%;min-height:36px;margin-bottom:6px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit}.resppop .rp-l{max-height:260px;overflow:auto}.resppop label small{margin-left:auto;color:var(--muted);font-size:11.5px}
 .zbtn .zresp{font-size:12px;color:#1d4ed8;font-weight:600}
+.er .acts .guidet{color:#94a3b8}.er .acts .guidet.on{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8}
+.e-guide{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe}.e-guide span{font-size:13px;font-weight:700;color:#1e40af}.e-guide small{font-weight:500;color:#64748b}
+.e-guide textarea{width:100%;min-height:64px;resize:vertical;border:1px solid #bfdbfe;border-radius:8px;padding:6px 8px;font:inherit;font-size:14px;background:#fff}
+.sh-guide{margin-top:8px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:6px 12px}.sh-guide summary{cursor:pointer;font-weight:800;color:#1e40af;font-size:14px}.sh-guide #shGuideTx{white-space:pre-wrap;font-size:14.5px;line-height:1.6;color:#1e293b;padding:4px 0 2px}
+.crow .gmark{display:inline-block;margin-left:4px;font-size:11px;font-weight:700;color:#1d4ed8;background:#dbeafe;border-radius:99px;padding:0 6px;vertical-align:1px}
 </style>
 <style>
 :root{
@@ -1374,7 +1379,7 @@ body.no-comments .igc,body.no-comments .cmb,body.no-comments #cmOpen,body.no-ret
 <div class="sheet-bg" id="sheetBg">
   <div class="sheet" role="dialog" aria-modal="true" onscroll="this.querySelector('.top').classList.toggle('stuck',this.scrollTop>4)">
     <div class="top">
-      <div class="t"><small id="shZone"></small><h2 id="shTitle"></h2><button type="button" class="cmjump" id="shCm" hidden></button></div>
+      <div class="t"><small id="shZone"></small><h2 id="shTitle"></h2><button type="button" class="cmjump" id="shCm" hidden></button><details class="sh-guide" id="shGuide" hidden><summary>วิธีตรวจ / จุดที่ต้องดู</summary><div id="shGuideTx"></div></details></div>
       <button class="x xw" id="shWide" aria-label="ขยายหน้าต่าง" title="ขยาย / ย่อหน้าต่าง"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
       <button class="x" id="shClose" aria-label="ปิด">×</button>
     </div>
@@ -1795,7 +1800,8 @@ function renderForm(){
       <span class="pill ${it.count?"ok":"opt"}">${it.count?`ส่งแล้ว ${it.count}`:"ไม่บังคับ"}</span></button>`;
     const cls = it.issue ? "ng" : it.checked ? "ok" : "";
     const pill = it.issue ? `<span class="pill ng">พบปัญหา</span>` : it.noact ? `<span class="pill na">${NO_ACT}</span>` : it.checked ? `<span class="pill ok">ตรวจแล้ว${it.count>1?" ×"+it.count:""}</span>` : `<span class="pill">ยังไม่ตรวจ</span>`;
-    const sub = it.checked ? `${esc(it.last_inspector)} · ${hm(it.last_time)} น.${it.images?` · รูป ${it.images}`:""}` : "แตะเพื่อกรอกผลการตรวจ";
+    const hasG = !!String((CFG.zones.flatMap(z => z.items).find(x => x.id === it.id) || {}).guide || "").trim();
+    const sub = (it.checked ? `${esc(it.last_inspector)} · ${hm(it.last_time)} น.${it.images?` · รูป ${it.images}`:""}` : "แตะเพื่อกรอกผลการตรวจ") + (hasG ? ` <span class="gmark">📖 มีวิธีตรวจ</span>` : "");
     return `<button class="item" data-a="${it.id}"><span class="mark ${cls}">${it.issue?"!":it.checked?"✓":""}</span>
       <span class="t"><b><span class="no">${it.no}</span>${esc(it.name)}${procTag(it)}</b><span>${sub}</span></span>${pill}</button>`;
   }).join("");
@@ -1937,6 +1943,8 @@ async function openSheet(areaId, round){
   $("#shZone").textContent = it.zone + (!late ? "" : editable ? ` · ส่งย้อนหลัง รอบ ${thDate(round)}` : ` · รอบ ${thDate(round)} (ดูอย่างเดียว เกิน ${CFG.backdate_days} วัน)`);
   $("#shTitle").innerHTML = esc(it.extra ? `${it.name}` : `${it.no}. ${it.name}`) + custTag(it);  // ลูกค้า (ถ้ามี)
   $("#topicWrap").hidden = !it.free;
+  // วิธีตรวจของหัวข้อนี้ (ตั้งในหน้าแก้ไขหัวข้อ) · เปิดไว้ก่อนให้อ่าน
+  { const g = String((CFG.zones.flatMap(z => z.items).find(x => x.id === areaId) || {}).guide || "").trim(); $("#shGuide").hidden = !g; $("#shGuide").open = true; $("#shGuideTx").textContent = g; }
   $("#inspector").value = getMyName();
   $("#entryForm").style.display = editable ? "" : "none";
   resetForm();
@@ -3118,10 +3126,12 @@ function renderEditor(){
         <textarea class="e-name" rows="1" placeholder="ชื่อรายการตรวจ">${esc(it.name)}</textarea>
         ${it.extra ? `<span></span>` : `<select class="e-proc" title="อยู่ในกระบวนการไหน"><option value="">— กระบวนการ —</option>${(CFG.process_tags||[]).map(t=>`<option ${t===it.proc?"selected":""}>${esc(t)}</option>`).join("")}</select>`}
         ${it.extra ? `<span></span>` : `<button type="button" class="e-cust c-${custKey(it).toLowerCase()}" title="Checklist นี้ใช้กับลูกค้าไหน · แตะเพื่อติ๊กเลือก"><span>${esc(custText(it) || "ไม่มีลูกค้า")}</span><i>▾</i></button>`}
-        <div class="acts">${movable?`<button type="button" class="hidet ${it.paused?"on":""}" title="${it.paused?"ซ่อนอยู่ · แตะเพื่อแสดงในฟอร์มอีกครั้ง":"ซ่อนหัวข้อนี้ (ไม่แสดงในฟอร์มและ Dashboard · ข้อมูลเก่ายังอยู่)"}">${it.paused?EYE_OFF:EYE_ON}</button>`:""}${movable?`<button type="button" class="pilt ${it.pilot?"on":""}" title="★ หัวข้อใหม่/ทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน % (กดอีกครั้งเพื่อเริ่มนับ)">★</button>`:""}${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
+        <div class="acts">${movable?`<button type="button" class="hidet ${it.paused?"on":""}" title="${it.paused?"ซ่อนอยู่ · แตะเพื่อแสดงในฟอร์มอีกครั้ง":"ซ่อนหัวข้อนี้ (ไม่แสดงในฟอร์มและ Dashboard · ข้อมูลเก่ายังอยู่)"}">${it.paused?EYE_OFF:EYE_ON}</button>`:""}${movable?`<button type="button" class="pilt ${it.pilot?"on":""}" title="★ หัวข้อใหม่/ทดลอง: แสดงใน Dashboard แต่ยังไม่นับใน % (กดอีกครั้งเพื่อเริ่มนับ)">★</button>`:""}${movable?`<button type="button" class="qtyt ${it.qty?"on":""}" title="ช่องให้พนักงานกรอกจำนวน (เช่น จำนวนคันแยกตามห้อง)">#</button><button type="button" class="guidet ${it.guide?"on":""}" title="${it.guide?"มีวิธีตรวจแล้ว · แตะเพื่อแก้ไข":"เพิ่มวิธีตรวจ (หน้างานเห็นในฟอร์ม)"}"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></svg></button>
+        <button type="button" class="up" ${ii===0?"disabled":""} title="เลื่อนขึ้น">▲</button>
         <button type="button" class="down" ${ii>=z.items.filter(x=>!x.extra).length-1?"disabled":""} title="เลื่อนลง">▼</button>
         <button type="button" class="del" title="ลบรายการ"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:`<span class="note">หัวข้อเพิ่มเติม</span>`}</div>
         ${it._off && !it.paused ? `<div class="e-off">⚠ หัวข้อนี้ไม่ขึ้นในฟอร์มวันนี้: ${esc(it._off)} · กด <b>บันทึกการแก้ไข</b> เพื่อให้กลับมาแสดง</div>` : ""}
+        ${!it.extra && (it.guide || it._gopen) ? `<div class="e-guide"><span>วิธีตรวจ / จุดที่ต้องดู <small>(หน้างานเห็นในฟอร์มตอนกรอก)</small></span><textarea class="e-guidein" rows="3" placeholder="เช่น 1) ดูอุณหภูมิที่จอ PLC ต้อง 121–123 °C  2) เปิดฝาตะกร้า ดูว่าไม่มีถาดล้ม  3) ถ่ายรูปหน้าจอแนบ">${esc(it.guide || "")}</textarea></div>` : ""}
         ${it.qty ? `<div class="e-qty"><span>ห้อง (คั่นด้วย ,)</span><input type="text" class="e-rooms" value="${esc((it.qty.rooms || []).join(", "))}" placeholder="เช่น ห้อง 1, ห้อง 2, ห้อง 3 (เว้นว่าง = กรอกยอดรวมอย่างเดียว)"><span>หน่วย</span><input type="text" class="e-unit" value="${esc(it.qty.unit || "คัน")}" style="flex:0 0 56px"></div>` : ""}</div>`;
     }).join("");
     return `<div class="ez" data-z="${zi}"><div class="ez-h">
@@ -3160,6 +3170,7 @@ $("#editZones").addEventListener("input", e => {
     else if(e.target.classList.contains("e-proc")) it.proc = e.target.value;
     else if(e.target.classList.contains("e-rooms")) it.qty = {...it.qty, rooms: e.target.value.split(/[,，]/).map(x => x.trim()).filter(Boolean)};
     else if(e.target.classList.contains("e-unit")) it.qty = {...it.qty, unit: e.target.value.trim() || "คัน"};
+    else if(e.target.classList.contains("e-guidein")){ it.guide = e.target.value; edGrow(e.target); }
     else { if(e.target.tagName === "TEXTAREA"){ if(/\n/.test(e.target.value)) e.target.value = e.target.value.replace(/\n+/g, " "); edGrow(e.target); } it.name = e.target.value; } }
 });
 // ผู้รับผิดชอบพื้นที่ (บัญชีผู้ใช้) → ได้รับแจ้งเตือนเมื่อพื้นที่ยังไม่ส่งก่อนตัดรอบ
@@ -3243,6 +3254,8 @@ $("#editZones").addEventListener("click", e => {
   if(b.classList.contains("del")){ if(!z.items[ii].name || confirm(`ลบรายการ "${z.items[ii].name}"?`)){ z.items.splice(ii,1); renderEditor(); } }
   if(b.classList.contains("hidet")){ const it = z.items[ii]; it.paused = !it.paused; renderEditor();
     toast(it.paused ? `ซ่อน "${it.name}" · กด บันทึกการแก้ไข เพื่อยืนยัน` : `แสดง "${it.name}" อีกครั้ง · กด บันทึกการแก้ไข เพื่อยืนยัน`); return; }
+  if(b.classList.contains("guidet")){ const it = z.items[ii]; it._gopen = !it._gopen || !!it.guide; renderEditor();
+    const t = $("#editZones").querySelector(`.er[data-z="${zi}"][data-i="${ii}"] .e-guidein`); if(t){ t.focus(); t.setSelectionRange(t.value.length, t.value.length); } return; }
   if(b.classList.contains("pilt")){ const it = z.items[ii]; it.pilot = !it.pilot; b.classList.toggle("on", it.pilot);
     toast(it.pilot ? "★ หัวข้อนี้ยังไม่นับใน % ของ Dashboard" : "หัวข้อนี้นับใน % ของ Dashboard แล้ว"); return; }
   if(b.classList.contains("qtyt")){ const it = z.items[ii];
