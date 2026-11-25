@@ -1751,6 +1751,18 @@ table.w5 td.n,table.w5 th.n{width:36px;text-align:center;font-weight:800}table.w
 .ps-slx select.ps-tag{position:absolute;left:4px;bottom:4px;max-width:calc(100% - 38px);min-height:0;height:24px;padding:0 4px;font-size:11.5px;font-weight:700;border-radius:7px;border:0;background:rgba(255,255,255,.92);color:var(--navy)}
 .pd-det{grid-column:1/-1;margin-top:10px}.pd-det .pdfields{margin-top:6px}.pd-pt{margin-top:8px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line)}.pd-pt input{width:100%;min-height:38px;font-size:14px}
 .pd-pt td:first-child{font-size:13px}.pd-det input[disabled]{background:#f1f5f9;color:#334155}
+@media(max-width:520px){.phbtns{grid-template-columns:1fr 1fr!important}.phb.lib{grid-column:1/-1}}
+.phb.lib{border:1.5px dashed var(--line);background:#fff;font:inherit;text-align:left;cursor:pointer}.phbtns{grid-template-columns:repeat(3,1fr)!important}
+.ph .phlib{position:absolute;left:4px;bottom:4px;display:inline-flex;align-items:center;gap:3px;min-height:0;height:24px;padding:0 8px;border-radius:99px;border:0;font-size:11.5px;font-weight:800;background:rgba(15,23,42,.78);color:#fff;cursor:pointer}
+.ph .phlib svg.i{width:12px;height:12px}.ph .phlib.on{background:#16a34a;cursor:default}.phliball{margin-top:8px}
+.my-lib{margin:8px 0 4px;display:flex;align-items:center;gap:8px}.my-lib small{color:var(--mute);font-weight:500}
+.lib-bar{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}.lib-rets{display:flex;gap:6px;flex-wrap:wrap}.lib-rets button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:5px 12px;font:inherit;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer}
+.lib-rets button.on{background:var(--navy);color:#fff;border-color:var(--navy)}.lib-rets em{font-style:normal;opacity:.7;margin-left:2px}.lib-bar input{min-height:40px}
+.lib-list{max-height:62vh;overflow:auto;display:flex;flex-direction:column;gap:12px}.lib-gh{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}.lib-gh b{color:var(--navy);font-size:15px}.lib-gh small{color:var(--mute)}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.lib-c{position:relative;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}.lib-c.on{border-color:#16a34a;box-shadow:0 0 0 2px #bbf7d0}
+.lib-c img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;cursor:pointer}.lib-m{padding:6px 8px;display:flex;flex-direction:column;gap:1px}.lib-m b{font-size:13px;color:var(--navy)}.lib-m small{font-size:11.5px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib-ok{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:#16a34a;color:#fff;display:grid;place-items:center}.lib-ok svg.i{width:15px;height:15px}
+.lib-del{position:absolute;top:6px;right:6px;width:28px;height:28px;min-height:0;padding:0;border-radius:50%;border:0;background:rgba(15,23,42,.75);color:#fff;display:grid;place-items:center;cursor:pointer}.lib-del svg.i{width:14px;height:14px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 /* พิมพ์รายงาน (หน้าวิเคราะห์) */
 @page{size:A4 landscape;margin:10mm}
@@ -2078,6 +2090,7 @@ function myPanel() {
       box.innerHTML = `<div class="my-h"><div class="av my-av">${esc(initials(S.user))}</div><div><b>ของฉัน</b><small>${MY.acct ? `บัญชี ${esc(MY.acct.name)} (${esc(MY.acct.emp_id)}) · ใช้ได้ทุกเครื่องที่เข้าสู่ระบบบัญชีนี้` : "ตั้งค่าเฉพาะเครื่องนี้ · เข้าสู่ระบบที่หน้าหลักเพื่อใช้กับบัญชีของคุณทุกเครื่อง"}</small></div><button class="tm-x" data-close aria-label="ปิด">${I("x")}</button></div>
       <label class="f"><span class="lab">ชื่อผู้บันทึก</span><div class="row"><input id="myName" value="${esc(S.user || "")}" maxlength="40" autocomplete="off"><button class="soft sm" id="myNameOk" style="flex:0 0 auto">บันทึกชื่อ</button></div></label>
       <div id="mySig"></div>
+      <button type="button" class="blk my-lib" id="myLib">${I("grid")}คลังรูปของฉัน <small>รูปที่เก็บไว้ · แยกตามหม้อ</small></button>
       <span class="lab my-l">${I("palette")}สีของฉัน</span>
       <div class="grid"><div class="colrow"><input type="color" data-myc="navy" value="${nav}"><span class="sub">สีหลัก</span></div><div class="colrow"><input type="color" data-myc="amber" value="${amb}"><span class="sub">สีเน้น</span></div></div>
       <div class="swatches">${THEME_PRESETS.map(([n, a, b]) => `<button class="swatch ${nav === a && amb === b ? "on" : ""}" data-mypre="${a}${b}" style="--a:${a};--b:${b}"><i></i>${n.replace(" (ค่าเริ่มต้น)", "")}</button>`).join("")}${P.navy || P.amber ? `<button class="ghost sm" data-myteam>ใช้สีของทีม</button>` : ""}</div>
@@ -2097,6 +2110,7 @@ function myPanel() {
       else if (ds.myscale) { mySet("scale", +ds.myscale === U.scale ? "" : +ds.myscale); draw(); }
       else if (ds.mypre) { mySet("navy", ds.mypre.slice(0, 7)); mySet("amber", ds.mypre.slice(7)); draw(); }
       else if (b.hasAttribute("data-myteam")) { mySet("navy", ""); mySet("amber", ""); draw(); }
+      else if (b.id === "myLib") libOpen(false);
       else if (b.id === "myReset") { MY.p = {}; mySet("x", ""); draw(); toast("กลับเป็นค่าเริ่มต้นแล้ว"); }
       else if (b.id === "myNameOk") { const v = box.querySelector("#myName").value.trim(); if (!v) return; S.user = v; setName(v); if (S.draft && !S.editingId) S.draft.by = v; $("#userBtn").textContent = initials(v); toast("บันทึกชื่อแล้ว"); draw(); } };
     box.oninput = e => { const t = e.target; if (t.dataset.myc) { mySet(t.dataset.myc, t.value); } };
@@ -2863,14 +2877,70 @@ function photoIn(d) {
     if (Math.abs(at - realTs(d.date, d.time)) > 10 * 60e3) hint = `<div class="ptime">${I("clock")}<div>รูปถ่ายเมื่อ <b>${dmy(bizISO(at))} ${hm} น.</b> (กะ ${shiftOf(hm)}) · เวลาที่บันทึกไว้ ${dmy(d.date)} ${esc(d.time)} น.</div><button class="soft sm" id="usePt" data-t="${t0}">ใช้เวลาถ่ายรูป</button></div>`; }
   return `<div class="f full photoin"><span class="lab">รูปถ่ายปัญหา <small class="sub" style="font-weight:500">${d.photos.length ? `${d.photos.length} รูป · เพิ่มหรือลบได้` : "ไม่บังคับ · มีเวลาประทับอัตโนมัติ"}</small></span>${photoPicker(d)}${hint}</div>`;
 }
+/* ---------- คลังรูปของฉัน (แยกตามบัญชี · แยกตามหม้อ) ----------
+   แนบรูปแล้วกด "เพิ่มเข้าคลัง" → เก็บไว้กับบัญชี พร้อมรายละเอียด (หม้อ / รอบ / วันที่ / ปัญหา) · ดึงกลับมาแนบใหม่ได้จาก "คลังในแอป" */
+const LIB = { items: null, busy: false, q: "", ret: "all" };
+const libHas = fn => !!(LIB.items && LIB.items.some(x => x.fn === fn));
+async function libLoad(force) {
+  if (LIB.items && !force) return LIB.items;
+  try { const r = await fetch("/api/me/photolib", { cache: "no-store" }); LIB.items = r.ok ? (await r.json()).items || [] : null; } catch { LIB.items = null; }
+  return LIB.items;
+}
+function libMeta(d, fn) {  // รายละเอียดของรูปจากฟอร์มที่กำลังกรอก
+  const rows = d._rows || (typeof irRowsOf === "function" ? irRowsOf(d) : []), tags = pdTagsOf(rows);
+  return { fn, retort: d.retort || "", plant: d.plant || "", batch: tags.join(", ") || (/\/\d/.test(d.batch || "") ? d.batch : ""), date: d.date || "", time: d.time || "", shift: d.shift || "",
+    cats: (d.cats || []).map(c => catById(c)?.name || "").filter(Boolean).join(" · "), kind: d.kind || "", by: d.by || S.user || "" };
+}
+async function libAdd(d, fns) {
+  if (!MY.acct) { toast("เข้าสู่ระบบบัญชีที่หน้าหลักก่อน · คลังรูปแยกตามบัญชี"); return false; }
+  try { const r = await jpost("/api/me/photolib", { items: fns.map(fn => libMeta(d, fn)) }); await libLoad(true);
+    toast(r.added > 1 ? `เพิ่ม ${r.added} รูปเข้าคลังแล้ว` : "เพิ่มรูปเข้าคลังแล้ว"); return true; }
+  catch (e) { toast("เพิ่มเข้าคลังไม่สำเร็จ: " + e.message); return false; }
+}
+// กลุ่มตามหม้อ (หม้อล่าสุดก่อน)
+function libGroups(L) { const m = new Map(); L.forEach(x => { const k = x.retort || "ไม่ระบุหม้อ"; if (!m.has(k)) m.set(k, []); m.get(k).push(x); }); return [...m.entries()]; }
+function libCardHtml(x, pick, on) {
+  return `<div class="lib-c ${on ? "on" : ""}"><img src="${photoUrl(x.fn)}?w=1" ${pick ? `data-libpick="${esc(x.fn)}"` : `data-libview="${esc(x.fn)}"`} alt="" loading="lazy">
+    <div class="lib-m"><b>${esc(x.batch || x.retort || "-")}</b><small>${esc([x.date ? dmy(x.date) : "", x.time, x.shift].filter(Boolean).join(" "))}</small>${x.cats ? `<small>${esc(x.cats)}</small>` : ""}</div>
+    ${pick ? (on ? `<span class="lib-ok">${I("check")}</span>` : "") : `<button type="button" class="lib-del" data-libdel="${esc(x.fn)}" title="เอาออกจากคลัง">${I("trash")}</button>`}</div>`;
+}
+// หน้าต่างคลังรูป · pick = เลือกรูปไปแนบในฟอร์ม (คืนค่าผ่าน onPick)
+async function libOpen(pick, onPick, cur) {
+  if (!MY.acct) { toast("เข้าสู่ระบบบัญชีที่หน้าหลักก่อน · คลังรูปแยกตามบัญชี"); return; }
+  const sel = new Set();
+  modal(`<div class="row sp" style="margin-bottom:8px"><h2>${pick ? "เลือกรูปจากคลังของฉัน" : "คลังรูปของฉัน"}</h2><button class="ghost sm" data-close>${I("x")}ปิด</button></div><div id="libBox"><p class="sub">กำลังโหลด…</p></div>`, async box => {
+    const L0 = await libLoad(true); const host = box.querySelector("#libBox"); if (!host) return;
+    const draw = () => { const L = L0 || [], rets = [...new Set(L.map(x => x.retort || "ไม่ระบุหม้อ"))], q = LIB.q.trim().toLowerCase();
+      if (LIB.ret !== "all" && !rets.includes(LIB.ret)) LIB.ret = "all";
+      const F = L.filter(x => (LIB.ret === "all" || (x.retort || "ไม่ระบุหม้อ") === LIB.ret) && (!q || [x.retort, x.batch, x.cats, x.date, x.plant].join(" ").toLowerCase().includes(q)));
+      host.innerHTML = !L.length ? `<div class="empty"><h3>ยังไม่มีรูปในคลัง</h3><p class="sub">แนบรูปในหน้าบันทึก แล้วกด "เพิ่มเข้าคลัง" ที่รูป</p></div>` : `
+        <div class="lib-bar"><div class="lib-rets"><button type="button" data-libret="all" class="${LIB.ret === "all" ? "on" : ""}">ทุกหม้อ <em>${L.length}</em></button>${rets.map(r => `<button type="button" data-libret="${esc(r)}" class="${LIB.ret === r ? "on" : ""}">${esc(r)} <em>${L.filter(x => (x.retort || "ไม่ระบุหม้อ") === r).length}</em></button>`).join("")}</div>
+          <input type="search" id="libQ" value="${esc(LIB.q)}" placeholder="ค้นหา หม้อ / รอบ / ปัญหา / วันที่"></div>
+        <div class="lib-list">${libGroups(F).map(([r, xs]) => `<div class="lib-g"><div class="lib-gh"><b>${esc(r)}</b><small>${xs.length} รูป</small></div><div class="lib-grid">${xs.map(x => libCardHtml(x, pick, sel.has(x.fn) || (cur || []).includes(x.fn))).join("")}</div></div>`).join("") || `<p class="sub">ไม่พบรูป</p>`}</div>
+        ${pick ? `<button class="pri blk" id="libUse" ${sel.size ? "" : "disabled"} style="margin-top:12px">${I("check")}แนบ ${sel.size || ""} รูปที่เลือก</button>` : ""}`; };
+    draw();
+    host.onclick = async e => {
+      const r = e.target.closest("[data-libret]"); if (r) { LIB.ret = r.dataset.libret; draw(); return; }
+      const v = e.target.closest("[data-libview]"); if (v) { window.open(photoUrl(v.dataset.libview), "_blank"); return; }
+      const p = e.target.closest("[data-libpick]"); if (p) { const f = p.dataset.libpick; if ((cur || []).includes(f)) return; sel.has(f) ? sel.delete(f) : sel.add(f); draw(); return; }
+      const dl = e.target.closest("[data-libdel]"); if (dl) { if (!confirm("เอารูปนี้ออกจากคลัง? (รูปในรายการที่บันทึกไปแล้วไม่หาย)")) return;
+        try { await api(`/api/me/photolib/${encodeURIComponent(dl.dataset.libdel)}`, { method: "DELETE" }); const i = L0.findIndex(x => x.fn === dl.dataset.libdel); if (i >= 0) L0.splice(i, 1); LIB.items = L0; draw(); } catch (err) { toast(err.message); } return; }
+      if (e.target.closest("#libUse")) { closeModal(); onPick && onPick([...sel]); } };
+    host.oninput = e => { if (e.target.id !== "libQ") return; LIB.q = e.target.value; clearTimeout(LIB.t); LIB.t = setTimeout(() => { draw(); const i = host.querySelector("#libQ"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 200); };
+  }, "wide");
+}
 function photoPicker(d) {
+  if (!LIB.items && !LIB.busy && MY.acct) { LIB.busy = true; libLoad().then(() => { LIB.busy = false; if (S.view === "log" && S.step === 5) { const y = scrollY; viewLog(); scrollTo(0, y); } }); }
   const full = d.photos.length >= U.form.maxPhotos;
   return `<div class="phbtns">
       <label class="phb cam ${full ? "dis" : ""}"><input type="file" accept="image/*" capture="environment" id="camIn" hidden ${full ? "disabled" : ""}>${I("camera")}<span><b>ถ่ายรูป</b><small>เปิดกล้อง</small></span></label>
       <label class="phb gal ${full ? "dis" : ""}"><input type="file" accept="image/*" id="galIn" multiple hidden ${full ? "disabled" : ""}>${I("image")}<span><b>คลังรูป</b><small>เลือกจากเครื่อง</small></span></label>
+      <button type="button" class="phb lib ${full ? "dis" : ""}" id="libPick" ${full ? "disabled" : ""}>${I("grid")}<span><b>คลังในแอป</b><small>รูปที่เก็บไว้ของฉัน</small></span></button>
     </div>
     <small class="phhint">${full ? `ครบ ${U.form.maxPhotos} รูปแล้ว · ลบรูปเดิมก่อนถ้าจะเพิ่ม` : `ประทับ ${esc(U.stamp)} · วันที่ เวลา กะ (รูปจากคลังใช้เวลาที่ถ่ายจริง)`}</small>
-    <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button></div>`).join("")}</div>
+    <div class="photos" id="photos">${d.photos.map((f, i) => `<div class="ph"><img src="${thumbUrl(f)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(f)}"><button class="phx" data-delph="${i}" aria-label="ลบรูป">${I("x")}</button>
+      ${libHas(f) ? `<span class="phlib on" title="อยู่ในคลังของฉันแล้ว">${I("check")}ในคลัง</span>` : `<button type="button" class="phlib" data-libadd="${i}" title="เก็บรูปนี้ไว้ในคลังของฉัน">${I("plus")}เข้าคลัง</button>`}</div>`).join("")}</div>
+    ${d.photos.filter(f => !libHas(f)).length > 1 ? `<button type="button" class="soft sm phliball" id="libAll">${I("plus")}เพิ่มทุกรูปเข้าคลัง (${d.photos.filter(f => !libHas(f)).length})</button>` : ""}
     <div id="upState" class="sub"></div>`;
 }
 function zoomPhoto(f) { modal(`<img src="${photoUrl(f)}" alt="" style="width:100%;border-radius:12px;display:block"><button class="blk" data-close style="margin-top:12px">ปิด</button>`); }
@@ -2959,6 +3029,10 @@ function wireLog() {
     else if (ds.retort != null) { if (d.retort !== ds.retort) { d.retort = ds.retort; d.program = ""; d.programDoc = ""; } S.rgrp = { plant: d.plant, g: retPre(d.retort) }; go(4); }
     else if (b.classList.contains("pickAdd")) { const bar = b.closest(".addbar"); addOption(bar.dataset.kind, bar.querySelector(".pickIn").value, bar.dataset.cat); }
     else if (ds.delph != null) { d.photos.splice(+ds.delph, 1); const y = window.scrollY; viewLog(); window.scrollTo(0, y); }
+    else if (ds.libadd != null) { b.disabled = true; libAdd(d, [d.photos[+ds.libadd]]).then(() => stay()); }
+    else if (b.id === "libAll") { b.disabled = true; libAdd(d, d.photos.filter(f => !libHas(f))).then(() => stay()); }
+    else if (b.id === "libPick") libOpen(true, fns => { const room = U.form.maxPhotos - d.photos.length, add = fns.filter(f => !d.photos.includes(f)).slice(0, Math.max(0, room));
+      d.photos.push(...add); if (add.length < fns.length) toast(`แนบได้สูงสุด ${U.form.maxPhotos} รูป`); else toast(`แนบจากคลัง ${add.length} รูปแล้ว`); stay(); }, d.photos);
     else if (b.id === "photoOk") go(5);
     else if (b.id === "detEdit") needEditPin("แก้ไขหัวข้อรายละเอียด", () => openDetailEditor(stay));
     else if (b.id === "usePt") { const at = new Date(+ds.t); d.date = bizISO(at); d.time = `${pad(at.getHours())}:${pad(at.getMinutes())}`; d.shift = shiftOf(d.time); toast(`ใช้เวลา ${dmy(d.date)} ${d.time} น. กะ ${d.shift}`); stay(); }

@@ -2730,6 +2730,54 @@ def _rt_thumb(src: Path) -> Path:
     return tp
 
 
+# ---- คลังรูปของฉัน (แยกตามบัญชี): เก็บรูปปัญหา Retort ที่ถ่ายไว้ พร้อมรายละเอียดว่ามาจากหม้อไหน
+with db() as _con:
+    _con.execute("CREATE TABLE IF NOT EXISTS photo_lib (emp_id TEXT NOT NULL, fn TEXT NOT NULL, data TEXT NOT NULL, created_at INTEGER NOT NULL, "
+                 "PRIMARY KEY (emp_id, fn))")
+_LIB_KEYS = {"retort": 20, "plant": 10, "batch": 120, "date": 10, "time": 5, "shift": 4, "cats": 200, "kind": 4, "note": 200, "by": 60}
+
+
+def _lib_user(request: Request):
+    u = _me(request)
+    if not u:
+        raise HTTPException(401, "เข้าสู่ระบบบัญชีที่หน้าหลักก่อน (คลังรูปแยกตามบัญชี)")
+    return u
+
+
+@app.get("/api/me/photolib")
+def api_photolib(request: Request):
+    u = _lib_user(request)
+    with db() as con:
+        rows = con.execute("SELECT fn, data, created_at FROM photo_lib WHERE emp_id=? ORDER BY created_at DESC LIMIT 3000", (u["emp_id"],)).fetchall()
+    return {"items": [{**json.loads(r["data"]), "fn": r["fn"], "at": r["created_at"]} for r in rows if (RT_PHOTO_DIR / r["fn"]).exists()]}
+
+
+@app.post("/api/me/photolib")
+async def api_photolib_add(request: Request):
+    u = _lib_user(request)
+    d = await request.json()
+    items = d.get("items") if isinstance(d.get("items"), list) else [d]
+    added = 0
+    with db() as con:
+        for it in items[:50]:
+            fn = str((it or {}).get("fn") or "")
+            if not _RT_PHOTO_RE.match(fn) or not (RT_PHOTO_DIR / fn).exists():
+                continue
+            meta = {k: str(it.get(k) or "").strip()[:n] for k, n in _LIB_KEYS.items()}
+            con.execute("INSERT INTO photo_lib(emp_id, fn, data, created_at) VALUES(?,?,?,?) ON CONFLICT(emp_id, fn) DO UPDATE SET data=excluded.data",
+                        (u["emp_id"], fn, json.dumps(meta, ensure_ascii=False), int(_time.time() * 1000)))
+            added += 1
+    return {"ok": True, "added": added}
+
+
+@app.delete("/api/me/photolib/{fn}")
+def api_photolib_del(fn: str, request: Request):
+    u = _lib_user(request)
+    with db() as con:
+        con.execute("DELETE FROM photo_lib WHERE emp_id=? AND fn=?", (u["emp_id"], fn))
+    return {"ok": True}
+
+
 # ลายเซ็นที่แนบในเอกสาร (เช่น Process Deviation Report) · เก็บเป็นสำเนาแยก เอกสารเดิมไม่เปลี่ยนแม้เจ้าของเปลี่ยนลายเซ็นภายหลัง
 RT_SIG_DIR = DATA_DIR / "retort_signs"
 _RT_SIG_RE = re.compile(r"^[0-9]{8}_[0-9a-f]{16}\.png$")
