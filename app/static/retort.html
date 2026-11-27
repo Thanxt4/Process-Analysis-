@@ -134,7 +134,7 @@ button.dash{border-style:dashed;border-color:#b6c3d6;color:var(--acc2);backgroun
 .hb .v{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
 .hb .v small{color:var(--mute);font-weight:400;margin-left:6px}
 .hb .track{grid-column:1/-1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden}
-.hb .fill{height:100%;border-radius:0 4px 4px 0;background:var(--s1)}
+.hb .fill{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--s1)}
 .tbl{width:100%;border-collapse:collapse;font-size:14px}
 .tbl th{text-align:left;font-weight:500;color:var(--mute);font-size:12.5px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl td{padding:8px;border-bottom:1px solid #f1f5f9;vertical-align:top}
@@ -570,7 +570,7 @@ table.heat{border-collapse:separate;border-spacing:3px;width:100%;font-size:13px
 .heat th.hx{min-width:62px}
 .heat td.hn{min-width:210px;max-width:340px;padding:4px 8px;position:sticky;left:0;background:#fff;z-index:1}.heat th.hn{position:sticky;left:0;background:#fff;z-index:1}.heat td.hn small{display:block;font-size:11px;color:var(--mute);font-weight:600}
 .heat td.hn span{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14.5px}.heat td.hn em{font-style:normal;flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#f1f5f9;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--ink2)}
-.heat td.hc{height:38px;min-width:28px;border-radius:8px;background:#f1f5f9;text-align:center;font-weight:700}
+.heat td.hc{height:38px;min-width:28px;border-radius:8px;background:var(--okbg);text-align:center;font-weight:700}
 .heat td.hc.on{background:rgba(239,68,68,var(--a));color:#7f1d1d}
 .heat td.hx{text-align:center;font-variant-numeric:tabular-nums}.heat td.hx b{font-size:16px}.heat td.hx.small{font-size:12.5px;color:var(--ink2);white-space:nowrap}
 .heat tr[data-trend]{cursor:pointer}.heat tr[data-trend]:hover td.hn{background:#f8fafc;border-radius:8px}
@@ -1216,6 +1216,8 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .rk .tr i{display:block;height:100%;border-radius:99px;background:var(--rc);opacity:.85}
 .rk .v{text-align:right;font-size:17px;font-weight:800;color:var(--navy);line-height:1.1}
 .rk .v small{display:block;font-size:11.5px;font-weight:600;color:var(--mute)}
+.tm-c svg [data-tday]{cursor:pointer}
+.tm-c svg [data-tday]:focus-visible rect,.tm-c svg [data-tday].on rect{stroke:var(--navy);stroke-width:2}
 @media(max-width:560px){.rk{grid-template-columns:26px minmax(0,1fr) 54px}.rk .tr{grid-column:2;grid-row:2;margin-top:-2px}.rk .v{grid-row:1/3;grid-column:3}}
 @media print{.kps{grid-template-columns:repeat(5,1fr)!important}.dgrid2{grid-template-columns:1fr 1fr!important}.kp,.rk{break-inside:avoid}.kp.k1{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 /* ---------- จำนวนรอบหม้อ (ใส่ต่อวัน ต่อกะ) ---------- */
@@ -1262,6 +1264,9 @@ body.svfull #main,body.svfull #main *{animation:none!important;transform:none!im
 .rt-t th.l{text-align:left}.rt-t th.ds{background:#b45309;border-color:#92400e}.rt-t th.ns{background:#1e3a8a;border-color:#1e40af}.rt-t th.s{font-size:11.5px;opacity:.95}
 .rt-t td{padding:7px 6px;border-bottom:1px solid #e2e8f0;text-align:center;font-variant-numeric:tabular-nums}
 .rt-t td.l{text-align:left}.rt-t td.p{color:var(--bad);font-weight:700}
+.rt-t .rt-rank{width:72px;white-space:nowrap}
+.rt-rank small{display:block;font-size:11.5px;font-weight:700;color:var(--mute)}
+.rt-rank .up{color:var(--ok)}.rt-rank .down{color:var(--bad)}.rt-rank .new{color:#1d4ed8}
 .rt-t tbody tr{cursor:pointer}.rt-t tbody tr:hover td{background:#f8fafc}
 .rt-t td.mc b{font-weight:700}.rt-t td.mc em{font-style:normal;font-size:12px;color:var(--mute)}.rt-t td.mc small{display:block;font-size:12px;color:var(--mute)}
 .rt-t tfoot td{font-weight:800;border-top:2px solid var(--navy);background:#f8fafc}
@@ -2380,6 +2385,10 @@ async function syncAll(full) {
     if (r.role && !$("#lock").classList.contains("hide")) { showLock(false); ch = true; }
     lastSync = r.now; S.loaded = true; setSync(true);
     if (ch) { softRender(); persistSoon(); if (typeof pdNotify === "function") pdNotify(); }
+    else if (S.view === "analyze" && $("#runSec")) {
+      const { f1, t1 } = dashRanges();
+      if (RUNS.key !== f1 + t1 && !RUNS.busy) softRender();
+    }
   } catch (e) { if (ep !== authEpoch) return; if (e.status === 401) { setRole(""); showLock(true); return; } setSync(false); if (!S.loaded) { S.loaded = true; softRender(); } }
 }
 /* ---------- เข้าสู่ระบบ: หัวหน้า (Supervisor) / พนักงาน ---------- */
@@ -3769,39 +3778,63 @@ async function viewRuns() {
 /* หน้าวิเคราะห์: รอบที่ใช้ vs รอบที่มีปัญหา แยกกะ DS / NS · % · ปัญหาหลัก */
 function runSection(R, plant) {
   const key = R.f1 + R.t1;
+  const prevFrom = addDays(R.f1, -1), prevTo = addDays(R.t1, -1);
   if (RUNS.key !== key) {
-    if (!RUNS.busy) { RUNS.busy = true; api(`/api/retort/runs?from=${R.f1}&to=${R.t1}`).then(r => { RUNS.items = r.items || []; RUNS.key = key; })
+    if (!RUNS.busy) { RUNS.busy = true; api(`/api/retort/runs?from=${prevFrom}&to=${R.t1}`).then(r => { RUNS.items = r.items || []; RUNS.key = key; })
       .catch(() => { RUNS.items = []; RUNS.key = key; }).finally(() => { RUNS.busy = false; if (S.view === "analyze" && $("#runSec")) { const y = scrollY; render(); scrollTo(0, y); } }); }
     return `<div class="card dcard" id="runSec">${sec("target", "อัตราปัญหาต่อรอบ", "กำลังโหลดจำนวนรอบ…")}</div>`;
   }
   const inPl = r => plant === "all" || plantRetorts(plant).includes(r);
-  const RD = runsDaily(RUNS.items), runs = {}; Object.entries(RD).forEach(([k, n]) => { const r = k.split("|")[1]; if (inPl(r)) runs[r] = (runs[r] || 0) + n; });
-  const P0 = Object.values(S.items).filter(x => x.retort && inPl(x.retort) && (plant === "all" || x.plant === plant) && prodDate(x) >= R.f1 && prodDate(x) <= R.t1);
-  // นับเฉพาะปัญหาของวันที่หม้อนั้นใส่จำนวนรอบแล้ว · วันที่ยังไม่ใส่รอบ ไม่นำมาคิด % (กันตัวเลขเกิน 100%)
-  const P = P0.filter(x => RD[prodDate(x) + "|" + x.retort] != null), skipped = P0.length - P.length, skipDays = new Set(P0.filter(x => !P.includes(x)).map(x => prodDate(x))).size;
-  const rets = [...new Set([...Object.keys(runs), ...P.map(x => x.retort)])].sort(byRetort);
+  const RD = runsDaily(RUNS.items);
+  const problems = Object.values(S.items).filter(x => x.retort && inPl(x.retort) && (plant === "all" || x.plant === plant) && RD[prodDate(x) + "|" + x.retort] != null);
+  const pct = (p, n) => n ? p / n * 100 : null;
+  const rankRows = (from, to) => {
+    const runs = {}, byPot = {};
+    Object.entries(RD).forEach(([k, n]) => {
+      const [day, r] = k.split("|");
+      if (day >= from && day <= to && inPl(r)) runs[r] = (runs[r] || 0) + n;
+    });
+    problems.forEach(x => {
+      const day = prodDate(x);
+      if (day >= from && day <= to) (byPot[x.retort] ||= []).push(x);
+    });
+    return Object.entries(runs).map(([r, n]) => {
+      const L = byPot[r] || [], pd = L.filter(x => x.shift === "DS").length;
+      return { r, n, pd, pn: L.length - pd, pt: L.length, L };
+    }).sort((a, b) => (pct(b.pt, b.n) ?? -1) - (pct(a.pt, a.n) ?? -1) || b.pt - a.pt || byRetort(a.r, b.r));
+  };
+  const rows = rankRows(R.f1, R.t1);
+  const previous = new Map(rankRows(prevFrom, prevTo).filter(x => x.n > 0).map((x, i) => [x.r, i + 1]));
+  const rankCell = (x, rank) => {
+    if (!x.n) return "–";
+    if (!previous.size) return `<b>${rank}</b><small title="ไม่มีข้อมูลช่วงเทียบ">–</small>`;
+    const oldRank = previous.get(x.r);
+    if (oldRank == null) return `<b>${rank}</b><small class="new">เข้าอันดับ</small>`;
+    const delta = oldRank - rank;
+    const change = delta > 0 ? `<small class="up" aria-label="ขึ้น ${delta} อันดับ">▲${delta}</small>`
+      : delta < 0 ? `<small class="down" aria-label="ลง ${-delta} อันดับ">▼${-delta}</small>` : `<small aria-label="อันดับคงเดิม">–</small>`;
+    return `<b>${rank}</b>${change}`;
+  };
   const head = sec("target", "อัตราปัญหาต่อรอบ", `รอบที่ใช้ (รวมทั้งวัน) vs ปัญหาที่พบ · ${thShort(R.f1)} – ${thShort(R.t1)} · แตะหม้อเพื่อดูแนวโน้ม`,
     `<button class="ghost sm" data-view-go2="runs">${I("pen")}ใส่จำนวนรอบ</button>`);
-  if (!rets.length) return `<div class="card dcard" id="runSec">${head}<p class="sub">ไม่มีข้อมูลในช่วงนี้</p></div>`;
-  const pct = (p, n) => n ? p / n * 100 : null;
+  if (!rows.length) return `<div class="card dcard" id="runSec">${head}<p class="sub">ไม่มีข้อมูลในช่วงนี้</p></div>`;
   const pctTxt = v => v == null ? `<span class="rt-na">–</span>` : `<b class="${v >= 20 ? "hi" : v >= 10 ? "md" : v > 0 ? "lo" : "ok"}">${v < 10 && v > 0 ? v.toFixed(1) : Math.round(v)}%</b>`;
   const top = (L, f) => { const e = Object.entries(L.reduce((m, x) => { const k = f(x); if (k) m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1])[0]; return e || null; };
-  const rows = rets.map(r => { const L = P.filter(x => x.retort === r), n = runs[r] || 0;
-    const pd = L.filter(x => x.shift === "DS").length, pn = L.length - pd;
-    return { r, n, pd, pn, pt: L.length, L, tc: top(L, x => x.category), tz: top(L, x => causeText(x)) }; })
-    .sort((a, b) => (pct(b.pt, b.n) ?? -1) - (pct(a.pt, a.n) ?? -1) || b.pt - a.pt);
   const T = rows.reduce((a, x) => ({ n: a.n + x.n, pd: a.pd + x.pd, pn: a.pn + x.pn }), { n: 0, pd: 0, pn: 0 });
-  const noRuns = skipped;
   return `<div class="card dcard" id="runSec">${head}
     <div class="rt-sum"><div class="all"><small>% ปัญหาต่อรอบ</small><b>${pctTxt(pct(T.pd + T.pn, T.n))}</b><span>${T.pd + T.pn} ปัญหา / ${T.n} รอบ</span></div>
       <div class="ds"><small>ปัญหากะ DS</small><b>${T.pd}</b><span>ครั้ง</span></div>
       <div class="ns"><small>ปัญหากะ NS</small><b>${T.pn}</b><span>ครั้ง</span></div></div>
     <div class="tscroll"><table class="rt-t"><thead>
-      <tr><th class="l">หม้อ</th><th class="all">รอบ</th><th class="ds">ปัญหา DS</th><th class="ns">ปัญหา NS</th><th class="all">ปัญหารวม</th><th class="all">%</th><th class="l">ปัญหาหลัก / สาเหตุหลัก</th></tr></thead><tbody>
-      ${rows.map(x => `<tr data-trend="${esc(x.r)}" data-tby="retort"><td class="l"><b>${esc(x.r)}</b></td><td class="n">${x.n || "–"}</td><td class="n">${x.pd || "–"}</td><td class="n">${x.pn || "–"}</td><td class="n p">${x.pt || "–"}</td><td class="n">${pctTxt(pct(x.pt, x.n))}</td>
-        <td class="l mc">${x.tc ? `<b>${esc(catById(x.tc[0])?.name || "-")}</b> <em>${x.tc[1]} ครั้ง</em>${x.tz ? `<small>สาเหตุ: ${esc(x.tz[0])} (${x.tz[1]})</small>` : ""}` : `<span class="rt-na">ไม่พบปัญหา</span>`}</td></tr>`).join("")}
-      </tbody><tfoot><tr><td class="l">รวม ${rows.length} หม้อ</td><td class="n">${T.n || "–"}</td><td class="n">${T.pd || "–"}</td><td class="n">${T.pn || "–"}</td><td class="n p">${T.pd + T.pn || "–"}</td><td class="n">${pctTxt(pct(T.pd + T.pn, T.n))}</td><td></td></tr></tfoot></table></div>
-    <p class="sub" style="margin:8px 2px 0">% = จำนวนปัญหา ÷ จำนวนรอบ × 100 · นับเฉพาะวันที่ใส่จำนวนรอบแล้ว · ถ้ารอบเดียวมีหลายปัญหาจะนับทุกปัญหา · เรียงจาก % มากไปน้อย</p></div>`;
+      <tr><th class="rt-rank">อันดับ</th><th class="l">หม้อ</th><th class="all">รอบ</th><th class="ds">ปัญหา DS</th><th class="ns">ปัญหา NS</th><th class="all">ปัญหารวม</th><th class="all">%</th><th class="l">ปัญหาหลัก / สาเหตุหลัก</th></tr></thead><tbody>
+      ${rows.map((x, i) => {
+        const tc = top(x.L, p => p.category), tz = top(x.L, p => causeText(p));
+        return `<tr data-trend="${esc(x.r)}" data-tby="retort"><td class="rt-rank">${rankCell(x, i + 1)}</td><td class="l"><b>${esc(x.r)}</b></td><td class="n">${x.n || "–"}</td><td class="n">${x.pd || "–"}</td><td class="n">${x.pn || "–"}</td><td class="n p">${x.pt || "–"}</td><td class="n">${pctTxt(pct(x.pt, x.n))}</td>
+        <td class="l mc">${tc ? `<b>${esc(catById(tc[0])?.name || "-")}</b> <em>${tc[1]} ครั้ง</em>${tz ? `<small>สาเหตุ: ${esc(tz[0])} (${tz[1]})</small>` : ""}` : `<span class="rt-na">ไม่พบปัญหา</span>`}</td></tr>`;
+      }).join("")}
+      </tbody><tfoot><tr><td class="l" colspan="2">รวม ${rows.length} หม้อ</td><td class="n">${T.n || "–"}</td><td class="n">${T.pd || "–"}</td><td class="n">${T.pn || "–"}</td><td class="n p">${T.pd + T.pn || "–"}</td><td class="n">${pctTxt(pct(T.pd + T.pn, T.n))}</td><td></td></tr></tfoot></table></div>
+    <p class="sub" style="margin:8px 2px 0">อันดับเทียบกับ ${thShort(prevFrom)} – ${thShort(prevTo)} · ▲ อันดับสูงขึ้น · ▼ อันดับลดลง</p>
+    <p class="sub" style="margin:4px 2px 0">% = จำนวนปัญหา ÷ จำนวนรอบ × 100 · นับเฉพาะวันที่ใส่จำนวนรอบแล้ว · ถ้ารอบเดียวมีหลายปัญหาจะนับทุกปัญหา · เรียงจาก % มากไปน้อย</p></div>`;
 }
 /* ---------- IR (Incident Report) · ช่องตามแบบฟอร์ม Excel "IR Retort" คอลัมน์ D–AM · คัดลอกไปวางใน Excel / LINE ได้ ---------- */
 const IR_COLS = [  // [key, ชื่อในแบบฟอร์ม, คอลัมน์ Excel]
@@ -5263,21 +5296,13 @@ function viewAnalyze() {
   const topCat = byCat[0] ? catById(byCat[0][0]) : null;
   const kpi = (cls, ic, lab, val, unit, sub, extra = "") => `<div class="kp ${cls}"><div class="kp-h"><span class="kp-ic">${I(ic)}</span><small>${lab}</small></div><b>${val}<i>${unit}</i></b><span class="kp-s">${sub}</span>${extra}</div>`;
   // อันดับ (แถบเดียว ไม่มีการเทียบ)
-  // จำนวนรอบหม้อในช่วงที่เลือก (จากหน้า รอบหม้อ) · ใช้ในอันดับหม้อ
-  const RR = RUNS.key === R.f1 + R.t1 ? runsDaily(RUNS.items) : null, runN = {};
-  if (RR) Object.entries(RR).forEach(([k, n]) => { const r = k.split("|")[1]; runN[r] = (runN[r] || 0) + n; });
-  const retRun = k => { const L = L1.filter(x => x.retort === k), n = runN[k] || 0;
-    if (!RR) return `<span class="rk-run">${L.length} ปัญหา · กำลังโหลดจำนวนรอบ…</span>`;
-    const p = L.filter(x => RR[prodDate(x) + "|" + k] != null).length, pc = n ? p / n * 100 : null;
-    return `<span class="rk-run"><b>${n ? n.toLocaleString() : "–"}</b> รอบ · พบปัญหา <b>${L.length}</b> ครั้ง${pc != null ? ` · <b class="${pc >= 20 ? "hi" : pc >= 10 ? "md" : "lo"}">${pc < 10 && pc > 0 ? pc.toFixed(1) : Math.round(pc)}%</b>${p < L.length ? ` <span class="na">(% คิดจาก ${p} ครั้งในวันที่ใส่รอบ)</span>` : ""}` : n ? "" : ` <span class="na">(ยังไม่ใส่รอบ)</span>`}</span>`; };
   const rank = (rows, kind) => { if (!rows.length) return `<p class="sub" style="margin:6px 2px">ไม่พบปัญหาในช่วงนี้</p>`;
     const mx = rows[0][1], tot = rows.reduce((a, r) => a + r[1], 0);
     return `<div class="rk-l">${rows.slice(0, 10).map(([k, v], i) => { const c = kind === "cat" ? catById(k) : null, G = c ? grpOf(c) : null;
       const sub = kind === "cat" ? (G ? G.name : "") : ((L1.find(x => x.retort === k) || {}).plant || "");
-      const topC = kind === "retort" ? (Object.entries(L1.filter(x => x.retort === k).reduce((m, x) => { m[x.category] = (m[x.category] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1])[0] || [])[0] : "";
       return `<button class="rk ${i < 3 ? "top" : ""}" data-trend="${esc(k)}" data-tby="${kind}" style="--rc:${G ? G.color : "#1b2a41"}"><em>${i + 1}</em>
-        <span class="nm"><b>${esc(kind === "cat" ? (c ? c.name : "หัวข้อที่ถูกลบ") : k)}</b><small>${esc(sub)}${topC ? ` · บ่อยสุด: ${esc(catById(topC)?.name || "-")}` : ""}</small>${kind === "retort" ? retRun(k) : ""}</span>
-        <span class="tr"><i style="width:${Math.max(3, v / mx * 100)}%"></i></span><span class="v">${dv(v)}<small>${Math.round(v / tot * 100)}%</small></span></button>`; }).join("")}</div>`; };
+        <span class="nm"><b>${esc(kind === "cat" ? (c ? c.name : "หัวข้อที่ถูกลบ") : k)}</b><small>${esc(sub)}</small></span>
+        <span class="tr"><i style="width:${v > 0 ? Math.max(3, v / mx * 100) : 0}%"></i></span><span class="v">${dv(v)}<small>${kind === "retort" ? dunit() : (tot ? Math.round(v / tot * 100) : 0) + "%"}</small></span></button>`; }).join("")}</div>`; };
   let h = `<div class="dash dx">
   <div class="dx-head"><div class="dx-t"><b>Dashboard</b><span>รายงานปัญหา Retort · ${esc(plantLabel)} · ${pr} · ${days1} วัน</span></div>
     <button class="dh-btn sm" id="dPrint">${I("printer")}<span>พิมพ์ / PDF</span></button></div>
@@ -5307,8 +5332,8 @@ function viewAnalyze() {
   </div>
   ${UD.trend ? `<div class="card dcard">${sec("trend", "แนวโน้มปัญหา", `${pr} · ชี้/แตะกราฟเพื่อดูตัวเลข`)}<div class="chart"><div class="svgc" id="cDash"></div></div><div class="legend" id="lDash"></div></div>` : ""}
   <div class="dgrid2">
+    <div class="card dcard">${sec("grid", "หม้อที่พบปัญหามากสุด", "Top 10 · เลือกหม้อเพื่อดูกราฟรายวัน")}${rank(byRet, "retort")}</div>
     <div class="card dcard">${sec("tag", "ปัญหาที่พบบ่อย", `Top 10 · แตะเพื่อดูแนวโน้ม`)}${rank(byCat, "cat")}</div>
-    <div class="card dcard">${sec("grid", "หม้อที่พบปัญหาบ่อย", `Top 10 · แตะเพื่อดูแนวโน้ม`)}${rank(byRet, "retort")}</div>
   </div>
   ${runSection(R, D.plant)}
   ${UD.groups || UD.hours ? `<div class="dgrid2">${UD.groups ? groupSection(L1) : ""}${UD.hours ? hourSection(L1) : ""}</div>` : ""}
@@ -5441,7 +5466,12 @@ function moreSection(L, total) {
   if (!L.length) return "";
   const g = f => { const m = {}; L.forEach(x => { const k = f(x); m[k] = (m[k] || 0) + dmv(x); }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
   const fm = v => dfmt(v);
-  const hb = (rows) => rows.map(([n, v]) => `<div class="hb"><span class="n">${esc(n)}</span><span class="v">${S.d.metric === "minutes" ? Math.round(v) : v}<small>${total ? Math.round(v / total * 100) : 0}%</small></span><span class="track"><span class="fill" style="width:${total ? v / total * 100 : 0}%"></span></span></div>`).join("");
+  const hb = rows => rows.map(([n, v]) => {
+    const share = total ? v / total * 100 : 0;
+    const pct = Math.round(share);
+    const color = pct >= 85 ? "--bad" : pct >= 35 ? "--amber" : "--ok";
+    return `<div class="hb"><span class="n">${esc(n)}</span><span class="v">${S.d.metric === "minutes" ? Math.round(v) : v}<small>${pct}%</small></span><span class="track"><span class="fill" style="width:${share}%;background:var(${color})"></span></span></div>`;
+  }).join("");
   return `<div style="margin-top:4px">
     <div class="card">${sec("factory", "แยกตามพื้นที่ / โปรแกรม")}${hb(g(x => x.plant || "ไม่ระบุพื้นที่"))}
       <span class="lab" style="margin:16px 0 4px 2px">โปรแกรมที่ใช้ตอนเกิดปัญหา</span>${(() => { const P = g(x => x.program ? "โปรแกรม " + x.program : "").filter(r => r[0]); const none = L.filter(x => !x.program).length;
@@ -5468,7 +5498,7 @@ function wireDash() {
 }
 /* ---------- ป๊อปอัปกราฟแนวโน้ม (กราฟแท่งรายวัน) ---------- */
 const TRN = { key: "", items: [], busy: "" };  // จำนวนรอบหม้อ สำหรับป๊อปอัปแนวโน้มของหม้อ
-function trendModal(k, span) {
+function trendModal(k, span, selected) {
   const D = S.d, R = dashRanges(), t = todayISO();
   const [from, to] = span === "sel" ? [R.f1, R.t1] : [addDays(t, -(+span - 1)), t];
   const L = dItems(from, to, D.plant).filter(x => dKey(x) === k);
@@ -5477,7 +5507,7 @@ function trendModal(k, span) {
   const isRet = D.by === "retort", rkey = from + to;
   if (isRet && TRN.key !== rkey && TRN.busy !== rkey) { TRN.busy = rkey;
     api(`/api/retort/runs?from=${from}&to=${to}`).then(r => { TRN.items = r.items || []; }).catch(() => { TRN.items = []; })
-      .finally(() => { TRN.key = rkey; TRN.busy = ""; const m = document.querySelector("#modalRoot [data-trk]"); if (m && m.dataset.trk === k + "|" + span) trendModal(k, span); }); }
+      .finally(() => { TRN.key = rkey; TRN.busy = ""; const m = document.querySelector("#modalRoot [data-trk]"); if (m && m.dataset.trk === k + "|" + span) trendModal(k, span, $("#tmList").dataset); }); }
   const RD = isRet && TRN.key === rkey ? runsDaily(TRN.items) : null, runOf = d => RD ? (RD[d + "|" + k] ?? null) : null;
   const runTot = RD ? days.reduce((a, d) => a + (runOf(d) || 0), 0) : 0, pOnRun = RD ? L.filter(x => runOf(prodDate(x)) != null).length : 0;
   const pctR = runTot ? pOnRun / runTot * 100 : null, pctTxt = v => v == null ? "–" : (v < 10 && v > 0 ? v.toFixed(1) : Math.round(v)) + "%";
@@ -5495,7 +5525,10 @@ function trendModal(k, span) {
   const every = Math.ceil(buckets.length / 24);
   buckets.forEach((b, i) => { const x = PL + i * bw + bw * 0.15, w = bw * 0.7, hh = (H - PT - PB) * b.v / top, y = H - PB - hh;
     if (RD) svg += `<text x="${x + w / 2}" y="${H - 6}" text-anchor="middle" class="ax rn">${b.run == null ? "– รอบ" : b.run + " รอบ"}</text>`;
-    if (b.v) svg += `<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="4" fill="#f87171"><title>${weekly ? `${thShort(b.from)} – ${thShort(b.to)}` : thLong(b.from)} · ${dfmt(b.v)}${RD && b.run != null ? ` · ${b.run} รอบ` : ""}</title></rect><text x="${x + w / 2}" y="${y - 6}" text-anchor="middle" class="bv">${S.d.metric === "minutes" ? Math.round(b.v) : b.v}</text>`;
+    if (b.n) {
+      const label = `${weekly ? `${thShort(b.from)} – ${thShort(b.to)}` : thLong(b.from)} · ${dfmt(b.v)}${RD && b.run != null ? ` · ${b.run} รอบ` : ""}`;
+      svg += `<g${isRet ? ` data-tday="${b.from}" data-tto="${b.to}" role="button" tabindex="0" aria-pressed="false" aria-label="${esc(label)}"` : ""}><title>${esc(label)}</title><rect x="${x}" y="${Math.min(y, H - PB - 4)}" width="${w}" height="${Math.max(4, hh)}" rx="4" fill="#f87171"/><text x="${x + w / 2}" y="${y - 6}" text-anchor="middle" class="bv">${S.d.metric === "minutes" ? Math.round(b.v) : b.v}</text></g>`;
+    }
     else svg += `<rect x="${x}" y="${H - PB - 4}" width="${w}" height="4" rx="2" fill="#bbf7d0"/>`;
     if (!(i % every)) { const d = new Date(b.from + "T00:00:00"); svg += `<text x="${x + w / 2}" y="${H - (RD ? 26 : 8)}" text-anchor="middle" class="ax">${d.getDate()}/${d.getMonth() + 1}</text>`; } });
   const causes = Object.entries(L.reduce((m, x) => { const c = S.d.by === "retort" ? (catById(x.category)?.name || "-") : (causeText(x) || "ไม่ระบุ"); m[c] = (m[c] || 0) + dmv(x); return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 6);
@@ -5513,20 +5546,34 @@ function trendModal(k, span) {
       <div><small>พบปัญหา</small><b class="bad">${L.length}</b><span>ครั้ง</span></div>
       <div><small>% ปัญหาต่อรอบ</small><b class="${pctR == null ? "" : pctR >= 20 ? "bad" : pctR >= 10 ? "md" : "lo"}">${pctTxt(pctR)}</b><span>${!runTot ? "ยังไม่ใส่จำนวนรอบในช่วงนี้" : pOnRun < L.length ? `คิดจาก ${pOnRun} ครั้งในวันที่ใส่รอบ` : "ปัญหา ÷ รอบ × 100"}</span></div>`
       : `<div class="ld"><small>รอบหม้อ</small><span>กำลังโหลดจำนวนรอบ…</span></div>`}</div>` : ""}
-    <div class="tm-c"><div class="cb-leg" style="margin:0 0 6px"><span><i style="background:#f87171"></i>พบปัญหา (${dunit()})</span><span><i style="background:#bbf7d0"></i>ไม่พบ</span>${RD ? `<span><b style="color:var(--navy)">n รอบ</b> = จำนวนรอบหม้อ (ใต้วันที่)</span>` : ""}${weekly ? "<em>ช่วงยาว แสดงเป็นรายสัปดาห์</em>" : ""}</div>
+    <div class="tm-c"><div class="cb-leg" style="margin:0 0 6px"><span><i style="background:#f87171"></i>พบปัญหา (${dunit()})</span><span><i style="background:#bbf7d0"></i>ไม่พบ</span>${RD ? `<span><b style="color:var(--navy)">n รอบ</b> = จำนวนรอบหม้อ (ใต้วันที่)</span>` : ""}${weekly ? "<em>ช่วงยาว แสดงเป็นรายสัปดาห์</em>" : ""}${isRet ? "<em>เลือกแท่งเพื่อดูรายการปัญหา</em>" : ""}</div>
       <div class="tscroll"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W, 900)}px;height:${H}px" preserveAspectRatio="none">${svg}</svg></div></div>
-    <div class="grid" style="margin-top:12px"><div>${sec("tool", S.d.by === "retort" ? "ปัญหาที่พบ" : "สาเหตุที่พบ")}${hb(causes)}</div><div>${sec(S.d.by === "retort" ? "list" : "grid", S.d.by === "retort" ? "สาเหตุที่พบ" : "หม้อที่พบ")}${hb(rets)}</div></div>
+    ${S.d.by === "retort"
+      ? `<div style="margin-top:12px">${sec("tool", "ปัญหาที่พบ")}${hb(causes)}</div>`
+      : `<div style="margin-top:12px">${sec("grid", "หม้อที่พบ")}${hb(rets)}</div>`}
     <h3 style="margin:16px 0 8px">วันที่พบปัญหา <span class="sub" style="font-weight:400">(แตะเพื่อดูรายการ)</span></h3>
-    <div class="tm-days">${pdays.map(d => `<button class="chip" data-tday="${d}">${thLong(d)}</button>`).join("") || `<p class="sub">ไม่พบปัญหาในช่วงนี้</p>`}</div>
-    <div id="tmList"></div>`, box => {
+    <div class="tm-days">${pdays.map(d => `<button class="chip" data-tday="${d}" aria-pressed="false">${thLong(d)}</button>`).join("") || `<p class="sub">ไม่พบปัญหาในช่วงนี้</p>`}</div>
+    <div id="tmList" aria-live="polite"></div>`, box => {
     box.parentElement.classList.add("center");
     box.querySelectorAll("[data-tspan]").forEach(b => b.onclick = () => trendModal(k, b.dataset.tspan));
-    box.querySelectorAll("[data-tday]").forEach(b => b.onclick = () => {
-      box.querySelectorAll("[data-tday]").forEach(x => x.classList.toggle("on", x === b));
-      const xs = L.filter(x => x.date === b.dataset.tday).sort((a, c) => a.time.localeCompare(c.time));
-      box.querySelector("#tmList").innerHTML = `<div class="card" style="margin-top:10px">${xs.map(itemRow).join("")}</div>`;
-      box.querySelectorAll("#tmList [data-edit]").forEach(it => it.onclick = () => { closeModal(); showItem(it.dataset.edit); });
+    const choices = box.querySelectorAll("[data-tday]"), list = box.querySelector("#tmList");
+    const showProblems = ({ tday, tto = tday }) => {
+      choices.forEach(x => {
+        const active = x.dataset.tday === tday && (x.dataset.tto || x.dataset.tday) === tto;
+        x.classList.toggle("on", active); x.setAttribute("aria-pressed", String(active));
+      });
+      Object.assign(list.dataset, { tday, tto });
+      const xs = sortItems(L.filter(x => x.date >= tday && x.date <= tto), "new");
+      list.innerHTML = `<div class="card" style="margin-top:10px"><h3>${thLong(tday)}${tto !== tday ? ` – ${thLong(tto)}` : ""}</h3>${xs.map(itemRow).join("")}</div>`;
+      list.querySelectorAll("[data-edit]").forEach(it => it.onclick = () => { closeModal(); showItem(it.dataset.edit); });
+    };
+    choices.forEach(b => {
+      b.onclick = () => { showProblems(b.dataset); list.scrollIntoView({ block: "nearest" }); };
+      if (b.matches("g")) b.onkeydown = e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); b.onclick(); }
+      };
     });
+    if (selected?.tday) showProblems(selected);
   }, "wide");
 }
 function crossTable(L) {
@@ -5956,7 +6003,7 @@ let liveES = null, liveT = 0;
 function liveStart() {
   if (liveES || document.hidden || !S.role || !window.EventSource) return;
   liveES = new EventSource("/api/live?ch=rt");
-  liveES.onmessage = () => { clearTimeout(liveT); liveT = setTimeout(() => syncAll(false), 300); };
+  liveES.onmessage = () => { clearTimeout(liveT); liveT = setTimeout(() => { RUNS.key = ""; syncAll(false); }, 300); };
   liveES.onerror = () => { if (liveES && liveES.readyState === 2) { liveES = null; setTimeout(liveStart, 5000); } };
 }
 function liveStop() { if (liveES) { liveES.close(); liveES = null; } }
